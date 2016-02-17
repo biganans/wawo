@@ -1,0 +1,149 @@
+#ifndef _WAWO_CONFIG_CONFIG_H_
+#define _WAWO_CONFIG_CONFIG_H_
+
+
+//#ifndef WAWO_ENABLE_LOG
+//	#define WAWO_ENABLE_LOG 1
+//#endif
+
+
+//split SYSLOG message into piece that less than 1024
+#ifndef WAWO_LOG_SPLIT_SYSLOG
+	#define WAWO_LOG_SPLIT_SYSLOG 1
+#endif
+
+#ifndef WAWO_LOG_SYSLOG_SPLIT_LENGTH
+	#define WAWO_LOG_SYSLOG_SPLIT_LENGTH 1024
+#endif
+
+//log level
+
+
+/** PLASE REFER TO loggerManager::LogLevels::LogLevel  */
+#ifndef WAWO_DEFAULT_LOG_LEVEL
+	#define WAWO_DEFAULT_LOG_LEVEL 3
+#endif
+
+
+#ifndef WAWO_USE_FILE_LOGGER
+	#ifdef WAWO_PLATFORM_WIN
+		#define WAWO_USE_FILE_LOGGER	1
+	#else
+		#define WAWO_USE_FILE_LOGGER	0
+	#endif
+#endif
+
+#ifndef WAWO_USE_SYS_LOGGER
+	#ifdef WAWO_PLATFORM_POSIX
+		#define WAWO_USE_SYS_LOGGER 1
+	#else
+		#define WAWO_USE_SYS_LOGGER 0
+	#endif
+#endif
+
+#define WAWO_USE_CONSOLE_LOGGER 1
+
+#ifdef RELEASE
+	#define __DEFAULT_CONSOLE_LOG_LEVEL 3
+	#define __DEFAULT_SYS_LOG_LEVEL 3
+	#define __DEFAULT_FILE_LOG_LEVEL 4
+#else
+	#define __DEFAULT_CONSOLE_LOG_LEVEL 5
+	#define __DEFAULT_FILE_LOG_LEVEL 5
+	#define __DEFAULT_SYS_LOG_LEVEL 5
+#endif
+
+
+#ifndef	WAWO_FILE_LOGGER_LEVEL
+	#define WAWO_FILE_LOGGER_LEVEL	__DEFAULT_FILE_LOG_LEVEL
+#endif
+
+#ifndef WAWO_SYS_LOGGER_LEVEL
+	#define WAWO_SYS_LOGGER_LEVEL	__DEFAULT_SYS_LOG_LEVEL
+#endif
+
+#ifndef WAWO_CONSOLE_LOGGER_LEVEL
+	#define WAWO_CONSOLE_LOGGER_LEVEL	__DEFAULT_CONSOLE_LOG_LEVEL
+#endif
+
+
+//SOCKET PART
+
+
+//FOR IO MODE
+#ifdef WAWO_PLATFORM_WIN
+	#define WAWO_IO_MODE_SELECT
+#elif defined(WAWO_PLATFORM_POSIX)
+	#define WAWO_IO_MODE_EPOLL
+#else
+	#error
+#endif
+
+#if !defined(WAWO_IO_MODE_EPOLL) && !defined( WAWO_IO_MODE_SELECT )
+	#define WAWO_IO_MODE_SELECT
+#endif
+
+// for epoll using
+#ifdef WAWO_IO_MODE_EPOLL
+	#define WAWO_EPOLL_SIZE                 (1024*1024)   ///< max size of epoll control
+	#define WAWO_EPOLL_PER_HANDLE_SIZE      (1024*1024)     ///< max size of per epoll_wait
+
+	#define WAWO_IO_MODE_EPOLL_USE_ET
+#endif
+
+#define WAWO_IO_PERFORMACE_SUPER_HIGH	1
+//#define WAWO_IO_PERFORMANCE_HIGH		2
+//#define WAWO_IO_PERFORMANCE_NORMAL	3
+
+//#ifndef WAWO_IO_PERFORMANCE_MODE
+//	#define WAWO_IO_PERFORMANCE_MODE WAWO_SELECT_NORMAL_IO_PERFORMANCE
+//#endif
+
+#ifndef WAWO_LIMIT_WAWO_MESSAGE_LEN_TO_SHORT
+	//#define WAWO_LIMIT_MESSAGE_TO_SHORT
+#endif
+
+
+#ifndef MAX_PACKET_COUNT_TO_PARSE_PER_TIME_FOR_ASYNC_SOCKET
+	#define MAX_PACKET_COUNT_TO_PARSE_PER_TIME_FOR_ASYNC_SOCKET 5
+#endif
+
+#ifndef MAX_PACKET_COUNT_TO_PARSE_PER_TIME_FOR_SYNC_SOCKET
+	#define MAX_PACKET_COUNT_TO_PARSE_PER_TIME_FOR_SYNC_SOCKET 10
+#endif
+
+#ifndef WAWO_MAX_MESSAGE_COUNT_IN_ONE_PACKET
+	#define WAWO_MAX_MESSAGE_COUNT_IN_ONE_PACKET 5
+#endif
+
+#ifndef MAX_MESSAGE_COUNT_TO_PARSE_PER_TIME_FOR_SYNC_SOCKET
+	//just double PACKET by default, for the socket type that send multi-message at one packets, you can tune this value for a better performance
+	#define MAX_MESSAGE_COUNT_TO_PARSE_PER_TIME_FOR_SYNC_SOCKET (MAX_PACKET_COUNT_TO_PARSE_PER_TIME_FOR_ASYNC_SOCKET*WAWO_MAX_MESSAGE_COUNT_IN_ONE_PACKET)
+#endif
+
+
+#ifndef WAWO_DEFAULT_TASK_RUNNER_CONCURRENCY_COUNT
+	#define WAWO_DEFAULT_TASK_RUNNER_CONCURRENCY_COUNT 4
+#endif
+#define WAWO_MAX_TASK_RUNNER_CONCURRENCY_COUNT 512
+
+
+//#define WAWO_ENABLE_TASK_TRACK
+#ifdef WAWO_ENABLE_TRACK_TASK
+	#define WAWO_TRACK_TASK WAWO_LOG_DEBUG
+#else
+	#define WAWO_TRACK_TASK(...)
+#endif
+
+//#define WAWO_ENABLE_SERVICE_EXECUTOR
+
+#ifndef _DEBUG_THREAD
+	#define _DEBUG_THREAD
+#endif
+
+#ifdef _DEBUG_THREAD
+	#define _DEBUG_THREAD_CREATE_JOIN
+#endif
+
+
+#endif // end for _CONFIG_WAWO_CONFIG_H_
