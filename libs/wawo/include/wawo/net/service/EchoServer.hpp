@@ -5,7 +5,6 @@
 
 #include <wawo/net/ServiceProvider_Abstract.hpp>
 #include <wawo/net/service/ServiceCommand.h>
-#include <wawo/net/Context.hpp>
 
 namespace wawo { namespace net { namespace service {
 

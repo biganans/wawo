@@ -116,7 +116,6 @@
     <ClInclude Include="..\..\include\wawo\macros.h" />
     <ClInclude Include="..\..\include\wawo\memory\memory.h" />
     <ClInclude Include="..\..\include\wawo\net\Peer_Abstract.hpp" />
-    <ClInclude Include="..\..\include\wawo\net\Context.hpp" />
     <ClInclude Include="..\..\include\wawo\net\core\observer_impl\SocketObserver_Abstract.hpp" />
     <ClInclude Include="..\..\include\wawo\net\core\observer_impl\SocketObserver_Epoll.hpp" />
     <ClInclude Include="..\..\include\wawo\net\core\observer_impl\SocketObserver_Select.hpp" />

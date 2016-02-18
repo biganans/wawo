@@ -52,7 +52,6 @@
 			<Add option="-D__WAWO_DAY_DAY_UP__" />
 			<Add option="-DGCC" />
 			<Add option="-DOS_LINUX" />
-			<Add directory="../../../../boost/boost_1_57_0" />
 			<Add directory="../../../../wawo_config" />
 			<Add directory="../../../include" />
 		</Compiler>
@@ -93,7 +92,6 @@
 		<Unit filename="../../../include/wawo/log/SysLogger.h" />
 		<Unit filename="../../../include/wawo/macros.h" />
 		<Unit filename="../../../include/wawo/memory/memory.h" />
-		<Unit filename="../../../include/wawo/net/Context.hpp" />
 		<Unit filename="../../../include/wawo/net/Credential.hpp" />
 		<Unit filename="../../../include/wawo/net/Message_Abstract.hpp" />
 		<Unit filename="../../../include/wawo/net/PeerProxy.hpp" />
@@ -146,7 +144,7 @@
 		<Unit filename="../../../src/log/FormatInterface.cpp" />
 		<Unit filename="../../../src/log/FormatNormal.cpp" />
 		<Unit filename="../../../src/log/LoggerManager.cpp" />
-		<Unit filename="../../../src/log/SysLogger.cpp" />
+		<Unit filename="../../../src/log/Syslogger.cpp" />
 		<Unit filename="../../../src/net/core/Socket.cpp" />
 		<Unit filename="../../../src/net/core/SocketAddr.cpp" />
 		<Unit filename="../../../src/signal/SignalManager.cpp" />

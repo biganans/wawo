@@ -104,10 +104,6 @@ namespace wawo { namespace algorithm {
 			return *this;
 		}
 
-		inline uint32_t Capacity() {
-			return m_left_capacity + m_right_capacity;
-		}
-
 		inline uint32_t Capacity() const {
 			return m_left_capacity + m_right_capacity;
 		}
@@ -115,24 +111,14 @@ namespace wawo { namespace algorithm {
 		inline uint32_t LeftCapacity() { return ( (Capacity() == 0) ? 0 : (m_left_index) ); }
 		inline uint32_t RightCapacity() { return ( (Capacity() == 0) ? 0 : Capacity() - m_right_index ); }
 
-		inline byte_t* const Begin() {
-			return m_buffer + m_left_index ;
-		}
 		inline byte_t* const Begin() const {
 			return m_buffer + m_left_index;
 		}
 
-		inline byte_t* const End() {
-			return m_buffer + m_right_index ;
-		}
 		inline byte_t* const End() const {
 			return m_buffer + m_right_index;
 		}
 
-		inline wawo::uint32_t Length() {
-			WAWO_ASSERT( m_right_index >= m_left_index );
-			return m_right_index - m_left_index ;
-		}
 		inline wawo::uint32_t Length() const {
 			WAWO_ASSERT( m_right_index >= m_left_index );
 			return m_right_index - m_left_index ;

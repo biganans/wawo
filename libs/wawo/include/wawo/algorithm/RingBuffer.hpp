@@ -45,14 +45,14 @@ namespace wawo { namespace algorithm {
 			m_begin = m_end = 0;
 		}
 
-		inline wawo::uint32_t TotalSpace() {
+		inline wawo::uint32_t TotalSpace() const {
 			return m_space - 1;
 		}
 
-		inline wawo::uint32_t LeftSpace() {
+		inline wawo::uint32_t LeftSpace() const {
 			return Space() - Count();
 		}
-		inline wawo::uint32_t Count() {
+		inline wawo::uint32_t Count() const {
 
 			//if u dont understand this line, DON'T be panic ,,please read the line commented below
 			return ((m_end-m_begin) + m_space ) % m_space; 
@@ -68,12 +68,12 @@ namespace wawo { namespace algorithm {
 			*/
 		}
 		//can not read
-		inline bool IsEmpty() {
+		inline bool IsEmpty() const {
 			return m_begin == m_end;
 		}
 
 		//can not write
-		inline bool IsFull() {
+		inline bool IsFull() const {
 			(m_end+1)%m_space == m_begin;
 		}
 

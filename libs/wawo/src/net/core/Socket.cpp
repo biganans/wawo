@@ -230,7 +230,7 @@ namespace wawo { namespace net { namespace core {
 		int _new_shut_flag = ((~m_shutdown_flag)&flag);
 
 		if( _new_shut_flag == 0 ) {
-			WAWO_LOG_WARN("socket", "[#%d:%s] current shut_flag: %d, incoming shut_flag: %d, ignore !!!", m_fd, m_addr.AddressInfo(),m_shutdown_flag, flag ) ;
+			WAWO_LOG_WARN("socket", "[#%d:%s] to shutdown for(%d), current shut_flag: %d, incoming shut_flag: %d, ignore !!!", m_fd, m_addr.AddressInfo(), ec, m_shutdown_flag, flag ) ;
 			return wawo::OK;
 		}
 
@@ -247,7 +247,7 @@ namespace wawo { namespace net { namespace core {
 		}
 
 		int shut_rt = shutdown( m_fd, _shut_flag );
-		WAWO_LOG_WARN("socket", "[#%d:%s] shutdown, shut flag: %d, shut_rt: %d, ec (only make sense for rt==-1): %d", m_fd, m_addr.AddressInfo(),_shut_flag, shut_rt , WAWO_TRANSLATE_SOCKET_ERROR_CODE(wawo::net::core::SocketGetLastErrno()) ) ;
+		WAWO_LOG_WARN("socket", "[#%d:%s] shutdown for(%d), shut flag: %d, shut_rt: %d, shut ec (only make sense for rt==-1): %d", m_fd, m_addr.AddressInfo(), ec, _shut_flag, shut_rt , WAWO_TRANSLATE_SOCKET_ERROR_CODE(wawo::net::core::SocketGetLastErrno()) ) ;
 
 		//update shut_flag
 		if( m_shutdown_flag==Socket::SSHUT_RDWR ) {

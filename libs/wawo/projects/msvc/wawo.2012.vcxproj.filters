@@ -333,9 +333,6 @@
     <ClInclude Include="..\..\include\wawo\algorithm\bytes_helper.hpp">
       <Filter>Header Files\wawo\algorithm</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\Context.hpp">
-      <Filter>Header Files\wawo\net</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\peer\Http.hpp">
       <Filter>Header Files\wawo\net\peer</Filter>
     </ClInclude>

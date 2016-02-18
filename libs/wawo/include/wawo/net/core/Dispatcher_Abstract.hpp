@@ -86,6 +86,19 @@ namespace wawo { namespace net { namespace core {
 		typedef std::map< int, _ListenerVector* > _IdListenerMap;
 		typedef typename _IdListenerMap::iterator _MyIdListenerIterator;
 
+		//TUNE BETWEEN SharedSpinMutex AND SharedMutex FOR PERFORMACE BENCHMARK ON DIFFERENT PLATFORM
+#ifdef USE_SHARED_MUTEX
+		typedef wawo::thread::SharedMutex _MyIdListenerMapMutex;
+#else
+		typedef wawo::thread::SpinMutex _MyIdListenerMapMutex;
+#endif
+
+	private:
+		_MyIdListenerMapMutex m_id_listener_map_mutex;
+		_IdListenerMap m_id_listener_map;
+
+		SpinMutex m_listener_ops_mutex;
+		_ListenerToOpQueue m_listener_ops ;
 	public:
 		Dispatcher_Abstract() {}
 
@@ -318,19 +331,6 @@ namespace wawo { namespace net { namespace core {
 				++it_begin;
 			}
 		}
-
-		//TUNE BETWEEN SharedSpinMutex AND SharedMutex FOR PERFORMACE BENCHMARK ON DIFFERENT PLATFORM
-#ifdef USE_SHARED_MUTEX
-		typedef wawo::thread::SharedMutex _MyIdListenerMapMutex;
-#else
-		typedef wawo::thread::SpinMutex _MyIdListenerMapMutex;
-#endif
-		_MyIdListenerMapMutex m_id_listener_map_mutex;
-
-		_IdListenerMap m_id_listener_map;
-
-		SpinMutex m_listener_ops_mutex;
-		_ListenerToOpQueue m_listener_ops ;
 	};
 
 

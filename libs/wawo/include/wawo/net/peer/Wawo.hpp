@@ -12,7 +12,6 @@
 #include <wawo/thread/Mutex.h>
 
 #include <wawo/net/Peer_Abstract.hpp>
-#include <wawo/net/Context.hpp>
 
 #include <wawo/net/ServiceList.h>
 
@@ -23,25 +22,22 @@ namespace wawo { namespace net { namespace peer {
 	using namespace wawo::net::core;
 
 	/*
-	 * Notice (u'd better read this, if you have any question about wawo::net::client )
+	 * Notice (u'd better read this, if you have any question about wawo::net::peer::Wawo )
 	 *
-	 * a client identify one user who connected or want to connect to a remote server.
+	 * wawo::net::peer::Wawo is a sub class of Peer_Abstract
+	 * Peer_Abstract is is what as it is, a object who can send , receive messages by its sockets
 	 * it's API is simple as below
 
-	 * 1, connect to remote server
-	 * 2, disconnect from remote server
-	 * 3, send message to remote server
-	 * 4, hear message from remote server
-	 * 5, identify itself on remote server, by credential
+	 * a peer is identified by its credential
+	 * 
 	 *
+	 * wawo's impl of a peer have only one socket, if you like, you can impl some kind of multi-socket peer
 	 *
-	 * wawo's impl of a client only have one connection, if you like, you can impl some kind of multi-connection client
-	 *
-	 * wawo's client impl do not have a status of login,this is left for yourself
+	 * wawo's peer impl do not have a status of login,this is left for yourself
 	 * there are several ways to impl a login logic, if you have no clue where to start, pls read the lines below:
 
 	 * First solution
-	 * 1, extends wawo::net::client::wawo, add a state of login|logout, impl your own login message, switch to login state when you get right login response success
+	 * 1, extends wawo::net::peer::Wawo, add a state of login|logout, impl your own login message, switch to login state when you get right login response success
 	   2, check this state for every message out and in
 
 	 * Seconds solution
@@ -55,16 +51,15 @@ namespace wawo { namespace net { namespace peer {
 	{
 
 	public:
-		typedef wawo::net::Peer_Abstract<_CredentialT,_MessageT,_SocketT> MyBasePeerT;
-		typedef typename MyBasePeerT::PeerCtxInfo MyPeerCtxInfoT ;
-
-		typedef wawo::net::peer::Wawo<_CredentialT,_MessageT,_SocketT> MyPeerT;
-		typedef wawo::net::PeerProxy_Abstract< MyBasePeerT> MyPeerProxyT;
-
 		typedef _CredentialT MyCredentialT;
 		typedef _MessageT MyMessageT;
 		typedef _SocketT MySocketT;
 		typedef typename _SocketT::SocketEventT MySocketEventT;
+		typedef Wawo<_CredentialT,_MessageT,_SocketT> MyT;
+
+		typedef Peer_Abstract<_CredentialT,_MessageT,_SocketT> MyBasePeerT;
+		typedef typename MyBasePeerT::PeerCtxInfo MyPeerCtxInfoT ;
+		typedef typename MyBasePeerT::MyPeerProxyT MyPeerProxyT;
 
 	private:
 		struct RequestedMessage
@@ -101,7 +96,6 @@ namespace wawo { namespace net { namespace peer {
 			WAWO_ASSERT( socket->IsConnected() );
 		}
 
-		//unset connetion would result in S_IDLE,,,
 		virtual void DetachSocket( WAWO_REF_PTR<MySocketT> const& socket ) {
 			//multi-shutdown evt may be triggered sometimes, then we get multi-times DetachSocket
 			//for example
@@ -197,7 +191,6 @@ namespace wawo { namespace net { namespace peer {
 
 			WAWO_ASSERT( ctx.peer == this );
 			WAWO_ASSERT( ctx.socket != NULL );
-			//WAWO_ASSERT( ctx.socket == m_socket );
 
 			response->SetType( wawo::net::message::Wawo::T_RESPONSE );
 			response->SetNetId( original->GetNetId() );
@@ -217,7 +210,7 @@ namespace wawo { namespace net { namespace peer {
 					ctx.peer = WAWO_REF_PTR< MyBasePeerT>( this );
 					ctx.socket = socket;
 
-					MyBasePeerT::GetProxy()->HandleMessage( message, ctx );
+					MyBasePeerT::GetProxy()->HandleMessage( ctx, message );
 				}
 				break;
 			case wawo::net::message::Wawo::T_RESPONSE:
@@ -254,7 +247,7 @@ namespace wawo { namespace net { namespace peer {
 						ctx.socket = socket;
 						ctx.message = req.message;
 
-						MyBasePeerT::GetProxy()->HandleMessage( message, ctx );
+						MyBasePeerT::GetProxy()->HandleMessage( ctx, message );
 					}
 				}
 				break;
@@ -269,21 +262,14 @@ namespace wawo { namespace net { namespace peer {
 		virtual void HandleDisconnected( WAWO_REF_PTR<MySocketT> const& socket, int const& ec ) {
 			MyPeerCtxInfoT ctx;
 			ctx.peer = WAWO_REF_PTR<MyBasePeerT>( this );
-			MyBasePeerT::GetProxy()->HandleDisconnected( socket, ctx, ec );
+			MyBasePeerT::GetProxy()->HandleDisconnected( ctx, socket,ec );
 		}
 
 		virtual void HandleError( WAWO_REF_PTR<MySocketT> const& socket, int const& ec ) {
 			MyPeerCtxInfoT ctx;
 			ctx.peer = WAWO_REF_PTR<MyBasePeerT>( this );
-			MyBasePeerT::GetProxy()->HandleError( socket, ctx , ec );
+			MyBasePeerT::GetProxy()->HandleError( ctx , socket, ec );
 		}
-
-		/*
-		void Echo_RequestPing() {
-		}
-		void Echo_HandlePong(WAWO_REF_PTR<MessageT> const& incoming, WAWO_REF_PTR<MessageT> const& original) {
-		}
-		*/
 
 		int Echo_RequestHello () {
 

@@ -62,7 +62,7 @@ namespace wawo { namespace net { namespace core {
 		typedef IOEvent<_SocketT> MyT;
 		typedef SocketObserver<_SocketT> MySocketObserverT;
 	public:
-		explicit IOEvent( WAWO_REF_PTR<MySocketObserverT> const& observer, uint32_t const& id,  EventData const& data ) :
+		explicit IOEvent( WAWO_REF_PTR<MySocketObserverT> const& observer, uint32_t const& id, EventData const& data ) :
 			Event(id,data),
 			m_observer(observer)
 		{

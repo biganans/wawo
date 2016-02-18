@@ -1,7 +1,6 @@
 #ifndef _WAWO_NET_CORE_EVENT_HPP_
 #define _WAWO_NET_CORE_EVENT_HPP_
 
-
 #include <wawo/core.h>
 #include <wawo/SmartPtr.hpp>
 #include <wawo/NonCopyable.hpp>
@@ -106,5 +105,4 @@ namespace wawo { namespace net { namespace core {
 	};
 
 }}}
-
 #endif

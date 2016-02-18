@@ -77,10 +77,6 @@ namespace wawo { namespace net { namespace core { namespace observer_impl {
 					_flag |= SocketObserverEvent::EVT_WRITE;
 				}
 
-				//if(flag& SocketObserverEvent::EVT_CONNECTING) {
-				//	_flag |= SocketObserverEvent::EVT_CONNECTING;
-				//}
-
 				if( _flag != 0 ) {
 					WAWO_CONDITION_CHECK( m_socket_evt_pairs.size() < WAWO_SELECT_LIMIT ) ;
 					RegisterIOEvent( m_socket_evt_pairs, _flag, socket );

@@ -3,7 +3,7 @@
 
 //#include <wawo/core.h>
 #include <wawo/NonCopyable.hpp>
-//#include <wawo/algorithm/bytes_helper.hpp>
+#include <wawo/algorithm/bytes_helper.hpp>
 
 #define WAWO_BYTES_RINGBUFFER_HIGH_PERFORMANCE_MODE 1
 
@@ -46,18 +46,18 @@ namespace wawo { namespace algorithm {
 			m_begin = m_end = 0;
 		}
 
-		inline bool IsFull() {
+		inline bool IsFull() const {
 			return (m_end+1) % m_space == m_begin;
 		}
 
-		inline wawo::uint32_t TotalSpace() {
+		inline wawo::uint32_t TotalSpace() const {
 			return m_space - 1;
 		}
-		inline wawo::uint32_t LeftSpace() {
+		inline wawo::uint32_t LeftSpace() const {
 			return ( TotalSpace() - BytesCount() ) ;
 		}
 
-		inline wawo::uint32_t BytesCount() {
+		inline wawo::uint32_t BytesCount() const {
 			return ((m_end - m_begin) + m_space ) % m_space;
 		}
 

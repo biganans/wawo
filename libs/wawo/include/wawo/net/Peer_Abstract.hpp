@@ -34,10 +34,10 @@ namespace wawo { namespace net {
 
 		typedef Listener_Abstract< typename _SocketT::SocketEventT> ListenerT;
 		typedef Peer_Abstract<_CredentialT,_MessageT,_SocketT> MyBasePeerT;
-		typedef PeerProxy_Abstract<MyBasePeerT> PeerProxyT;
+		typedef PeerProxy_Abstract<MyBasePeerT> MyPeerProxyT;
 
 		struct PeerCtxInfo {
-			WAWO_REF_PTR<MyBasePeerT>			peer;
+			WAWO_REF_PTR<MyBasePeerT>		peer;
 			WAWO_REF_PTR<MySocketT>			socket;
 			WAWO_SHARED_PTR<MyMessageT>		message;
 		};
@@ -45,7 +45,7 @@ namespace wawo { namespace net {
 	private:
 		SharedMutex m_mutex;
 		MyCredentialT m_credential;
-		WAWO_REF_PTR<PeerProxyT> m_proxy;
+		WAWO_REF_PTR<MyPeerProxyT> m_proxy;
 	public:
 		explicit Peer_Abstract( MyCredentialT const& credential):
 			m_credential(credential)
@@ -61,12 +61,11 @@ namespace wawo { namespace net {
 
 		virtual void Tick() {}
 
-		void AssignProxy( WAWO_REF_PTR<PeerProxyT> const& proxy ) {
+		void AssignProxy( WAWO_REF_PTR<MyPeerProxyT> const& proxy ) {
 			LockGuard<SharedMutex> lg( m_mutex );
 			m_proxy = proxy;
 		}
-
-		inline WAWO_REF_PTR<PeerProxyT> const& GetProxy() const { return m_proxy; }
+		inline WAWO_REF_PTR<MyPeerProxyT> const& GetProxy() const { return m_proxy; }
 
 		void OnEvent( WAWO_REF_PTR<MySocketEventT> const& evt) {
 
@@ -138,15 +137,6 @@ namespace wawo { namespace net {
 			WAWO_LOG_DEBUG("client_wawo", "new messages arrived: %d", idx);
 			return idx;
 		}
-
-		virtual void AttachSocket( WAWO_REF_PTR<MySocketT> const& socket ) = 0;
-		virtual void DetachSocket( WAWO_REF_PTR<MySocketT> const& socket ) = 0;
-		virtual void GetAllSockets( std::vector< WAWO_REF_PTR<MySocketT> >& sockets ) = 0 ;
-
-		virtual void HandleIncomingMessage( WAWO_REF_PTR<MySocketT> const& socket, WAWO_SHARED_PTR<MyMessageT> const& message ) = 0;
-		virtual void HandleDisconnected( WAWO_REF_PTR<MySocketT> const& socket, int const& ec ) = 0;
-		virtual void HandleError( WAWO_REF_PTR<MySocketT> const& socket, int const& ec ) = 0;
-
 		virtual int DoSend( WAWO_REF_PTR<MySocketT> const& socket, WAWO_SHARED_PTR<MyMessageT> const& message ) {
 			WAWO_ASSERT( message != NULL );
 			WAWO_ASSERT( socket != NULL ) ;
@@ -159,6 +149,14 @@ namespace wawo { namespace net {
 
 			return socket->SendPacket( packet_o );
 		}
+
+		virtual void AttachSocket( WAWO_REF_PTR<MySocketT> const& socket ) = 0;
+		virtual void DetachSocket( WAWO_REF_PTR<MySocketT> const& socket ) = 0;
+		virtual void GetAllSockets( std::vector< WAWO_REF_PTR<MySocketT> >& sockets ) = 0 ;
+
+		virtual void HandleIncomingMessage( WAWO_REF_PTR<MySocketT> const& socket, WAWO_SHARED_PTR<MyMessageT> const& message ) = 0;
+		virtual void HandleDisconnected( WAWO_REF_PTR<MySocketT> const& socket, int const& ec ) = 0;
+		virtual void HandleError( WAWO_REF_PTR<MySocketT> const& socket, int const& ec ) = 0;
 	};
 }}
 #endif
