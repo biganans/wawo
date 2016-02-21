@@ -345,6 +345,9 @@
     <ClInclude Include="..\..\include\wawo\net\PeerProxy.hpp">
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\Context.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\log\ConsoleLogger.cpp">

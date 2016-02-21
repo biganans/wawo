@@ -2,7 +2,7 @@
 #define _WAWO_NET_SERVICE_PROVIDER_ABSTRACT_HPP_
 
 #include <wawo/net/core/Listener_Abstract.hpp>
-#include <wawo/task/Task.hpp>
+#include <wawo/net/Context.hpp>
 
 namespace wawo { namespace net {
 
@@ -15,7 +15,9 @@ namespace wawo { namespace net {
 		typedef _MyPeerT MyPeerT;
 		typedef typename MyPeerT::MyMessageT MyMessageT;
 		typedef typename MyPeerT::MySocketT MySocketT;
-		typedef typename MyPeerT::MyPeerCtxInfoT MyPeerCtxInfoT;
+
+		typedef typename _MyPeerT::MyBasePeerCtxT MyBasePeerCtxT;
+		typedef typename _MyPeerT::MyBasePeerMessageCtxT MyBasePeerMessageCtxT;
 
 		ServiceProvider_Abstract<MyPeerT>( uint32_t const& id ):
 			m_id(id)
@@ -31,14 +33,18 @@ namespace wawo { namespace net {
 			return m_id;
 		}
 
-		virtual void HandleMessage( WAWO_SHARED_PTR<MyMessageT> const& incoming, MyPeerCtxInfoT const& ctx ) = 0;
+		virtual void HandleMessage( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ) = 0;
 
 	private:
 		uint32_t m_id;
 	};
+}}
+
 
 
 #ifdef WAWO_ENABLE_SERVICE_EXECUTOR
+#include <wawo/task/Task.hpp>
+namespace wawo { namespace net {
 	template <class ServiceListenerType>
 	class ReceiveTask:
 		public wawo::task::Task_Abstract {
@@ -170,7 +176,7 @@ namespace wawo { namespace net {
 			//nothing to do now...
 		}
 	};
+}}
 #endif
 
-}}
 #endif

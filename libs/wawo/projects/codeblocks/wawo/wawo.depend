@@ -20453,13 +20453,14 @@
 	<wawo/core.h>
 	<string>
 
-1454552905 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/log/LoggerManager.h
+1455867926 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/log/LoggerManager.h
 	<vector>
 	<wawo/SafeSingleton.hpp>
 	<wawo/log/Logger_Abstract.hpp>
 	<wawo/log/ConsoleLogger.h>
 	<wawo/log/FileLogger.h>
 	<wawo/log/SysLogger.h>
+	<wawo/SmartPtr.hpp>
 	<wawo/thread/Mutex.h>
 
 1448593437 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/utils/SafeSingleton.hpp
@@ -20546,7 +20547,7 @@
 1451379325 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/Listener_Abstract.h
 	<wawo/prototype/AutoPoint.hpp>
 
-1455775857 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/Dispatcher_Abstract.hpp
+1455874523 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/Dispatcher_Abstract.hpp
 	<vector>
 	<queue>
 	<map>
@@ -20561,7 +20562,7 @@
 	<wawo/prototype/SafeSingleton.hpp>
 	<wawo/task/TaskManager.h>
 
-1455417832 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/task/TaskManager.h
+1455870039 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/task/TaskManager.h
 	<vector>
 	<wawo/core.h>
 	<wawo/SmartPtr.hpp>
@@ -20739,7 +20740,7 @@
 
 1442202949 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/signal/SignalHandler_Abstract.h
 
-1455417833 source:/home/copy/winshare/svn_repository/trunk/libs/wawo/src/task/TaskManager.cpp
+1455870026 source:/home/copy/winshare/svn_repository/trunk/libs/wawo/src/task/TaskManager.cpp
 	<wawo/core.h>
 	<wawo/SmartPtr.hpp>
 	<wawo/task/TaskManager.h>
@@ -20781,7 +20782,7 @@
 	<wawo/thread/Thread.h>
 	<wawo/log/LoggerManager.h>
 
-1454552249 source:/home/copy/winshare/svn_repository/trunk/libs/wawo/src/log/LoggerManager.cpp
+1455868094 source:/home/copy/winshare/svn_repository/trunk/libs/wawo/src/log/LoggerManager.cpp
 	<wawo/core.h>
 	<wawo/log/LoggerManager.h>
 	<wawo/time/time.hpp>
@@ -20955,7 +20956,7 @@
 	<mutex>
 	<wawo/core.h>
 
-1455620537 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/SmartPtr.hpp
+1455866765 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/SmartPtr.hpp
 	<wawo/core.h>
 
 1454552972 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/IOTaskManager.hpp

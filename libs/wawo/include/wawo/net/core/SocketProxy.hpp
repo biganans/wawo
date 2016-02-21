@@ -126,7 +126,6 @@ namespace wawo { namespace net { namespace core {
 
 			WAWO_ASSERT( m_socket_observer != NULL );
 			m_socket_observer->Stop();
-
 			//it should be safe here, cuz we checked the m_state in _CheckOps
 			WAWO_ASSERT( m_state == S_EXIT );
 		}

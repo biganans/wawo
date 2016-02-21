@@ -33,8 +33,10 @@ namespace wawo { namespace task {
 		m_runner_pool = new TaskRunnerPool("task_runner_pool", max_task_runner ) ;
 		WAWO_NULL_POINT_CHECK( m_runner_pool ) ;
 
+#ifdef WAWO_TASK_MANAGER_ENABLE_SEQUENCE_TASK
 		m_sequence_runners = new SequenceTaskRunnerPool(2) ;
 		WAWO_NULL_POINT_CHECK( m_sequence_runners ) ;
+#endif
 
 		if( auto_start ) {
 			WAWO_CONDITION_CHECK( Start() == wawo::OK );
@@ -48,7 +50,9 @@ namespace wawo { namespace task {
 		WAWO_DELETE(m_tasks_to_add);
 		WAWO_DELETE(m_tasks_to_assign);
 
+#ifdef WAWO_TASK_MANAGER_ENABLE_SEQUENCE_TASK
 		WAWO_DELETE(m_sequence_runners);
+#endif
 		WAWO_DELETE(m_runner_pool);
 
 		WAWO_LOG_DEBUG("TaskManager","~TaskManager()");
@@ -73,7 +77,10 @@ namespace wawo { namespace task {
 		WAWO_ASSERT(m_tasks_to_assign->empty()) ;
 
 		m_runner_pool->Init();
+#ifdef WAWO_TASK_MANAGER_ENABLE_SEQUENCE_TASK
 		m_sequence_runners->Init();
+#endif
+
 	}
 
 	void TaskManager::OnStop() {
@@ -84,9 +91,12 @@ namespace wawo { namespace task {
 		WAWO_CONDITION_CHECK(m_tasks_to_assign->empty());
 
 		m_runner_pool->Deinit() ;
+#ifdef WAWO_TASK_MANAGER_ENABLE_SEQUENCE_TASK
 		m_sequence_runners->Deinit();
+#endif
 	}
 
+#ifdef WAWO_TASK_MANAGER_ENABLE_SEQUENCE_TASK
 	int TaskManager::PlanTask( WAWO_REF_PTR<SequenceTask> const& task ) {
 
 		UniqueLock<Mutex> _lg( m_mutex );
@@ -96,7 +106,7 @@ namespace wawo { namespace task {
 
 		return m_sequence_runners->AssignTask(task);
 	}
-
+#endif
 	/*
 	void TaskManager::CancelTask( WAWO_REF_PTR<Task_Abstract> const& task ) {
 		task->Cancel();

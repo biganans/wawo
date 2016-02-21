@@ -50,6 +50,8 @@ namespace wawo { namespace net { namespace core {
 		SE_SHUTDOWN_WR, //19
 		SE_SHUTDOWN, //20
 		SE_CLOSE, //21
+		
+		NE_MAX
 	};
 
 	template <class _SocketT>

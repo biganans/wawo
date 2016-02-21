@@ -2,10 +2,8 @@
 
 #include <wawo/log/LoggerManager.h>
 #include <wawo/time/time.hpp>
-
 #include <wawo/log/FormatNormal.h>
 #include <wawo/thread/Mutex.h>
-
 
 #ifdef WAWO_PLATFORM_WIN
 	#include <wawo/log/FileLogger.h>
@@ -36,9 +34,8 @@ namespace wawo { namespace log {
 			return ;
 		}
 
-
 #if WAWO_USE_CONSOLE_LOGGER
-		m_consoleLogger = new ConsoleLogger() ;
+		m_consoleLogger = WAWO_SHARED_PTR<Logger_Abstract>( new ConsoleLogger()) ;
 		m_consoleLogger->SetLevel ( WAWO_CONSOLE_LOGGER_LEVEL ) ;
 		AddLogger( m_consoleLogger );
 #endif
@@ -47,7 +44,7 @@ namespace wawo { namespace log {
 			//flush log buffer
 
 			for( int i=0;i<m_logBufferIdx;i++ ) {
-				std::vector<Logger_Abstract*>::iterator it = m_loggers.begin();
+				std::vector< WAWO_SHARED_PTR<Logger_Abstract> >::iterator it = m_loggers.begin();
 
 				while( it != m_loggers.end() ) {
 					(*it)->Write( m_logLevel[i], m_logBuffer[i].c_str(), m_logBuffer[i].length() );
@@ -63,24 +60,19 @@ namespace wawo { namespace log {
 
 	void LoggerManager::Deinit() {
 		LockGuard<SharedMutex> _lg( m_mutexLoggers );
-
-#if WAWO_USE_CONSOLE_LOGGER
-		WAWO_DELETE( m_consoleLogger );
-#endif
-
 		m_loggers.clear();
 	}
 
-	void LoggerManager::AddLogger( Logger_Abstract * const logger) {
+	void LoggerManager::AddLogger( WAWO_SHARED_PTR<Logger_Abstract> const& logger) {
 		LockGuard<SharedMutex> _lg( m_mutexLoggers ) ;
 		m_loggers.push_back(logger);
 	}
 
 
-	void LoggerManager::RemoveLogger( Logger_Abstract * const logger) {
+	void LoggerManager::RemoveLogger( WAWO_SHARED_PTR<Logger_Abstract> const& logger ) {
 		LockGuard<SharedMutex> _lg( m_mutexLoggers ) ;
 
-		std::vector<Logger_Abstract*>::iterator it = m_loggers.begin();
+		std::vector< WAWO_SHARED_PTR<Logger_Abstract> >::iterator it = m_loggers.begin();
 
 		while( it != m_loggers.end() ) {
 
@@ -129,7 +121,7 @@ namespace wawo { namespace log {
 		}
 
 		FormatInterface* formatInterface;
-		std::vector<Logger_Abstract*>::iterator it = m_loggers.begin();
+		std::vector< WAWO_SHARED_PTR<Logger_Abstract> >::iterator it = m_loggers.begin();
 		while( it != m_loggers.end() ) {
 
 			if( !(*it)->TestLevel(level) ) { return ; }
@@ -172,4 +164,5 @@ namespace wawo { namespace log {
 	FormatInterface*& LoggerManager::GetDefaultFormatInterface() {
 		return m_defaultFormatInterface ;
 	}
-} }
+
+}}

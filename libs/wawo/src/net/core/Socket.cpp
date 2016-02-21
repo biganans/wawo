@@ -102,10 +102,6 @@ namespace wawo { namespace net { namespace core {
 		WAWO_LOG_DEBUG( "socket", "[#%d:%s] Socket::~Socket,address: 0x%p", m_fd, m_addr.AddressInfo(), this );
 	}
 
-	SocketAddr const& Socket::GetAddr() {
-		return m_addr;
-	}
-
 	SocketAddr const& Socket::GetAddr() const {
 		return m_addr;
 	}

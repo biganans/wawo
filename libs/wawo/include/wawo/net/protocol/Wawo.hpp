@@ -170,6 +170,8 @@ namespace wawo { namespace net { namespace protocol {
 						break;
 					case S_READ_CONTENT:
 						{
+							WAWO_ASSERT( m_size > 0 );
+
 							if( buffer->BytesCount() < m_size ) {
 								exit_parse = true;
 							} else {

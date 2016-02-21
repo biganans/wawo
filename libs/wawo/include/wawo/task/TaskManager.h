@@ -18,6 +18,8 @@
 	#define WAWO_TASK_MANAGER_USE_SPIN_MUTEX
 //#endif
 
+//#define WAWO_TASK_MANAGER_ENABLE_SEQUENCE_TASK
+
 namespace wawo { namespace task {
 
 	class TaskManager:
@@ -79,8 +81,10 @@ namespace wawo { namespace task {
 		uint32_t CancelAll() ;
 
 	private:
-		SequenceTaskRunnerPool* m_sequence_runners;
 
+#ifdef WAWO_TASK_MANAGER_ENABLE_SEQUENCE_TASK
+		SequenceTaskRunnerPool* m_sequence_runners;
+#endif
 		TaskRunnerPool* m_runner_pool;
 		TaskVector* m_tasks_to_add;
 		TaskVector* m_tasks_to_assign;

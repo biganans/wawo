@@ -18,8 +18,9 @@ namespace wawo { namespace net { namespace service {
 		typedef _MyPeerT MyPeerT;
 		typedef typename MyPeerT::MyMessageT MyMessageT;
 		typedef typename MyPeerT::MySocketT MySocketT;
-		typedef typename MyPeerT::MyPeerCtxInfoT MyPeerCtxInfoT;
 
+		typedef typename MyPeerT::MyBasePeerCtxT MyBasePeerCtxT;
+		typedef typename MyPeerT::MyBasePeerMessageCtxT MyBasePeerMessageCtxT;
 	public:
 		EchoServer(int id ):
 			ServiceProvider_Abstract<_MyPeerT>(id),
@@ -31,33 +32,33 @@ namespace wawo { namespace net { namespace service {
 		}
 		~EchoServer() {}
 
-		virtual void HandleMessage( WAWO_SHARED_PTR<MyMessageT> const& incoming, MyPeerCtxInfoT const& ctx ) {
+		virtual void HandleMessage( MyBasePeerMessageCtxT const& ctx , WAWO_SHARED_PTR<MyMessageT> const& incoming ) {
 
 			int type = incoming->GetType();
 			switch( type ) {
 			case wawo::net::message::Wawo::T_SEND:
 				{
-					OnReceive( incoming, ctx );
+					OnReceive( ctx, incoming );
 				}
 				break;
 			case wawo::net::message::Wawo::T_REQUEST:
 				{
-					OnRequest( incoming, ctx );
+					OnRequest( ctx, incoming );
 				}
 				break;
 			case wawo::net::message::Wawo::T_RESPONSE:
 				{
-					OnRespond( incoming, ctx );
+					OnRespond( ctx, incoming );
 				}
 				break;
 			}
 		}
 
-		virtual void OnReceive( WAWO_SHARED_PTR<MyMessageT> const& incoming, MyPeerCtxInfoT const& ctx ){
+		virtual void OnReceive( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ){
 
 		}
 
-		virtual void OnRequest( WAWO_SHARED_PTR<MyMessageT> const& incoming, MyPeerCtxInfoT const& ctx ) {
+		virtual void OnRequest(  MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ) {
 
 			WAWO_REF_PTR<MyPeerT> peer = WAWO_REF_PTR<MyPeerT>( static_cast<MyPeerT*> (ctx.peer.Get()) );
 
@@ -121,7 +122,7 @@ namespace wawo { namespace net { namespace service {
 			}
 		}
 
-		virtual void OnRespond( WAWO_SHARED_PTR<MyMessageT> const& incoming, MyPeerCtxInfoT const& ctx ) {
+		virtual void OnRespond( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming  ) {
 		}
 
 	private:

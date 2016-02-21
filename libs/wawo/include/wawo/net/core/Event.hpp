@@ -10,31 +10,7 @@
 namespace wawo { namespace net { namespace core {
 
 	using namespace wawo::algorithm;
-
-	union EventData {
-		explicit EventData() :int64_v(0){}
-		explicit EventData(uint64_t const& u64_v) : uint64_v(u64_v){}
-		explicit EventData(uint32_t const& u32_v) : uint32_v(u32_v){}
-		explicit EventData(uint16_t const& u16_v) : uint16_v(u16_v){}
-		explicit EventData(uint8_t const& u8_v) : uint8_v(u8_v){}
-		explicit EventData(int64_t const& i64_v) : int64_v(i64_v){}
-		explicit EventData(int32_t const& i32_v) : int32_v(i32_v){}
-		explicit EventData(int16_t const& i16_v) : int16_v(i16_v){}
-		explicit EventData(int8_t const& i8_v) : int8_v(i8_v){}
-		explicit EventData( void* const ptr) : ptr_v(ptr) {}
-
-		uint64_t uint64_v;
-		uint32_t uint32_v;
-		uint16_t uint16_v;
-		uint8_t uint8_v;
-
-		int64_t int64_v;
-		int32_t int32_v;
-		int16_t int16_v;
-		int8_t int8_v;
-
-		void* ptr_v;
-	};
+	typedef wawo::Data64 EventData;
 	
 	//root class for dispatchable object
 	class Event :

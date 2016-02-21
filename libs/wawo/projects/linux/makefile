@@ -1,17 +1,30 @@
 PRJ_PLATFORM 	:= linux
-X86_64 			:= 1
+platform 		:= x86_64
 PRJ_CONFIG 		:= release
 
-ifeq ($(X86_64),1)
-	PRJ_PLATFORM := $(PRJ_PLATFORM)64
-else
-	PRJ_PLATFORM := $(PRJ_PLATFORM)32
-endif
+
+#
+# usage
+# make build=debug platform=x86_32
+# make build=release platform=x86_64
+#
+#
 
 
 #build_config could be [release|debug]
 ifdef build
 	PRJ_CONFIG=$(build)
+endif
+
+# x86_32, x86_64
+ifdef platform
+	PRJ_PLATFORM := $(platform)
+endif
+
+ifeq ($(platform),x86_64)
+	PRJ_PLATFORM := $(PRJ_PLATFORM)
+else
+	PRJ_PLATFORM := $(PRJ_PLATFORM)
 endif
 
 LIBPREFIX	= lib
@@ -47,7 +60,7 @@ LIB_FULL_NAME	= $(LIBPREFIX)$(LIBNAME).$(LIBEXT)
 LIB_FULL_PATH_NAME	= $(LIB_BIN_DIR)/$(LIB_FULL_NAME)
 
 
-DEFINES	:= $(DEFINES) __WAWO_DAY_DAY_UP__ PLATFORM_POSIX GCC LINUX64
+DEFINES	:= $(DEFINES) __WAWO_DAY_DAY_UP__ GCC OS_LINUX
 CC_MISC	:= -c -std=c++11
 
 ifeq ($(PRJ_CONFIG),debug)
@@ -58,7 +71,7 @@ else
 	CC_MISC:=$(CC_MISC) -fexpensive-optimizations -O3
 endif
 
-ifeq ($(X86_64),1)
+ifeq ($(platform),x86_64)
     CC_MISC:=$(CC_MISC) -m64
 else
     CC_MISC:=$(CC_MISC) -m32
@@ -70,12 +83,10 @@ DEFINES :=\
 INCLUDES:= \
 	$(foreach include,$(LIB_INCLUDE_DIR), -I"$(include)")	
 	
-DEP_INCLUDE = ../../../boost/boost_1_57_0
-
-DEP_INCLUDE_WITH_I :=\
-	$(foreach include,$(DEP_INCLUDE), -I"$(include)")	
-	
-INCLUDES:= $(INCLUDES) $(DEP_INCLUDE_WITH_I)
+#DEP_INCLUDE = ../../../boost/boost_1_57_0
+#DEP_INCLUDE_WITH_I :=\
+#	$(foreach include,$(DEP_INCLUDE), -I"$(include)")		
+#INCLUDES:= $(INCLUDES) $(DEP_INCLUDE_WITH_I)
 
 
 wawo: all

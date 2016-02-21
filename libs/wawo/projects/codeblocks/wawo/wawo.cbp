@@ -92,6 +92,7 @@
 		<Unit filename="../../../include/wawo/log/SysLogger.h" />
 		<Unit filename="../../../include/wawo/macros.h" />
 		<Unit filename="../../../include/wawo/memory/memory.h" />
+		<Unit filename="../../../include/wawo/net/Context.hpp" />
 		<Unit filename="../../../include/wawo/net/Credential.hpp" />
 		<Unit filename="../../../include/wawo/net/Message_Abstract.hpp" />
 		<Unit filename="../../../include/wawo/net/PeerProxy.hpp" />

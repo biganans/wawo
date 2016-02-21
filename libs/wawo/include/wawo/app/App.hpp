@@ -25,14 +25,22 @@ namespace wawo { namespace app {
 		App() :
 			SignalHandler_Abstract()
 		{
+			WAWO_SHARED_PTR<wawo::log::Logger_Abstract> fileLogger (new wawo::log::FileLogger("./wawo.log")) ;
+			fileLogger->SetLevel ( WAWO_FILE_LOGGER_LEVEL );
+			wawo::log::LoggerManager::GetInstance()->AddLogger( fileLogger );
+
 #ifdef WAWO_PLATFORM_POSIX
 			wawo::signal::SignalManager::GetInstance()->RegisterSignal( SIGPIPE, NULL);
 #endif
 			wawo::signal::SignalManager::GetInstance()->RegisterSignal( SIGINT, this );
 			wawo::signal::SignalManager::GetInstance()->RegisterSignal( SIGTERM, this );
+
+			int rt = WAWO_IO_TASK_MANAGER->Start();
+			WAWO_CONDITION_CHECK( rt == wawo::OK );
 		}
 
 		~App() {
+			WAWO_IO_TASK_MANAGER->Stop();
 		}
 
 		void ProcessSignal( int signo ) {
@@ -50,7 +58,7 @@ namespace wawo { namespace app {
 			return ( m_signalList.find( signo ) != m_signalList.end() ) ;
 		}
 
-		bool ShouldExit() {
+		bool HasReceivedSignalExit() {
 			return HasReceivedSignal( SIGINT )||HasReceivedSignal( SIGTERM );
 		}
 
@@ -73,7 +81,7 @@ namespace wawo { namespace app {
 					}
 				}
 
-				if( ShouldExit() ) {
+				if( HasReceivedSignalExit() ) {
 					return 0;
 				}
 			}

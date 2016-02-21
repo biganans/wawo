@@ -388,7 +388,7 @@ namespace wawo {
 		inline bool operator !=(T* const& rp) const { return Get() != rp; }
 
 	private:
-		template<class Y>
+		template <class Y>
 		friend class SharedPoint;
 	};
 
@@ -461,48 +461,6 @@ namespace wawo {
 #define WAWO_WEAK_PTR wawo::WeakPoint
 
 namespace wawo {
-	/**
-	 * thread security level
-	 * you must hold one copy of AUTO_PTR FOR your objects before it is accessed across threads
-	 *
-	 * Warning: behaviour is undefined is u try to do Grab on ~self Destruct function
-	 */
-
-	class RefObject_Abstract : public wawo::NonCopyable
-	{
-	private:
-		class ref_counter {
-		private:
-			ref_counter( ref_counter const& );
-			ref_counter& operator = ( ref_counter const& );
-
-			std::atomic<int32_t> ref_c;
-
-		public:
-			ref_counter(): ref_c(0)
-			{}
-
-			virtual ~ref_counter() {}
-			int32_t ref_count() const {return ref_c;}
-			void require() { wawo::atomic_increment(&ref_c); }
-			int32_t release() { return wawo::atomic_decrement(&ref_c);}
-		};
-		ref_counter counter;
-	public:
-		RefObject_Abstract()
-		{
-		}
-		virtual ~RefObject_Abstract() {
-		}
-
-		void Grab() { return counter.require(); }
-		void Drop() {
-			if( counter.release() == 1) {
-				delete this;
-			}
-		}
-		int32_t RefCount() const { return counter.ref_count(); }
-	};
 
 	template <class T>
 	class RefPoint {
@@ -574,6 +532,52 @@ namespace wawo {
 		inline bool operator < (POINT_TYPE const& p) const { return _p < p; }
 	};
 
+	/**
+	 * thread security level
+	 * you must hold one copy of AUTO_PTR FOR your objects before it is accessed across threads
+	 *
+	 * Warning: behaviour is undefined is u try to do Grab on ~self Destruct function
+	 */
+
+	class RefObject_Abstract : public wawo::NonCopyable
+	{
+	private:
+		class ref_counter {
+			friend class RefObject_Abstract;
+		private:
+			ref_counter( ref_counter const& );
+			ref_counter& operator = ( ref_counter const& );
+
+			std::atomic<int32_t> ref_c;
+
+		protected:
+			ref_counter(): ref_c(0)
+			{}
+
+			virtual ~ref_counter() {}
+			int32_t ref_count() const {return ref_c;}
+			void require() { wawo::atomic_increment(&ref_c); }
+			int32_t release() { return wawo::atomic_decrement(&ref_c);}
+		};
+		ref_counter counter;
+	public:
+		RefObject_Abstract()
+		{
+		}
+		virtual ~RefObject_Abstract() {
+		}
+
+		template <class T>
+		friend class RefPoint;
+	protected:
+		void Grab() { return counter.require(); }
+		void Drop() {
+			if( counter.release() == 1) {
+				delete this;
+			}
+		}
+		int32_t RefCount() const { return counter.ref_count(); }
+	};
 
 	/*
 	 * Notice, I think we can't impl a const_point_cast for Ref wrapper, or ,it's not a ref wrapper..

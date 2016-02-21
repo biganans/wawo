@@ -14,7 +14,7 @@
 #include <wawo/SmartPtr.hpp>
 
 
-//#define USE_SHARED_MUTEX
+//#define USE_SHARED_MUTEX_FOR_ID_LISTENER_MAP
 
 namespace wawo { namespace net { namespace core {
 
@@ -87,7 +87,7 @@ namespace wawo { namespace net { namespace core {
 		typedef typename _IdListenerMap::iterator _MyIdListenerIterator;
 
 		//TUNE BETWEEN SharedSpinMutex AND SharedMutex FOR PERFORMACE BENCHMARK ON DIFFERENT PLATFORM
-#ifdef USE_SHARED_MUTEX
+#ifdef USE_SHARED_MUTEX_FOR_ID_LISTENER_MAP
 		typedef wawo::thread::SharedMutex _MyIdListenerMapMutex;
 #else
 		typedef wawo::thread::SpinMutex _MyIdListenerMapMutex;
@@ -174,17 +174,16 @@ namespace wawo { namespace net { namespace core {
 			WAWO_IO_TASK_MANAGER->PlanTask( evt_task );
 		}
 
-	protected:
-		inline void ProcessListenerOp() {
-#ifdef USE_SHARED_MUTEX
-			SharedLockGuard _lg(m_id_listener_map_mutex) ;
+		inline void ForceUpdateListenerMap() {
+#ifdef USE_SHARED_MUTEX_FOR_ID_LISTENER_MAP
+			SharedLockGuard<SharedMutex> _lg(m_id_listener_map_mutex) ;
 #else
 			LockGuard<_MyIdListenerMapMutex> _lg(m_id_listener_map_mutex);
 #endif
 
 			if( !m_listener_ops.empty() ) {
-#ifdef USE_SAHRED_MUTEX
-				SharedUpgradeToLockGuard _lg(m_id_listener_map_mutex) ;
+#ifdef USE_SHARED_MUTEX_FOR_ID_LISTENER_MAP
+				SharedUpgradeToLockGuard<SharedMutex> _lg(m_id_listener_map_mutex) ;
 #endif
 				_ProcessListenerOp();
 			}
@@ -304,15 +303,15 @@ namespace wawo { namespace net { namespace core {
 
 			WAWO_ASSERT( evt->GetId() > 0 );
 
-#ifdef USE_SHARED_MUTEX
-			SharedLockGuard _lg(m_id_listener_map_mutex) ;
+#ifdef USE_SHARED_MUTEX_FOR_ID_LISTENER_MAP
+			SharedLockGuard<SharedMutex> _lg(m_id_listener_map_mutex) ;
 #else
 			LockGuard<_MyIdListenerMapMutex> _lg(m_id_listener_map_mutex);
 #endif
 
 			if( !m_listener_ops.empty() ) {
-#ifdef USE_SAHRED_MUTEX
-				SharedUpgradeToLockGuard _lg(m_id_listener_map_mutex) ;
+#ifdef USE_SHARED_MUTEX_FOR_ID_LISTENER_MAP
+				SharedUpgradeToLockGuard<SharedMutex> _lg(m_id_listener_map_mutex) ;
 #endif
 				_ProcessListenerOp();
 			}

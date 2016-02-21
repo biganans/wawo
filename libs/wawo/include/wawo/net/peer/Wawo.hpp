@@ -58,8 +58,12 @@ namespace wawo { namespace net { namespace peer {
 		typedef Wawo<_CredentialT,_MessageT,_SocketT> MyT;
 
 		typedef Peer_Abstract<_CredentialT,_MessageT,_SocketT> MyBasePeerT;
-		typedef typename MyBasePeerT::PeerCtxInfo MyPeerCtxInfoT ;
 		typedef typename MyBasePeerT::MyPeerProxyT MyPeerProxyT;
+
+		typedef typename MyBasePeerT::MyBasePeerCtxT MyBasePeerCtxT ;
+		typedef typename MyBasePeerT::MyBasePeerMessageCtxT MyBasePeerMessageCtxT ;
+
+		typedef MyPeerCtx<MyT> MyPeerCtxT;
 
 	private:
 		struct RequestedMessage
@@ -182,7 +186,7 @@ namespace wawo { namespace net { namespace peer {
 			return rt;
 		}
 
-		int Respond( WAWO_SHARED_PTR<MyMessageT> const& response, WAWO_SHARED_PTR<MyMessageT> const& original, MyPeerCtxInfoT const& ctx ) {
+		int Respond( WAWO_SHARED_PTR<MyMessageT> const& response, WAWO_SHARED_PTR<MyMessageT> const& original, MyBasePeerMessageCtxT const& ctx ) {
 
 			WAWO_ASSERT( original != NULL );
 			WAWO_ASSERT( response != NULL );
@@ -206,10 +210,7 @@ namespace wawo { namespace net { namespace peer {
 			case wawo::net::message::Wawo::T_SEND:
 			case wawo::net::message::Wawo::T_REQUEST:
 				{
-					MyPeerCtxInfoT ctx;
-					ctx.peer = WAWO_REF_PTR< MyBasePeerT>( this );
-					ctx.socket = socket;
-
+					MyBasePeerMessageCtxT ctx = {WAWO_REF_PTR< MyBasePeerT>( this ), socket,NULL};
 					MyBasePeerT::GetProxy()->HandleMessage( ctx, message );
 				}
 				break;
@@ -242,11 +243,7 @@ namespace wawo { namespace net { namespace peer {
 						WAWO_ASSERT( req.socket != NULL );
 						WAWO_ASSERT( req.message != NULL );
 
-						MyPeerCtxInfoT ctx;
-						ctx.peer = WAWO_REF_PTR<MyBasePeerT>( this );
-						ctx.socket = socket;
-						ctx.message = req.message;
-
+						MyBasePeerMessageCtxT ctx = { WAWO_REF_PTR<MyBasePeerT>( this ), req.socket, req.message } ;
 						MyBasePeerT::GetProxy()->HandleMessage( ctx, message );
 					}
 				}
@@ -260,15 +257,13 @@ namespace wawo { namespace net { namespace peer {
 		}
 
 		virtual void HandleDisconnected( WAWO_REF_PTR<MySocketT> const& socket, int const& ec ) {
-			MyPeerCtxInfoT ctx;
-			ctx.peer = WAWO_REF_PTR<MyBasePeerT>( this );
-			MyBasePeerT::GetProxy()->HandleDisconnected( ctx, socket,ec );
+			MyBasePeerCtxT ctx = {WAWO_REF_PTR<MyBasePeerT>( this ), socket };
+			MyBasePeerT::GetProxy()->HandleDisconnected( ctx, ec );
 		}
 
 		virtual void HandleError( WAWO_REF_PTR<MySocketT> const& socket, int const& ec ) {
-			MyPeerCtxInfoT ctx;
-			ctx.peer = WAWO_REF_PTR<MyBasePeerT>( this );
-			MyBasePeerT::GetProxy()->HandleError( ctx , socket, ec );
+			MyBasePeerCtxT ctx = {WAWO_REF_PTR<MyBasePeerT>( this ), socket };
+			MyBasePeerT::GetProxy()->HandleError( ctx, ec );
 		}
 
 		int Echo_RequestHello () {

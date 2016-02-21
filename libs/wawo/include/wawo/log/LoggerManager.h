@@ -9,6 +9,7 @@
 #include <wawo/log/ConsoleLogger.h>
 #include <wawo/log/FileLogger.h>
 #include <wawo/log/SysLogger.h>
+#include <wawo/SmartPtr.hpp>
 
 #include <wawo/thread/Mutex.h>
 
@@ -28,8 +29,8 @@ namespace wawo { namespace log {
 		void Init(); //ident for linux
 		void Deinit();
 
-		void AddLogger( Logger_Abstract * const logger);
-		void RemoveLogger( Logger_Abstract * const logger);
+		void AddLogger( WAWO_SHARED_PTR<Logger_Abstract> const& logger);
+		void RemoveLogger( WAWO_SHARED_PTR<Logger_Abstract> const& logger);
 
 
 		//void SetLevel( unsigned int level );
@@ -44,8 +45,8 @@ namespace wawo { namespace log {
 
 		SharedMutex m_mutexLoggers;
 
-		Logger_Abstract* m_consoleLogger;
-		std::vector<Logger_Abstract*> m_loggers;
+		WAWO_SHARED_PTR<Logger_Abstract> m_consoleLogger;
+		std::vector< WAWO_SHARED_PTR<Logger_Abstract> > m_loggers;
 		FormatInterface* m_defaultFormatInterface;
 
 		bool m_isInited;

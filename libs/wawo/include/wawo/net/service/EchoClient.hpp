@@ -16,7 +16,9 @@ namespace wawo { namespace net { namespace service {
 		typedef _MyPeerT MyPeerT;
 		typedef typename MyPeerT::MyMessageT MyMessageT;
 		typedef typename MyPeerT::MySocketT MySocketT;
-		typedef typename MyPeerT::MyPeerCtxInfoT MyPeerCtxInfoT;
+
+		typedef typename MyPeerT::MyBasePeerCtxT MyBasePeerCtxT;
+		typedef typename MyPeerT::MyBasePeerMessageCtxT MyBasePeerMessageCtxT;
 
 		enum IncreaseMode {
 			INC = 0,
@@ -64,37 +66,37 @@ namespace wawo { namespace net { namespace service {
 			free( m_test_to_send_buffer );
 		}
 
-		virtual void HandleMessage( WAWO_SHARED_PTR<MyMessageT> const& incoming, MyPeerCtxInfoT const& ctx ) {
+		virtual void HandleMessage( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ) {
 
 			int type = incoming->GetType();
 			switch( type ) {
 			case wawo::net::message::Wawo::T_SEND:
 				{
-					OnReceive( incoming, ctx );
+					OnReceive( ctx, incoming );
 				}
 				break;
 			case wawo::net::message::Wawo::T_REQUEST:
 				{
-					OnRequest( incoming, ctx );
+					OnRequest( ctx, incoming );
 				}
 				break;
 			case wawo::net::message::Wawo::T_RESPONSE:
 				{
-					OnRespond( incoming, ctx );
+					OnRespond( ctx, incoming );
 				}
 				break;
 			}
 		}
 
-		void OnReceive( WAWO_SHARED_PTR<MyMessageT> const& incoming, MyPeerCtxInfoT const& ctx ){
+		void OnReceive( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ){
 
 		}
 
-		void OnRequest( WAWO_SHARED_PTR<MyMessageT> const& incoming, MyPeerCtxInfoT const& ctx ) {
+		void OnRequest( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ) {
 
 		}
 
-		void OnRespond( WAWO_SHARED_PTR<MyMessageT> const& incoming, MyPeerCtxInfoT const& ctx ) {
+		void OnRespond( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ) {
 			WAWO_ASSERT( incoming->GetId() == this->GetId() );
 
 			WAWO_SHARED_PTR<MyMessageT> const& original = ctx.message ;

@@ -220,7 +220,6 @@ namespace wawo { namespace net { namespace core {
 			L_MAX
 		};
 
-		// Socket( SOCKET fd ); //for unix domain , as we can not get socket addr from anubis
 		explicit Socket( int const& fd, SocketAddr const& addr, Socket::SocketMode const& sm , SockBufferConfig const& sbc , Socket::Type const& type, Socket::Protocol const& proto , Socket::Family const& family = Socket::FAMILY_AF_INET, Socket::Option const& option = Socket::OPTION_NONE ); //by pass a connected socket fd
 		explicit Socket( SocketAddr const& addr, Socket::Type const& type, Socket::Protocol const& proto, Socket::Family const& family = Socket::FAMILY_AF_INET, Socket::Option const& option = Socket::OPTION_NONE ); //init a empty socket object
 		explicit Socket( SocketAddr const& addr,SockBufferConfig const& sbc, Socket::Type const& type, Socket::Protocol const& proto, Socket::Family const& family = Socket::FAMILY_AF_INET, Socket::Option const& option = Socket::OPTION_NONE ); //init a empty socket object
@@ -235,30 +234,27 @@ namespace wawo { namespace net { namespace core {
 		inline bool IsActive() const {return m_sm == SM_ACTIVE;}
 		inline bool IsListener() const {return m_sm ==SM_LISTENER;}
 
-		inline bool IsDataSocket() { return GetMode() != SM_LISTENER ;}
-		inline bool IsListenSocket() { return GetMode() == SM_LISTENER; }
+		inline bool IsDataSocket() const { return GetMode() != SM_LISTENER ;}
+		inline bool IsListenSocket() const { return GetMode() == SM_LISTENER; }
 
-		inline int& GetFd() { return m_fd; }
 		inline int const& GetFd() const { return m_fd ;}
-
-		SocketAddr const& GetAddr();
 		SocketAddr const& GetAddr() const;
 
 		int Open();
 		int Close( int const& ec = wawo::OK);
 		int Shutdown(int const& shut_flag, int const& ec = wawo::OK);
 
-		inline bool IsIdle() {return m_state == Socket::STATE_IDLE ;}
-		inline bool IsOpened() {return m_state == Socket::STATE_OPENED ;}
-		inline bool IsBinded() {return m_state == Socket::STATE_BINDED; }
-		inline bool IsConnected() {return m_state == Socket::STATE_CONNECTED; }
-		inline bool IsClosed() { return (m_fd<0) || (m_state == Socket::STATE_RDWR_CLOSED); }
-		inline bool IsReadClosed() {return (m_fd<0) || (m_shutdown_flag&SSHUT_RD) ;}
-		inline bool IsWriteClosed() {return (m_fd<0) || (m_shutdown_flag&SSHUT_WR) ;}
+		inline bool IsIdle() const {return m_state == Socket::STATE_IDLE ;}
+		inline bool IsOpened() const {return m_state == Socket::STATE_OPENED ;}
+		inline bool IsBinded() const {return m_state == Socket::STATE_BINDED; }
+		inline bool IsConnected() const {return m_state == Socket::STATE_CONNECTED; }
+		inline bool IsClosed() const { return (m_fd<0) || (m_state == Socket::STATE_RDWR_CLOSED); }
+		inline bool IsReadClosed() const {return (m_fd<0) || (m_shutdown_flag&SSHUT_RD) ;}
+		inline bool IsWriteClosed() const {return (m_fd<0) || (m_shutdown_flag&SSHUT_WR) ;}
 
 		int Bind( SocketAddr const& addr );
 		int Listen( int const& backlog );
-		inline bool IsListening() { return (m_fd>0) && (m_state == STATE_LISTEN); }
+		inline bool IsListening() const { return (m_fd>0) && (m_state == STATE_LISTEN); }
 
 		//return socketFd if success, otherwise return -1 if an error is set
 		uint32_t Accept( WAWO_REF_PTR<Socket> sockets[], uint32_t const& size, int& ec_o );
@@ -281,7 +277,7 @@ namespace wawo { namespace net { namespace core {
 
 		int TurnOnNonBlocking();
 		int TurnOffNonBlocking();
-		inline bool IsNonBlocking() {return ( (m_option & Socket::OPTION_NON_BLOCKING) != 0) ;}
+		inline bool IsNonBlocking() const {return ( (m_option & Socket::OPTION_NON_BLOCKING) != 0) ;}
 
 		//must be called between open and connect|listen
 		int SetSndBufferSize( int const& size );
@@ -300,7 +296,7 @@ namespace wawo { namespace net { namespace core {
 		inline SpinMutex& GetLock( LockType const& lt) {  WAWO_ASSERT( lt < L_MAX );return m_mutexes[lt]; }
 		inline SpinMutex const& GetLock( LockType const& lt) const {  WAWO_ASSERT( lt < L_MAX ); return m_mutexes[lt]; }
 
-		inline bool IsConnecting() { return m_is_connecting; }
+		inline bool IsConnecting() const { return m_is_connecting; }
 
 	protected:
 		int _Shutdown(int const& shut_flag, int const& ec );
@@ -436,7 +432,7 @@ namespace wawo { namespace net { namespace core {
 				IsDataSocket() &&
 				!IsWriteClosed() )
 			{
-				//last time to flush
+				//last chance to flush
 				Flush();
 			}
 

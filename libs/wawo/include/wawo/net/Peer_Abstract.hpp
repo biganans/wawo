@@ -4,14 +4,16 @@
 #include <vector>
 
 #include <wawo/core.h>
-#include <wawo/net/core/Listener_Abstract.hpp>
-#include <wawo/net/Credential.hpp>
 #include <wawo/SmartPtr.hpp>
-
-#include <wawo/net/core/NetEvent.hpp>
+#include <wawo/net/Credential.hpp>
 #include <wawo/thread/Mutex.h>
 
+#include <wawo/net/core/NetEvent.hpp>
+#include <wawo/net/core/Listener_Abstract.hpp>
+
 #include <wawo/log/LoggerManager.h>
+
+#include <wawo/net/Context.hpp>
 
 namespace wawo { namespace net {
 
@@ -36,11 +38,8 @@ namespace wawo { namespace net {
 		typedef Peer_Abstract<_CredentialT,_MessageT,_SocketT> MyBasePeerT;
 		typedef PeerProxy_Abstract<MyBasePeerT> MyPeerProxyT;
 
-		struct PeerCtxInfo {
-			WAWO_REF_PTR<MyBasePeerT>		peer;
-			WAWO_REF_PTR<MySocketT>			socket;
-			WAWO_SHARED_PTR<MyMessageT>		message;
-		};
+		typedef BasePeerCtx<MyBasePeerT> MyBasePeerCtxT;
+		typedef BasePeerMessageCtx<MyBasePeerT> MyBasePeerMessageCtxT;
 
 	private:
 		SharedMutex m_mutex;

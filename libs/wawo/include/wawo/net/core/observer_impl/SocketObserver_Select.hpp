@@ -212,7 +212,11 @@ namespace wawo { namespace net { namespace core { namespace observer_impl {
 		}
 		void Deinit() {
 			SocketObserver_Abstract::Deinit();
- 			m_socket_evt_pairs.clear();
+			m_socket_evt_pairs.clear();
+
+			for( int i=0;i<WAWO_SELECT_MAX_PAIR;i++ ) {
+				m_sockets_to_check[i]->Reset() ;
+			}
 		}
 
 		void _CheckSocketsIO( SocketsToCheck* const sockets ) {

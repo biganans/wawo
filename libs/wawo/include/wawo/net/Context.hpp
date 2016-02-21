@@ -5,23 +5,28 @@
 
 namespace wawo { namespace net {
 
-	template <class MyPeerT>
-	struct SocketContext
+	template <class _BasePeerT>
+	struct BasePeerCtx 
 	{
-		WAWO_REF_PTR<MyPeerT> peer;
-		int ec;
+		WAWO_REF_PTR<_BasePeerT>						peer;
+		WAWO_REF_PTR<typename _BasePeerT::MySocketT >	socket;
+	};
+
+	template <class _BasePeerT>
+	struct BasePeerMessageCtx
+	{
+		WAWO_REF_PTR<_BasePeerT>						peer;
+		WAWO_REF_PTR<typename _BasePeerT::MySocketT >	socket;
+		WAWO_SHARED_PTR<typename _BasePeerT::MyMessageT> message;
 	};
 
 	template <class _MyPeerT>
-	struct MessageContext
+	struct MyPeerCtx 
 	{
-		typedef _MyPeerT MyPeerT;
-		typedef typename _MyPeerT::MySocketT MySocketT;
-		typedef typename _MyPeerT::MyMessageT MyMessageT;
-
-		WAWO_REF_PTR<MyPeerT> peer;
-		WAWO_REF_PTR<MySocketT> socket;
-		WAWO_SHARED_PTR<MyMessageT> message;
+		WAWO_REF_PTR<_MyPeerT> peer;
+		WAWO_REF_PTR<typename _MyPeerT::MySocketT> socket;
+		WAWO_SHARED_PTR<typename _MyPeerT::MyMessageT> message;
 	};
+
 }}
 #endif
