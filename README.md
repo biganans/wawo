@@ -38,17 +38,17 @@ wawo is a network lib providing multi-threading io for windows&posix platforms
 
 ###socket
   a socket is a packet transfer, we use it to send and packets to a remote socket, and receive packets from a remote socket.  
-  once a socket receives a packet from remote end, or a error occurs, then the socket as a socket event dispatcher will trigger a socket event , and then its listener would hear this socket event immediately. the listener would be a peer, or a socket proxy.     
+  once a socket receives a packet from remote end, or a error occurs, then the socket as a socket event dispatcher will trigger a socket event , and then its listener should hear this socket event immediately if the event have been registered before. the listener can be a peer, or a socket proxy.     
   
-  socket is a template class in wawo's implementation   
+  socket is a template class in wawo's implementation.      
   
-  by this way, 
-  you can easyly custom your own protocol implementation by inheriting Protocol_Abstract. and pass your own protocol class as template arguments to instance a new socket type.          
+  by doing so    
+  you can easily custom your own protocol implementation by inheriting wawo::net::core::Protocol_Abstract. and pass your own protocol class as template argument to instantiate a new socket type.          
 
 
 ###io event and socket event  
-  each event would be planed on task pool and executed on threading pools concurrently.     
-  we have io event and socket event right now.    
+  each event is planed on task pool and is executed on threading pool concurrently.     
+  currently, we have io event and socket event    
   io event tells what happens on a given socket fd:     
          
         1, fd can read        
@@ -59,7 +59,7 @@ wawo is a network lib providing multi-threading io for windows&posix platforms
       for a complete event list , please refer to wawo\net\core\NetEvnet.hpp     
   
   
-  socket event tells what happens on a given socket object.         
+  socket event tells what happens on a given socket object:         
   
         1, socket received a packet   
         2, socket closed     
@@ -68,8 +68,8 @@ wawo is a network lib providing multi-threading io for windows&posix platforms
       and so on       
       for a complete event list , please refer to wawo\net\core\NetEvnet.hpp
 
-  notice:    
-  socket read, and socket write can execute concurrently on thread safe level .
+  Note:    
+  socket read&write can execute concurrently on thread safe level .
 
 ###socket proxy
   socket proxy is a socket manager and its main responsibility is as follows:   
