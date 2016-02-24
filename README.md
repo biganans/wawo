@@ -1,5 +1,5 @@
 # wawo
-wawo is a network lib providing multi-threading io support across windows&amp;posix platforms  
+wawo is a network lib providing multi-threading io for windows&posix platforms  
 
 #features
   1, windows and posix platform compatible   
@@ -85,18 +85,31 @@ wawo is a network lib providing multi-threading io support across windows&amp;po
 
 
 ###peer
-  peer is the basic client unit of socket based programme in wawo, and it is a listener a peer can holds several sockets, once a socket packet arrived , peer 
-
-peer proxy
-
-service provider
-
-
-
-listener
+  peer is the basic client unit of socket based programme in wawo.    
+  a peer is a socket event listener.    
+  a peer can hold several sockets.   
+  
+  
+###peer proxy
+  peer proxy works as peer manager and it is also a service holder
 
 
-dispatcher
+###service provider
+  service provider is as what its name tells, it service the message by messsage id, all the business message with a service id of this service would be dispatched to the provider.    
+  
+  if u want to build a new service provider, you must do as follows:    
+        a, inherit from wawo::net::ServiceProvider_Abstract
+        b, implement virtual function 
+            	virtual void HandleMessage( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ) = 0;         c, register this service to your peer proxy by 
+            	 peer_proxy_instance->Register(service_id, your_service_provider);   
+  
+
+
+
+###listener
+
+
+###dispatcher
 
 
 
