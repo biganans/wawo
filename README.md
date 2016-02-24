@@ -12,9 +12,18 @@ wawo is a network lib providing multi-threading io support across windows&amp;po
   gcc：gcc 4.8x  　　   
 
 #build proj
-  windows libs/wawo/projects/msvc/wawo.2012.vcxproj  
-  linux  /libs/wawo/projects/linux/makefile   
-  codeblock /libs/wawo/projects/codeblocks/wawo  
+###windows
+  libs/wawo/projects/msvc/wawo.2012.vcxproj      
+  
+###linux
+  /libs/wawo/projects/linux/makefile    
+      usage example     
+      make build=debug platform=x86_32    
+      make build=release platform=x86_64
+  
+  
+###codeblock
+  /libs/wawo/projects/codeblocks/wawo     
 
 
 #example
