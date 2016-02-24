@@ -3,21 +3,21 @@ wawo is a network lib providing multi-threading io for windows&posix platforms
 
 #features
   1, windows and posix platform compatible   
-  2, about 300K QPS on i7 4770 (runing on os centos 7.1) with 50% cpu usage on ping <--> pong test case   
+  2, about 300K QPS on i7 4770 (running on OS centos 7.1) with 50% cpu usage on ping <--> pong test case   
   3, friendly to define customized business message and network packet protocol  
 
 #build requirement
   compiler: c++ 11  
-  msvc ide : vc 2012 update 4  
-  gcc：gcc 4.8x  　　   
+  msvc ide: vc 2012 update 4  
+  gcc: gcc 4.8x  　　   
 
-#build proj
+#build projects
 ###windows
   libs/wawo/projects/msvc/wawo.2012.vcxproj      
   
 ###linux
   /libs/wawo/projects/linux/makefile    
-      usage example     
+      usage          
       make build=debug platform=x86_32    
       make build=release platform=x86_64
   
@@ -33,14 +33,14 @@ wawo is a network lib providing multi-threading io for windows&posix platforms
 #basic concept
 
 ###packet
-  a pakcet is basically a chunk of network bytes sequence, it is usually the basic transfer unit in between two sockets.
-
+  a pakcet is a chunk of network bytes sequence, it is a basic transfer unit in between two sockets    
+  then the socket as a socket event dispather, will trigger
 
 ###socket
-  a socket is a packet transfer, we use socket to send packets to a remote socket, and receive packet from remote socket.    
-  once a a socket received a packet from remote end, or a error occured on this socket, as a socket event dispatcher, socket will trigger a socket event , and its listener would hear this socket event immediately. the listener would be a peer, or a socket proxy.     
+  a socket is a packet transfer, we use it to send and packets to a remote socket, and receive packets from a remote socket.  
+  once a socket receives a packet from remote end, or a error occurs, then the socket as a socket event dispatcher will trigger a socket event , and then its listener would hear this socket event immediately. the listener would be a peer, or a socket proxy.     
   
-  socket is a template class in wawo's implementation as below   
+  socket is a template class in wawo's implementation   
   
   by this way, 
   you can easyly custom your own protocol implementation by inheriting Protocol_Abstract. and pass your own protocol class as template arguments to instance a new socket type.          
@@ -97,20 +97,24 @@ wawo is a network lib providing multi-threading io for windows&posix platforms
 ###service provider
   service provider is as what its name tells, it service the message by messsage id, all the business message with a service id of this service would be dispatched to the provider.    
   
-  if u want to build a new service provider, you must do as follows:    
-        a, inherit from wawo::net::ServiceProvider_Abstract
-        b, implement virtual function 
-            	virtual void HandleMessage( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ) = 0;         c, register this service to your peer proxy by 
-            	 peer_proxy_instance->Register(service_id, your_service_provider);   
+  if u want to build a new service provider, you must do as follows:
+          
+          a, inherit from wawo::net::ServiceProvider_Abstract   
+          b, implement virtual function     
+                	virtual void HandleMessage( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ) = 0;            
+          c, register this service to your peer proxy by 
+            	 peer_proxy_instance->Register(service_id, your_service_provider);    
+            	 
+            	 
   
 
 
 
 ###listener
-
+    a listener used to hear event
 
 ###dispatcher
-
+    a dispatcher can trigger relevant event to its listener
 
 
 
