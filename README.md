@@ -18,7 +18,7 @@ wawo is a network lib providing multi-threading io support across windows&amp;po
 
 
 #example
-  examples   
+  examples\     
 
 
 #basic concept
@@ -48,7 +48,7 @@ dispatcher
 
 
 
-schedule
+#schedule
   1, implement protocol, message, and peer for the followwing network protocol  
       a, http  
       b, https  
