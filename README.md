@@ -1,27 +1,27 @@
 # wawo
 wawo is a network lib providing multi-threading io support across windows&amp;posix platforms
 
-features
+#features
   1, windows and posix platform compatible
   2, about 300K QPS on i7 4770 (runing on os centos 7.1) with 50% cpu usage on ping <--> pong test case
   3, friendly to define customized business message and network packet protocol
 
-build requirement
+#build requirement
   compiler: c++ 11
   msvc ide : vc 2012 update 4
   gcc：gcc 4.8x　　  
 
-build proj
+#build proj
   windows libs/wawo/projects/msvc/wawo.2012.vcxproj
   linux  /libs/wawo/projects/linux/makefile
   codeblock /libs/wawo/projects/codeblocks/wawo
 
 
-example
+#example
   examples
 
 
-basic concept
+#basic concept
 
 packet
 
