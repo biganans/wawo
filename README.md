@@ -32,19 +32,60 @@ wawo is a network lib providing multi-threading io support across windows&amp;po
 
 #basic concept
 
-packet
+###packet
+  a pakcet is basically a chunk of network bytes sequence, it is usually the basic transfer unit in between two sockets.
 
-message
 
-socket
+###socket
+  a socket is a packet transfer, we use socket to send packets to a remote socket, and receive packet from remote socket.    
+  once a a socket received a packet from remote end, or a error occured on this socket, as a socket event dispatcher, socket will trigger a socket event , and its listener would hear this socket event immediately. the listener would be a peer, or a socket proxy.     
+  
+  socket is a template class in wawo's implementation as below   
+  
+  by this way, 
+  you can easyly custom your own protocol implementation by inheriting Protocol_Abstract. and pass your own protocol class as template arguments to instance a new socket type.          
 
-socket proxy
 
-socket observer
+###io event and socket event  
+  each event would be planed on task pool and executed on threading pools concurrently.     
+  we have io event and socket event right now.    
+  io event tells what happens on a given socket fd:     
+         
+        1, fd can read        
+        2, fd can write       
+        3, fd error   
+        ...
+      and so on       
+      for a complete event list , please refer to wawo\net\core\NetEvnet.hpp     
+  
+  
+  socket event tells what happens on a given socket object.         
+  
+        1, socket received a packet   
+        2, socket closed     
+        3, socket encounter a error
+        ....
+      and so on       
+      for a complete event list , please refer to wawo\net\core\NetEvnet.hpp
 
-socket event
+  notice:    
+  socket read, and socket write can execute concurrently on thread safe level .
 
-peer
+###socket proxy
+  socket proxy is a socket manager and its main responsibility is as follows:   
+    a, hold a reference of sockets   
+    b, socket error handing   
+    c, work as a observer to do asyn connect to a remote server    
+
+###socket observer
+  socket observer is just as what its name is , its main responsibility is as follows:    
+    a, register and unregister socket event for non-blocking sockets    
+    b, watch sockets io event, and enqueue the relevant event into the task pool   
+
+
+
+###peer
+  peer is the basic client unit of socket based programme in wawo, and it is a listener a peer can holds several sockets, once a socket packet arrived , peer 
 
 peer proxy
 
