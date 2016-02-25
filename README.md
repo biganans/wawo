@@ -11,9 +11,11 @@ wawo is a network message dispatche lib providing multi-threading io for windows
   
 #build requirement
    
-    compiler: c++ 11  
-    msvc ide: vc 2012 update 4  
-    gcc: gcc 4.8x  　　   
+    your compiler must support c++ 11     
+    
+    suggest tool     
+    msvc ide: vc 2012 update 4     
+    gcc: gcc 4.8x    　　   
 
 #build projects
 ###windows
