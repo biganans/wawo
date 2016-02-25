@@ -3,7 +3,7 @@ wawo is a network message dispatche lib providing multi-threading io for windows
 
 #features
   1, windows and posix platform compatible   
-  2, message dispatche driven by system io read/write event
+  2, message dispatche driven by system io read/write event   
   3, about 300K QPS at peak and a average of 250K on i7 4770 (running on OS centos 7.1) with 50% cpu usage on ping <--> pong test case   
   4, friendly to define customized business message and network packet protocol  
   
@@ -73,7 +73,7 @@ wawo is a network message dispatche lib providing multi-threading io for windows
   
         1, socket received a packet   
         2, socket closed     
-        3, socket encounter a error
+        3, socket encounter a error   
         ....
       and so on       
       for a complete event list , please refer to wawo\net\core\NetEvnet.hpp
@@ -140,7 +140,7 @@ wawo is a network message dispatche lib providing multi-threading io for windows
    
   1, implement RPC component     
   2, integrate script support for lua and javascript   
-  3, implement support for distributed message dispatch infrastructure
+  3, implement support for distributed message dispatch infrastructure   
   4, implement protocol, message, and peer for the followwing network protocol  
       a, http  
       b, https  
