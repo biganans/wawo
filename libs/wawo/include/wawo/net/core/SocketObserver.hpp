@@ -49,7 +49,6 @@ namespace wawo { namespace net { namespace core {
 
 			WAWO_REF_PTR<MySocketT> m_socket;
 			WAWO_REF_PTR<MyIOEventT> m_ioe;
-			NetEvent m_id;
 		public:
 			explicit SocketEventTask( WAWO_REF_PTR<MySocketT> const& socket, WAWO_REF_PTR<MyIOEventT> const& evt, wawo::task::Priority const& priority = wawo::task::P_NORMAL ):
 				Task_Abstract(priority),

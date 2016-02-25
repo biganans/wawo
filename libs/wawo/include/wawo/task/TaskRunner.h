@@ -57,26 +57,15 @@ namespace wawo { namespace task {
 				return wawo::E_TASK_RUNNER_INVALID_STATE ;
 			}
 
-			if( m_state == TR_S_RUNNING ) {
-				//full,,,
-				if( (m_task_current_assign_index == m_task_current_exec_index ) ) {
-					return wawo::E_TASK_RUNNER_BUSY ;
-				}
-			} else {
-				WAWO_ASSERT( m_state == TR_S_WAITING );
-				WAWO_ASSERT( m_task_current_exec_index == -1 );
-				WAWO_ASSERT( ((m_task_current_assign_index + 1)%TASK_BUFFER_SIZE) != m_task_next_exec_index );
-
-				if( (m_task_current_assign_index + 1) == m_task_next_exec_index ) {
-					m_condition.notify_one();
-					return wawo::E_TASK_RUNNER_BUSY;
-				}
+			if( (m_task_current_assign_index+1)%TASK_BUFFER_SIZE == m_task_next_exec_index ) {
+				m_condition.notify_one();
+				return wawo::E_TASK_RUNNER_BUSY;
 			}
 
 			WAWO_ASSERT( m_task[m_task_current_assign_index] == NULL || !m_task[m_task_current_assign_index]->Isset() );
-			m_task[m_task_current_assign_index++] = task;
+			m_task[m_task_current_assign_index] = task;
 			WAWO_TRACK_TASK("TRunner", "[-%d-]task assigned success, tid: %d", m_runner_id, task->GetId() );
-			m_task_current_assign_index = ((m_task_current_assign_index))%TASK_BUFFER_SIZE;
+			m_task_current_assign_index = (m_task_current_assign_index+1)%TASK_BUFFER_SIZE;
 
 			if( m_state == TR_S_WAITING ) {
 				m_condition.notify_one();

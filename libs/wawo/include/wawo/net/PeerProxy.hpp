@@ -15,19 +15,11 @@
 #include <wawo/net/core/Listener_Abstract.hpp>
 #include <wawo/net/core/Dispatcher_Abstract.hpp>
 
-// for different net service, we have different connection type, client type, service message type
-// for wawo service, we usually use NetMessage and PacketConnection or EncryptedPacketConnection for security concern
 
-// for bt service, we'll use BtMessage, BtConnection
-// by this kind of design, we can custom any kind of netmessage and connection type for various of network protocol
-// connection is responsible for reading a packet from remote endpoint, message is resposible for parsing packet into message content
-// on the overall, connection object standfor socket stream line, endpoint standfor peer to peer line
-// stream line means packet stream pipeline, peer to peer means message based connection node
-
-//one client may contain several endpoint
-//for active connection, we identify the client on connected stage,
-//for passive connection, we identify the client on nm_connect_service stage
-
+/*
+ * Peer proxy is used to manage peers that accepted from remote connect , or the peers that we connect out actively.
+ * Peer proxy is also a holder of all service providers
+ */
 
 namespace wawo { namespace net {
 
@@ -505,7 +497,9 @@ namespace wawo { namespace net {
 							break;
 						default:
 							{
-								WAWO_ASSERT(!"unknown client error");
+								char tmp[256]={0};
+								snprintf( tmp, sizeof(tmp)/sizeof(tmp[0]), "unknown peer error: %d", ec );
+								WAWO_THROW_EXCEPTION( tmp );
 							}
 							break;
 						}

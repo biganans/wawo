@@ -368,6 +368,7 @@ namespace wawo { namespace net { namespace core {
 					{
 						//only for async connect fail code
 						switch( ec ) {
+							case wawo::E_ETIMEOUT:
 							case wawo::E_ECONNRESET:
 							case wawo::E_ECONNABORTED:
 							case wawo::E_WSAECONNABORTED:

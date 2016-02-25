@@ -123,6 +123,7 @@ namespace wawo { namespace task {
 			++total_cancelled ;
 		}
 #endif
+		WAWO_TRACK_TASK("TRunner", "[-%d-] cancel task: %d, tid: %d", total_cancelled, task->GetId() );
 		return total_cancelled;
 	}
 
@@ -181,20 +182,26 @@ namespace wawo { namespace task {
 		try {
 			m_task[m_task_current_exec_index]->Run();
 		} catch ( wawo::Exception& e ) {
+			m_task[m_task_current_exec_index]->Reset();
+
 			#ifdef _DEBUG
 			WAWO_THROW(e);
 			#else
 			WAWO_LOG_FATAL("TRunner", "[-%d-]task_runner wawo::Exception: %s\n%s[%d] %s\n%s", m_runner_id, e.GetInfo() ,e.GetFile(), e.GetLine(), e.GetFunc(), e.GetStackTrace()  );
 			#endif
 		} catch( std::exception& e) {
+			m_task[m_task_current_exec_index]->Reset();
+
 			#ifdef _DEBUG
 			WAWO_THROW(e);
 			#else
 			WAWO_LOG_FATAL("TRunner", "[-%d-]task_runner exception: %s", m_runner_id, e.what() );
 			#endif
 		} catch( ... ) {
+			m_task[m_task_current_exec_index]->Reset();
 			WAWO_THROW_EXCEPTION("unknown exception in task runner !!!!");
 		}
+
 		WAWO_TRACK_TASK("TRunner", "[-%d-]task run end, tid: %d",m_runner_id, m_task[_run_idx]->GetId() );
 
 		m_task[m_task_current_exec_index]->Reset();
