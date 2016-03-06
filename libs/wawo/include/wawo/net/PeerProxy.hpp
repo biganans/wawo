@@ -10,24 +10,15 @@
 #include <wawo/net/core/SocketProxy.hpp>
 #include <wawo/net/ServiceProvider_Abstract.hpp>
 #include <wawo/net/Peer_Abstract.hpp>
-#include <wawo/net/Context.hpp>
 
 #include <wawo/net/core/Listener_Abstract.hpp>
 #include <wawo/net/core/Dispatcher_Abstract.hpp>
 
-// for different net service, we have different connection type, client type, service message type
-// for wawo service, we usually use NetMessage and PacketConnection or EncryptedPacketConnection for security concern
 
-// for bt service, we'll use BtMessage, BtConnection
-// by this kind of design, we can custom any kind of netmessage and connection type for various of network protocol
-// connection is responsible for reading a packet from remote endpoint, message is resposible for parsing packet into message content
-// on the overall, connection object standfor socket stream line, endpoint standfor peer to peer line
-// stream line means packet stream pipeline, peer to peer means message based connection node
-
-//one client may contain several endpoint
-//for active connection, we identify the client on connected stage,
-//for passive connection, we identify the client on nm_connect_service stage
-
+/*
+ * Peer proxy is used to manage peers that accepted from remote connect , or the peers that we connect out actively.
+ * Peer proxy is also a holder of all service providers
+ */
 
 namespace wawo { namespace net {
 
@@ -38,62 +29,9 @@ namespace wawo { namespace net {
 	class PeerProxy_Abstract :
 		virtual public RefObject_Abstract
 	{
-
 	public:
-		typedef typename _BasePeerT::MyMessageT MyMessageT;
-		typedef typename _BasePeerT::MySocketT MySocketT;
-		typedef typename _BasePeerT::MyBasePeerCtxT MyBasePeerCtxT;
-		typedef typename _BasePeerT::MyBasePeerMessageCtxT MyBasePeerMessageCtxT;
-
-	public:
-		virtual void HandleMessage( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ) = 0;
-		virtual void HandleError( MyBasePeerCtxT const& ctx, int const& ec ) =0;
-		virtual void HandleDisconnected( MyBasePeerCtxT const& ctx, int const& ec ) = 0;
-	};
-
-	enum PeerEventId {
-		PE_CONNECTED = wawo::net::core::NE_MAX,
-		PE_DISCONNECTED,
-		PE_ERROR,
-		PE_MESSAGE
-	};
-
-	template <class _MyPeerT>
-	class PeerEvent :
-		public wawo::net::core::Event
-	{
-		typedef _MyPeerT MyPeerT;
-		typedef typename _MyPeerT::MySocketT MySocketT;
-		typedef typename _MyPeerT::MyMessageT MyMessageT;
-
-		typedef typename _MyPeerT::MyPeerCtxT MyPeerCtxT;
-
-	private:
-		MyPeerCtxT m_ctx;
-		WAWO_SHARED_PTR<MyMessageT> m_message;
-
-	public:
-		explicit PeerEvent( int const& id,MyPeerCtxT const& ctx ):
-			Event(id),
-			m_ctx(ctx),
-			m_message(NULL)
-		{}
-		explicit PeerEvent( int const& id,MyPeerCtxT const& ctx , int const& ec ):
-			Event(id, EventData(ec)),
-			m_ctx(ctx),
-			m_message(NULL)
-		{}
-		explicit PeerEvent( int const& id,MyPeerCtxT const& ctx , WAWO_SHARED_PTR<MyMessageT> const& incoming ):
-			Event(id),
-			m_ctx(ctx),
-			m_message(incoming)
-		{}
-		inline MyPeerCtxT const& GetCtx() const {
-			return m_ctx;
-		}
-		inline WAWO_SHARED_PTR<MyMessageT> const& GetMsg() const {
-			return m_message;
-		}
+		virtual void HandleError( WAWO_REF_PTR<_BasePeerT> const& peer, int const& ec ) =0;
+		virtual void HandleDisconnected( WAWO_REF_PTR<_BasePeerT> const& peer, int const& ec ) = 0;
 	};
 
 	template <class _MyPeerT = wawo::net::peer::Wawo<> >
@@ -109,34 +47,27 @@ namespace wawo { namespace net {
 			S_EXIT
 		};
 	public:
-		typedef PeerEvent<_MyPeerT> MyPeerEventT;
-		typedef Dispatcher_Abstract< MyPeerEventT > DispatcherT;
-
 		typedef _MyPeerT MyPeerT;
 
 		typedef typename MyPeerT::MyBasePeerT MyBasePeerT;
-
 		typedef typename MyPeerT::MyCredentialT MyCredentialT;
 		typedef typename MyPeerT::MyMessageT MyMessageT;
 		typedef typename MyPeerT::MySocketT MySocketT;
 		typedef typename MySocketT::SocketEventT MySocketEventT;
 
-		typedef Listener_Abstract< typename MyPeerT::MySocketEventT > ListenerT;
+		typedef PeerEvent<_MyPeerT> MyPeerEventT;
+		typedef Dispatcher_Abstract< MyPeerEventT > _MyPeerEventDispatcherT;
+
+		typedef Listener_Abstract< typename MyPeerT::MySocketEventT > _MySocketEventListenerT;
 
 		typedef typename MyPeerT::MyPeerProxyT MyPeerProxyT;
 
-		typedef wawo::net::ServiceProvider_Abstract<MyPeerT> MyServiceProviderT ;
-		typedef wawo::net::core::SocketProxy<typename MyPeerT::MySocketT> MySocketProxyT ;
+		typedef SocketProxy<typename MyPeerT::MySocketT> MySocketProxyT ;
 
 		typedef std::vector< WAWO_REF_PTR<MyBasePeerT> > PeerPool;
 
 		typedef std::map<SocketAddr, WAWO_REF_PTR<MySocketT> > ListenSocketPairs;
 		typedef std::pair<SocketAddr, WAWO_REF_PTR<MySocketT> > SocketPair;
-
-		typedef typename _MyPeerT::MyBasePeerCtxT MyBasePeerCtxT;
-		typedef typename _MyPeerT::MyBasePeerMessageCtxT MyBasePeerMessageCtxT;
-
-		typedef typename _MyPeerT::MyPeerCtxT MyPeerCtxT;
 
 		struct ConnectingPeerInfo {
 			WAWO_REF_PTR<MyBasePeerT> peer;
@@ -144,14 +75,13 @@ namespace wawo { namespace net {
 		};
 		typedef std::vector< ConnectingPeerInfo > ConnectingPeerPool;
 
-
 		enum PeerOpCode {
 			OP_ACCEPTED,
 			OP_CONNECT,
 			OP_CONNECTED,
 			OP_DISCONNECT,
 			OP_STOP_LISTEN, //for listener
-			OP_DISCONNECT_ALL_SOCKETS_AND_REMOVE,
+			OP_DISCONNECT_AND_REMOVE,
 			OP_ADD,
 			OP_REMOVE,
 			OP_ERROR
@@ -185,7 +115,6 @@ namespace wawo { namespace net {
 		typedef std::queue<PeerOp> PeerOpQueue;
 
 	private:
-		WAWO_REF_PTR<MyServiceProviderT> m_services[wawo::net::WSI_MAX] ;
 		SharedMutex m_mutex;
 		int m_state;
 
@@ -209,21 +138,15 @@ namespace wawo { namespace net {
 
 		wawo::net::core::SockBufferConfig m_global_socket_buffer_cfgs;
 	private:
-		void _ResetProvider() {
-			for( int i=0;i<wawo::net::WSI_MAX;i++ ) {
-				m_services[i] = NULL ;
-			}
-		}
+
 		void _Init() {
 			WAWO_ASSERT( m_socket_proxy == NULL );
 			m_socket_proxy = WAWO_REF_PTR<MySocketProxyT> (new MySocketProxyT());
-			_ResetProvider();
 		}
 
 		void _Deinit() {
 			WAWO_ASSERT( m_socket_proxy != NULL );
 			m_socket_proxy = NULL;
-			_ResetProvider();
 		}
 
 		inline void _PlanOp(PeerOp const& op) {
@@ -252,23 +175,24 @@ namespace wawo { namespace net {
 						case S_RUN:
 							{
 								WAWO_ASSERT( peer != NULL );
+								WAWO_ASSERT( peer->GetSocket() != NULL );
+								WAWO_ASSERT( peer->GetSocket()->IsNonBlocking() );
+
 								typename PeerPool::iterator it = std::find( m_peers.begin(), m_peers.end(), peer );
 								WAWO_ASSERT( it == m_peers.end() );
 								m_peers.push_back(peer);
+
+								peer->AssignProxy( WAWO_REF_PTR<MyPeerProxyT>(this) );
+								WAWO_ASSERT( m_socket_proxy != NULL );
+								m_socket_proxy->AddSocket(peer->GetSocket());
 							}
 							break;
 						case S_IDLE:
 						case S_EXIT:
 							{
-								std::vector< WAWO_REF_PTR<MySocketT> > sockets;
-								peer->GetAllSockets(sockets);
-								WAWO_ASSERT( sockets.size() > 0 );
-
-								WAWO_REF_PTR<typename MyBasePeerT::ListenerT> peer_l(peer.Get());
-								std::for_each( sockets.begin(), sockets.end(), [&](WAWO_REF_PTR<MySocketT> const& socket ) {
-									socket->UnRegister( peer_l );
-									peer->DetachSocket(socket);
-								});
+								WAWO_REF_PTR<MySocketT> socket = peer->GetSocket();
+								peer->DetachSocket();
+								socket->Close();
 							}
 							break;
 						}
@@ -276,11 +200,8 @@ namespace wawo { namespace net {
 					break;
 				case OP_REMOVE:
 					{
-#ifdef _DEBUG
-						std::vector< WAWO_REF_PTR<MySocketT> > sockets;
-						peer->GetAllSockets(sockets);
-						WAWO_ASSERT( sockets.size() == 0 );
-#endif
+						WAWO_ASSERT( peer != NULL );
+						WAWO_ASSERT( peer->GetSocket() == NULL );
 
 						typename PeerPool::iterator it = std::find( m_peers.begin(), m_peers.end(), peer );
 						if( it != m_peers.end() ) {
@@ -294,30 +215,14 @@ namespace wawo { namespace net {
 						WAWO_ASSERT( socket != NULL );
 						WAWO_ASSERT( socket->IsPassive() );
 
-
 						MyCredentialT credential( Len_CStr("anonymous"), Len_CStr(""));
-						socket->IsPassive();
-						socket->IsNonBlocking();
+						WAWO_ASSERT(socket->IsNonBlocking());
 
 						WAWO_REF_PTR<MyBasePeerT> _peer( new MyPeerT( credential ) );
-
-						WAWO_REF_PTR<typename MyBasePeerT::ListenerT> _peer_l(_peer.Get());
-						socket->Register(SE_PACKET_ARRIVE, _peer_l );
-						socket->Register(SE_SHUTDOWN,_peer_l);
-						socket->Register(SE_CLOSE, _peer_l);
 						_peer->AttachSocket(socket);
 
-						MyPeerCtxT ctx = {wawo::static_pointer_cast<MyPeerT>(_peer), socket};
-						WAWO_REF_PTR<MyPeerEventT> evt( new MyPeerEventT(PE_CONNECTED, ctx ) );
-
-						DispatcherT::Trigger(evt);
-
-						PeerOp op(OP_ADD, _peer );
-						m_ops.push(op);
-
-						_peer->AssignProxy( WAWO_REF_PTR<typename MyBasePeerT::MyPeerProxyT>(this) );
-						WAWO_ASSERT( m_socket_proxy != NULL );
-						m_socket_proxy->AddSocket(socket);
+						WAWO_REF_PTR<MyPeerEventT> evt( new MyPeerEventT(PE_CONNECTED, wawo::static_pointer_cast<MyPeerT>(_peer) ) );
+						_MyPeerEventDispatcherT::Raise(evt);
 					}
 					break;
 				case OP_CONNECTED:
@@ -332,55 +237,21 @@ namespace wawo { namespace net {
 						WAWO_ASSERT( it != m_connecting_infos.end() );
 						WAWO_ASSERT( it->peer != NULL );
 
-
-						WAWO_REF_PTR<ListenerT> socket_l( this );
+						WAWO_REF_PTR<_MySocketEventListenerT> socket_l( this );
 						socket->UnRegister( SE_CONNECTED, socket_l );
 						socket->UnRegister( SE_ERROR, socket_l );
 
-						WAWO_REF_PTR<typename MyBasePeerT::ListenerT> peer_l( it->peer.Get() );
-
-						socket->Register(SE_PACKET_ARRIVE, peer_l );
-						socket->Register(SE_SHUTDOWN,peer_l);
-						socket->Register(SE_CLOSE, peer_l);
 						it->peer->AttachSocket(socket);
-
-						MyPeerCtxT ctx = {wawo::static_pointer_cast<MyPeerT>(it->peer),socket};
-						WAWO_REF_PTR<MyPeerEventT> evt( new MyPeerEventT(PE_CONNECTED, ctx ) );
-
-						DispatcherT::Trigger(evt);
-
-						PeerOp op( OP_ADD,it->peer );
-						m_ops.push(op);
-
-						it->peer->AssignProxy( WAWO_REF_PTR<MyPeerProxyT>(this) );
-						WAWO_ASSERT( m_socket_proxy != NULL );
-						m_socket_proxy->AddSocket(socket);
+						WAWO_REF_PTR<MyPeerEventT> evt( new MyPeerEventT(PE_CONNECTED, wawo::static_pointer_cast<MyPeerT>(it->peer) ) );
+						_MyPeerEventDispatcherT::Raise(evt);
 					}
 					break;
 				case OP_DISCONNECT:
 					{
-						WAWO_ASSERT( peer != NULL );
-						WAWO_REF_PTR<typename MyBasePeerT::ListenerT> peer_l(peer.Get());
+						peer->DetachSocket();
 
-						socket->UnRegister(SE_PACKET_ARRIVE, peer_l );
-						socket->UnRegister(SE_SHUTDOWN,peer_l);
-						socket->UnRegister(SE_CLOSE, peer_l);
-
-
-						MyPeerCtxT ctx = {wawo::static_pointer_cast<MyPeerT>(peer), socket};
-						WAWO_REF_PTR<MyPeerEventT> evt( new MyPeerEventT(PE_DISCONNECTED, ctx, ec) );
-
-						DispatcherT::Trigger(evt);
-
-						peer->DetachSocket(socket);
-
-						std::vector< WAWO_REF_PTR<MySocketT> > sockets;
-						peer->GetAllSockets(sockets);
-
-						if( sockets.size() == 0 ) {
-							PeerOp op( OP_REMOVE, peer, ec);
-							m_ops.push(op);
-						}
+						WAWO_REF_PTR<MyPeerEventT> evt( new MyPeerEventT(PE_DISCONNECTED, wawo::static_pointer_cast<MyPeerT>(peer), ec) );
+						_MyPeerEventDispatcherT::Raise(evt);
 					}
 					break;
 				case OP_STOP_LISTEN:
@@ -389,19 +260,15 @@ namespace wawo { namespace net {
 						StopListenOn( socket->GetAddr() );
 					}
 					break;
-				case OP_DISCONNECT_ALL_SOCKETS_AND_REMOVE:
+				case OP_DISCONNECT_AND_REMOVE:
 					{
-						std::vector< WAWO_REF_PTR<MySocketT> > sockets;
-						peer->GetAllSockets(sockets);
-						WAWO_ASSERT( sockets.size() > 0 );
+						WAWO_REF_PTR<MySocketT> socket = peer->GetSocket() ;
 
 						WAWO_REF_PTR<typename MyBasePeerT::ListenerT> peer_l(peer.Get());
-						std::for_each( sockets.begin(), sockets.end(), [&](WAWO_REF_PTR<MySocketT> const& socket ) {
-							socket->UnRegister( peer_l );
-							socket->Flush(2000); /*WAIT FOR 2 SECONDS IF send blocks*/
-							socket->Shutdown(Socket::SSHUT_RDWR);
-							peer->DetachSocket(socket);
-						});
+						socket->UnRegister( peer_l );
+						socket->Flush(2000); /*WAIT FOR 2 SECONDS IF send blocks*/
+						socket->Shutdown(Socket::SSHUT_RDWR);
+						peer->DetachSocket();
 
 						PeerOp op( OP_REMOVE,peer, ec);
 						m_ops.push(op);
@@ -420,11 +287,10 @@ namespace wawo { namespace net {
 								typename ConnectingPeerPool::iterator it = std::find_if(m_connecting_infos.begin(), m_connecting_infos.end(), [&](ConnectingPeerInfo const& info) {
 									return socket == info.socket ;
 								});
-
 								WAWO_ASSERT( it == m_connecting_infos.end() );
 #endif
 
-								WAWO_REF_PTR<ListenerT> socket_l( this );
+								WAWO_REF_PTR<_MySocketEventListenerT> socket_l( this );
 
 								socket->Register(SE_CONNECTED, socket_l );
 								socket->Register(SE_ERROR, socket_l );
@@ -438,8 +304,8 @@ namespace wawo { namespace net {
 							break;
 						case S_EXIT:
 							{
-								PeerOp op( OP_ERROR, peer, wawo::E_CLIENT_PROXY_EXIT);
-								m_ops.push(op);
+								WAWO_REF_PTR<MyPeerEventT> evt( new MyPeerEventT( PE_ERROR, wawo::static_pointer_cast<MyPeerT>(peer), ec) );
+								_MyPeerEventDispatcherT::Trigger(evt);
 							}
 							break;
 						case S_IDLE:
@@ -471,16 +337,13 @@ namespace wawo { namespace net {
 								WAWO_ASSERT( it != m_connecting_infos.end() );
 								WAWO_ASSERT( it->peer != NULL );
 
-								MyPeerCtxT ctx ={wawo::static_pointer_cast<MyPeerT>(it->peer), socket};
-
-								WAWO_REF_PTR<MyPeerEventT> evt( new MyPeerEventT(PE_ERROR, ctx , ec) );
-								DispatcherT::Trigger(evt);
+								WAWO_REF_PTR<MyPeerEventT> evt( new MyPeerEventT(PE_ERROR, wawo::static_pointer_cast<MyPeerT>(it->peer) , ec) );
+								_MyPeerEventDispatcherT::Trigger(evt);
 
 								m_connecting_infos.erase(it);
 								socket->Close(ec);
 							}
 							break;
-						case wawo::E_CLIENT_PROXY_EXIT:
 						case wawo::E_ECONNABORTED:
 						case wawo::E_ECONNRESET:
 						case wawo::E_WSAECONNRESET:
@@ -489,23 +352,23 @@ namespace wawo { namespace net {
 						case wawo::E_SOCKET_NOT_CONNECTED:
 							{
 								WAWO_ASSERT(!"what");
-								MyPeerCtxT ctx = {wawo::static_pointer_cast<MyPeerT>(peer), socket};
 
-								WAWO_REF_PTR<MyPeerEventT> evt( new MyPeerEventT( PE_ERROR, ctx, ec) );
-								DispatcherT::Trigger(evt);
+								WAWO_REF_PTR<MyPeerEventT> evt( new MyPeerEventT( PE_ERROR, wawo::static_pointer_cast<MyPeerT>(peer), ec) );
+								_MyPeerEventDispatcherT::Raise(evt);
 							}
 							break;
 						case wawo::E_EMFILE:
 							{
 								WAWO_ASSERT( socket->IsListener() );
-								MyPeerCtxT ctx = {wawo::static_pointer_cast<MyPeerT>(peer), socket};
-								WAWO_REF_PTR<MyPeerEventT> evt( new MyPeerEventT(PE_ERROR, ctx, ec) );
-								DispatcherT::Trigger(evt);
+								WAWO_REF_PTR<MyPeerEventT> evt( new MyPeerEventT(PE_ERROR, wawo::static_pointer_cast<MyPeerT>(peer), ec) );
+								_MyPeerEventDispatcherT::Raise(evt);
 							}
 							break;
 						default:
 							{
-								WAWO_ASSERT(!"unknown client error");
+								char tmp[256]={0};
+								snprintf( tmp, sizeof(tmp)/sizeof(tmp[0]), "unknown peer error: %d", ec );
+								WAWO_THROW_EXCEPTION( tmp );
 							}
 							break;
 						}
@@ -579,7 +442,7 @@ namespace wawo { namespace net {
 				_PlanOp(op);
 			});
 			std::for_each( m_peers.begin(), m_peers.end(), [&]( WAWO_REF_PTR<MyBasePeerT> const& peer ) {
-				PeerOp op( OP_DISCONNECT_ALL_SOCKETS_AND_REMOVE, peer );
+				PeerOp op( OP_DISCONNECT_AND_REMOVE, peer );
 				_PlanOp(op);
 			});
 			_ExecuteOps();
@@ -618,6 +481,16 @@ namespace wawo { namespace net {
 			}
 		}
 
+		void AddPeer( WAWO_REF_PTR<MyPeerT> const& peer ) {
+			PeerOp op( OP_ADD, wawo::static_pointer_cast<MyBasePeerT>(peer) );
+			_PlanOp(op);
+		}
+
+		void RemovePeer( WAWO_REF_PTR<MyPeerT> const& peer ) {
+			PeerOp op( OP_REMOVE, wawo::static_pointer_cast<MyBasePeerT>(peer) );
+			_PlanOp(op);
+		}
+
 		int StartListenOn( wawo::net::core::SocketAddr const& addr ) {
 			WAWO_ASSERT( m_listen_sockets.find( addr ) == m_listen_sockets.end() );
 
@@ -642,9 +515,9 @@ namespace wawo { namespace net {
 				return turn_on_nonblocking;
 			}
 
-			listen_socket->Register( SE_ACCEPTED, WAWO_REF_PTR<ListenerT>(this) );
-			listen_socket->Register( SE_ERROR, WAWO_REF_PTR<ListenerT>(this));
-			listen_socket->Register( SE_CLOSE, WAWO_REF_PTR<ListenerT>(this) , true);
+			listen_socket->Register( SE_ACCEPTED, WAWO_REF_PTR<_MySocketEventListenerT>(this) );
+			listen_socket->Register( SE_ERROR, WAWO_REF_PTR<_MySocketEventListenerT>(this));
+			listen_socket->Register( SE_CLOSE, WAWO_REF_PTR<_MySocketEventListenerT>(this) , true);
 
 			LockGuard <SpinMutex> lg(m_listen_socket_mutex);
 			m_listen_sockets.insert( SocketPair(addr, listen_socket) );
@@ -663,7 +536,7 @@ namespace wawo { namespace net {
 			WAWO_REF_PTR<MySocketT> socket = it->second;
 			WAWO_ASSERT( socket != NULL );
 
-			socket->UnRegister( WAWO_REF_PTR<ListenerT>(this) ,true);
+			socket->UnRegister( WAWO_REF_PTR<_MySocketEventListenerT>(this) ,true);
 			m_listen_sockets.erase(it);
 
 			return m_socket_proxy->StopListen(socket);
@@ -672,7 +545,7 @@ namespace wawo { namespace net {
 		void StopAllListen() {
 
 			std::for_each( m_listen_sockets.begin(), m_listen_sockets.end(), [&](SocketPair const& pair) {
-				WAWO_REF_PTR<ListenerT> socket_l(this);
+				WAWO_REF_PTR<_MySocketEventListenerT> socket_l(this);
 				pair.second->UnRegister( socket_l );
 				m_socket_proxy->StopListen(pair.second);
 			});
@@ -691,58 +564,27 @@ namespace wawo { namespace net {
 			_PlanOp(op);
 		}
 
-		void HandleDisconnected( MyBasePeerCtxT const& ctx, int const& ec ) {
+		void HandleDisconnected( WAWO_REF_PTR<MyBasePeerT> const& peer, int const& ec ) {
 			SharedLockGuard<SharedMutex> lg(m_mutex);
 			if( m_state != S_RUN ) {
 				return ;
 			}
 
-			WAWO_ASSERT( ctx.socket != NULL );
-			WAWO_ASSERT( ctx.socket->IsNonBlocking() );
-
-			WAWO_ASSERT( ctx.peer != NULL );
-
-			PeerOp op ( OP_DISCONNECT, ctx.peer, ctx.socket, ec );
+			WAWO_ASSERT( peer != NULL );
+			PeerOp op ( OP_DISCONNECT, peer,ec );
 			_PlanOp(op);
 		}
 
-		void HandleError( MyBasePeerCtxT const& ctx, int const& ec ) {
-
+		void HandleError( WAWO_REF_PTR<MyBasePeerT> const& peer, int const& ec ) {
 			SharedLockGuard<SharedMutex> lg(m_mutex);
 			if( m_state != S_RUN ) {
 				return ;
 			}
 
-			WAWO_ASSERT( ctx.peer != NULL );
+			WAWO_ASSERT( peer != NULL );
 
-			WAWO_ASSERT( ctx.socket != NULL );
-			WAWO_ASSERT( ctx.socket->IsNonBlocking() );
-
-			PeerOp op ( OP_ERROR, ctx.peer, ctx.socket, ec );
+			PeerOp op ( OP_ERROR, peer, ec );
 			_PlanOp(op);
-		}
-
-		void HandleMessage( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ) {
-
-			WAWO_ASSERT( ctx.peer != NULL );
-			WAWO_ASSERT( ctx.socket != NULL );
-			WAWO_ASSERT( incoming != NULL );
-
-			int id = incoming->GetId();
-			WAWO_ASSERT( id >=0 && id< wawo::net::WSI_MAX );
-			WAWO_ASSERT( m_services[id] != NULL );
-			
-			//MyPeerCtxT my_ctx (
-			//	wawo::static_pointer_cast<MyPeerT>(ctx.peer),
-			//	ctx.socket,
-			//	ctx.message );
-
-			m_services[id]->HandleMessage( ctx, incoming );
-
-			/*
-			WAWO_REF_PTR<MyPeerEventT> evt( new MyPeerEventT( PE_MESSAGE, my_ctx, incoming ) );
-			DispatcherT::Trigger(evt);
-			*/
 		}
 
 		void OnEvent( WAWO_REF_PTR<MySocketEventT> const& evt ) {
@@ -817,31 +659,7 @@ namespace wawo { namespace net {
 		wawo::net::core::SockBufferConfig& GetGlobalSocketBufferConfigs() {
 			return m_global_socket_buffer_cfgs;
 		}
-
-
-		inline WAWO_REF_PTR<MyServiceProviderT> const& GetProvider ( uint32_t const& id ) {
-
-			WAWO_ASSERT( id >=0 && id< wawo::net::WSI_MAX );
-			WAWO_ASSERT( m_services[id] != NULL );
-
-			return m_services[id];
-		}
-		void RegisterProvider( uint32_t const& id, WAWO_REF_PTR<MyServiceProviderT> const& provider ) {
-			WAWO_ASSERT( id < wawo::net::WSI_MAX );
-			WAWO_ASSERT( m_services[id] == NULL );
-			m_services[id] = provider;
-		}
-		void UnRegisterProvider( uint32_t const& id ) {
-			WAWO_ASSERT( id < wawo::net::WSI_MAX );
-			WAWO_ASSERT( m_services[id] != NULL );
-			m_services[id] = NULL;
-		}
-
-		//virtual void OnConnected( WAWO_REF_PTR<MyPeerT> const& peer, WAWO_REF_PTR<MySocketT> const& socket ) = 0;
-		//virtual void OnDisconnected(WAWO_REF_PTR<MyPeerT> const& peer, WAWO_REF_PTR<MySocketT> const& socket, int const& code ) = 0;
-		//virtual void OnError( WAWO_REF_PTR<MyPeerT> const& peer, WAWO_REF_PTR<MySocketT> const& socket, int const& code ) = 0;
 	};
-
 }}
 
 namespace wawo { namespace net {

@@ -100,12 +100,6 @@ namespace wawo { namespace net { namespace core {
 			m_identity = (m_identity|(port&0xFFFF));
 		}
 
-		char* const AddressInfo() {
-			memset(m_info,0,sizeof(m_info)/sizeof(m_info[0])) ;
-			snprintf( m_info, sizeof(m_info)/sizeof(m_info[0]), "%s:%d", GetIpAddress(), GetHostSequencePort() );
-			return &m_info[0] ;
-		}
-
 		char const* const AddressInfo() const {
 			memset( const_cast<char*>(m_info),0,sizeof(m_info)/sizeof(m_info[0])) ;
 			snprintf( const_cast<char*>(m_info), sizeof(m_info)/sizeof(m_info[0]), "%s:%d", GetIpAddress(), GetHostSequencePort() );

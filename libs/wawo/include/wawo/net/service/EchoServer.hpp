@@ -14,13 +14,10 @@ namespace wawo { namespace net { namespace service {
 	class EchoServer:
 		public wawo::net::ServiceProvider_Abstract<_MyPeerT>
 	{
-
 		typedef _MyPeerT MyPeerT;
-		typedef typename MyPeerT::MyMessageT MyMessageT;
-		typedef typename MyPeerT::MySocketT MySocketT;
+		typedef typename ServiceProvider_Abstract<_MyPeerT>::PeerMessageCtx PeerMessageCtx;
+		typedef typename _MyPeerT::MyMessageT MyMessageT;
 
-		typedef typename MyPeerT::MyBasePeerCtxT MyBasePeerCtxT;
-		typedef typename MyPeerT::MyBasePeerMessageCtxT MyBasePeerMessageCtxT;
 	public:
 		EchoServer(int id ):
 			ServiceProvider_Abstract<_MyPeerT>(id),
@@ -32,7 +29,7 @@ namespace wawo { namespace net { namespace service {
 		}
 		~EchoServer() {}
 
-		virtual void HandleMessage( MyBasePeerMessageCtxT const& ctx , WAWO_SHARED_PTR<MyMessageT> const& incoming ) {
+		virtual void WaitMessage( PeerMessageCtx const& ctx , WAWO_SHARED_PTR<MyMessageT> const& incoming ) {
 
 			int type = incoming->GetType();
 			switch( type ) {
@@ -54,15 +51,18 @@ namespace wawo { namespace net { namespace service {
 			}
 		}
 
-		virtual void OnReceive( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ){
+		virtual void OnReceive( PeerMessageCtx const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ){
 
 		}
 
-		virtual void OnRequest(  MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ) {
+		virtual void OnRequest(  PeerMessageCtx const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming ) {
 
 			WAWO_REF_PTR<MyPeerT> peer = WAWO_REF_PTR<MyPeerT>( static_cast<MyPeerT*> (ctx.peer.Get()) );
 
+			
+
 			WAWO_SHARED_PTR<Packet> const& packet = incoming->GetPacket();
+			
 			uint32_t command = packet->Read<uint32_t>();
 
 			if( command == wawo::net::service::C_ECHO_HELLO ||
@@ -84,7 +84,7 @@ namespace wawo { namespace net { namespace service {
 				free(hello_string);
 
 				WAWO_SHARED_PTR<MyMessageT> message( new MyMessageT( this->GetId(), packet_o ) );
-				int rt = peer->Respond( message, incoming, ctx );
+				int rt = peer->Respond( message, incoming );
 
 
 				WAWO_CHECK_SOCKET_SEND_RETURN_V(rt);
@@ -97,16 +97,17 @@ namespace wawo { namespace net { namespace service {
 					uint64_t current_millsecond = wawo::time::curr_milliseconds();
 					uint64_t diff_time = current_millsecond - m_check_millseconds ;
 					if( diff_time != 0 ) {
-						double qps = (m_request_count/diff_time ) * 1000.0;
+						double curr_qps = (m_request_count/diff_time ) * 1000.0;
 						m_total += m_request_count;
 
 						uint64_t diff_time_total = current_millsecond - m_check_millseconds_begin;
+						WAWO_ASSERT( diff_time_total > 0 );
 						double qps_avg = (m_total/diff_time_total) * 1000.0;
 
 						m_request_count = 0 ;
 
 						m_check_millseconds = current_millsecond ;
-						WAWO_LOG_WARN( "echo", "current qps:%0.f\tavg qps:%0.f\ttotal:%d\ttime cost:%0.2f\thours%", qps, qps_avg,m_total, (diff_time_total/(3600.0*1000)) );
+						WAWO_LOG_WARN( "echo", "current qps(every 50000):%0.lf\tavg qps(total_qs/total_run_time):%0.lf\ttotal qs:%lld\ttotal run time: %0.2lf\thours%", curr_qps, qps_avg,m_total, ((diff_time_total*1.0)/(3600.0*1000)) );
 					}
 				}
 			} else if( command == wawo::net::service::C_ECHO_PINGPONG ) {
@@ -115,18 +116,18 @@ namespace wawo { namespace net { namespace service {
 				packet_o->Write<uint32_t>(command);
 				packet_o->Write<uint32_t>(wawo::OK);
 				WAWO_SHARED_PTR<MyMessageT> message( new MyMessageT( this->GetId(), packet_o ) );
-				int rt = peer->Respond( message, incoming, ctx );
+				int rt = peer->Respond( message, incoming );
 				WAWO_CHECK_SOCKET_SEND_RETURN_V(rt);
 			} else {
 				WAWO_THROW_EXCEPTION("invalid echo command");
 			}
 		}
 
-		virtual void OnRespond( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming  ) {
+		virtual void OnRespond( PeerMessageCtx const& ctx, WAWO_SHARED_PTR<MyMessageT> const& incoming  ) {
 		}
 
 	private:
-		uint32_t m_total;
+		uint64_t m_total;
 		std::atomic<uint32_t> m_request_count;
 		uint64_t m_check_millseconds;
 		uint64_t m_check_millseconds_begin;

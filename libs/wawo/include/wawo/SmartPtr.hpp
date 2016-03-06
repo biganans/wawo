@@ -285,7 +285,6 @@ namespace wawo {
 	template <class T>
 	class WeakPoint;
 
-	//class LoggerManager;
 	template <class T>
 	class SharedPoint {
 
@@ -513,13 +512,15 @@ namespace wawo {
 			return _p;
 		}
 
-		T& operator * ()
+		T& operator * () const
 		{
 			WAWO_ASSERT( _p != 0 );
 			return *_p;
 		}
 
 		POINT_TYPE Get() const {return _p;}
+
+
 
 		inline bool operator == (THIS_TYPE const& r) const { return _p == r._p; }
 		inline bool operator != (THIS_TYPE const& r) const { return _p != r._p; }

@@ -9,7 +9,7 @@
 
 namespace wawo { namespace algorithm {
 
-	// memory bytes plane
+	// memory bytes pane
 
 	// [--writeable----bytes---bytes-----begin ------bytes--------bytes----bytes--end---writeable--]
 

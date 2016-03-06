@@ -13,8 +13,6 @@
 
 #include <wawo/log/LoggerManager.h>
 
-#include <wawo/net/Context.hpp>
-
 namespace wawo { namespace net {
 
 	using namespace wawo::net::core;
@@ -22,6 +20,61 @@ namespace wawo { namespace net {
 
 	template <class _MyPeerT>
 	class PeerProxy_Abstract;
+
+		enum PeerEventId {
+			PE_CONNECTED = wawo::net::core::NE_MAX,
+			PE_DISCONNECTED,
+			PE_ERROR,
+			PE_MESSAGE
+		};
+
+
+	template <class _MyPeerT>
+	class PeerEvent :
+		public wawo::net::core::Event
+	{
+		typedef _MyPeerT MyPeerT;
+		typedef typename _MyPeerT::MyMessageT MyMessageT;
+
+	private:
+		WAWO_REF_PTR<MyPeerT> m_peer;
+		WAWO_SHARED_PTR<MyMessageT> m_incoming; //incoming message
+		WAWO_SHARED_PTR<MyMessageT> m_related; //original request,for respond message
+	public:
+		explicit PeerEvent( uint32_t const& id, WAWO_REF_PTR<MyPeerT> const& peer ):
+			Event(id),
+			m_peer(peer),
+			m_incoming(NULL),
+			m_related(NULL)
+		{}
+		explicit PeerEvent( uint32_t const& id, WAWO_REF_PTR<MyPeerT> const& peer , int const& ec ):
+			Event(id, EventData(ec)),
+			m_peer(peer),
+			m_incoming(NULL),
+			m_related(NULL)
+		{}
+		explicit PeerEvent( uint32_t const& id, WAWO_REF_PTR<MyPeerT> const& peer , WAWO_SHARED_PTR<MyMessageT> const& incoming ):
+			Event(id),
+			m_peer(peer),
+			m_incoming(incoming),
+			m_related(NULL)
+		{}
+		explicit PeerEvent( uint32_t const& id, WAWO_REF_PTR<MyPeerT> const& peer , WAWO_SHARED_PTR<MyMessageT> const& incoming, WAWO_SHARED_PTR<MyMessageT> const& related ):
+			Event(id),
+			m_peer(peer),
+			m_incoming(incoming),
+			m_related(related)
+		{}
+		inline WAWO_REF_PTR<MyPeerT> const& GetPeer() const {
+			return m_peer;
+		}
+		inline WAWO_SHARED_PTR<MyMessageT> const& GetIncoming() const {
+			return m_incoming;
+		}
+		inline WAWO_SHARED_PTR<MyMessageT> const& GetRelated() const {
+			return m_related;
+		}
+	};
 
 	template <class _CredentialT, class _MessageT, class _SocketT>
 	class Peer_Abstract :
@@ -38,20 +91,24 @@ namespace wawo { namespace net {
 		typedef Peer_Abstract<_CredentialT,_MessageT,_SocketT> MyBasePeerT;
 		typedef PeerProxy_Abstract<MyBasePeerT> MyPeerProxyT;
 
-		typedef BasePeerCtx<MyBasePeerT> MyBasePeerCtxT;
-		typedef BasePeerMessageCtx<MyBasePeerT> MyBasePeerMessageCtxT;
-
 	private:
 		SharedMutex m_mutex;
 		MyCredentialT m_credential;
 		WAWO_REF_PTR<MyPeerProxyT> m_proxy;
+		WAWO_REF_PTR<MySocketT> m_socket;
 	public:
 		explicit Peer_Abstract( MyCredentialT const& credential):
-			m_credential(credential)
+			m_credential(credential),
+			m_proxy(NULL),
+			m_socket(NULL)
 		{
 		}
 
 		virtual ~Peer_Abstract() {
+			/* 
+			 * u must Detach your socket if the socket has been closed. 
+			 */
+			WAWO_ASSERT( m_socket == NULL );
 		}
 
 		MyCredentialT const& GetCredential() const {
@@ -64,11 +121,14 @@ namespace wawo { namespace net {
 			LockGuard<SharedMutex> lg( m_mutex );
 			m_proxy = proxy;
 		}
+
 		inline WAWO_REF_PTR<MyPeerProxyT> const& GetProxy() const { return m_proxy; }
 
 		void OnEvent( WAWO_REF_PTR<MySocketEventT> const& evt) {
 
+			WAWO_ASSERT( evt->GetSocket() == m_socket );
 			int id = evt->GetId();
+
 			switch( id ) {
 
 			case SE_PACKET_ARRIVE:
@@ -83,14 +143,14 @@ namespace wawo { namespace net {
 
 					//parse message from packet, and trigger message
 					for(uint32_t i=0;i<count;i++) {
-						HandleIncomingMessage( evt->GetSocket(), messages[i] );
+						HandleIncomingMessage( messages[i] );
 					}
 				}
 				break;
 			case SE_SHUTDOWN:
 			case SE_CLOSE:
 				{
-					HandleDisconnected( evt->GetSocket(), evt->GetEventData().int32_v );
+					HandleDisconnected( evt->GetEventData().int32_v );
 				}
 				break;
 			default:
@@ -104,13 +164,13 @@ namespace wawo { namespace net {
 		}
 
 		//blocked until we received a new message arrived
-		uint32_t ReceiveMessages( WAWO_REF_PTR<MySocketT> const& socket, WAWO_SHARED_PTR<MyMessageT> messages[], uint32_t const& size, int& ec_o ) {
-			WAWO_ASSERT( socket != NULL );
+		uint32_t ReceiveMessages( WAWO_SHARED_PTR<MyMessageT> messages[], uint32_t const& size, int& ec_o ) {
+			WAWO_ASSERT( m_socket != NULL );
 
 			uint32_t idx=0;
 
 			WAWO_SHARED_PTR<Packet> packets[MAX_PACKET_COUNT_TO_PARSE_PER_TIME_FOR_ASYNC_SOCKET];
-			uint32_t count = socket->ReceivePackets( packets, MAX_PACKET_COUNT_TO_PARSE_PER_TIME_FOR_ASYNC_SOCKET, ec_o );
+			uint32_t count = m_socket->ReceivePackets( packets, MAX_PACKET_COUNT_TO_PARSE_PER_TIME_FOR_ASYNC_SOCKET, ec_o );
 
 			for( uint32_t pi=0;pi<count;pi++ ) {
 				
@@ -136,9 +196,11 @@ namespace wawo { namespace net {
 			WAWO_LOG_DEBUG("client_wawo", "new messages arrived: %d", idx);
 			return idx;
 		}
-		virtual int DoSend( WAWO_REF_PTR<MySocketT> const& socket, WAWO_SHARED_PTR<MyMessageT> const& message ) {
+		virtual int DoSend( WAWO_SHARED_PTR<MyMessageT> const& message ) {
+			SharedLockGuard<SharedMutex> lg(m_mutex);
+
 			WAWO_ASSERT( message != NULL );
-			WAWO_ASSERT( socket != NULL ) ;
+			WAWO_ASSERT( m_socket != NULL ) ;
 
 			WAWO_SHARED_PTR<Packet> packet_o;
 			int rt = MyMessageT::Encode( message, packet_o );
@@ -146,16 +208,43 @@ namespace wawo { namespace net {
 				return rt;
 			}
 
-			return socket->SendPacket( packet_o );
+			return m_socket->SendPacket( packet_o );
 		}
 
-		virtual void AttachSocket( WAWO_REF_PTR<MySocketT> const& socket ) = 0;
-		virtual void DetachSocket( WAWO_REF_PTR<MySocketT> const& socket ) = 0;
-		virtual void GetAllSockets( std::vector< WAWO_REF_PTR<MySocketT> >& sockets ) = 0 ;
+		void AttachSocket( WAWO_REF_PTR<MySocketT> const& socket ) {
+			LockGuard<SharedMutex> lg(m_mutex);
+			WAWO_ASSERT( m_socket == NULL );
 
-		virtual void HandleIncomingMessage( WAWO_REF_PTR<MySocketT> const& socket, WAWO_SHARED_PTR<MyMessageT> const& message ) = 0;
-		virtual void HandleDisconnected( WAWO_REF_PTR<MySocketT> const& socket, int const& ec ) = 0;
-		virtual void HandleError( WAWO_REF_PTR<MySocketT> const& socket, int const& ec ) = 0;
+			WAWO_REF_PTR<ListenerT> peer_l( this );
+			socket->Register(SE_PACKET_ARRIVE, peer_l );
+			socket->Register(SE_SHUTDOWN, peer_l);
+			socket->Register(SE_CLOSE, peer_l);
+
+			m_socket = socket;
+		}
+		void DetachSocket() {
+			LockGuard<SharedMutex> lg(m_mutex);
+			if ( m_socket != NULL ) {
+				WAWO_REF_PTR<ListenerT> peer_l( this );
+				m_socket->UnRegister( peer_l );
+				m_socket = NULL;
+			}
+		}
+
+		inline WAWO_REF_PTR<MySocketT> const& GetSocket() const {
+			return m_socket;
+		}
+
+		virtual void HandleDisconnected( int const& ec ) {
+			m_proxy->HandleDisconnected( WAWO_REF_PTR<MyBasePeerT>( this ), ec );
+		}
+		virtual void HandleError( int const& ec ) {
+			WAWO_ASSERT( m_proxy != NULL );
+			m_proxy->HandleError( WAWO_REF_PTR<MyBasePeerT>( this ), ec );
+		}
+
+		virtual void HandleIncomingMessage( WAWO_SHARED_PTR<MyMessageT> const& message ) = 0;
 	};
 }}
+
 #endif

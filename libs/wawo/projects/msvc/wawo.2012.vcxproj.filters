@@ -345,7 +345,10 @@
     <ClInclude Include="..\..\include\wawo\net\PeerProxy.hpp">
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\Context.hpp">
+    <ClInclude Include="..\..\include\wawo\net\ServicePool.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\Node.hpp">
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
   </ItemGroup>

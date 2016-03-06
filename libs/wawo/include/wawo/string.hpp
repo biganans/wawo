@@ -162,7 +162,6 @@ namespace wawo {
 		typedef len_cstr<char_t> _MyT;
 
 	private:
-
 		// basic type
 		_MyCharT* cstr;
 		// len of string

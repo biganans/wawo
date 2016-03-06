@@ -20520,10 +20520,10 @@
 	<wawo/net/core/Socket.h>
 	<wawo/net/core/Dispatcher_Abstract.hpp>
 
-1454642491 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/SocketAddr.h
+1456564472 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/SocketAddr.h
 	<wawo/core.h>
 
-1455432710 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/Socket.h
+1455938981 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/Socket.h
 	<wawo/core.h>
 	<wawo/net/core/NetEvent.hpp>
 	<wawo/SmartPtr.hpp>
@@ -20547,7 +20547,7 @@
 1451379325 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/Listener_Abstract.h
 	<wawo/prototype/AutoPoint.hpp>
 
-1455874523 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/Dispatcher_Abstract.hpp
+1455954231 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/Dispatcher_Abstract.hpp
 	<vector>
 	<queue>
 	<map>
@@ -20585,7 +20585,7 @@
 	<wawo/NonCopyable.hpp>
 	<condition_variable>
 
-1454725757 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/task/TaskRunner.h
+1456370718 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/task/TaskRunner.h
 	<wawo/core.h>
 	<wawo/SmartPtr.hpp>
 	<wawo/NonCopyable.hpp>
@@ -20622,10 +20622,10 @@
 	<wawo/SmartPtr.hpp>
 	<wawo/io/bytes_helper.hpp>
 
-1455782067 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/NetEvent.hpp
+1456562795 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/NetEvent.hpp
 	<wawo/net/core/Event.hpp>
 
-1455767164 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/Event.hpp
+1456563725 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/Event.hpp
 	<wawo/core.h>
 	<wawo/SmartPtr.hpp>
 	<wawo/NonCopyable.hpp>
@@ -20688,7 +20688,7 @@
 1452588075 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/PacketConnection.h
 	<wawo/net/core/Connection.h>
 
-1455675497 source:/home/copy/winshare/svn_repository/trunk/libs/wawo/src/net/core/Socket.cpp
+1455947694 source:/home/copy/winshare/svn_repository/trunk/libs/wawo/src/net/core/Socket.cpp
 	<wawo/core.h>
 	<wawo/log/LoggerManager.h>
 	<wawo/net/core/Socket.h>
@@ -20746,7 +20746,7 @@
 	<wawo/task/TaskManager.h>
 	<wawo/log/LoggerManager.h>
 
-1454726486 source:/home/copy/winshare/svn_repository/trunk/libs/wawo/src/task/TaskRunner.cpp
+1456204663 source:/home/copy/winshare/svn_repository/trunk/libs/wawo/src/task/TaskRunner.cpp
 	<wawo/task/TaskRunner.h>
 	<wawo/log/LoggerManager.h>
 	<wawo/task/TaskManager.h>
@@ -20820,7 +20820,7 @@
 1449048713 source:/home/copy/winshare/svn_repository/trunk/libs/wawo/src/prototype/generic.cpp
 	<wawo/prototype/generic.hpp>
 
-1454552865 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/core.h
+1456562933 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/core.h
 	<cstddef>
 	<cstdio>
 	<csignal>
@@ -20846,7 +20846,7 @@
 	<wawo/config/compiler.h>
 	<limits.h>
 
-1454566216 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/basic.hpp
+1455948741 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/basic.hpp
 	<chrono>
 	<thread>
 	<wawo/config/platform.h>
@@ -20950,13 +20950,12 @@
 
 1455417832 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/NonCopyable.hpp
 
-1455620523 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/SafeSingleton.hpp
-	<thread>
+1456375003 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/SafeSingleton.hpp
 	<vector>
 	<mutex>
 	<wawo/core.h>
 
-1455866765 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/SmartPtr.hpp
+1456711920 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/SmartPtr.hpp
 	<wawo/core.h>
 
 1454552972 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/net/core/IOTaskManager.hpp
@@ -20969,7 +20968,7 @@
 	<syslog.h>
 	<wawo/log/SysLogger.h>
 
-1455761735 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/algorithm/Packet.hpp
+1456566689 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/algorithm/Packet.hpp
 	<wawo/core.h>
 	<wawo/SmartPtr.hpp>
 	<wawo/algorithm/bytes_helper.hpp>

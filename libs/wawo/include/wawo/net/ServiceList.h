@@ -1,13 +1,9 @@
 #ifndef _WAWO_NET_SERVICE_LIST_H_
 #define _WAWO_NET_SERVICE_LIST_H_
 
-
-
 #define WAWO_ENABLE_ECHO_TEST 1
 
-
 namespace wawo { namespace net {
-
 	enum ServiceId {
 		WSI_WAWO = 0 , //default reserved service
 		WSI_AUTH,

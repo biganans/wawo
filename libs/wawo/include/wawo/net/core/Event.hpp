@@ -2,10 +2,12 @@
 #define _WAWO_NET_CORE_EVENT_HPP_
 
 #include <wawo/core.h>
+
 #include <wawo/SmartPtr.hpp>
 #include <wawo/NonCopyable.hpp>
 
 #include <wawo/algorithm/Packet.hpp>
+
 
 namespace wawo { namespace net { namespace core {
 

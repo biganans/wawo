@@ -7,16 +7,62 @@
 #define WAWO_MESSAGE_SECURE_MODE 1
 #define WAWO_MESSAGE_TIMEOUT_TIME (30*1000)
 
+#include <wawo/core.h>
+#include <wawo/net/core/Event.hpp>
+
 namespace wawo { namespace net { namespace message {
 
 	using namespace wawo::net;
 	using namespace wawo::net::core;
 
 	// about 49710/s , can run one day for no-repeat
-	static std::atomic<uint32_t> s_ai_nid(1) ; //auto increment
-	static uint32_t MakeNetId() { return s_ai_nid++ ; }
+	static std::atomic<wawo::uint32_t> s_ai_nid(1) ; //auto increment
+	static wawo::uint32_t MakeNetId() { return s_ai_nid++ ; }
 
 	class Wawo {
+
+	public:
+
+		enum MessageEventId {
+			ME_SENT = 0,
+			ME_RESPONSE,
+			ME_CANCEL,
+			ME_TIMEOUT,
+			ME_ERROR,
+			ME_MAX
+		};
+
+		struct Callback_Abstract :
+			public wawo::RefObject_Abstract
+		{
+			virtual bool operator() ( MessageEventId const& id, WAWO_SHARED_PTR<Packet> const& packet ) = 0;
+		};
+
+		/*
+		//return true to stop propagation
+		typedef std::function<bool (WAWO_REF_PTR<Event> const& evt)> WAWO_MESSAGE_CALLBACK;
+
+		struct Callbacks {
+			WAWO_REF_PTR<Callbacks_Abstract> callbacks[ME_MAX];
+			Callbacks() {
+				for( int i=0;i<ME_MAX;i++ ) {
+					callbacks[i] = NULL;
+				}
+			}
+			inline WAWO_REF_PTR<Callbacks_Abstract>& operator[] ( int const& evt_id ) {
+				WAWO_ASSERT( evt_id < ME_MAX && evt_id >= 0 );
+				return callbacks[evt_id];
+			}
+			inline bool operator() ( WAWO_REF_PTR<Event> const& evt ) {
+				int const& id = evt->GetId();
+				WAWO_ASSERT( id < ME_MAX );
+				if( callbacks[id] != NULL ) {
+					return (*callbacks[id])( evt ) ;
+				}
+				return false;
+			}
+		};
+		*/
 
 	public:
 		enum Type {
@@ -27,77 +73,20 @@ namespace wawo { namespace net { namespace message {
 			T_MAX
 		};
 
-		enum EventId {
-			E_SENT = 0,
-			E_RESPONSE,
-			E_CANCEL,
-			E_TIMEOUT,
-			E_ERROR,
-			E_MAX
-		};
-
-		typedef bool (*NET_CALLBACK)( WAWO_REF_PTR<Event> const& evt );
-		struct Callbacks {
-			NET_CALLBACK callbacks[E_MAX];
-			Callbacks() {
-				for( int i=0;i<E_MAX;i++ ) {
-					callbacks[i] = 0;
-				}
-			}
-			NET_CALLBACK& operator[] ( int cb_id ) {
-				WAWO_ASSERT( cb_id < E_MAX && cb_id >= 0 );
-				return callbacks[cb_id];
-			}
-		};
-
-
 	private:
 		Type m_type; //response, request, send
 		uint32_t m_net_id; //unique message id
 
 		uint32_t m_id;
 		WAWO_SHARED_PTR<Packet> m_packet ;
-		Callbacks m_callbacks;
 
 		uint32_t m_timeout_time;
 		uint64_t m_creation_time;
 		uint64_t m_arrive_time;
 		uint64_t m_send_time;
-
 	public:
-		//retrun true to prevent bubble to top
-		bool TriggerEvent( WAWO_REF_PTR<Event> const& evt ) {
-			int id = evt->GetId();
-			WAWO_ASSERT( id < E_MAX );
 
-			switch( id ) {
-			case E_SENT:
-				{
-					m_send_time = wawo::time::curr_milliseconds();
-				}
-				break;
-			case E_RESPONSE:
-				{
-				}
-				break;
-			case E_TIMEOUT:
-				{
-				}
-				break;
-			case E_ERROR:
-				{
-				}
-				break;
-			}
 
-			if( m_callbacks[id] != NULL ) {
-				return m_callbacks[id]( evt ) ;
-			}
-
-			return false;
-		}
-
-		void SetCallbacks( Callbacks const& callback ) { m_callbacks = callback; }
 		inline void SetTimeoutTime( int const& time /* in milliseconds, -1 == infinite*/ ) { m_timeout_time = time ;}
 		inline uint32_t const& GetNetId() {return m_net_id;}
 		inline void SetNetId(uint32_t const& id) { m_net_id = id;}
@@ -110,20 +99,6 @@ namespace wawo { namespace net { namespace message {
 			m_net_id(MakeNetId()),
 			m_id(id),
 			m_packet(NULL),
-			m_callbacks(),
-			m_timeout_time(WAWO_MESSAGE_TIMEOUT_TIME),
-			m_creation_time(wawo::time::curr_milliseconds()),
-			m_arrive_time(0),
-			m_send_time(0)
-		{
-		}
-
-		explicit Wawo( uint32_t const& id, Callbacks const& callbacks ) :
-			m_type( T_NONE ),
-			m_net_id( MakeNetId() ),
-			m_id(id),
-			m_packet(NULL),
-			m_callbacks(),
 			m_timeout_time(WAWO_MESSAGE_TIMEOUT_TIME),
 			m_creation_time(wawo::time::curr_milliseconds()),
 			m_arrive_time(0),
@@ -137,31 +112,18 @@ namespace wawo { namespace net { namespace message {
 			m_net_id( MakeNetId() ),
 			m_id(id),
 			m_packet(packet),
-			m_callbacks(),
 			m_timeout_time(WAWO_MESSAGE_TIMEOUT_TIME),
 			m_creation_time(wawo::time::curr_milliseconds()),
 			m_arrive_time(0),
 			m_send_time(0)
 		{
 		}
-		explicit Wawo( uint32_t const& id, WAWO_SHARED_PTR<Packet> const& packet, Callbacks const& callbacks ):
-			m_type( T_NONE ),
-			m_net_id( MakeNetId() ),
-			m_id(id),
-			m_packet(packet),
-			m_callbacks(callbacks),
-			m_timeout_time(WAWO_MESSAGE_TIMEOUT_TIME),
-			m_creation_time(wawo::time::curr_milliseconds()),
-			m_arrive_time(0),
-			m_send_time(0)
-		{
-		}
+
 		explicit Wawo(uint32_t const& net_id, uint32_t const& id,Type const& type, WAWO_SHARED_PTR<Packet> const& packet ):
 			m_type( type ),
 			m_net_id( net_id ),
 			m_id(id),
 			m_packet(packet),
-			m_callbacks(),
 			m_timeout_time(WAWO_MESSAGE_TIMEOUT_TIME),
 			m_creation_time(0),
 			m_arrive_time(0),

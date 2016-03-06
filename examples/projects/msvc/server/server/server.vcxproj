@@ -53,7 +53,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)\..\..\..\..\wawo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\..\..\..\..\libs\wawo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -81,12 +81,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\wawo\projects\msvc\wawo.2012.vcxproj">
-      <Project>{dd8557ac-a37c-4fe5-8f46-c2c36c89602f}</Project>
-    </ProjectReference>
+    <ClCompile Include="..\..\..\..\src\server.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\src\server.cpp" />
+    <ProjectReference Include="..\..\..\..\..\libs\wawo\projects\msvc\wawo.2012.vcxproj">
+      <Project>{dd8557ac-a37c-4fe5-8f46-c2c36c89602f}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -29,7 +29,7 @@ namespace wawo { namespace thread {
 
 	} //end of ns _impl_
 
-	template <class _MytexT>
+	template <class _MutexT>
 	class UniqueLock;
 
 	namespace _my_wrapper_ {

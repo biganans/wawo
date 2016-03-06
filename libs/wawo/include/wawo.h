@@ -30,6 +30,8 @@
 #include <wawo/net/peer/Wawo.hpp>
 
 #include <wawo/net/PeerProxy.hpp>
+#include <wawo/net/Node.hpp>
+#include <wawo/net/ServicePool.hpp>
 
 #include <wawo/env/Env.hpp>
 #include <wawo/app/App.hpp>

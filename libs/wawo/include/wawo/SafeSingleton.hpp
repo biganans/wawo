@@ -1,7 +1,6 @@
 #ifndef _WAWO_SAFE_SINGLETION_HPP_
 #define _WAWO_SAFE_SINGLETION_HPP_
 
-#include <thread>
 #include <vector>
 #include <mutex>
 

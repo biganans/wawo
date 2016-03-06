@@ -2,6 +2,7 @@
 #define _WAWO_NET_CREDENTIAL_HPP_
 
 #include <wawo/basic.hpp>
+#include <wawo/string.hpp>
 
 namespace wawo { namespace net {
 

@@ -115,7 +115,7 @@
     <ClInclude Include="..\..\include\wawo\log\SysLogger.h" />
     <ClInclude Include="..\..\include\wawo\macros.h" />
     <ClInclude Include="..\..\include\wawo\memory\memory.h" />
-    <ClInclude Include="..\..\include\wawo\net\Context.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\Node.hpp" />
     <ClInclude Include="..\..\include\wawo\net\Peer_Abstract.hpp" />
     <ClInclude Include="..\..\include\wawo\net\core\observer_impl\SocketObserver_Abstract.hpp" />
     <ClInclude Include="..\..\include\wawo\net\core\observer_impl\SocketObserver_Epoll.hpp" />
@@ -144,6 +144,7 @@
     <ClInclude Include="..\..\include\wawo\net\Credential.hpp" />
     <ClInclude Include="..\..\include\wawo\net\Protocol_Abstract.hpp" />
     <ClInclude Include="..\..\include\wawo\net\ServiceList.h" />
+    <ClInclude Include="..\..\include\wawo\net\ServicePool.hpp" />
     <ClInclude Include="..\..\include\wawo\net\ServiceProvider_Abstract.hpp" />
     <ClInclude Include="..\..\include\wawo\net\service\EchoClient.hpp" />
     <ClInclude Include="..\..\include\wawo\net\service\EchoServer.hpp" />
