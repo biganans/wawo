@@ -103,7 +103,7 @@ namespace wawo { namespace net { namespace peer {
 
 		int Request( WAWO_SHARED_PTR<MyMessageT> const& message, WAWO_REF_PTR<message::Wawo::Callback_Abstract> const& cb ) {
 			WAWO_ASSERT( message != NULL );
-			
+
 			//WAWO_ASSERT( message->GetType() == wawo::net::message::Wawo::T_NONE );
 
 			message->SetType( wawo::net::message::Wawo::T_REQUEST );
@@ -197,7 +197,7 @@ namespace wawo { namespace net { namespace peer {
 			}
 		}
 
-#define _TEST_CALLBACK
+//#define _TEST_CALLBACK
 #ifdef _TEST_CALLBACK
 		struct MyCallback:
 			public wawo::net::message::Wawo::Callbacks_Abstract

@@ -57,9 +57,9 @@ namespace wawo { namespace net {
 			m_service_pool->Register(id, provider );
 		}
 
-		void RemoveService(uint32_t const& service_id) {
+		void RemoveService(uint32_t const& id) {
 			WAWO_ASSERT( m_service_pool != NULL );
-			m_service_pool->UnRegister(id, provider );
+			m_service_pool->UnRegister(id );
 		}
 
 		int StartListen(SocketAddr const& addr) {
@@ -94,7 +94,7 @@ namespace wawo { namespace net {
 
 			peer->Register( PE_MESSAGE, WAWO_REF_PTR<MyListenerT>(this) );
 			m_peer_proxy->AddPeer(peer);
-		
+
 			return wawo::OK;
 		}
 

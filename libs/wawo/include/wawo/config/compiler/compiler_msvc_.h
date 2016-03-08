@@ -3,16 +3,16 @@
 
 namespace wawo { namespace basic_type {
 
-	typedef char						_INT8_		;
-	typedef unsigned char				_UINT8_		;
+	typedef __int8						_INT8_		;
+	typedef unsigned __int8				_UINT8_		;
 
-	typedef short int					_INT16_		;
-	typedef unsigned short int			_UINT16_	;
+	typedef __int16						_INT16_		;
+	typedef unsigned __int16			_UINT16_	;
 
-	typedef int							_INT32_		;
-	typedef unsigned int				_UINT32_	;
+	typedef __int32						_INT32_		;
+	typedef unsigned __int32			_UINT32_	;
 
-	typedef signed __int64				_INT64_		;
+	typedef __int64						_INT64_		;
 	typedef unsigned __int64			_UINT64_	;
 
 }}

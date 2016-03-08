@@ -55,15 +55,15 @@ namespace wawo { namespace net {
 			2, call remote
 			3, should explicitly distinct local call and remote call ?
 
-		 * send message to remote 
-		 * 
-		 * return wawo::OK if call success, 
-		 * 
-		 * 
+		 * send message to remote
+		 *
+		 * return wawo::OK if call success,
+		 *
+		 *
 		 */
 		//int Call( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& message_in, WAWO_SHARED_PTR<MyMessageT> const& mesage_out ) {
-		//	
-		
+		//
+
 		//}
 
 		//int void RPC( MyBasePeerMessageCtxT const& ctx, WAWO_SHARED_PTR<MyMessageT> const& message_in, WAWO_SHARED_PTR<MyMessageT> const& mesage_out ) {
@@ -83,14 +83,14 @@ namespace wawo { namespace net {
 
 	private:
 		wawo::thread::Condition m_condition;
-		RPC(  ) 
+		RPC(  )
 		{
-		
+
 		}
 
 		~RPC()
 		{
-		
+
 		}
 
 		int Request() {
@@ -99,6 +99,8 @@ namespace wawo { namespace net {
 			// wait response
 			// get response
 			// return
+
+			return wawo::OK;
 		}
 	};
 }}
