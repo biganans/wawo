@@ -54,7 +54,6 @@ namespace wawo { namespace algorithm {
 
 		Packet( Packet const& copy ) {
 
-			WAWO_ASSERT( m_buffer == NULL );
 			m_left_capacity = copy.m_left_capacity ;
 			m_right_capacity = copy.m_right_capacity;
 

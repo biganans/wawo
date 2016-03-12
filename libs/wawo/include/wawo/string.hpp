@@ -1,9 +1,11 @@
 #ifndef _WAWO_STRING_HPP_
 #define _WAWO_STRING_HPP_
 
-#include <cstring>
-#include <cwchar>
+#include <string.h>
+#include <wchar.h>
 
+#include <algorithm>
+#include <vector>
 #include <wawo/config/platform.h>
 
 #define _WAWO_IS_CHAR_T(_T) (sizeof(_T)==sizeof(char))
@@ -141,6 +143,16 @@ namespace wawo {
 		return (sub-dst);
 	}
 
+
+	enum CharacterSet
+	{
+		CS_UTF8,
+		CS_GBK,
+		CS_GB2312,
+		CS_BIG5
+	};
+
+	//wctomb,wcstombs,mbstowcs,setlocal
 }
 
 namespace wawo {
@@ -174,11 +186,12 @@ namespace wawo {
 		{
 		}
 
+		//reserve init
 		explicit len_cstr(uint32_t const& slen ) :
 			cstr(NULL),
-			len(slen+1)
+			len(slen)
 		{
-			cstr = (_MyCharT*) malloc(sizeof(_MyCharT)*len);
+			cstr = (_MyCharT*) malloc(sizeof(_MyCharT)*(slen+1));
 			WAWO_MALLOC_CHECK(cstr);
 		}
 
@@ -188,8 +201,8 @@ namespace wawo {
 		{
 			WAWO_ASSERT( str != NULL );
 
-			len = wawo::strlen(str) + 1 ;// str + '\0'
-			cstr = (_MyCharT*) malloc( sizeof(_MyCharT)*len );
+			len = wawo::strlen(str) ;// str + '\0'
+			cstr = (_MyCharT*) malloc( sizeof(_MyCharT)*(len+1) );
 			WAWO_MALLOC_CHECK(cstr);
 
 			wawo::strcpy(cstr,str);
@@ -199,8 +212,8 @@ namespace wawo {
 			cstr(NULL),
 			len(0)
 		{
-			len = slen + 1;
-			cstr = (_MyCharT*) malloc( sizeof(char)*len ); // str + '\0'
+			len = slen ;
+			cstr = (_MyCharT*) malloc( sizeof(char)*(slen+1) ); // str + '\0'
 			WAWO_MALLOC_CHECK(cstr);
 
 			wawo::strncpy(cstr,str,slen);
@@ -212,91 +225,151 @@ namespace wawo {
 			len=0;
 		}
 
-		inline uint32_t Len() {
-			return len-1;
-		}
 		inline uint32_t Len() const {
-			return len-1;
-		}
-		inline _MyCharT* const CStr() {
-			return cstr;
+			return len;
 		}
 		inline _MyCharT const* const CStr() const {
 			return cstr;
+		}
+
+		void Swap( len_cstr& other ) {
+			wawo::swap( cstr,other.cstr );
+			wawo::swap( len, other.len );
 		}
 
 		len_cstr(len_cstr const& other ) :
 			cstr(NULL),
 			len(0)
 		{
-			WAWO_ASSERT(cstr == NULL);
+			if( other.len > 0 ) {
+				cstr = (_MyCharT*) malloc ( sizeof(_MyCharT)*(other.len+1) );
+				WAWO_MALLOC_CHECK(cstr);
 
-			cstr = (_MyCharT*) malloc ( sizeof(_MyCharT)*other.len );
-			WAWO_MALLOC_CHECK(cstr);
-
-			len = other.len;
-			memcpy(cstr,other.cstr,(len)*sizeof(_MyCharT) );
+				len = other.len;
+				//contain '\0'
+				memcpy(cstr,other.cstr,(len+1)*sizeof(_MyCharT) );
+			}
 		}
 
 		len_cstr& operator = (len_cstr const& other) {
-
-			if( cstr != NULL ) {
-				free(cstr);
-				len =0;
-			}
-
-			WAWO_ASSERT( cstr == NULL );
-			WAWO_ASSERT( len == 0 );
-
-			cstr = (_MyCharT*) malloc (sizeof(_MyCharT)*other.len);
-			WAWO_MALLOC_CHECK(cstr);
-
-			len = other.len;
-			memcpy(cstr,other.cstr,(len)*sizeof(_MyCharT));
+			len_cstr(other).Swap( *this );
 			return *this;
 		}
 
-		bool operator == (len_cstr const& other) {
-			return (len == other.len) && (wawo::strncmp( cstr,other.cstr,len ) == 0) ;
+		//str must be null terminated, or behaviour undefined
+		len_cstr& operator = ( char const* const str ) {
+			len_cstr(str).Swap(*this);
+			return *this;
 		}
+
 		bool operator == (len_cstr const& other) const {
 			return (len == other.len) && (wawo::strncmp( cstr,other.cstr,len ) == 0) ;
-		}
-		bool operator != (len_cstr const& other) {
-			return (len != other.len) || (wawo::strncmp( cstr,other.cstr,len ) != 0) ;
 		}
 		bool operator != (len_cstr const& other) const {
 			return (len != other.len) || (wawo::strncmp( cstr,other.cstr,len ) != 0) ;
 		}
 
-		_MyT operator + (len_cstr const& other) {
+		_MyT operator + (len_cstr const& other) const {
 			uint32_t buffer_len = Len() + other.Len() + 1;
-			_MyCharT* _buffer = (_MyCharT*) malloc( sizeof(_MyCharT)*buffer_len );
+			_MyCharT* _buffer = (_MyCharT*) calloc( sizeof(_MyCharT), buffer_len );
 
-			wawo::strncpy( _buffer, CStr(), Len() );
-			wawo::strncat( _buffer, other.CStr(), other.Len() );
+			if( Len() ) {
+				wawo::strncpy( _buffer, CStr(), Len() );
+			}
 
-			_MyT lcstr(_buffer,buffer_len-1);
-			WAWO_DELETE(_buffer);
+			if( other.Len() ) {
+				wawo::strncat( _buffer, other.CStr(), other.Len() );
+			}
+
+			_MyT lcstr(_buffer, Len() + other.Len() );
+			delete _buffer;
 
 			return lcstr;
 		}
-		_MyT operator + (len_cstr const& other) const {
-			uint32_t buffer_len = Len() + other.Len() + 1;
-			_MyCharT* _buffer = (_MyCharT*) malloc( sizeof(_MyCharT)*buffer_len );
 
-			wawo::strncpy( _buffer, CStr(), Len() );
-			wawo::strncat( _buffer, other.CStr(), other.Len() );
+		_MyT operator + ( char const* const str ) const {
+			return *this + len_cstr( str );
+		}
 
-			_MyT lcstr(_buffer,buffer_len-1);
-			WAWO_DELETE(_buffer);
+		_MyT& operator += ( len_cstr const& other ) {
+			_MyT tmp = (*this) + other;
+			tmp.Swap(*this);
+			return *this;
+		}
 
-			return lcstr;
+		_MyT& operator += (char const* const str) {
+			_MyT tmp = (*this) + str;
+			tmp.Swap(*this);
+			return *this;
 		}
 	};
 
-
 	typedef len_cstr<char>		Len_CStr;
 	typedef len_cstr<wchar_t>	Len_WCStr;
+
+	template<class T>
+	inline void split( T const& string, T const& delimiter, std::vector<T>& result ) {
+
+		char const* check_cstr = string.CStr();
+		uint32_t check_len = string.Len();
+		uint32_t next_check_idx = 0;
+
+		char const* delimiter_cstr = delimiter.CStr();
+		uint32_t delimiter_len = delimiter.Len();
+
+		uint32_t hit_pos ;
+
+		while( (next_check_idx < check_len) && ( hit_pos = wawo::strpos( check_cstr + next_check_idx, delimiter_cstr )) != -1 )
+		{
+			T tmp( (check_cstr + next_check_idx), hit_pos );
+			next_check_idx += (hit_pos + delimiter_len);
+
+			if( tmp.Len() > 0 ) {
+				result.push_back( tmp );
+			}
+		}
+
+		if( (check_len - next_check_idx) > 0 ) {
+			T left_string( (check_cstr + next_check_idx), check_len-next_check_idx );
+			result.push_back( left_string );
+		}
+	}
+
+	template <>
+	inline void split<std::string>( std::string const& string, std::string const& delimiter_string, std::vector<std::string>& result ) {
+
+		std::vector<Len_CStr> len_cstr_result;
+		split( Len_CStr( string.c_str(), string.length()), Len_CStr(delimiter_string.c_str(), delimiter_string.length()), len_cstr_result );
+
+		std::for_each( len_cstr_result.begin(), len_cstr_result.end(), [&]( Len_CStr lencstr ) {
+			result.push_back( std::string( lencstr.CStr(), lencstr.Len()) );
+		}) ;
+	}
+
+	template <class T>
+	inline void join( std::vector<T> const& strings, T const& delimiter, T& result ) {
+		uint32_t curr_idx = 0;
+		while( curr_idx < strings.size() ) {
+			result += strings[curr_idx];
+			if( curr_idx != (strings.size() -1) ) {
+				result += delimiter;
+			}
+			++curr_idx;
+		}
+	}
+
+	template <>
+	inline void join<std::string>( std::vector<std::string> const& strings, std::string const& delimiter, std::string& result ) {
+		std::vector<Len_CStr> len_cstr_vector;
+		
+		std::for_each( strings.begin(), strings.end(), [&]( std::string const& sstr ) {
+			len_cstr_vector.push_back( Len_CStr( sstr.c_str(), sstr.length() ) );
+		});
+
+		Len_CStr len_cstr;
+		join( len_cstr_vector, Len_CStr( delimiter.c_str(), delimiter.length()), len_cstr );
+
+		result = std::string( len_cstr.CStr(), len_cstr.Len() );	
+	}
 }
 #endif

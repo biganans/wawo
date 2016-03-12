@@ -72,11 +72,11 @@ namespace wawo {
 			return code;
 		}
 
-		char* const GetFile() {
+		char const* GetFile() {
 			return file.CStr();
 		}
 
-		char* const GetFunc() {
+		char const* GetFunc() {
 			return func.CStr();
 		}
 
@@ -84,7 +84,7 @@ namespace wawo {
 			return line;
 		}
 
-		char* const GetStackTrace() {
+		char const* GetStackTrace() {
 			return callstack.CStr();
 		}
 	};
