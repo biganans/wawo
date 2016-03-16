@@ -53,7 +53,7 @@
 	<cassert>
 	<cassert>
 
-1455417833 
+1455417832 
 
 1449043398 /home/copy/winshare/svn_repository/trunk/libs/wawo/include/wawo/config/inlines.h
 
@@ -314,8 +314,6 @@
 1455603558 /home/copy/winshare/svn_repository/trunk/libs/boost/boost_1_57_0/boost/config/stdlib/libstdcpp3.hpp
 	<unistd.h>
 	<unistd.h>
-
-1455417832 
 
 1455603558 /home/copy/winshare/svn_repository/trunk/libs/boost/boost_1_57_0/boost/config/stdlib/sgi.hpp
 	<boost/config/no_tr1/utility.hpp>
@@ -19276,7 +19274,7 @@
 	<wawo/Exception.hpp>
 	<wawo/basic.hpp>
 
-1457403959 /home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/include/wawo/Exception.hpp
+1457783509 /home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/include/wawo/Exception.hpp
 	<cstring>
 	<string>
 	<wawo/config/platform.h>
@@ -19284,10 +19282,13 @@
 	<wawo/string.hpp>
 	<execinfo.h>
 
-1457403959 /home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/include/wawo/string.hpp
+1458129427 /home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/include/wawo/string.hpp
 	<cstring>
 	<cwchar>
+	<algorithm>
+	<vector>
 	<wawo/config/platform.h>
+	<cstring>
 
 1457403959 source:/home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/src/log/ConsoleLogger.cpp
 	<wawo/log/ConsoleLogger.h>
@@ -19300,7 +19301,7 @@
 	<wawo/core.h>
 	<wawo/log/FormatInterface.h>
 
-1457403959 /home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/include/wawo/core.h
+1458123750 /home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/include/wawo/core.h
 	<cstddef>
 	<cstdio>
 	<csignal>
@@ -19381,7 +19382,7 @@
 1457403959 /home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/include/wawo/log/SysLogger.h
 	<wawo/log/Logger_Abstract.hpp>
 
-1457403959 /home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/include/wawo/SmartPtr.hpp
+1458113953 /home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/include/wawo/SmartPtr.hpp
 	<wawo/core.h>
 
 1457403959 /home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/include/wawo/thread/Mutex.h
@@ -19435,7 +19436,7 @@
 	<wawo/NonCopyable.hpp>
 	<wawo/algorithm/Packet.hpp>
 
-1457403959 /home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/include/wawo/algorithm/Packet.hpp
+1457783390 /home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/include/wawo/algorithm/Packet.hpp
 	<wawo/core.h>
 	<wawo/SmartPtr.hpp>
 	<wawo/algorithm/bytes_helper.hpp>
@@ -19488,7 +19489,7 @@
 	<wawo/thread/Condition.h>
 	<wawo/task/TaskRunner.h>
 
-1457403959 /home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/include/wawo/task/TaskRunner.h
+1458113889 /home/copy/winshare/svn_repository/trunk/libs/wawo/github/wawo/libs/wawo/include/wawo/task/TaskRunner.h
 	<wawo/core.h>
 	<wawo/SmartPtr.hpp>
 	<wawo/NonCopyable.hpp>

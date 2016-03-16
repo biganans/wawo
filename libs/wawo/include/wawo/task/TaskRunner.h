@@ -10,7 +10,7 @@
 #include <wawo/task/Task.hpp>
 
 #define USE_TASK_BUFFER
-#define TASK_BUFFER_SIZE 2
+#define TASK_BUFFER_SIZE 4
 
 //#ifdef WAWO_PLATFORM_WIN
 	#define WAWO_TASK_RUNNER_USE_SPIN_MUTEX

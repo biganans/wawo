@@ -170,9 +170,11 @@ namespace wawo {
 		sp_counter& operator = (sp_counter const& r) {
 			WAWO_ASSERT( base != r.base );
 
-			if( r.base != 0 ) r.base->require();
-			if( base != 0 ) base->release();
-			base = r.base;
+			sp_counter(r).swap( *this );
+
+			//if( r.base != 0 ) r.base->require();
+			//if( base != 0 ) base->release();
+			//base = r.base;
 
 			return *this;
 		}
@@ -228,22 +230,24 @@ namespace wawo {
 			if( base != 0 ) base->weak_release();
 		}
 
-		sp_weak_counter& operator = ( sp_weak_counter const& counter ) {
-			WAWO_ASSERT( base != counter.base );
+		sp_weak_counter& operator = ( sp_weak_counter const& weak_counter ) {
+			WAWO_ASSERT( base != weak_counter.base );
 
-			if( counter.base != 0 ) { counter.base->weak_require(); }
-			if( base != 0 ) base->weak_release();
-			base = counter.base;
+			sp_weak_counter(weak_counter).swap(*this);
+			//if( counter.base != 0 ) { counter.base->weak_require(); }
+			//if( base != 0 ) base->weak_release();
+			//base = counter.base;
 
 			return *this;
 		}
 
-		sp_weak_counter& operator = (sp_counter const& counter) {
-			WAWO_ASSERT( base != counter.base );
+		sp_weak_counter& operator = (sp_counter const& sp_counter) {
+			WAWO_ASSERT( base != sp_counter.base );
+			sp_weak_counter(sp_counter).swap(*this);
 
-			if( counter.base != 0 ) { counter.base->weak_require(); }
-			if( base != 0 ) base->weak_release();
-			base = counter.base;
+			//if( counter.base != 0 ) { counter.base->weak_require(); }
+			//if( base != 0 ) base->weak_release();
+			//base = counter.base;
 
 			return *this;
 		}
@@ -301,7 +305,7 @@ namespace wawo {
 		SharedPoint():sp_ct() {
 		}
 
-		SharedPoint( T* const& point ):
+		explicit SharedPoint( T* const& point ):
 			sp_ct(point)
 		{
 		}
@@ -343,9 +347,9 @@ namespace wawo {
 			THIS_TYPE(r).swap(*this);
 			return *this ;
 		}
-
+		
 		void swap( THIS_TYPE& other ) {
-			wawo::swap(sp_ct, other.sp_ct);
+			wawo::swap( sp_ct, other.sp_ct );
 		}
 
 		inline T* operator -> () const {
@@ -436,13 +440,17 @@ namespace wawo {
 		{
 		}
 
+		void swap( THIS_TYPE& r ) {
+			wawo::swap(r.weak_ct,weak_ct);
+		}
+
 		THIS_TYPE& operator = (THIS_TYPE const& r) {
-			sp_weak_counter(r.weak_ct).swap(weak_ct);
+			WeakPoint(r).swap(*this);
 			return *this;
 		}
 
 		THIS_TYPE& operator = (SHARED_POINT_TYPE const& r) {
-			sp_weak_counter(r.sp_ct).swap(weak_ct);
+			WeakPoint(r).swap(*this);
 			return *this;
 		}
 
@@ -471,8 +479,8 @@ namespace wawo {
 
 		typedef T ELEMENT_TYPE;
 
-		explicit RefPoint():_p(0) {}
-		explicit RefPoint( POINT_TYPE const& p )
+		RefPoint():_p(0) {}
+		RefPoint( POINT_TYPE const& p )
 			:_p(p)
 		{
 			if(_p != 0) _p->Grab();

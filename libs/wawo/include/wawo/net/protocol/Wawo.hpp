@@ -184,7 +184,7 @@ namespace wawo { namespace net { namespace protocol {
 								packets[count++]=packet ;
 								m_parse_state = S_PREPARE ;
 
-								if( count == size ) {
+								if( (count == size) && (buffer->BytesCount()>0) ) {
 									exit_parse = true;
 									ec_o = wawo::E_SOCKET_MAY_HAVE_MORE_PACKET ;
 

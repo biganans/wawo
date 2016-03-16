@@ -5,13 +5,13 @@
 //#include "../../../../wawo_config/wawo_config.h"
 
 //custom generic compiler , platform infos for wawo
-#include <stddef.h>
-#include <stdio.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <assert.h>
+#include <cstddef>
+#include <cstdio>
+#include <csignal>
+#include <cstdlib>
+#include <cstdarg>
+#include <cstring>
+#include <cassert>
 
 #include <wawo/config/compiler.h>
 #include <wawo/config/platform.h>

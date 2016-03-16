@@ -169,8 +169,8 @@ namespace wawo { namespace net { namespace message {
 #ifdef WAWO_COMPACT_ID_AND_TYPE
 			packet->WriteLeft<uint8_t>(id_type);
 #else
-			packet->WriteLeft<uint8_t>(message->GetId()&0xFF);
 			packet->WriteLeft<uint8_t>(message->GetType()&0XFF);
+			packet->WriteLeft<uint8_t>(message->GetId()&0xFF);
 #endif
 			packet->WriteLeft<uint32_t>(message_in->GetNetId());
 
