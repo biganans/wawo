@@ -10,7 +10,6 @@
 
 #define _WAWO_IS_CHAR_T(_T) (sizeof(_T)==sizeof(char))
 #define _WAWO_IS_WCHAR_T(_T) (sizeof(_T)==sizeof(wchar_t))
-#include <cstring>
 
 //extern part
 namespace wawo {
