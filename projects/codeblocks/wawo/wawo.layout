@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_layout_file>
+	<FileVersion major="1" minor="0" />
+	<ActiveTarget name="Debug" />
+	<File name="../../../include/wawo/algorithm/Packet.hpp" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4297" topLine="147" />
+		</Cursor>
+	</File>
+	<File name="../../../include/wawo/net/core/Dispatcher_Abstract.hpp" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="10636" topLine="344" />
+		</Cursor>
+	</File>
+	<File name="../../../3rd/http_parser/http_parser.h" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="10064" topLine="213" />
+		</Cursor>
+	</File>
+	<File name="../../../include/wawo/net/PeerProxy.hpp" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="9492" topLine="343" />
+		</Cursor>
+	</File>
+	<File name="../../../include/wawo/thread/Mutex.hpp" open="1" top="0" tabpos="12" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="17871" topLine="704" />
+		</Cursor>
+	</File>
+	<File name="../../../include/wawo/constants.h" open="1" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="12697" topLine="243" />
+		</Cursor>
+	</File>
+	<File name="../../../include/wawo/net/core/TLP/HLenPacket.hpp" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1748" topLine="59" />
+		</Cursor>
+	</File>
+	<File name="../../../include/wawo/net/peer/SuperCargo.hpp" open="1" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="34744" topLine="1200" />
+		</Cursor>
+	</File>
+	<File name="../../../include/wawo/algorithm/BytesRingBuffer.hpp" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2211" topLine="73" />
+		</Cursor>
+	</File>
+	<File name="../../../include/wawo/net/peer/Http.hpp" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="9646" topLine="314" />
+		</Cursor>
+	</File>
+	<File name="../../../include/wawo/net/Node_Abstract.hpp" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="1610" topLine="55" />
+		</Cursor>
+	</File>
+</CodeBlocks_layout_file>

@@ -1,0 +1,67 @@
+../../build/x86_64_release/thread/Thread.o: ../../src/thread/Thread.cpp \
+ ../../include/wawo/core.h ../../include/wawo/config/compiler.h \
+ ../../include/wawo/config/compiler/compiler_gcc_.h \
+ ../../include/wawo/config/platform.h \
+ ../../include/wawo/config/platform/platform_posix_.h \
+ ../../include/wawo/macros.h ../../include/wawo/config/config.h \
+ ../../include/wawo/constants.h ../../include/wawo/memory/memory.h \
+ ../../include/wawo/NonCopyable.hpp ../../include/wawo/basic.hpp \
+ ../../include/wawo/time/time.hpp ../../include/wawo/string.hpp \
+ ../../include/wawo/Exception.hpp ../../include/wawo/thread/Thread.h \
+ ../../include/wawo/thread/Tls.hpp ../../include/wawo/SafeSingleton.hpp \
+ ../../include/wawo/log/LoggerManager.h \
+ ../../include/wawo/log/Logger_Abstract.hpp \
+ ../../include/wawo/log/FormatInterface.h \
+ ../../include/wawo/log/ConsoleLogger.h \
+ ../../include/wawo/log/FileLogger.h ../../include/wawo/log/SysLogger.h \
+ ../../include/wawo/thread/Mutex.h ../../include/wawo/thread/Condition.h
+
+../../include/wawo/core.h:
+
+../../include/wawo/config/compiler.h:
+
+../../include/wawo/config/compiler/compiler_gcc_.h:
+
+../../include/wawo/config/platform.h:
+
+../../include/wawo/config/platform/platform_posix_.h:
+
+../../include/wawo/macros.h:
+
+../../include/wawo/config/config.h:
+
+../../include/wawo/constants.h:
+
+../../include/wawo/memory/memory.h:
+
+../../include/wawo/NonCopyable.hpp:
+
+../../include/wawo/basic.hpp:
+
+../../include/wawo/time/time.hpp:
+
+../../include/wawo/string.hpp:
+
+../../include/wawo/Exception.hpp:
+
+../../include/wawo/thread/Thread.h:
+
+../../include/wawo/thread/Tls.hpp:
+
+../../include/wawo/SafeSingleton.hpp:
+
+../../include/wawo/log/LoggerManager.h:
+
+../../include/wawo/log/Logger_Abstract.hpp:
+
+../../include/wawo/log/FormatInterface.h:
+
+../../include/wawo/log/ConsoleLogger.h:
+
+../../include/wawo/log/FileLogger.h:
+
+../../include/wawo/log/SysLogger.h:
+
+../../include/wawo/thread/Mutex.h:
+
+../../include/wawo/thread/Condition.h:
