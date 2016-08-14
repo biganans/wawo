@@ -1,1 +1,0 @@
-1, if send side send large files frequenctly, then call shutdown, the remote recv side's fd status remain ESTABLISH and the send side's status remain FIN_WAIT_1 until all the previous data been received 
