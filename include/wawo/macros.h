@@ -30,24 +30,19 @@
 
 #define WAWO_STRINGIFY(str)	#str
 
-/*
-statement,
-	x==3 && y==4 && z==5
-	x
-	y != 0
-	func();
-*/
-#ifdef WAWO_ISGNU
-	#define WAWO_ASSERT(x) assert(x) // @todo ,let's polish this latter ,,,,,,,
+#ifdef _DEBUG
+	#if WAWO_ISGNU
+		#define WAWO_ASSERT(x) assert(x)
+	#else
+		#define WAWO_ASSERT(to_check, ...) ((void) ((to_check) ? 0 : wawo::appError (#to_check, __FILE__, __LINE__ , __FUNCTION__, ##__VA_ARGS__)))
+	#endif
 #else
-	#define WAWO_ASSERT(to_check, ...) ((void) ((to_check) ? 0 : wawo::appError (#to_check, __FILE__, __LINE__ , __FUNCTION__, ##__VA_ARGS__)))
+	#define WAWO_ASSERT(x)
 #endif
 
-//#define WAWO_ASSERT_N(Dev, to_check, ...) ((void) ((to_check) ? 0 : wawo::appError ("["#Dev"]"#to_check, __FILE__, __LINE__ , __FUNCTION__, ##__VA_ARGS__)))
-
-#define WAWO_MALLOC_CHECK(point) \
+#define WAWO_MALLOC_CHECK(pointer) \
 	do { \
-		if(NULL==point) { \
+		if(NULL==pointer) { \
 			std::exit( wawo::E_MALLOC_FAILED ); \
 		} \
 	} while(0)

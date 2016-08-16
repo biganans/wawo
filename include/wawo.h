@@ -41,7 +41,6 @@
 #include <wawo/net/ServiceNode.hpp>
 
 #include <wawo/net/CargoNode.hpp>
-
 #include <wawo/net/HttpNode.hpp>
 #include <wawo/net/WawoNode.hpp>
 

@@ -188,6 +188,19 @@ namespace wawo { namespace net {
 		L_MAX
 	};
 
+	struct KeepAliveVals {
+		u8_t	onoff;
+		i32_t 	idle; //in milliseconds
+		i32_t	interval; //in milliseconds
+		i32_t	probes;
+
+		KeepAliveVals() :
+			onoff(0),
+			idle(0),
+			interval(0),
+			probes(0)
+		{}
+	};
 	class SocketBase:
 		virtual public wawo::RefObject_Abstract
 	{
@@ -269,6 +282,16 @@ namespace wawo { namespace net {
 
 		int GetLinger( bool& on_off, int& linger_t ) const ;
 		int SetLinger( bool const& on_off, int const& linger_t = 30 /* in seconds */ ) ;
+
+		int TurnOnKeepAlive();
+		int TurnOffKeepAlive();
+
+		/*	please note that
+			windows do not provide ways to retrieve idle time and interval ,and probes has been disabled programming since vista
+		*/
+
+		int SetKeepAliveVals(KeepAliveVals const& vals);
+		int GetKeepAliveVals(KeepAliveVals& vals);
 
 		inline SpinMutex& GetLock( LockType const& lt) {  WAWO_ASSERT( lt < L_MAX ); return m_mutexes[lt]; }
 

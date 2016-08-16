@@ -15,6 +15,7 @@ namespace wawo {
 #include <SDKDDKVer.h>
 #include <winsock2.h> //WIN32_LEAN_AND_MEAN will exclude this from Windows.h
 #include <WS2tcpip.h> //for inet_ntop, etc
+#include <mstcpip.h>
 #include <Windows.h> //will include winsock.h
 #include <tchar.h>
 

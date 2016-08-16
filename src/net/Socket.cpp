@@ -846,6 +846,102 @@ namespace wawo { namespace net {
 		return wawo::OK ;
 	}
 
+	int SocketBase::TurnOnKeepAlive() {
+#if WAWO_ISGNU
+		int keepalive = 1;
+#elif WAWO_ISWIN
+		char keepalive = 1;
+#else
+	#error
+#endif
+		return setsockopt(m_fd, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive) );
+	}
+
+	int SocketBase::TurnOffKeepAlive() {
+#if WAWO_ISGNU
+		int keepalive = 0;
+#elif WAWO_ISWIN
+		char keepalive = 0;
+#else
+#error
+#endif
+		return setsockopt(m_fd, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive));
+	}
+
+	int SocketBase::SetKeepAliveVals(KeepAliveVals const& vals) {
+		if (vals.onoff == 0) {
+			return TurnOffKeepAlive();
+		}
+
+#if WAWO_ISWIN
+		DWORD dwBytesRet;
+		struct tcp_keepalive alive;
+		memset(&alive, 0, sizeof(alive));
+
+		alive.onoff = 1;
+		if (vals.idle == 0) {
+			alive.keepalivetime = WAWO_DEFAULT_KEEPALIVE_IDLETIME;
+		}
+		else {
+			alive.keepalivetime = vals.idle;
+		}
+
+		if (vals.interval == 0) {
+			alive.keepaliveinterval = WAWO_DEFAULT_KEEPALIVE_INTERVAL;
+		}
+		else {
+			alive.keepaliveinterval = vals.idle;
+		}
+
+		int rt = WSAIoctl(m_fd, SIO_KEEPALIVE_VALS, &alive, sizeof(alive), NULL, 0, &dwBytesRet, NULL, NULL);
+		return rt;
+#elif WAWO_ISGNU
+		int rt;
+		if (vals.idle != 0) {
+			i32_t idle = (vals.idle/1000);
+			rt = setsockopt(m_fd, SOL_TCP, TCP_KEEPIDLE, &idle, sizeof(idle));
+			WAWO_RETURN_V_IF_NOT_MATCH(wawo::GetLastErrno(), rt == 0);
+		}
+		if (vals.interval != 0) {
+			i32_t interval = (vals.interval/1000);
+			rt = setsockopt(m_fd, SOL_TCP, TCP_KEEPINTVL, &interval, sizeof(interval));
+			WAWO_RETURN_V_IF_NOT_MATCH(wawo::GetLastErrno(), rt == 0);
+		}
+		if (vals.probes != 0) {
+			rt = setsockopt(m_fd, SOL_TCP, TCP_KEEPCNT, &vals.probes, sizeof(vals.probes));
+			WAWO_RETURN_V_IF_NOT_MATCH(wawo::GetLastErrno(), rt == 0);
+		}
+
+		return wawo::OK;
+#else
+		#error
+#endif
+	}
+
+	int SocketBase::GetKeepAliveVals(KeepAliveVals& vals) {
+#if WAWO_ISWIN
+		WAWO_THROW_EXCEPTION("not supported");
+#elif WAWO_ISGNU
+		KeepAliveVals _vals;
+		int rt;
+		socklen_t len ;
+		rt = getsockopt(m_fd, SOL_TCP, TCP_KEEPIDLE, &_vals.idle, &len);
+		WAWO_RETURN_V_IF_NOT_MATCH(wawo::GetLastErrno(), rt == 0);
+		rt = getsockopt(m_fd, SOL_TCP, TCP_KEEPINTVL, &_vals.interval,&len);
+		WAWO_RETURN_V_IF_NOT_MATCH(wawo::GetLastErrno(), rt == 0);
+		rt = getsockopt(m_fd, SOL_TCP, TCP_KEEPCNT, &_vals.probes, &len);
+		WAWO_RETURN_V_IF_NOT_MATCH(wawo::GetLastErrno(), rt == 0);
+
+		_vals.idle = _vals.idle*1000;
+		_vals.interval = _vals.interval*1000;
+		vals = _vals;
+		return wawo::OK;
+#else
+		#error
+#endif
+	}
+
+
 	u32_t SocketBase::SendTo( wawo::byte_t const* const buff, wawo::u32_t const& byte_len, const wawo::net::SocketAddr& addr, int& ec_o ) {
 
 		sockaddr_in addr_in;
