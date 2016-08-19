@@ -69,7 +69,7 @@ LIB_FULL_PATH_NAME	:= $(LIB_BIN_DIR)/$(LIB_FULL_NAME)
 
 DEFINES	:= $(DEFINES) __WAWO__
 
-CC_MISC		:= -c
+CC_MISC		:= -c -rdynamic
 CC_C11		:= -std=c++11
 
 ifeq ($(PRJ_BUILD),debug)

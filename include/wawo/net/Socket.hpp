@@ -273,12 +273,15 @@ namespace wawo { namespace net {
 		inline bool IsNonBlocking() const {return ( (m_option&OPTION_NON_BLOCKING) != 0) ;}
 
 		//must be called between open and connect|listen
-		int SetSndBufferSize( int const& size );
-		int GetSndBufferSize( int& size ) const;
+		int SetSndBufferSize( u32_t const& size );
+		int GetSndBufferSize( u32_t& size ) const;
+		int GetLeftSndQueue( u32_t& size) const;
+
 
 		//must be called between open and connect|listen
-		int SetRcvBufferSize( int const& size );
-		int GetRcvBufferSize( int& size ) const;
+		int SetRcvBufferSize( u32_t const& size );
+		int GetRcvBufferSize( u32_t& size ) const;
+		int GetLeftRcvQueue( u32_t& size) const;
 
 		int GetLinger( bool& on_off, int& linger_t ) const ;
 		int SetLinger( bool const& on_off, int const& linger_t = 30 /* in seconds */ ) ;

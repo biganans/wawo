@@ -18,6 +18,8 @@
 #include <sys/un.h> //sockaddr_un
 #include <sys/uio.h>
 
+#include <sys/ioctl.h>
+
 #ifdef WAWO_IO_MODE_EPOLL
 	#include <sys/epoll.h>
 #endif

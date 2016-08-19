@@ -41,18 +41,16 @@
 				<Option createDefFile="1" />
 				<Compiler>
 					<Add option="-O3" />
+					<Add option="-g" />
 					<Add option="-DNDEBUG" />
 				</Compiler>
-				<Linker>
-					<Add option="-s" />
-				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-std=c++11" />
 			<Add option="-m64" />
-			<Add option="-D__WAWO_DAY_DAY_UP__" />
+			<Add option="-D__WAWO__" />
 			<Add directory="../../../include" />
 		</Compiler>
 		<Linker>
