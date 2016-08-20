@@ -130,7 +130,7 @@ namespace wawo { namespace net {
 						u32_t c = m_sockets.size();
 						for (u32_t i = 0; i < c; i++) {
 							if (m_sockets[i]->IsFlushTimerExpired()) {
-								m_sockets[i]->Shutdown(wawo::E_SOCKET_ASYNC_FLUSH_TIMER_EXPIRED);
+								m_sockets[i]->Shutdown(wawo::net::SHUTDOWN_RDWR,wawo::E_SOCKET_ASYNC_FLUSH_TIMER_EXPIRED);
 							}
 						}
 					}
