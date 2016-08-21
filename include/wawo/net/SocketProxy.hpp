@@ -339,7 +339,7 @@ namespace wawo { namespace net {
 							{
 								WAWO_ASSERT(m_observer != NULL );
 								m_observer->UnWatch( socket, IOE_RD );
-								WAWO_WARN("[socket_proxy][#%d:%s] socket error, wawo::E_SOCKET_RD_SHUTDOWN_ALREADY", socket->GetFd(), socket->GetRemoteAddr().AddressInfo().CStr() );
+								WAWO_DEBUG("[socket_proxy][#%d:%s] socket error, wawo::E_SOCKET_RD_SHUTDOWN_ALREADY", socket->GetFd(), socket->GetRemoteAddr().AddressInfo().CStr() );
 							}
 							break;
 							{
