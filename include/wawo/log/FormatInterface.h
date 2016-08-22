@@ -1,5 +1,5 @@
-#ifndef _WAWO_FORMAT_INTERFACE_H_
-#define _WAWO_FORMAT_INTERFACE_H_
+#ifndef _WAWO_LOG_FORMAT_INTERFACE_H_
+#define _WAWO_LOG_FORMAT_INTERFACE_H_
 
 #include <stdarg.h>
 

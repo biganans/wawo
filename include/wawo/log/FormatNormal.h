@@ -1,5 +1,5 @@
-#ifndef _WAWO_FORMAT_NORMAL_H_
-#define _WAWO_FORMAT_NORMAL_H_
+#ifndef _WAWO_LOG_FORMAT_NORMAL_H_
+#define _WAWO_LOG_FORMAT_NORMAL_H_
 
 #include <wawo/core.h>
 #include <wawo/log/FormatInterface.h>
