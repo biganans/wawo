@@ -225,7 +225,7 @@ namespace wawo { namespace net {
 
 //		int socket_buffer_size = 1024*64;
 #ifdef _DEBUG
-		int tmp_size ;
+		u32_t tmp_size ;
 		GetSndBufferSize(tmp_size);
 		WAWO_DEBUG( "[socket][#%d:%s] current snd buffer size: %d", m_fd, m_addr.AddressInfo().CStr(), tmp_size );
 #endif
@@ -589,7 +589,7 @@ namespace wawo { namespace net {
 		return SetOptions( m_option & ~OPTION_NON_BLOCKING  ) ;
 	}
 
-	int SocketBase::SetSndBufferSize( int const& size ) {
+	int SocketBase::SetSndBufferSize( u32_t const& size ) {
 		WAWO_ASSERT( size >= SOCK_SND_MIN_SIZE && size <= SOCK_SND_MAX_SIZE );
 		WAWO_ASSERT( m_fd > 0 );
 
@@ -603,21 +603,18 @@ namespace wawo { namespace net {
 		if( -1 == rt ) {
 			int ec = WAWO_TRANSLATE_SOCKET_ERROR_CODE(SocketGetLastErrno());
 			WAWO_FATAL("[socket][#%d:%s]setsockopt(SO_SNDBUF) == %d failed, error code: %d", m_fd, m_addr.AddressInfo().CStr(),size, ec );
-
 			m_ec = ec;
 			return ec ;
 		}
 
-		//WAWO_DEBUG("[socket][#%d:%s]setsockopt(SO_SNDBUF) == %d success", m_fd, m_addr.AddressInfo().CStr(), size ) ;
 		return wawo::OK ;
 	}
 
-	int SocketBase::GetSndBufferSize( int& size ) const {
+	int SocketBase::GetSndBufferSize(u32_t& size ) const {
 		WAWO_ASSERT( m_fd > 0 );
 
 		int iBufSize = 0;
-		socklen_t opt_len = sizeof(int);
-
+		socklen_t opt_len = sizeof(u32_t);
 		int rt = getsockopt( m_fd, SOL_SOCKET, SO_SNDBUF, (char*) &iBufSize, &opt_len );
 
 		if( rt == -1 ) {
@@ -626,12 +623,44 @@ namespace wawo { namespace net {
 			return ec ;
 		} else {
 			size = iBufSize ;
-			//WAWO_DEBUG("[socket][#%d:%s]getsockopt(SO_SNDBUF) == %d", m_fd, m_addr.AddressInfo().CStr(), size );
 			return wawo::OK ;
 		}
 	}
 
-	int SocketBase::SetRcvBufferSize( int const& size ) {
+	int SocketBase::GetLeftSndQueue(u32_t& size) const {
+#if WAWO_ISGNU
+		if( m_fd <= 0 ) {
+			size = 0;
+			return -1;
+		}
+
+        int rt= ioctl(m_fd, TIOCOUTQ, &size);
+
+        WAWO_RETURN_V_IF_MATCH(rt,rt==0);
+        return SocketGetLastErrno();
+#else
+		WAWO_THROW_EXCEPTION("this operation does not supported on windows");
+#endif
+	}
+
+	int SocketBase::GetLeftRcvQueue(u32_t& size) const {
+		if(m_fd<=0) {
+			size=0;
+			return -1;
+		}
+#if WAWO_ISGNU
+		int rt = ioctl(m_fd, FIONREAD, size);
+#else
+		u_long ulsize;
+		int rt = ioctlsocket(m_fd, FIONREAD, &ulsize );
+		if (rt == 0) size = ulsize & 0xFFFFFFFF;
+#endif
+
+		WAWO_RETURN_V_IF_MATCH(rt, rt==0);
+		return SocketGetLastErrno();
+	}
+
+	int SocketBase::SetRcvBufferSize( u32_t const& size ) {
 		WAWO_ASSERT( size >= SOCK_RCV_MIN_SIZE && size <= SOCK_RCV_MAX_SIZE );
 		WAWO_ASSERT( m_fd > 0 );
 
@@ -650,15 +679,14 @@ namespace wawo { namespace net {
 			return ec ;
 		}
 
-		//WAWO_DEBUG("[socket]%d]setsockopt(SO_RCVBUF) == %d success", m_fd, size ) ;
 		return wawo::OK ;
 	}
 
-	int SocketBase::GetRcvBufferSize( int& size ) const {
+	int SocketBase::GetRcvBufferSize( u32_t& size ) const {
 		WAWO_ASSERT( m_fd > 0 );
 
 		int iBufSize = 0;
-		socklen_t opt_len = sizeof(int);
+		socklen_t opt_len = sizeof(u32_t);
 
 		int rt = getsockopt( m_fd, SOL_SOCKET, SO_RCVBUF, (char*) &iBufSize, &opt_len );
 
@@ -669,7 +697,6 @@ namespace wawo { namespace net {
 			return ec ;
 		} else {
 			size = iBufSize;
-			//WAWO_DEBUG("[socket]%d]getsockopt(SO_RCVBUF) == %d", m_fd, size );
 			return wawo::OK ;
 		}
 	}
@@ -707,11 +734,6 @@ namespace wawo { namespace net {
 			return wawo::E_SOCKET_INVALID_FD ;
 		}
 
-		//if( options == 0 ) {
-			//do nothing
-		//	return wawo::OK ;
-		//}
-
 	#if WAWO_ISGNU
 		int optval;
 	#elif WAWO_ISWIN
@@ -730,7 +752,6 @@ namespace wawo { namespace net {
 			if( should_set ) {
 				optval = (options & OPTION_BROADCAST) ? 1 : 0 ;
 				ret = setsockopt(m_fd, SOL_SOCKET, SO_BROADCAST, &optval, sizeof(optval));
-				//WAWO_DEBUG( "[socket][#%d:%s] socket set Socket::OPTION_BROADCAST, optval: %d, op ret: %d : %d", m_fd, m_addr.AddressInfo().CStr(),optval, ret );
 
 				if( ret == 0 ) {
 					if( optval == 1 ) {
@@ -756,7 +777,6 @@ namespace wawo { namespace net {
 			if( should_set ) {
 				optval = (options & OPTION_REUSEADDR) ? 1 : 0 ;
 				ret = setsockopt(m_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-				//WAWO_DEBUG( "[socket][#%d:%s] socket set Socket::OPTION_REUSEADDR,optval: %d, op ret: %d", m_fd, m_addr.AddressInfo().CStr(), optval, ret );
 
 				if( ret == 0 ) {
 					if( optval == 1 ) {
