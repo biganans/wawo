@@ -20,29 +20,7 @@ int main( int argc, char** argv ) {
 
 	wawo::app::App application ;
 
-	std::vector<wawo::net::AddrInfo> ips;
-	WAWO_ENV_INSTANCE->GetLocalIpList(ips);
-
-	WAWO_ASSERT( ips.size() > 0 );
-	char server_ip[32] = {0};
-
-	std::vector<wawo::net::AddrInfo>::iterator it = std::find_if( ips.begin(), ips.end(), [&](wawo::net::AddrInfo const& info) {
-		if(
-			wawo::strncmp(info.ip.CStr(), "10.",3) == 0 ||
-			wawo::strncmp(info.ip.CStr(), "192.168.2.",10) == 0 ||
-			wawo::strncmp(info.ip.CStr(), "192.168.1.",10) == 0
-		) {
-			return true;
-		}
-		return false;
-	});
-
-	WAWO_ASSERT( it != ips.end() );
-	memcpy(server_ip,it->ip.CStr(), it->ip.Len());
-	WAWO_ASSERT( wawo::strlen(server_ip) > 0 );
-
 	WAWO_REF_PTR<NodeT> node( new NodeT() );
-
 	int start_rt = node->Start();
 	if( start_rt != wawo::OK )
 	{
