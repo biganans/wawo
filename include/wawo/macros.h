@@ -32,12 +32,12 @@
 
 #ifdef _DEBUG
 	#if WAWO_ISGNU
-		#define WAWO_ASSERT(x) assert(x)
+		#define WAWO_ASSERT(x,...) assert(x)
 	#else
-		#define WAWO_ASSERT(to_check, ...) ((void) ((to_check) ? 0 : wawo::appError (#to_check, __FILE__, __LINE__ , __FUNCTION__, ##__VA_ARGS__)))
+		#define WAWO_ASSERT(x, ...) ((void) ((x) ? 0 : wawo::appError (#x, __FILE__, __LINE__ , __FUNCTION__, ##__VA_ARGS__)))
 	#endif
 #else
-	#define WAWO_ASSERT(x)
+	#define WAWO_ASSERT(x,...)
 #endif
 
 #define WAWO_MALLOC_CHECK(pointer) \

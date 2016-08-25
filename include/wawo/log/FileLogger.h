@@ -1,5 +1,5 @@
-#ifndef _WAWO_FILE_LOGGER_H_
-#define _WAWO_FILE_LOGGER_H_
+#ifndef _WAWO_LOG_FILE_LOGGER_H_
+#define _WAWO_LOG_FILE_LOGGER_H_
 
 #include <wawo/log/Logger_Abstract.hpp>
 #include <string>

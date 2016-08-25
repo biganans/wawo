@@ -32,7 +32,7 @@ namespace wawo { namespace net {
 		m_addr(addr),
 		m_fd(fd),
 		m_ec(wawo::OK),
-		m_state( S_CONNECTED ),
+		m_state( S_ACCEPTED ),
 		m_shutdown_flag(SHUTDOWN_NONE),
 
 		m_sbc(sbc),
@@ -466,6 +466,20 @@ namespace wawo { namespace net {
 		return Connect();
 	}
 
+	void SocketBase::HandlePassiveConnected(int& ec_o) {
+		LockGuard<SpinMutex> _lg(m_mutexes[L_SOCKET]);
+		ec_o = wawo::OK;
+		WAWO_ASSERT( m_state == S_ACCEPTED );
+		if (m_state != S_ACCEPTED) {
+			WAWO_ASSERT(m_fd < 0);
+			ec_o = wawo::E_SOCKET_INVALID_STATE;
+			return;
+		}
+		WAWO_ASSERT(m_fd > 0);
+		WAWO_ASSERT(m_sm == SM_PASSIVE);
+		m_state = S_CONNECTED;
+	}
+
 	void SocketBase::HandleAsyncConnected(int& ec_o) {
 		LockGuard<SpinMutex> _lgw( m_mutexes[L_WRITE] );
 
@@ -483,25 +497,23 @@ namespace wawo { namespace net {
 		}
 
 		WAWO_ASSERT( m_fd > 0 );
-		WAWO_ASSERT( m_sm == SM_ACTIVE || m_sm == SM_PASSIVE);
+		WAWO_ASSERT( m_sm == SM_ACTIVE );
 		WAWO_ASSERT( IsNonBlocking() );
 
-		if( m_sm == SM_ACTIVE ) {
-			WAWO_ASSERT( m_state == S_CONNECTING );
-			WAWO_ASSERT( m_is_connecting );
+		WAWO_ASSERT( m_state == S_CONNECTING );
+		WAWO_ASSERT( m_is_connecting );
 
-			int iError = 0;
-			socklen_t opt_len = sizeof(int);
+		int iError = 0;
+		socklen_t opt_len = sizeof(int);
 
-			if (getsockopt(m_fd, SOL_SOCKET, SO_ERROR, (char*)&iError, &opt_len) < 0) {
-				WAWO_FATAL( "[socket][#%d:%s]getsockopt failed: %d",m_fd,m_addr.AddressInfo().CStr(), iError );
-			}
+		if (getsockopt(m_fd, SOL_SOCKET, SO_ERROR, (char*)&iError, &opt_len) < 0) {
+			WAWO_FATAL( "[socket][#%d:%s]getsockopt failed: %d",m_fd,m_addr.AddressInfo().CStr(), iError );
+		}
 
-			if( iError == 0 ) {
-				WAWO_DEBUG("[socket_proxy]socket connected, local addr: %s, remote addr: %s", GetLocalAddr().AddressInfo().CStr(), GetRemoteAddr().AddressInfo().CStr());
-				m_state = S_CONNECTED ;
-				m_is_connecting = false;
-			}
+		if( iError == 0 ) {
+			WAWO_DEBUG("[socket_proxy]socket connected, local addr: %s, remote addr: %s", GetLocalAddr().AddressInfo().CStr(), GetRemoteAddr().AddressInfo().CStr());
+			m_state = S_CONNECTED ;
+			m_is_connecting = false;
 		}
 		m_ws = S_WRITE_IDLE;
 	}
@@ -916,22 +928,23 @@ namespace wawo { namespace net {
 		int rt = WSAIoctl(m_fd, SIO_KEEPALIVE_VALS, &alive, sizeof(alive), NULL, 0, &dwBytesRet, NULL, NULL);
 		return rt;
 #elif WAWO_ISGNU
-		int rt;
+		int rt = TurnOnKeepAlive();
+		WAWO_RETURN_V_IF_NOT_MATCH(SocketGetLastErrno(), rt == 0);
+
 		if (vals.idle != 0) {
 			i32_t idle = (vals.idle/1000);
 			rt = setsockopt(m_fd, SOL_TCP, TCP_KEEPIDLE, &idle, sizeof(idle));
-			WAWO_RETURN_V_IF_NOT_MATCH(wawo::GetLastErrno(), rt == 0);
+			WAWO_RETURN_V_IF_NOT_MATCH(SocketGetLastErrno(), rt == 0);
 		}
 		if (vals.interval != 0) {
 			i32_t interval = (vals.interval/1000);
 			rt = setsockopt(m_fd, SOL_TCP, TCP_KEEPINTVL, &interval, sizeof(interval));
-			WAWO_RETURN_V_IF_NOT_MATCH(wawo::GetLastErrno(), rt == 0);
+			WAWO_RETURN_V_IF_NOT_MATCH(SocketGetLastErrno(), rt == 0);
 		}
 		if (vals.probes != 0) {
 			rt = setsockopt(m_fd, SOL_TCP, TCP_KEEPCNT, &vals.probes, sizeof(vals.probes));
-			WAWO_RETURN_V_IF_NOT_MATCH(wawo::GetLastErrno(), rt == 0);
+			WAWO_RETURN_V_IF_NOT_MATCH(SocketGetLastErrno(), rt == 0);
 		}
-
 		return wawo::OK;
 #else
 		#error
@@ -946,11 +959,11 @@ namespace wawo { namespace net {
 		int rt;
 		socklen_t len ;
 		rt = getsockopt(m_fd, SOL_TCP, TCP_KEEPIDLE, &_vals.idle, &len);
-		WAWO_RETURN_V_IF_NOT_MATCH(wawo::GetLastErrno(), rt == 0);
+		WAWO_RETURN_V_IF_NOT_MATCH(SocketGetLastErrno(), rt == 0);
 		rt = getsockopt(m_fd, SOL_TCP, TCP_KEEPINTVL, &_vals.interval,&len);
-		WAWO_RETURN_V_IF_NOT_MATCH(wawo::GetLastErrno(), rt == 0);
+		WAWO_RETURN_V_IF_NOT_MATCH(SocketGetLastErrno(), rt == 0);
 		rt = getsockopt(m_fd, SOL_TCP, TCP_KEEPCNT, &_vals.probes, &len);
-		WAWO_RETURN_V_IF_NOT_MATCH(wawo::GetLastErrno(), rt == 0);
+		WAWO_RETURN_V_IF_NOT_MATCH(SocketGetLastErrno(), rt == 0);
 
 		_vals.idle = _vals.idle*1000;
 		_vals.interval = _vals.interval*1000;
@@ -961,6 +974,21 @@ namespace wawo { namespace net {
 #endif
 	}
 
+	int SocketBase::GetTOS(u8_t& tos) const {
+		u8_t _tos;
+		socklen_t len;
+
+		int rt = getsockopt(m_fd, IPPROTO_IP, IP_TOS, (char*)&_tos, &len );
+		WAWO_RETURN_V_IF_NOT_MATCH( wawo::SocketGetLastErrno(), rt == 0 );
+		tos = IPTOS_TOS(_tos);
+		return rt;
+	}
+
+	int SocketBase::SetTOS(u8_t const& tos) {
+		WAWO_ASSERT(m_fd>0);
+		u8_t _tos = IPTOS_TOS(tos) | 0xe0;
+		return setsockopt(m_fd, IPPROTO_IP, IP_TOS, (char*)&_tos, sizeof(_tos));
+	}
 
 	u32_t SocketBase::SendTo( wawo::byte_t const* const buff, wawo::u32_t const& byte_len, const wawo::net::SocketAddr& addr, int& ec_o ) {
 
@@ -1484,8 +1512,6 @@ namespace wawo { namespace net {
 		WAWO_ASSERT( m_sb != NULL );
 		ec_o = wawo::OK ;
 
-		//WAWO_DEBUG("[socket][#%d:%s]Flush begin", m_fd, m_addr.AddressInfo().CStr() );
-
 		u32_t flushed_total = 0;
 		u64_t begin_time = 0 ;
 		u32_t k = 0;
@@ -1517,8 +1543,6 @@ namespace wawo { namespace net {
 		WAWO_ASSERT( IsNonBlocking() );
 		WAWO_ASSERT( m_sb != NULL );
 		ec_o = wawo::OK ;
-
-		//WAWO_DEBUG("[socket][#%d:%s]AsyncFlush begin", m_fd, m_addr.AddressInfo().CStr() );
 
 		u32_t flushed_total = 0;
 		u64_t begin_time = 0 ;

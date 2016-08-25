@@ -1,5 +1,5 @@
-#ifndef _WAWO_LOGGER_MANAGER_H_
-#define _WAWO_LOGGER_MANAGER_H_
+#ifndef _WAWO_LOG_LOGGER_MANAGER_H_
+#define _WAWO_LOG_LOGGER_MANAGER_H_
 
 #include <vector>
 

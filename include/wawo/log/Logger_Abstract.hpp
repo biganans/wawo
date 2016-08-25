@@ -1,5 +1,5 @@
-#ifndef _WAWO_LOGGER_ABSTRACT_H_
-#define _WAWO_LOGGER_ABSTRACT_H_
+#ifndef _WAWO_LOG_LOGGER_ABSTRACT_H_
+#define _WAWO_LOG_LOGGER_ABSTRACT_H_
 
 #include <wawo/core.h>
 #include <wawo/SmartPtr.hpp>

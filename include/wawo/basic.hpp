@@ -32,6 +32,17 @@ namespace wawo {
 #endif
 	}
 
+	//remark: WSAGetLastError() == GetLastError(), but there is no gurantee for future change.
+	inline int SocketGetLastErrno() {
+#ifdef WAWO_PLATFORM_GNU
+		return errno;
+#elif defined(WAWO_PLATFORM_WIN)
+		return ::WSAGetLastError();
+#else
+		#error
+#endif
+	}
+
 	inline bool IsBigEndian() {
 		unsigned int x = 1;
 		return 0 == *(unsigned char*)(&x);

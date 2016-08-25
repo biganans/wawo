@@ -15,19 +15,6 @@
 
 #define WAWO_TRANSLATE_SOCKET_ERROR_CODE(_code) WAWO_NEGATIVE(_code)
 
-namespace wawo { namespace net {
-	//remark: WSAGetLastError() == GetLastError(), but there is no gurantee for future change.
-	inline int SocketGetLastErrno() {
-#ifdef WAWO_PLATFORM_GNU
-		return errno;
-#elif defined(WAWO_PLATFORM_WIN)
-		return ::WSAGetLastError();
-#else
-		#error
-#endif
-	}
-}}
-
 #define WAWO_CHECK_SOCKET_SEND_RETURN_V(v) \
 	do { \
 		WAWO_ASSERT(v == wawo::OK || \
@@ -94,6 +81,30 @@ namespace wawo { namespace net {
 #endif
 
 #define WAWO_MAX_ACCEPTS_ONE_TIME 128
+
+#ifndef IPTOS_TOS_MASK
+	#define IPTOS_TOS_MASK		0x1E
+#endif
+
+#ifndef IPTOS_TOS
+	#define IPTOS_TOS(tos)		((tos)&IPTOS_TOS_MASK)
+#endif
+
+#ifndef IPTOS_LOWDELAY
+	#define	IPTOS_LOWDELAY		0x10
+#endif
+
+#ifndef IPTOS_THROUGHPUT
+	#define	IPTOS_THROUGHPUT	0x08
+#endif
+
+#ifndef IPTOS_RELIABILITY
+	#define	IPTOS_RELIABILITY	0x04
+#endif
+
+#ifndef IPTOS_MINCOST
+	#define	IPTOS_MINCOST		0x02
+#endif
 
 namespace wawo { namespace net { namespace core {
 #ifdef WAWO_PLATFORM_GNU
@@ -177,6 +188,7 @@ namespace wawo { namespace net {
 		S_BINDED,
 		S_LISTEN,
 		S_CONNECTING,// for async connect
+		S_ACCEPTED,
 		S_CONNECTED,
 		S_CLOSED
 	};
@@ -190,7 +202,7 @@ namespace wawo { namespace net {
 
 	struct KeepAliveVals {
 		u8_t	onoff;
-		i32_t 	idle; //in milliseconds
+		i32_t	idle; //in milliseconds
 		i32_t	interval; //in milliseconds
 		i32_t	probes;
 
@@ -253,6 +265,7 @@ namespace wawo { namespace net {
 		int Connect();
 		int AsyncConnect();
 
+		void HandlePassiveConnected(int& ec_o);
 		void HandleAsyncConnected( int& ec_o );
 
 		u32_t Send( byte_t const* const buffer, u32_t const& size, int& ec_o,int const& block_time = __SEND_BLOCK_TIME__, int const& flags = 0 );
@@ -295,6 +308,9 @@ namespace wawo { namespace net {
 
 		int SetKeepAliveVals(KeepAliveVals const& vals);
 		int GetKeepAliveVals(KeepAliveVals& vals);
+
+		int GetTOS( u8_t& tos ) const;
+		int SetTOS( u8_t const& tos);
 
 		inline SpinMutex& GetLock( LockType const& lt) {  WAWO_ASSERT( lt < L_MAX ); return m_mutexes[lt]; }
 
