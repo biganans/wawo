@@ -84,7 +84,6 @@ namespace wawo { namespace net {
 				do {
 					WWRP<Socket> sockets[WAWO_MAX_ACCEPTS_ONE_TIME];
 					u32_t count = m_socket->Accept(sockets, WAWO_MAX_ACCEPTS_ONE_TIME, ec);
-
 					for (u32_t i = 0; i<count; i++) {
 						WWRP<SocketEvent> evt(new SocketEvent(m_socket, SE_ACCEPTED, core::Cookie((void*)(sockets[i].Get()))));
 						m_socket->Trigger(evt);
@@ -107,7 +106,6 @@ namespace wawo { namespace net {
 				if (ec == wawo::OK) {
 					WWRP<SocketEvent> sevt(new SocketEvent(m_socket, SE_CONNECTED));
 					m_socket->OSchedule(sevt);
-					//WAWO_CONDITION_CHECK(m_socket->Test_DP_ADDRESS_TAG() == DP_ADDRESS_TAG(m_socket.Get()));
 				} else {
 					m_socket->Close(ec);
 				}

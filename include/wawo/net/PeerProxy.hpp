@@ -57,7 +57,6 @@ namespace wawo { namespace net {
 
 		enum PeerOpCode {
 			OP_NONE,
-			OP_SOCKET_ACCEPTED,
 			OP_SOCKET_CONNECTED,
 			OP_SOCKET_ERROR,
 			OP_SOCKET_CLOSE,
@@ -138,30 +137,6 @@ namespace wawo { namespace net {
 				int const& ec = pop.ec;
 
 				switch (code) {
-				case OP_SOCKET_ACCEPTED:
-				{
-					if (m_state != S_RUN) {
-						socket->Close(wawo::E_PEER_PROXY_INVALID_STATE);
-					} else {
-						WAWO_ASSERT(peer == NULL);
-						WAWO_ASSERT(socket != NULL);
-						WAWO_ASSERT(socket->IsPassive());
-						WAWO_ASSERT(socket->IsNonBlocking());
-						WAWO_ASSERT(m_pevt_listener != NULL);
-
-						WWRP<PeerT> accepted_peer(new PeerT());
-						accepted_peer->AttachSocket(socket);
-						accepted_peer->Register(PE_SOCKET_CONNECTED, m_pevt_listener);
-						accepted_peer->Register(PE_CONNECTED, m_pevt_listener);
-
-						WWRP<SocketEvent> sevt(new SocketEvent(socket, SE_CONNECTED));
-						typename PeerT::LambdaFnT lambdaFNR = [accepted_peer, sevt]() -> void {
-							accepted_peer->OnEvent(sevt);
-						};
-						accepted_peer->OSchedule(lambdaFNR, nullptr);
-					}
-				}
-				break;
 				case OP_SOCKET_CONNECTED:
 				{
 					if (m_state != S_RUN) {
@@ -517,14 +492,13 @@ namespace wawo { namespace net {
 			peer->UnRegister(PE_CLOSE, peer_l);
 
 			WAWO_ASSERT(m_pevt_listener != NULL);
-			peer->UnRegister(PE_SOCKET_CONNECTED, m_pevt_listener);
+			peer->UnRegister(PE_CLOSE, m_pevt_listener);
 			peer->UnRegister(PE_CONNECTED, m_pevt_listener);
 			peer->UnRegister(PE_MESSAGE, m_pevt_listener);
 			peer->UnRegister(PE_SOCKET_RD_SHUTDOWN, m_pevt_listener);
 			peer->UnRegister(PE_SOCKET_WR_SHUTDOWN, m_pevt_listener);
 			peer->UnRegister(PE_SOCKET_CLOSE, m_pevt_listener);
-			peer->UnRegister(PE_CLOSE, m_pevt_listener);
-
+			peer->UnRegister(PE_SOCKET_CONNECTED, m_pevt_listener);
 			m_peers.erase(it);
 		}
 
@@ -644,7 +618,6 @@ namespace wawo { namespace net {
 
 			socket->Register(SE_CONNECTED,socket_l);
 			socket->Register(SE_ERROR, socket_l);
-//			socket->Register(SE_CLOSE, socket_l);
 
 			ConnectingPeerInfo info = { peer, socket };
 			peer->Register(PE_SOCKET_ERROR, m_pevt_listener);
@@ -689,8 +662,27 @@ namespace wawo { namespace net {
 
 				int rt = socket->TurnOnNonBlocking();
 				if (rt == wawo::OK) {
-					PeerOp op(OP_SOCKET_ACCEPTED, WWRP<PeerT>(NULL), socket);
-					_PlanOp(op);
+					WAWO_ASSERT(socket->IsPassive());
+					WAWO_ASSERT(socket->IsNonBlocking());
+					WAWO_ASSERT(m_pevt_listener != NULL);
+
+					typename PeerT::LambdaFnT lambdaFNR = [socket,evt_l=m_pevt_listener]() -> void {
+						WWRP<PeerT> accepted_peer(new PeerT());
+						accepted_peer->AttachSocket(socket);
+						accepted_peer->Register(PE_SOCKET_CONNECTED, evt_l);
+						accepted_peer->Register(PE_CONNECTED, evt_l);
+						int ec_o;
+						WWRP<SocketEvent> sevt(new SocketEvent(socket, SE_CONNECTED));
+						socket->HandlePassiveConnected(ec_o);
+						if (ec_o == wawo::OK) {
+							socket->Trigger(sevt);
+						} else {
+							accepted_peer->DetachSocket(socket);
+							accepted_peer->UnRegister(PE_SOCKET_CONNECTED, evt_l);
+							accepted_peer->UnRegister(PE_CONNECTED, evt_l);
+						}
+					};
+					socket->OSchedule(lambdaFNR, nullptr);
 				} else {
 					WAWO_WARN("[peer_proxy][%d:%s] new socket connected, but turn on nonblocking failed, error code: %d", socket->GetFd(), socket->GetRemoteAddr().AddressInfo().CStr(), rt);
 					socket->Close(rt);

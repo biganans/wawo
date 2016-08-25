@@ -59,7 +59,7 @@ namespace wawo { namespace net {
 		retval = getaddrinfo( hostname, servicename, &hint, &result );
 
 		if( retval != 0 ) {
-			WAWO_FATAL("[socketaddr]getaddrinfo failed: %d", wawo::GetLastErrno() );
+			WAWO_FATAL("[socketaddr]getaddrinfo failed: %d", wawo::SocketGetLastErrno() );
 			return retval;
 		}
 
@@ -137,7 +137,7 @@ namespace wawo { namespace net {
 		struct in_addr inaddr;
 		int rval = inet_pton( AF_INET, ipaddr, &inaddr );
 		if (rval == 0) return wawo::E_INVALID_IP_ADDR;
-		if (rval == -1) { return WAWO_NEGATIVE(wawo::GetLastErrno()); }
+		if (rval == -1) { return WAWO_NEGATIVE(wawo::SocketGetLastErrno()); }
 		ip = (inaddr.s_addr);
 		//ip = ntohl( inet_addr(ipaddr) ) ;
 		return wawo::OK;
