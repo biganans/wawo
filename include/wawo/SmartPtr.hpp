@@ -354,16 +354,19 @@ namespace wawo {
 	template <class T, class U>
 	inline SharedPointer<T> static_pointer_cast(SharedPointer<U> const& r )
 	{
-		//typename SharedPoint<T>::ELEMENT_TYPE* p = static_cast< typename SharedPoint<T>::ELEMENT_TYPE* >( r.Get() );
-		return SharedPointer<T>(r);
+		//check castable
+		typename SharedPointer<T>::ELEMENT_TYPE* p = static_cast< typename SharedPoint<T>::ELEMENT_TYPE* >( r.Get() );
+		return SharedPointer<T>(p);
 	}
 
-	//template <class T, class U>
-	//SharedPoint<T> dynamic_pointer_cast( SharedPoint<U> const& r )
-	//{
-		//typename SharedPoint<T>::ELEMENT_TYPE* p = dynamic_cast< typename SharedPoint<T>::ELEMENT_TYPE* >( r.Get() );
-	//	return SharedPoint<T>(p);
-	//}
+	template <class T, class U>
+	inline SharedPointer<T> dynamic_pointer_cast( SharedPointer<U> const& r )
+	{
+		//check castable
+		typename SharedPointer<T>::ELEMENT_TYPE* p = dynamic_cast< typename SharedPoint<T>::ELEMENT_TYPE* >( r.Get() );
+		if(p) return SharedPointer<T>(p);
+		return SharedPointer<T>();
+	}
 
 	//template <class T, class U>
 	//SharedPoint<T> const_pointer_cast( SharedPoint<U> const& r )
@@ -565,7 +568,8 @@ namespace wawo {
 	inline RefPointer<T> dynamic_pointer_cast(RefPointer<U> const& r )
 	{
 		typename RefPointer<T>::ELEMENT_TYPE* p = dynamic_cast< typename RefPointer<T>::ELEMENT_TYPE* >( r.Get() );
-		return RefPointer<T>(p);
+		if(p) return RefPointer<T>(p);
+		return RefPointer<T>();
 	}
 }
 
