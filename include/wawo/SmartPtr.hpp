@@ -355,7 +355,7 @@ namespace wawo {
 	inline SharedPointer<T> static_pointer_cast(SharedPointer<U> const& r )
 	{
 		//check castable
-		typename SharedPointer<T>::ELEMENT_TYPE* p = static_cast< typename SharedPoint<T>::ELEMENT_TYPE* >( r.Get() );
+		typename SharedPointer<T>::ELEMENT_TYPE* p = static_cast< typename SharedPointer<T>::ELEMENT_TYPE* >( r.Get() );
 		return SharedPointer<T>(p);
 	}
 
@@ -363,7 +363,7 @@ namespace wawo {
 	inline SharedPointer<T> dynamic_pointer_cast( SharedPointer<U> const& r )
 	{
 		//check castable
-		typename SharedPointer<T>::ELEMENT_TYPE* p = dynamic_cast< typename SharedPoint<T>::ELEMENT_TYPE* >( r.Get() );
+		typename SharedPointer<T>::ELEMENT_TYPE* p = dynamic_cast< typename SharedPointer<T>::ELEMENT_TYPE* >( r.Get() );
 		if(p) return SharedPointer<T>(p);
 		return SharedPointer<T>();
 	}
