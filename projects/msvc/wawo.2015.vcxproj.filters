@@ -1,0 +1,485 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="3rd">
+      <UniqueIdentifier>{9e6825b6-a6f5-4ab7-85e0-4dabdf706ee3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3rd\http_parser">
+      <UniqueIdentifier>{bc0f8ed0-a984-416c-807d-f5019c6c48c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo">
+      <UniqueIdentifier>{3ceefb70-8735-4312-a96e-d8717abc4f4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\config">
+      <UniqueIdentifier>{dcd09b86-efb6-4fd9-b7f4-15064670e090}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\env">
+      <UniqueIdentifier>{635b0c7e-9328-4895-b081-d4ea0f4bf078}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\log">
+      <UniqueIdentifier>{e6f5b3f5-c359-4dce-be1e-aec20ee4d30d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\net">
+      <UniqueIdentifier>{c7df995f-9bbc-41b2-b20a-b646bb3fd203}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\signal">
+      <UniqueIdentifier>{ca0d6bf1-58d4-4461-b28b-12664a5ac6c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\task">
+      <UniqueIdentifier>{f1789fa1-c94a-4981-8514-429e6ea6bebc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\thread">
+      <UniqueIdentifier>{140b351a-8b36-4c29-b011-41298545f83c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\time">
+      <UniqueIdentifier>{dc741019-cd41-4505-8ff7-4587da8e113f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\config\compiler">
+      <UniqueIdentifier>{cbcc2574-5590-4313-8dbb-19440e60d003}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\config\platform">
+      <UniqueIdentifier>{373666bd-5644-44d0-80cb-e1ba2699d77b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\net\peer">
+      <UniqueIdentifier>{f62e7a13-4fab-4b62-b3d4-efd19efc01e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\net\peer\message">
+      <UniqueIdentifier>{3894aaf7-546f-4feb-9f24-ede195bd3866}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src">
+      <UniqueIdentifier>{dcd78f91-04a6-4b80-8e02-5e99efe28c7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src\log">
+      <UniqueIdentifier>{20c1713a-cea0-4d4a-8487-5b6950c715cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src\net">
+      <UniqueIdentifier>{75c1c420-4e05-411b-bc88-3fd163998aaf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src\signal">
+      <UniqueIdentifier>{45eba9f2-adcd-4472-a842-58c5348811af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src\task">
+      <UniqueIdentifier>{356d7e0c-e553-4c52-887d-260745c24eff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src\thread">
+      <UniqueIdentifier>{37411f93-7eb7-402e-9a30-2b2374a317c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\security">
+      <UniqueIdentifier>{4b44b612-43a6-41c5-8ce0-7605eccc03d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\math">
+      <UniqueIdentifier>{9d4666f2-d057-431b-b150-77a2d3666934}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src\net\peer">
+      <UniqueIdentifier>{c2c87ca7-b8ec-4c54-9193-02acc1d2d990}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\thread\impl">
+      <UniqueIdentifier>{1f94cd76-49df-4ee2-8aea-41a9908a10b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src\thread\impl">
+      <UniqueIdentifier>{1e7cad8c-72d3-46e7-9498-8a2888cdcd6b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\context">
+      <UniqueIdentifier>{ce876d99-e4b2-4f98-bff9-340bc06919d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src\context">
+      <UniqueIdentifier>{2bfb8462-d0b8-4865-a8d8-90298ffc3923}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\net\tlp">
+      <UniqueIdentifier>{d824cb88-c672-4155-8513-d5f7870cdc7a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\net\observer_impl">
+      <UniqueIdentifier>{80026568-fcac-4a41-944a-2eb02afb7008}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src\net\peer\message">
+      <UniqueIdentifier>{f967a4ac-43e0-4618-9b4c-637c66a5691b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3rd\stack_walker">
+      <UniqueIdentifier>{932e0e04-f05e-4085-a689-c60a1088183d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\net\protocol">
+      <UniqueIdentifier>{eddb4dc2-a98c-4b4e-96e7-d042a06f478f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src\net\protocol">
+      <UniqueIdentifier>{496680a5-764d-4b44-a164-6fe6f84ab52a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\3rd\http_parser\http_parser.c">
+      <Filter>3rd\http_parser</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\basic.cpp">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\log\console_logger.cpp">
+      <Filter>Source Files\src\log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\log\file_logger.cpp">
+      <Filter>Source Files\src\log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\log\format_normal.cpp">
+      <Filter>Source Files\src\log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\log\logger_manager.cpp">
+      <Filter>Source Files\src\log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\log\sys_logger.cpp">
+      <Filter>Source Files\src\log</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\net\peer\http.cpp">
+      <Filter>Source Files\src\net\peer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\net\address.cpp">
+      <Filter>Source Files\src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\net\socket.cpp">
+      <Filter>Source Files\src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\net\socket_base.cpp">
+      <Filter>Source Files\src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\net\socket_observer.cpp">
+      <Filter>Source Files\src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\net\wcp.cpp">
+      <Filter>Source Files\src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\signal\signal_manager.cpp">
+      <Filter>Source Files\src\signal</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\thread\impl\mutex.cpp">
+      <Filter>Source Files\src\thread\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\thread\thread.cpp">
+      <Filter>Source Files\src\thread</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\exception.cpp">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\net\peer\message\mux_cargo.cpp">
+      <Filter>Source Files\src\net\peer\message</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\task\scheduler.cpp">
+      <Filter>Source Files\src\task</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\task\runner.cpp">
+      <Filter>Source Files\src\task</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rd\stack_walker\win_stack_walker.cpp">
+      <Filter>3rd\stack_walker</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\net\protocol\http_utils.cpp">
+      <Filter>Source Files\src\net\protocol</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\3rd\http_parser\http_parser.h">
+      <Filter>3rd\http_parser</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\config\compiler.h">
+      <Filter>Header Files\wawo\config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\config\config.h">
+      <Filter>Header Files\wawo\config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\config\platform.h">
+      <Filter>Header Files\wawo\config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\config\compiler\compiler_msvc_.h">
+      <Filter>Header Files\wawo\config\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\config\platform\platform_win_.h">
+      <Filter>Header Files\wawo\config\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\time\time.hpp">
+      <Filter>Header Files\wawo\time</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\config\platform\platform_gnu_.h">
+      <Filter>Header Files\wawo\config\platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\config\compiler\compiler_gnugcc_.h">
+      <Filter>Header Files\wawo\config\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\math\formula.hpp">
+      <Filter>Header Files\wawo\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\thread\impl\mutex.hpp">
+      <Filter>Header Files\wawo\thread\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\thread\impl\mutex_basic.hpp">
+      <Filter>Header Files\wawo\thread\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\thread\impl\shared_mutex.hpp">
+      <Filter>Header Files\wawo\thread\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\thread\impl\spin_mutex.hpp">
+      <Filter>Header Files\wawo\thread\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\context\fcontext.hpp">
+      <Filter>Header Files\wawo\context</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\env\env.hpp">
+      <Filter>Header Files\wawo\env</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\env\env_impl_gnu.hpp">
+      <Filter>Header Files\wawo\env</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\env\env_impl_win32.hpp">
+      <Filter>Header Files\wawo\env</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\log\console_logger.h">
+      <Filter>Header Files\wawo\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\log\file_logger.h">
+      <Filter>Header Files\wawo\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\log\format_interface.h">
+      <Filter>Header Files\wawo\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\log\format_normal.h">
+      <Filter>Header Files\wawo\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\log\logger_abstract.hpp">
+      <Filter>Header Files\wawo\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\log\logger_manager.h">
+      <Filter>Header Files\wawo\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\log\sys_logger.h">
+      <Filter>Header Files\wawo\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\peer\message\http.hpp">
+      <Filter>Header Files\wawo\net\peer\message</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\peer\http.hpp">
+      <Filter>Header Files\wawo\net\peer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\address.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\http_node.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\messenger.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\net_event.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\node_abstract.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\peer_abstract.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\peer_proxy.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\service_pool.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\service_provider_abstract.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\socket.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\socket_base.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\socket_observer.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\wcp.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\security\cipher_abstract.hpp">
+      <Filter>Header Files\wawo\security</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\security\dh.hpp">
+      <Filter>Header Files\wawo\security</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\security\obfuscate.hpp">
+      <Filter>Header Files\wawo\security</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\security\xxtea.hpp">
+      <Filter>Header Files\wawo\security</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\signal\signal_handler_abstract.h">
+      <Filter>Header Files\wawo\signal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\signal\signal_manager.h">
+      <Filter>Header Files\wawo\signal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\task\task.hpp">
+      <Filter>Header Files\wawo\task</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\thread\condition.hpp">
+      <Filter>Header Files\wawo\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\thread\mutex.hpp">
+      <Filter>Header Files\wawo\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\thread\thread.hpp">
+      <Filter>Header Files\wawo\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\thread\thread_run_object_abstract.hpp">
+      <Filter>Header Files\wawo\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\thread\ticker.hpp">
+      <Filter>Header Files\wawo\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\thread\tls.hpp">
+      <Filter>Header Files\wawo\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\__init__.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\app.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\basic.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\bytes_helper.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\bytes_ringbuffer.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\constants.h">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\exception.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\macros.h">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\packet.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\ringbuffer.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\singleton.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\string.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\peer\ros.hpp">
+      <Filter>Header Files\wawo\net\peer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\peer\message\ros.hpp">
+      <Filter>Header Files\wawo\net\peer\message</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\ros_node.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\tlp\dh_symmetric_encrypt.hpp">
+      <Filter>Header Files\wawo\net\tlp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\tlp\hlen_packet.hpp">
+      <Filter>Header Files\wawo\net\tlp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\tlp\stream.hpp">
+      <Filter>Header Files\wawo\net\tlp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\tlp\symmetric_encrypt.hpp">
+      <Filter>Header Files\wawo\net\tlp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\observer_impl\epoll.hpp">
+      <Filter>Header Files\wawo\net\observer_impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\observer_impl\select.hpp">
+      <Filter>Header Files\wawo\net\observer_impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\observer_impl\wpoll.hpp">
+      <Filter>Header Files\wawo\net\observer_impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\dispatcher_abstract.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\event.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\listener_abstract.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\observer_abstract.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\tlp_abstract.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\smart_ptr.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\peer\message\cargo.hpp">
+      <Filter>Header Files\wawo\net\peer\message</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\peer\cargo.hpp">
+      <Filter>Header Files\wawo\net\peer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\peer\message\mux_cargo.hpp">
+      <Filter>Header Files\wawo\net\peer\message</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\peer\mux_cargo.hpp">
+      <Filter>Header Files\wawo\net\peer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\task\scheduler.hpp">
+      <Filter>Header Files\wawo\task</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\thread\impl\condition.hpp">
+      <Filter>Header Files\wawo\thread\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\task\runner.hpp">
+      <Filter>Header Files\wawo\task</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\stack_walker\win_stack_walker.hpp">
+      <Filter>3rd\stack_walker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\memory.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\core.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\protocol\http.hpp">
+      <Filter>Header Files\wawo\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\protocol\icmp.hpp">
+      <Filter>Header Files\wawo\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\peer\_mux.hpp">
+      <Filter>Header Files\wawo\net\peer</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\src\context\jump_i386_ms_pe_masm.asm">
+      <Filter>Source Files\src\context</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\context\make_i386_ms_pe_masm.asm">
+      <Filter>Source Files\src\context</Filter>
+    </CustomBuild>
+  </ItemGroup>
+</Project>

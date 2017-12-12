@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="wawo" />
+		<Option makefile="makefile" />
+		<Option execution_dir="../../linux" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/wawo" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Debug/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option parameters="-r 1" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-g" />
+					<Add option="-O0 -rdynamic" />
+					<Add option="-DDEBUG" />
+				</Compiler>
+				<Linker>
+					<Add option="-rdynamic" />
+				</Linker>
+				<MakeCommands>
+					<Build command="$make -f $makefile" />
+					<CompileFile command="$make -f $makefile $file" />
+					<Clean command="$make -f $makefile clean$target" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile $target" />
+					<SilentBuild command="$make -f $makefile &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/wawo" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Release/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option parameters="-r 16" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-O3" />
+					<Add option="-DNDEBUG" />
+				</Compiler>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-std=c++11" />
+			<Add option="-m64" />
+			<Add option="-g" />
+			<Add option="-rdynamic" />
+			<Add option="-D__WAWO__" />
+			<Add directory="../../../include" />
+		</Compiler>
+		<Linker>
+			<Add option="-m64" />
+			<Add option="-rdynamic" />
+		</Linker>
+		<Unit filename="../../../3rd/http_parser/http_parser.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../3rd/http_parser/http_parser.h" />
+		<Unit filename="../../../include/wawo.h" />
+		<Unit filename="../../../include/wawo/__init__.hpp" />
+		<Unit filename="../../../include/wawo/app.hpp" />
+		<Unit filename="../../../include/wawo/basic.hpp" />
+		<Unit filename="../../../include/wawo/bytes_helper.hpp" />
+		<Unit filename="../../../include/wawo/bytes_ringbuffer.hpp" />
+		<Unit filename="../../../include/wawo/config/compiler.h" />
+		<Unit filename="../../../include/wawo/config/compiler/compiler_gnugcc_.h" />
+		<Unit filename="../../../include/wawo/config/compiler/compiler_msvc_.h" />
+		<Unit filename="../../../include/wawo/config/config.h" />
+		<Unit filename="../../../include/wawo/config/platform.h" />
+		<Unit filename="../../../include/wawo/config/platform/platform_gnu_.h" />
+		<Unit filename="../../../include/wawo/config/platform/platform_win_.h" />
+		<Unit filename="../../../include/wawo/constants.h" />
+		<Unit filename="../../../include/wawo/context/fcontext.hpp" />
+		<Unit filename="../../../include/wawo/core.h" />
+		<Unit filename="../../../include/wawo/env/env.hpp" />
+		<Unit filename="../../../include/wawo/env/env_impl_gnu.hpp" />
+		<Unit filename="../../../include/wawo/env/env_impl_win32.hpp" />
+		<Unit filename="../../../include/wawo/exception.hpp" />
+		<Unit filename="../../../include/wawo/log/console_logger.h" />
+		<Unit filename="../../../include/wawo/log/file_logger.h" />
+		<Unit filename="../../../include/wawo/log/format_interface.h" />
+		<Unit filename="../../../include/wawo/log/format_normal.h" />
+		<Unit filename="../../../include/wawo/log/logger_abstract.hpp" />
+		<Unit filename="../../../include/wawo/log/logger_manager.h" />
+		<Unit filename="../../../include/wawo/log/sys_logger.h" />
+		<Unit filename="../../../include/wawo/macros.h" />
+		<Unit filename="../../../include/wawo/math/formula.hpp" />
+		<Unit filename="../../../include/wawo/net/address.hpp" />
+		<Unit filename="../../../include/wawo/net/dispatcher_abstract.hpp" />
+		<Unit filename="../../../include/wawo/net/event.hpp" />
+		<Unit filename="../../../include/wawo/net/http_node.hpp" />
+		<Unit filename="../../../include/wawo/net/io_event_task.hpp" />
+		<Unit filename="../../../include/wawo/net/listener_abstract.hpp" />
+		<Unit filename="../../../include/wawo/net/messenger.hpp" />
+		<Unit filename="../../../include/wawo/net/net_event.hpp" />
+		<Unit filename="../../../include/wawo/net/node_abstract.hpp" />
+		<Unit filename="../../../include/wawo/net/observer_abstract.hpp" />
+		<Unit filename="../../../include/wawo/net/observer_impl/epoll.hpp" />
+		<Unit filename="../../../include/wawo/net/observer_impl/select.hpp" />
+		<Unit filename="../../../include/wawo/net/observer_impl/wpoll.hpp" />
+		<Unit filename="../../../include/wawo/net/peer/cargo.hpp" />
+		<Unit filename="../../../include/wawo/net/peer/http.hpp" />
+		<Unit filename="../../../include/wawo/net/peer/message/cargo.hpp" />
+		<Unit filename="../../../include/wawo/net/peer/message/http.hpp" />
+		<Unit filename="../../../include/wawo/net/peer/message/mux_cargo.hpp" />
+		<Unit filename="../../../include/wawo/net/peer/message/ros.hpp" />
+		<Unit filename="../../../include/wawo/net/peer/mux_cargo.hpp" />
+		<Unit filename="../../../include/wawo/net/peer/ros.hpp" />
+		<Unit filename="../../../include/wawo/net/peer_abstract.hpp" />
+		<Unit filename="../../../include/wawo/net/peer_proxy.hpp" />
+		<Unit filename="../../../include/wawo/net/ros_node.hpp" />
+		<Unit filename="../../../include/wawo/net/service_pool.hpp" />
+		<Unit filename="../../../include/wawo/net/service_provider_abstract.hpp" />
+		<Unit filename="../../../include/wawo/net/socket.hpp" />
+		<Unit filename="../../../include/wawo/net/socket_base.hpp" />
+		<Unit filename="../../../include/wawo/net/socket_observer.hpp" />
+		<Unit filename="../../../include/wawo/net/tlp/dh_symmetric_encrypt.hpp" />
+		<Unit filename="../../../include/wawo/net/tlp/hlen_packet.hpp" />
+		<Unit filename="../../../include/wawo/net/tlp/stream.hpp" />
+		<Unit filename="../../../include/wawo/net/tlp/symmetric_encrypt.hpp" />
+		<Unit filename="../../../include/wawo/net/tlp_abstract.hpp" />
+		<Unit filename="../../../include/wawo/net/utils/icmp.hpp" />
+		<Unit filename="../../../include/wawo/net/wcp.hpp" />
+		<Unit filename="../../../include/wawo/packet.hpp" />
+		<Unit filename="../../../include/wawo/ringbuffer.hpp" />
+		<Unit filename="../../../include/wawo/security/cipher_abstract.hpp" />
+		<Unit filename="../../../include/wawo/security/dh.hpp" />
+		<Unit filename="../../../include/wawo/security/obfuscate.hpp" />
+		<Unit filename="../../../include/wawo/security/xxtea.hpp" />
+		<Unit filename="../../../include/wawo/signal/signal_handler_abstract.h" />
+		<Unit filename="../../../include/wawo/signal/signal_manager.h" />
+		<Unit filename="../../../include/wawo/singleton.hpp" />
+		<Unit filename="../../../include/wawo/smart_ptr.hpp" />
+		<Unit filename="../../../include/wawo/string.hpp" />
+		<Unit filename="../../../include/wawo/task/runner.hpp" />
+		<Unit filename="../../../include/wawo/task/scheduler.hpp" />
+		<Unit filename="../../../include/wawo/task/task.hpp" />
+		<Unit filename="../../../include/wawo/thread/condition.hpp" />
+		<Unit filename="../../../include/wawo/thread/impl/condition.hpp" />
+		<Unit filename="../../../include/wawo/thread/impl/mutex.hpp" />
+		<Unit filename="../../../include/wawo/thread/impl/mutex_basic.hpp" />
+		<Unit filename="../../../include/wawo/thread/impl/shared_mutex.hpp" />
+		<Unit filename="../../../include/wawo/thread/impl/spin_mutex.hpp" />
+		<Unit filename="../../../include/wawo/thread/mutex.hpp" />
+		<Unit filename="../../../include/wawo/thread/thread.hpp" />
+		<Unit filename="../../../include/wawo/thread/thread_run_object_abstract.hpp" />
+		<Unit filename="../../../include/wawo/thread/ticker.hpp" />
+		<Unit filename="../../../include/wawo/thread/tls.hpp" />
+		<Unit filename="../../../include/wawo/time/time.hpp" />
+		<Unit filename="../../../src/basic.cpp" />
+		<Unit filename="../../../src/exception.cpp" />
+		<Unit filename="../../../src/log/console_logger.cpp" />
+		<Unit filename="../../../src/log/file_logger.cpp" />
+		<Unit filename="../../../src/log/format_normal.cpp" />
+		<Unit filename="../../../src/log/logger_manager.cpp" />
+		<Unit filename="../../../src/log/sys_logger.cpp" />
+		<Unit filename="../../../src/net/address.cpp" />
+		<Unit filename="../../../src/net/peer/http.cpp" />
+		<Unit filename="../../../src/net/peer/message/mux_cargo.cpp" />
+		<Unit filename="../../../src/net/protocol/http_utils.cpp" />
+		<Unit filename="../../../src/net/socket.cpp" />
+		<Unit filename="../../../src/net/socket_base.cpp" />
+		<Unit filename="../../../src/net/socket_observer.cpp" />
+		<Unit filename="../../../src/net/wcp.cpp" />
+		<Unit filename="../../../src/signal/signal_manager.cpp" />
+		<Unit filename="../../../src/task/runner.cpp" />
+		<Unit filename="../../../src/task/scheduler.cpp" />
+		<Unit filename="../../../src/thread/impl/mutex.cpp" />
+		<Unit filename="../../../src/thread/thread.cpp" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

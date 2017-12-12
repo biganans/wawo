@@ -1,0 +1,276 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{CDCE0809-6C77-480B-8912-09C043B9C268}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>wawo2015</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="vsprops_local\common.props" />
+    <Import Project="vsprops_local\debug.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="vsprops_local\common.props" />
+    <Import Project="vsprops_local\release.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BrowseInformation>true</BrowseInformation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <Bscmake>
+      <PreserveSbr>true</PreserveSbr>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>Disabled</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\3rd\http_parser\http_parser.c" />
+    <ClCompile Include="..\..\3rd\stack_walker\win_stack_walker.cpp" />
+    <ClCompile Include="..\..\src\basic.cpp" />
+    <ClCompile Include="..\..\src\exception.cpp" />
+    <ClCompile Include="..\..\src\log\console_logger.cpp" />
+    <ClCompile Include="..\..\src\log\file_logger.cpp" />
+    <ClCompile Include="..\..\src\log\format_normal.cpp" />
+    <ClCompile Include="..\..\src\log\logger_manager.cpp" />
+    <ClCompile Include="..\..\src\log\sys_logger.cpp" />
+    <ClCompile Include="..\..\src\net\address.cpp" />
+    <ClCompile Include="..\..\src\net\peer\http.cpp" />
+    <ClCompile Include="..\..\src\net\peer\message\mux_cargo.cpp" />
+    <ClCompile Include="..\..\src\net\protocol\http_utils.cpp" />
+    <ClCompile Include="..\..\src\net\socket.cpp" />
+    <ClCompile Include="..\..\src\net\socket_base.cpp" />
+    <ClCompile Include="..\..\src\net\socket_observer.cpp" />
+    <ClCompile Include="..\..\src\net\wcp.cpp" />
+    <ClCompile Include="..\..\src\signal\signal_manager.cpp" />
+    <ClCompile Include="..\..\src\task\scheduler.cpp" />
+    <ClCompile Include="..\..\src\task\runner.cpp" />
+    <ClCompile Include="..\..\src\thread\impl\mutex.cpp" />
+    <ClCompile Include="..\..\src\thread\thread.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\3rd\http_parser\http_parser.h" />
+    <ClInclude Include="..\..\3rd\stack_walker\win_stack_walker.hpp" />
+    <ClInclude Include="..\..\include\wawo.h" />
+    <ClInclude Include="..\..\include\wawo\app.hpp" />
+    <ClInclude Include="..\..\include\wawo\basic.hpp" />
+    <ClInclude Include="..\..\include\wawo\bytes_helper.hpp" />
+    <ClInclude Include="..\..\include\wawo\bytes_ringbuffer.hpp" />
+    <ClInclude Include="..\..\include\wawo\config\compiler.h" />
+    <ClInclude Include="..\..\include\wawo\config\compiler\compiler_gnugcc_.h" />
+    <ClInclude Include="..\..\include\wawo\config\compiler\compiler_msvc_.h" />
+    <ClInclude Include="..\..\include\wawo\config\config.h" />
+    <ClInclude Include="..\..\include\wawo\config\platform.h" />
+    <ClInclude Include="..\..\include\wawo\config\platform\platform_gnu_.h" />
+    <ClInclude Include="..\..\include\wawo\config\platform\platform_win_.h" />
+    <ClInclude Include="..\..\include\wawo\constants.h" />
+    <ClInclude Include="..\..\include\wawo\context\fcontext.hpp" />
+    <ClInclude Include="..\..\include\wawo\core.hpp" />
+    <ClInclude Include="..\..\include\wawo\env\env.hpp" />
+    <ClInclude Include="..\..\include\wawo\env\env_impl_gnu.hpp" />
+    <ClInclude Include="..\..\include\wawo\env\env_impl_win32.hpp" />
+    <ClInclude Include="..\..\include\wawo\exception.hpp" />
+    <ClInclude Include="..\..\include\wawo\log\console_logger.h" />
+    <ClInclude Include="..\..\include\wawo\log\file_logger.h" />
+    <ClInclude Include="..\..\include\wawo\log\format_interface.h" />
+    <ClInclude Include="..\..\include\wawo\log\format_normal.h" />
+    <ClInclude Include="..\..\include\wawo\log\logger_abstract.hpp" />
+    <ClInclude Include="..\..\include\wawo\log\logger_manager.h" />
+    <ClInclude Include="..\..\include\wawo\log\sys_logger.h" />
+    <ClInclude Include="..\..\include\wawo\macros.h" />
+    <ClInclude Include="..\..\include\wawo\math\formula.hpp" />
+    <ClInclude Include="..\..\include\wawo\memory.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\address.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\dispatcher_abstract.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\event.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\http_node.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\listener_abstract.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\messenger.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\net_event.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\node_abstract.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\observer_abstract.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\observer_impl\epoll.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\observer_impl\select.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\observer_impl\wpoll.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\peer\cargo.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\peer\http.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\peer\message\cargo.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\peer\message\http.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\peer\message\mux_cargo.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\peer\message\ros.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\peer\mux_cargo.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\peer\ros.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\peer\_mux.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\peer_abstract.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\peer_proxy.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\protocol\http.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\protocol\icmp.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\service_pool.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\service_provider_abstract.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\socket.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\socket_base.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\socket_observer.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\tlp\dh_symmetric_encrypt.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\tlp\hlen_packet.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\tlp\stream.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\tlp\symmetric_encrypt.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\tlp_abstract.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\ros_node.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\wcp.hpp" />
+    <ClInclude Include="..\..\include\wawo\packet.hpp" />
+    <ClInclude Include="..\..\include\wawo\ringbuffer.hpp" />
+    <ClInclude Include="..\..\include\wawo\security\cipher_abstract.hpp" />
+    <ClInclude Include="..\..\include\wawo\security\dh.hpp" />
+    <ClInclude Include="..\..\include\wawo\security\obfuscate.hpp" />
+    <ClInclude Include="..\..\include\wawo\security\xxtea.hpp" />
+    <ClInclude Include="..\..\include\wawo\signal\signal_handler_abstract.h" />
+    <ClInclude Include="..\..\include\wawo\signal\signal_manager.h" />
+    <ClInclude Include="..\..\include\wawo\singleton.hpp" />
+    <ClInclude Include="..\..\include\wawo\smart_ptr.hpp" />
+    <ClInclude Include="..\..\include\wawo\string.hpp" />
+    <ClInclude Include="..\..\include\wawo\task\runner.hpp" />
+    <ClInclude Include="..\..\include\wawo\task\task.hpp" />
+    <ClInclude Include="..\..\include\wawo\task\scheduler.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread\condition.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread\impl\condition.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread\impl\mutex.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread\impl\mutex_basic.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread\impl\shared_mutex.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread\impl\spin_mutex.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread\mutex.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread\thread.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread\thread_run_object_abstract.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread\ticker.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread\tls.hpp" />
+    <ClInclude Include="..\..\include\wawo\time\time.hpp" />
+    <ClInclude Include="..\..\include\wawo\__init__.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\src\context\jump_i386_ms_pe_masm.asm">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ml /c $(ProjectDir)./../../src/context/%(fileName).asm</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(fileName).obj</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\context\make_i386_ms_pe_masm.asm">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ml -coff -c /Zi /Zd -Fo $(IntDir)/%(fileName).obj  $(ProjectDir)./../../src/context/%(fileName).asm</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)/%(fileName).obj</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

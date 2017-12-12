@@ -1,0 +1,23 @@
+1, FIN prompt to user (done)
+2, WCP state change check (first done)
+3, check setlasterror on win (done, vld's problem)
+	sync_client ok
+	roger not ok
+
+4, separate handle accept and pump_pack (done)
+
+5, steam_cargo _flush -> -30032. (done, disable SEND_BUFFER_NOT_ENOUGHT error, return SEND_BLOCK instead)
+
+7, wpoll_wait, evt size optimization (done, add pending queue)
+10, opserver IOE_ERROR ,getsockopt  (done)
+
+
+
+- pump_pack 10054
+- stream state FIN_WAIT_1, CLOSE_WAIT issue 
+- multi-syn issue, one client send more than one syn during a period (half done)
+
+- snd_sending increase check.
+
+
+epoll, select, check到read_write shutdown后，要不要再最后扔一个事件出来？

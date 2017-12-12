@@ -1,0 +1,5 @@
+thread data
+	add notify all when thread exit ? should we ?
+
+
+optimize shared_mutex
