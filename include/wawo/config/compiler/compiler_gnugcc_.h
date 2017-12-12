@@ -1,6 +1,0 @@
-#ifndef _WAWO_CONFIG_COMPILER_COMPILER_GNUGCC_H_
-#define _WAWO_CONFIG_COMPILER_COMPILER_GNUGCC_H_
-
-#define WAWO_TLS __thread
-
-#endif
