@@ -443,6 +443,12 @@ namespace wawo { namespace net {
 
 				if (WCPPACK_TEST_FLAG(*(inpack), WCP_FLAG_RST)) {
 					lock_guard<spin_mutex> lg_wcp_state(mutex);
+
+					//according to RFC 793, if state in LISTEN, just ignore RST
+					if (state == WCB_LISTEN) {
+						return;
+					}
+
 					wcb_errno = wawo::E_ECONNRESET;
 					state = WCB_CLOSED;
 					cond.notify_all();
