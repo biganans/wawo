@@ -2,6 +2,7 @@
 #define WAWO_NET_WCP_HPP
 
 #include <map>
+#include <unordered_map>
 #include <queue>
 #include <list>
 
@@ -658,7 +659,7 @@ namespace wawo { namespace net {
 		spin_mutex m_wcb_create_pending_map_mutex;
 		WCBMap m_wcb_create_pending_map;
 
-		typedef std::map<wawo::u32_t, WWRP<WCB>> FourTupleWCBMap;
+		typedef std::unordered_map<wawo::u32_t, WWRP<WCB>> FourTupleWCBMap;
 		typedef std::pair<wawo::u32_t, WWRP<WCB>> FourTupleWCBPair;
 
 		spin_mutex m_wcb_four_tuple_map_mutex;
