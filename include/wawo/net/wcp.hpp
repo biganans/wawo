@@ -133,7 +133,7 @@ namespace wawo { namespace net {
 	enum WCB_State {
 		WCB_CLOSED,
 		WCB_LISTEN,
-		WCB_SYNING,
+		WCB_SYNING, //this is a middle state lies between WCB_CLOSED and WCB_SYN_SENT, cuz we'll inject pack to net on another thread
 		WCB_SYN_SENT,
 		WCB_SYN_RECEIVED,
 		WCB_FIN_WAIT_1,
@@ -203,12 +203,6 @@ namespace wawo { namespace net {
 	typedef std::queue< WWRP<WCB> > WCBQueue;
 
 	class socket;
-
-	//struct UDPSO_CTX_FOR_WCB :
-	//	public wawo::ref_base
-	//{
-	//	WWRP<WCB> wcb;
-	//};
 
 	struct WCB_keepalive_vals {
 		u16_t idle;

@@ -118,6 +118,7 @@ namespace wawo { namespace net {
 
 		case WCB_CLOSED:
 		{
+			//WCB can only be recycled after the call of close 
 			if ((r_flag&READ_LOCAL_READ_SHUTDOWNED) && (s_flag&WRITE_LOCAL_WRITE_SHUTDOWNED)) {
 				lock_guard<spin_mutex> lg(mutex);
 				if (wcb_flag&WCB_FLAG_CLOSED_CALLED) {
@@ -130,15 +131,6 @@ namespace wawo { namespace net {
 		{
 			WAWO_ASSERT(wcb_flag&WCB_FLAG_IS_LISTENER);
 			if (!(r_flag&READ_LOCAL_READ_SHUTDOWNED)) {
-				
-				/*
-				WWRP<WCB> wcbs[16];
-				u32_t count = listen_handle_syn(wcbs, 16);
-				for (u32_t i = 0; i < count; ++i) {
-					wcp::instance()->watch(wcbs[i]);
-				}
-				*/
-
 				listen_handle_syn();
 			}
 
@@ -1526,14 +1518,18 @@ namespace wawo { namespace net {
 
 	int wcp::send(int const& fd, byte_t const* const buffer, u32_t const& len, int const& flag) {
 		(void)flag;
-		shared_lock_guard<shared_mutex> slg(m_wcb_map_mutex);
-		const WCBMap::iterator& it = m_wcb_map.find(fd);
-		if (it == m_wcb_map.end()) {
-			wawo::set_last_errno(wawo::E_EBADF);
-			return wawo::E_EBADF;
+
+		WWRP<WCB> wcb;
+		{
+			shared_lock_guard<shared_mutex> slg(m_wcb_map_mutex);
+			const WCBMap::iterator& it = m_wcb_map.find(fd);
+			if (it == m_wcb_map.end()) {
+				wawo::set_last_errno(wawo::E_EBADF);
+				return wawo::E_EBADF;
+			}
+			wcb = it->second;
 		}
 
-		WWRP<WCB>& wcb = it->second;
 		WAWO_ASSERT(wcb != NULL);
 		WAWO_ASSERT(wcb->so != NULL);
 
@@ -1559,14 +1555,17 @@ namespace wawo { namespace net {
 	int wcp::recv(int const&fd, byte_t* const buffer_o, u32_t const& size, int const& flag ) {
 		(void)flag;
 
-		shared_lock_guard<shared_mutex> slg(m_wcb_map_mutex);
-		const WCBMap::iterator& it = m_wcb_map.find(fd);
-		if (it == m_wcb_map.end()) {
-			wawo::set_last_errno(wawo::E_EBADF);
-			return wawo::E_EBADF;
+		WWRP<WCB> wcb;
+		{
+			shared_lock_guard<shared_mutex> slg(m_wcb_map_mutex);
+			const WCBMap::iterator& it = m_wcb_map.find(fd);
+			if (it == m_wcb_map.end()) {
+				wawo::set_last_errno(wawo::E_EBADF);
+				return wawo::E_EBADF;
+			}
+			wcb = it->second;
 		}
 
-		WWRP<WCB>& wcb = it->second;
 		WAWO_ASSERT(wcb != NULL);
 		WAWO_ASSERT(wcb->so != NULL);
 
@@ -1622,14 +1621,17 @@ namespace wawo { namespace net {
 	int wcp::getsockname(int const& fd, struct sockaddr* addr, socklen_t* addrlen ) {
 		(void)addrlen;
 
-		shared_lock_guard<shared_mutex> slg(m_wcb_map_mutex);
-		const WCBMap::iterator& it = m_wcb_map.find(fd);
-		if (it == m_wcb_map.end()) {
-			wawo::set_last_errno(wawo::E_EBADF);
-			return wawo::E_EBADF;
+		WWRP<WCB> wcb;
+		{
+			shared_lock_guard<shared_mutex> slg(m_wcb_map_mutex);
+			const WCBMap::iterator& it = m_wcb_map.find(fd);
+			if (it == m_wcb_map.end()) {
+				wawo::set_last_errno(wawo::E_EBADF);
+				return wawo::E_EBADF;
+			}
+			wcb = it->second;
 		}
 
-		WWRP<WCB>& wcb = it->second;
 		WAWO_ASSERT(wcb != NULL);
 		WAWO_ASSERT(wcb->so != NULL);
 
