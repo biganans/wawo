@@ -1082,11 +1082,11 @@ namespace wawo { namespace net {
 		|| shutdown_flag == WCB_SHUT_RDWR
 		);
 
-		int update_new = wawo::E_WCP_WCB_SHUTDOWNED;
+		int ec = wawo::E_ENOTCONN;
 		if (shutdown_flag==WCB_SHUT_WR||shutdown_flag == WCB_SHUT_RDWR) {
 			lock_guard<spin_mutex> lg_s_mutex(s_mutex);
 			if ( !(s_flag&WRITE_LOCAL_WRITE_SHUTDOWNED) ) {
-				update_new = 0;
+				ec = wawo::OK;
 				FIN();
 				s_flag |= WRITE_LOCAL_WRITE_SHUTDOWNED;
 			}
@@ -1095,13 +1095,18 @@ namespace wawo { namespace net {
 		if (shutdown_flag==WCB_SHUT_RD || shutdown_flag == WCB_SHUT_RDWR) {
 			lock_guard<spin_mutex> lg_r_mutex(r_mutex);
 			if (!(r_flag&READ_LOCAL_READ_SHUTDOWNED)) {
-				update_new = 0;
+				ec = wawo::OK;
 				r_flag |= READ_LOCAL_READ_SHUTDOWNED;;
 				r_cond.notify_all();
 			}
 		}
 
-		return update_new;
+		if (ec!=wawo::OK) {
+			wawo::set_last_errno(ec);
+			return -1;
+		}
+
+		return wawo::OK;
 	}
 
 
