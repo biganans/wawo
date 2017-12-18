@@ -403,7 +403,7 @@ namespace wawo { namespace net {
 			return wawo::OK;
 		}
 
-		void SYN() {
+		inline void SYN() {
 			WAWO_ASSERT(state == WCB_CLOSED);
 			WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
 			opack->header.seq = snd_info.dsn++;
@@ -412,7 +412,7 @@ namespace wawo { namespace net {
 			s_sending_standby.push(opack);
 		}
 
-		void SYNACK() {
+		inline void SYNACK() {
 			WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
 			opack->header.seq = snd_info.dsn++;
 			opack->header.flag = WCP_FLAG_ACK;
@@ -420,7 +420,7 @@ namespace wawo { namespace net {
 			s_sending_standby.push(opack);
 		}
 
-		void SYNSYNACK() {
+		inline void SYNSYNACK() {
 			WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
 			opack->header.seq = snd_info.dsn++;
 			opack->header.flag = WCP_FLAG_SYN | WCP_FLAG_ACK;
@@ -429,7 +429,7 @@ namespace wawo { namespace net {
 			s_sending_standby.push(opack);
 		}
 
-		void FIN() {
+		inline void FIN() {
 			WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
 			opack->header.seq = snd_info.dsn++;
 			opack->header.flag = WCP_FLAG_FIN;
@@ -437,7 +437,7 @@ namespace wawo { namespace net {
 			s_sending_standby.push(opack);
 		}
 
-		void FINACK() {
+		inline void FINACK() {
 			WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
 			opack->header.seq = snd_info.dsn++;
 			opack->header.flag = WCP_FLAG_ACK;
@@ -445,7 +445,7 @@ namespace wawo { namespace net {
 			s_sending_standby.push(opack);
 		}
 
-		void SACK(WWSP<wawo::packet> const& sacked_packet) {
+		inline void SACK(WWSP<wawo::packet> const& sacked_packet) {
 			static u32_t pack_acked_max = WCP_MDU/sizeof(u32_t);
 			static u32_t pack_acked_max_bytes = pack_acked_max*sizeof(u32_t);
 
@@ -468,7 +468,7 @@ namespace wawo { namespace net {
 			}
 		}
 
-		void keepalive() {
+		inline void keepalive() {
 			WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
 			opack->header.seq = snd_info.dsn;
 			opack->header.flag = WCP_FLAG_KEEP_ALIVE;
@@ -476,7 +476,7 @@ namespace wawo { namespace net {
 			s_sending_ignore_seq_space.push(opack);
 		}
 
-		void keepalive_reply() {
+		inline void keepalive_reply() {
 			WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
 			opack->header.seq = snd_info.dsn;
 			opack->header.flag = WCP_FLAG_KEEP_ALIVE_REPLY;
@@ -484,7 +484,7 @@ namespace wawo { namespace net {
 			s_sending_ignore_seq_space.push(opack);
 		}
 
-		void update_rwnd() {
+		inline void update_rwnd() {
 			WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
 			opack->header.seq = snd_info.dsn;
 			opack->header.flag = WCP_FLAG_WND ;
@@ -492,7 +492,7 @@ namespace wawo { namespace net {
 			s_sending_ignore_seq_space.push(opack);
 		}
 
-		void SYN_RCVD(WWSP<WCB_received_pack> const& synpack) {
+		inline void SYN_RCVD(WWSP<WCB_received_pack> const& synpack) {
 			lock_guard<spin_mutex> _lg(mutex);
 			WAWO_ASSERT(state == WCB_CLOSED);
 
