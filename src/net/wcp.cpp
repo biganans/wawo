@@ -297,7 +297,6 @@ namespace wawo { namespace net {
 				if (WCPPACK_TEST_FLAG(*pack, (WCP_FLAG_KEEP_ALIVE))) {
 					snd_info.rwnd = pack->header.wnd;
 
-					//lock_guard<spin_mutex> lg_s_mutex(s_mutex);
 					keepalive_reply();
 					WCP_TRACE("[wcp][%u:%s]keepalive reply, probes: %u", fd, remote_addr.address_info().cstr, keepalive_probes_sent);
 					continue;
@@ -311,21 +310,29 @@ namespace wawo { namespace net {
 
 					continue;
 				}
+				
+				WCB_ReceivedPackList::const_iterator it = rcv_received.begin();
+				while (it != rcv_received.end()) {					
+					u32_t& seq = (*it)->header.seq;
+					if ( seq == pack->header.seq) {
+						//question: can we ignore this rwnd update ? 
+						snd_info.rwnd = pack->header.wnd;
+						WCP_TRACE("[wcp]check_recv, duplicate (new), update rwnd, seq: %u, flag: %u, wnd: %u, ack: %u, expect: %u",
+							pack->header.seq, pack->header.flag, pack->header.wnd, pack->header.ack, rcv_info.next);
 
-				WCB_ReceivedPackList::iterator it = std::find_if(rcv_received.begin(), rcv_received.end(), [&pack](WWSP<WCB_received_pack> const& _pack) {
-					return pack->header.seq == _pack->header.seq;
-				});
-				if (it != rcv_received.end()) {
-
-					snd_info.rwnd = pack->header.wnd;
-					WCP_TRACE("[wcp]check_recv, duplicate (new), update rwnd, seq: %u, flag: %u, wnd: %u, ack: %u, expect: %u",
-						pack->header.seq, pack->header.flag, pack->header.wnd, pack->header.ack, rcv_info.next);
-
-					continue;
+						goto _end_current_loop;
+					}
+					else if (seq < pack->header.seq) {
+						++it;
+					}
+					else {
+						break;
+					}
 				}
-
-				rcv_received.push_back(pack);
-				wcb_flag |= RCV_ARRIVE_NEW;
+				rcv_received.insert(it, pack);
+				//wcb_flag |= RCV_ARRIVE_NEW;
+			_end_current_loop:
+				(void)it;//for compile grammar
 			}
 
 			if (snd_sacked_pack_tmp->len()) {
@@ -379,10 +386,10 @@ namespace wawo { namespace net {
 				ack_queue.pop();
 			}
 
-			if (wcb_flag&RCV_ARRIVE_NEW) {
-				wcb_flag &= ~RCV_ARRIVE_NEW;
-				rcv_received.sort(&WCP_seq_asc_compare);
-			}
+			//if (wcb_flag&RCV_ARRIVE_NEW) {
+			//	wcb_flag &= ~RCV_ARRIVE_NEW;
+			//	rcv_received.sort(&WCP_seq_asc_compare);
+			//}
 
 			WCB_ReceivedPackList::iterator it = rcv_received.begin();
 			while (it != rcv_received.end()) {
