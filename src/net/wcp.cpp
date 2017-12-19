@@ -1606,7 +1606,7 @@ namespace wawo { namespace net {
 		if (wcb->r_flag&READ_RECV_ERROR) {
 			WAWO_ASSERT(wcb->wcb_errno != 0);
 			wawo::set_last_errno(wcb->wcb_errno);
-			return wcb->wcb_errno;
+			return WAWO_NEGATIVE(wcb->wcb_errno);
 		}
 
 		if (wcb->wcb_errno != 0) {
