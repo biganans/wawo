@@ -311,8 +311,8 @@ namespace wawo { namespace net {
 					continue;
 				}
 				
-				WCB_ReceivedPackList::iterator it = rcv_received.begin();
-				while (it != rcv_received.end()) {					
+				WCB_ReceivedPackList::reverse_iterator it = rcv_received.rbegin();
+				while (it != rcv_received.rend()) {					
 					u32_t& seq = (*it)->header.seq;
 					if ( seq == pack->header.seq) {
 						//question: can we ignore this rwnd update ? 
@@ -322,14 +322,14 @@ namespace wawo { namespace net {
 
 						goto _end_current_loop;
 					}
-					else if (seq < pack->header.seq) {
+					else if ( pack->header.seq < seq) {
 						++it;
 					}
 					else {
 						break;
 					}
 				}
-				rcv_received.insert(it, pack);
+				rcv_received.insert(it.base(), pack);
 				//wcb_flag |= RCV_ARRIVE_NEW;
 			_end_current_loop:
 				(void)it;//for compile grammar
