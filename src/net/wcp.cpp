@@ -311,7 +311,7 @@ namespace wawo { namespace net {
 					continue;
 				}
 				
-				WCB_ReceivedPackList::const_iterator it = rcv_received.begin();
+				WCB_ReceivedPackList::iterator it = rcv_received.begin();
 				while (it != rcv_received.end()) {					
 					u32_t& seq = (*it)->header.seq;
 					if ( seq == pack->header.seq) {
