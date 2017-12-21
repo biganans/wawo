@@ -21,7 +21,7 @@ public:
 	}
 
 	void on_peer_close(WWRP<client_peer_t::peer_event_t> const& evt) {
-		WAWO_LOG_INFO("NodeT","peer closed");
+		WAWO_LOG_INFO("client_node","peer closed");
 	}
 
 	void async_make_peer() {
@@ -87,6 +87,6 @@ int main( int argc, char** argv ) {
 	node->stop();
 
 	
-	WAWO_LOG_WARN("main", "socket server exit done ...");
+	WAWO_WARN("[main]socket server exit done ...");
 	return wawo::OK;
 }
