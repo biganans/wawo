@@ -135,19 +135,19 @@ namespace wawo { namespace net {
 			}
 
 			lock_guard<spin_mutex> lg_r_mutex(r_mutex);
-			WCBVector::iterator it = backlogvec_pending.begin();
-			while (it != backlogvec_pending.end()) {
+			WCBList::iterator it = backloglist_pending.begin();
+			while (it != backloglist_pending.end()) {
 				WCB_State s = (*it)->update(now);
 				if (s == WCB_ESTABLISHED) {
 					WAWO_ASSERT(backlogq.size() <= backlog_size);
 					backlogq.push(*it);
-					it = backlogvec_pending.erase(it);
+					it = backloglist_pending.erase(it);
 				}
 				else if (s == WCB_CLOSE_WAIT ||
 					s == WCB_CLOSED
 					) {
 					(*it)->close();
-					it = backlogvec_pending.erase(it);
+					it = backloglist_pending.erase(it);
 				}
 				else if (s == WCB_SYN_RECEIVED) {
 					++it;
@@ -882,7 +882,7 @@ namespace wawo { namespace net {
 
 			{
 				lock_guard<spin_mutex> lg_r_mutex(r_mutex);
-				if ((backlogq.size() + backlogvec_pending.size()) == backlog_size) {
+				if ((backlogq.size() + backloglist_pending.size()) == backlog_size) {
 					reply_rst_to_address( so, pack->header.ack, from );
 					break;
 				}
@@ -987,7 +987,7 @@ namespace wawo { namespace net {
 			wcp::instance()->watch(wcb);
 			
 			lock_guard<spin_mutex> lg_r_mutex(r_mutex);
-			backlogvec_pending.push_back(wcb);
+			backloglist_pending.push_back(wcb);
 		}
 
 		received_vec_standby->erase( received_vec_standby->begin() , received_vec_standby->begin() + i);

@@ -199,7 +199,8 @@ namespace wawo { namespace net {
 
 
 	struct WCB;
-	typedef std::vector< WWRP<WCB> > WCBVector;
+//	typedef std::vector< WWRP<WCB> > WCBVector;
+	typedef std::vector< WWRP<WCB> > WCBList;
 	typedef std::queue< WWRP<WCB> > WCBQueue;
 
 	class socket;
@@ -249,7 +250,7 @@ namespace wawo { namespace net {
 		WWRP<wawo::bytes_ringbuffer> rb_standby;
 		u64_t r_timer_last_rwnd_update;
 
-		WCBVector backlogvec_pending;
+		WCBList backloglist_pending;
 		WCBQueue backlogq;
 		u32_t backlog_size;
 
