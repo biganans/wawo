@@ -11,7 +11,7 @@ int main( int argc, char** argv ) {
 	remote_addr.so_family = wawo::net::F_AF_INET;
 	remote_addr.so_type = wawo::net::ST_STREAM;
 	remote_addr.so_protocol = wawo::net::P_TCP;
-	remote_addr.so_address = wawo::net::address("192.168.2.42", 22310);
+	remote_addr.so_address = wawo::net::address("127.0.0.1", 22310);
 
 	
 	do {
@@ -22,13 +22,16 @@ int main( int argc, char** argv ) {
 		int rt = so->open();
 		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 
+//		wawo::net::address local_addr("127.0.0.1", 22311);
+//		rt = so->bind(local_addr);
+
 		rt = so->connect(remote_addr.so_address);
 		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 
 		WWRP<wawo::net::tlp_abstract> tlp = wawo::make_ref<typename services::peer_t::TLPT>();
 		so->set_tlp(tlp);
 		rt = so->tlp_handshake();
-		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
+		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::E_TLP_HANDSHAKE_DONE);
 		WAWO_ASSERT( so->is_connected() );
 
 //		socket->Close();

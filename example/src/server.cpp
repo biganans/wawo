@@ -9,20 +9,10 @@ typedef services::EchoServer<PeerT>	EchoProvider_Server;
 using namespace wawo::net;
 
 
-#include <unordered_map>
-
-
 int main( int argc, char** argv ) {
 
-
-
-	std::hash<std::string> string_hash;
-
-	string_hash( std::string("ssssss"));
-
-
 	wawo::app application ;
-	WAWO_REF_PTR<NodeT> node = wawo::make_ref<NodeT>() ;
+	WWRP<NodeT> node = wawo::make_ref<NodeT>() ;
 
 	int start_rt = node->start();
 	if( start_rt != wawo::OK )
@@ -30,7 +20,7 @@ int main( int argc, char** argv ) {
 		return start_rt;
 	}
 
-	WAWO_REF_PTR<NodeT::SPT> echo_service_server = wawo::make_ref<EchoProvider_Server>(services::S_ECHO) ;
+	WWRP<NodeT::SPT> echo_service_server = wawo::make_ref<EchoProvider_Server>(services::S_ECHO) ;
 	node->add_service( services::S_ECHO, echo_service_server );
 
 	wawo::net::socket_addr laddr;

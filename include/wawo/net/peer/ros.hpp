@@ -112,7 +112,7 @@ namespace wawo { namespace net { namespace peer {
 		virtual void detach_socket() {
 			lock_guard<shared_mutex> lg( peer_abstract_t::m_mutex);
 			if (peer_abstract_t::m_so != NULL) {
-				peer_abstract_t::_unregister_evt(peer_abstract_t::m_so);
+				peer_abstract_t::_unregister_evts(peer_abstract_t::m_so);
 				peer_abstract_t::m_so = NULL;
 			}
 			_cancel_all_request(wawo::E_PEER_NO_SOCKET_ATTACHED);
@@ -181,6 +181,8 @@ namespace wawo { namespace net { namespace peer {
 
 			case E_PACKET_ARRIVE:
 				{
+					evt->so->begin_async_read();
+
 					WWSP<packet> const& inpack = evt->data;
 					try {
 						int message_parse_ec;
