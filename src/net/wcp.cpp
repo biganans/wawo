@@ -271,32 +271,30 @@ namespace wawo { namespace net {
 			keepalive_timer_last_received_pack = now;
 			keepalive_probes_sent = 0; 
 
-			std::queue<u32_t> ack_queue; //0 normal, 1 dup
+			std::queue<u32_t> acked_queue; //0 normal, 1 dup
 			for (u32_t i = 0; i < received_size; ++i) {
 				WWSP<WCB_received_pack>& pack = (*received_vec)[i];
 
+				//ack new means the packet has been read by remote user, so rwnd should be updated
 				if (snd_info.una < pack->header.ack) {
 					snd_info.una = pack->header.ack;
-					snd_info.rwnd = pack->header.wnd;
 					wcb_flag |= SND_UNA_UPDATE;
+					snd_info.rwnd = pack->header.wnd;
+				}
+
+				if (WCPPACK_TEST_FLAG(*pack, WCP_FLAG_WND)) {
+					snd_info.rwnd = pack->header.wnd;
 				}
 
 				if (WCPPACK_TEST_FLAG(*pack, WCP_FLAG_SACK)) {
 					WAWO_ASSERT(pack->data != NULL && pack->data->len());
 					while (pack->data->len()) {
-						ack_queue.push(pack->data->read<u32_t>());
+						acked_queue.push(pack->data->read<u32_t>());
 					}
 					continue;
 				}
 
-				if (WCPPACK_TEST_FLAG(*pack, (WCP_FLAG_WND| WCP_FLAG_KEEP_ALIVE_REPLY)) ) {
-					snd_info.rwnd = pack->header.wnd;
-					continue;
-				}
-
 				if (WCPPACK_TEST_FLAG(*pack, (WCP_FLAG_KEEP_ALIVE))) {
-					snd_info.rwnd = pack->header.wnd;
-
 					keepalive_reply();
 					WCP_TRACE("[wcp][%u:%s]keepalive reply, probes: %u", fd, remote_addr.address_info().cstr, keepalive_probes_sent);
 					continue;
@@ -315,8 +313,6 @@ namespace wawo { namespace net {
 				while (it != rcv_received.end()) {					
 					u32_t& seq = (*it)->header.seq;
 					if ( seq == pack->header.seq) {
-						//question: can we ignore this rwnd update ? 
-						snd_info.rwnd = pack->header.wnd;
 						WCP_TRACE("[wcp]check_recv, duplicate (new), update rwnd, seq: %u, flag: %u, wnd: %u, ack: %u, expect: %u",
 							pack->header.seq, pack->header.flag, pack->header.wnd, pack->header.ack, rcv_info.next);
 
@@ -341,11 +337,11 @@ namespace wawo { namespace net {
 				snd_sacked_pack_tmp->reset();
 			}
 
-			while (ack_queue.size()) {
-				u32_t const& ack = ack_queue.front();
+			while (acked_queue.size()) {
+				u32_t const& ack = acked_queue.front();
 
 				if (ack < snd_info.una) {
-					ack_queue.pop();
+					acked_queue.pop();
 					continue;
 				}
 
@@ -383,13 +379,8 @@ namespace wawo { namespace net {
 					}
 				}
 
-				ack_queue.pop();
+				acked_queue.pop();
 			}
-
-			//if (wcb_flag&RCV_ARRIVE_NEW) {
-			//	wcb_flag &= ~RCV_ARRIVE_NEW;
-			//	rcv_received.sort(&WCP_seq_asc_compare);
-			//}
 
 			WCB_ReceivedPackList::iterator it = rcv_received.begin();
 			while (it != rcv_received.end()) {
@@ -736,11 +727,21 @@ namespace wawo { namespace net {
 		}
 	}
 
+
+	//@issue 1: we did not considerate faireness for each session for current implementation
 	void WCB::check_send(u64_t const& now) {
 
 		{
-			if ( (s_sending_ignore_seq_space.size() == 0) && (r_flag&READ_RWND_MORE_THAN_MTU) && (now - r_timer_last_rwnd_update)>WCP_RWND_CHECK_GRANULARITY) {
-				update_rwnd();
+			//update rwnd manually
+			if ( (r_flag&READ_RWND_MORE_THAN_MTU) && (now - r_timer_last_rwnd_update)>WCP_RWND_CHECK_GRANULARITY) {
+
+				if (s_sending_ignore_seq_space.size() == 0) {
+					update_rwnd();
+				}
+				else {
+					WWSP<WCB_pack>& pack = s_sending_ignore_seq_space.front();
+					pack->header.flag |= WCP_FLAG_WND;
+				}
 				r_timer_last_rwnd_update = now;
 			}
 
@@ -765,11 +766,12 @@ namespace wawo { namespace net {
 				return;
 			}
 
-			while ( s_sending_standby.size()) {
+			while ( s_sending_standby.size() ) {
 				snd_sending.push(s_sending_standby.front());
 				s_sending_standby.pop();
 			}
 
+			//split sending buffer into segment if allowed 
 			while ( !(s_flag&WRITE_LOCAL_FIN_SENT) && (snd_sending.size() ==0) && (snd_info.cwnd- snd_nflight_bytes)>= WCP_MTU && (sb->count()>0) ) {
 				WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
 				opack->header.seq = snd_info.dsn++;
@@ -786,7 +788,7 @@ namespace wawo { namespace net {
 		}
 
 		while ( snd_sending.size()) {
-			WWSP<WCB_pack> pack = snd_sending.front();
+			WWSP<WCB_pack>& pack = snd_sending.front();
 
 			u32_t ntotal_bytes = pack->header.dlen + WCP_HeaderLen;
 			if ( ((ntotal_bytes + snd_nflight_bytes) >= WAWO_MIN(snd_info.cwnd, snd_info.rwnd)) )
@@ -809,7 +811,6 @@ namespace wawo { namespace net {
 				}
 				break;
 			}
-			snd_sending.pop();
 
 			WAWO_ASSERT(!WCPPACK_TEST_FLAG(*pack, (WCP_FLAG_SACK | WCP_FLAG_KEEP_ALIVE | WCP_FLAG_KEEP_ALIVE_REPLY)));
 
@@ -860,6 +861,8 @@ namespace wawo { namespace net {
 					state = WCB_SYN_SENT;
 				}
 			}
+
+			snd_sending.pop();
 		}
 	}
 

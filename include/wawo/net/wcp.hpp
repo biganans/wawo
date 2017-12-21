@@ -87,7 +87,7 @@ namespace wawo { namespace net {
 		WCP_FLAG_SACK =	1 << 2,
 		WCP_FLAG_FIN =	1 << 3,
 		WCP_FLAG_RST =	1 << 4,
-		WCP_FLAG_WND =	1 << 5,
+		WCP_FLAG_WND =	1 << 5, //force update wnd any way
 		WCP_FLAG_DAT =	1 << 6,
 		WCP_FLAG_KEEP_ALIVE =	1 << 7,
 		WCP_FLAG_KEEP_ALIVE_REPLY = 1<<8,
@@ -199,7 +199,6 @@ namespace wawo { namespace net {
 
 
 	struct WCB;
-//	typedef std::vector< WWRP<WCB> > WCBVector;
 	typedef std::vector< WWRP<WCB> > WCBList;
 	typedef std::queue< WWRP<WCB> > WCBQueue;
 
@@ -433,7 +432,7 @@ namespace wawo { namespace net {
 		inline void FIN() {
 			WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
 			opack->header.seq = snd_info.dsn++;
-			opack->header.flag = WCP_FLAG_FIN;
+			opack->header.flag = WCP_FLAG_FIN ;
 			opack->header.dlen = 0;
 			s_sending_standby.push(opack);
 		}
