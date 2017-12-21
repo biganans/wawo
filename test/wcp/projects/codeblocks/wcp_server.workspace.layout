@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_workspace_layout_file>
 	<FileVersion major="1" minor="0" />
-	<ActiveProject path="wcp_server/wcp_server.cbp" />
-	<PreferredTarget name="Debug" />
+	<ActiveProject path="../../../../../../../../../../../mnt/hgfs/git/github/libs/wawo/test/wcp/projects/codeblocks/wcp_server/wcp_server.cbp" />
+	<PreferredTarget name="Release" />
 </CodeBlocks_workspace_layout_file>

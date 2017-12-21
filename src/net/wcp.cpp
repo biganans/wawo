@@ -88,11 +88,11 @@ namespace wawo { namespace net {
 		WCPPACK_TO_UDPMESSAGE(*opack, buffer, WCP_MTU, len);
 		int ec;
 		wawo::u32_t nbytes = so->sendto(buffer, len, to, ec);
-		
+
 #ifdef WCP_TRACE_INOUT_PACK
 		WCP_TRACE("[wcp]WCB::inject_to_address, sendto: %s, seq: %u, flag: %u, ack: %u, wnd: %u, sndrt: %d",
 			to.address_info().cstr, opack->header.seq, opack->header.flag, opack->header.ack, opack->header.wnd, ec );
-#endif		
+#endif
 		WAWO_RETURN_V_IF_MATCH(ec, ((ec == wawo::OK) && (nbytes == len)) );
 		WAWO_WARN("[wcp]WCB::send_pack_to_address failed: %d, sent: %u, sendto: %s, seq: %u, flag: %u, ack: %u, wnd: %u",
 			ec, nbytes, to.address_info().cstr, opack->header.seq, opack->header.flag, opack->header.ack, opack->header.wnd);
@@ -118,7 +118,7 @@ namespace wawo { namespace net {
 
 		case WCB_CLOSED:
 		{
-			//WCB can only be recycled after the call of close 
+			//WCB can only be recycled after the call of close
 			if ((r_flag&READ_LOCAL_READ_SHUTDOWNED) && (s_flag&WRITE_LOCAL_WRITE_SHUTDOWNED)) {
 				lock_guard<spin_mutex> lg(mutex);
 				if (wcb_flag&WCB_FLAG_CLOSED_CALLED) {
@@ -269,11 +269,11 @@ namespace wawo { namespace net {
 		else {
 
 			keepalive_timer_last_received_pack = now;
-			keepalive_probes_sent = 0; 
+			keepalive_probes_sent = 0;
 
 			std::queue<u32_t> acked_queue; //0 normal, 1 dup
 			for (u32_t i = 0; i < received_size; ++i) {
-				WWSP<WCB_received_pack>& pack = (*received_vec)[i];
+				WWSP<WCB_received_pack> const& pack = (*received_vec)[i];
 
 				//ack new means the packet has been read by remote user, so rwnd should be updated
 				if (snd_info.una < pack->header.ack) {
@@ -308,9 +308,9 @@ namespace wawo { namespace net {
 
 					continue;
 				}
-				
-				WCB_ReceivedPackList::const_iterator it = rcv_received.begin();
-				while (it != rcv_received.end()) {					
+
+				WCB_ReceivedPackList::iterator it = rcv_received.begin();
+				while (it != rcv_received.end()) {
 					u32_t& seq = (*it)->header.seq;
 					if ( seq == pack->header.seq) {
 						WCP_TRACE("[wcp]check_recv, duplicate (new), update rwnd, seq: %u, flag: %u, wnd: %u, ack: %u, expect: %u",
@@ -369,7 +369,7 @@ namespace wawo { namespace net {
 						snd_info.cwnd = WAWO_MIN(snd_info.cwnd, WCP_SND_CWND_MAX);
 
 						WCP_TRACE("[wcp][FR]try to set ssthresh from: %u to: %u (choose larger one), compensation: %u", snd_info.ssthresh, snd_info.cwnd, snd_lost_cwnd_for_fast_recovery_compensation );
-						
+
 						u32_t _new_ssthresh = WAWO_MIN(snd_info.cwnd, WCP_SND_SSTHRESH_MAX);
 						snd_info.ssthresh = WAWO_MAX( _new_ssthresh, snd_info.ssthresh );
 
@@ -771,7 +771,7 @@ namespace wawo { namespace net {
 				s_sending_standby.pop();
 			}
 
-			//split sending buffer into segment if allowed 
+			//split sending buffer into segment if allowed
 			while ( !(s_flag&WRITE_LOCAL_FIN_SENT) && (snd_sending.size() ==0) && (snd_info.cwnd- snd_nflight_bytes)>= WCP_MTU && (sb->count()>0) ) {
 				WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
 				opack->header.seq = snd_info.dsn++;
@@ -879,7 +879,7 @@ namespace wawo { namespace net {
 		u32_t received_size = received_vec_standby->size();
 		u32_t i = 0;
 		for( ;i<received_size;++i ) {
-			
+
 			WWSP<WCB_received_pack> const& pack = (*received_vec_standby)[i];
 			address const& from = pack->from;
 
@@ -988,7 +988,7 @@ namespace wawo { namespace net {
 			}
 
 			wcp::instance()->watch(wcb);
-			
+
 			lock_guard<spin_mutex> lg_r_mutex(r_mutex);
 			backloglist_pending.push_back(wcb);
 		}
@@ -1255,7 +1255,7 @@ namespace wawo { namespace net {
 		m_wpoll_map.clear();
 	}
 
-	
+
 	void wcp::_execute_ops() {
 
 		while (!m_ops.empty()) {
