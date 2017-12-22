@@ -45,10 +45,8 @@ namespace wawo { namespace net { namespace observer_impl {
 			WAWO_ASSERT(flag&(IOE_READ | IOE_WRITE));
 
 			WWRP<observer_ctx> ctx;
-			typename observer_ctx_vector::iterator it = std::find_if(m_ctxs.begin(), m_ctxs.end(), [&](WWRP<observer_ctx> const& ctx_ ) {
-				return ctx_->fd == fd;
-			});
-
+			typename observer_ctx_map::iterator it = m_ctxs.find(fd); 
+			
 			bool _to_add = false;
 			if (it == m_ctxs.end()) {
 				WWRP<observer_ctx> _ctx = wawo::make_ref<observer_ctx>();
@@ -60,7 +58,7 @@ namespace wawo { namespace net { namespace observer_impl {
 				_to_add = true;
 			}
 			else {
-				ctx = *it;
+				ctx = it->second ;
 			}
 
 			wpoll_event evt = {fd, static_cast<u32_t>(flag&(IOE_READ|IOE_WRITE)), ctx};
@@ -80,7 +78,7 @@ namespace wawo { namespace net { namespace observer_impl {
 			WAWO_ASSERT( (ctx->flag&flag) == 0);
 			ctx_update_for_watch(ctx, flag, fd, cookie, fn, err);
 			if (_to_add) {
-				m_ctxs.push_back(ctx);
+				m_ctxs.insert({fd, ctx});
 			}
 			TRACE_IOE("[WPOLL][##%d][#%d][watch]wpoll op success,op flag: %d, new flag: %d", m_wpHandle, fd, flag, ctx->flag);
 		}
@@ -90,13 +88,11 @@ namespace wawo { namespace net { namespace observer_impl {
 			WAWO_ASSERT( fd>0 );
 			WAWO_ASSERT(m_wpHandle > 0);
 
-			observer_ctx_vector::iterator it = std::find_if(m_ctxs.begin(), m_ctxs.end(), [&](WWRP<observer_ctx> const& ctx_) {
-				return ctx_->fd == fd;
-			});
-
+			observer_ctx_map::iterator it = m_ctxs.find(fd);
+			
 			if (it == m_ctxs.end()) { return; }
 
-			WWRP<observer_ctx> ctx = *it;
+			WWRP<observer_ctx> ctx = it->second ;
 
 			wpoll_event evt;
 			evt.evts = (flag& (IOE_READ|IOE_WRITE));
