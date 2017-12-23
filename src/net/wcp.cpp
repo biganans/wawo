@@ -276,6 +276,7 @@ namespace wawo { namespace net {
 				WWSP<WCB_received_pack> const& pack = (*received_vec)[i];
 
 				//ack new means the packet has been read by remote user, so rwnd should be updated
+				//@todo, we should check ack range
 				if (snd_info.una < pack->header.ack) {
 					snd_info.una = pack->header.ack;
 					wcb_flag |= SND_UNA_UPDATE;
@@ -297,6 +298,10 @@ namespace wawo { namespace net {
 				if (WCPPACK_TEST_FLAG(*pack, (WCP_FLAG_KEEP_ALIVE))) {
 					keepalive_reply();
 					WCP_TRACE("[wcp][%u:%s]keepalive reply, probes: %u", fd, remote_addr.address_info().cstr, keepalive_probes_sent);
+					continue;
+				}
+
+				if (WCPPACK_TEST_FLAG(*pack, WCP_FLAG_KEEP_ALIVE_REPLY)) {
 					continue;
 				}
 
@@ -424,11 +429,11 @@ namespace wawo { namespace net {
 					}
 				}
 
-				if (snd_info.una < inpack->header.ack) {
-					snd_info.una = inpack->header.ack;
-					wcb_flag |= SND_UNA_UPDATE;
-				}
-				snd_info.rwnd = inpack->header.wnd;
+				//if (snd_info.una < inpack->header.ack) {
+				//	snd_info.una = inpack->header.ack;
+				//	wcb_flag |= SND_UNA_UPDATE;
+				//}
+				//snd_info.rwnd = inpack->header.wnd;
 				rcv_info.next++;
 
 				if (WCPPACK_TEST_FLAG(*(inpack), WCP_FLAG_RST)) {
@@ -800,7 +805,7 @@ namespace wawo { namespace net {
 			}
 
 			WAWO_ASSERT(pack->header.seq == snd_info.next);
-			WAWO_ASSERT(pack->header.seq >= snd_info.una);
+			WAWO_ASSERT(pack->header.seq >= snd_info.una, "seq: %u, una: %u, flag: %u", pack->header.seq, snd_info.una, pack->header.flag );
 
 			int sndrt = send_pack(pack);
 			if (sndrt != wawo::OK) {
