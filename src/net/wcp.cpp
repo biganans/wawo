@@ -429,20 +429,10 @@ namespace wawo { namespace net {
 					}
 				}
 
-				//if (snd_info.una < inpack->header.ack) {
-				//	snd_info.una = inpack->header.ack;
-				//	wcb_flag |= SND_UNA_UPDATE;
-				//}
-				//snd_info.rwnd = inpack->header.wnd;
 				rcv_info.next++;
 
 				if (WCPPACK_TEST_FLAG(*(inpack), WCP_FLAG_RST)) {
 					lock_guard<spin_mutex> lg_wcp_state(mutex);
-
-					//according to RFC 793, if state in LISTEN, just ignore RST
-					if (state == WCB_LISTEN) {
-						return;
-					}
 
 					wcb_errno = wawo::E_ECONNRESET;
 					state = WCB_CLOSED;
@@ -880,6 +870,8 @@ namespace wawo { namespace net {
 
 	void WCB::listen_handle_syn() {
 
+		WAWO_ASSERT(wcb_flag&WCB_FLAG_IS_LISTENER);
+
 		lock_guard<spin_mutex> lg(received_vec_mutex);
 		u32_t received_size = received_vec_standby->size();
 		u32_t i = 0;
@@ -896,8 +888,15 @@ namespace wawo { namespace net {
 				}
 			}
 
+			//according to RFC 793, if state in LISTEN, just ignore RST
+			if (WCPPACK_TEST_FLAG( *pack, WCP_FLAG_RST)) {
+				WAWO_ASSERT(state == WCB_LISTEN);
+				WAWO_WARN("[wcp]WCB::accept, flag none WCP_FLAG_SYN, flag: %u, ignore, remote addr: %s, reply rst", pack->header.flag, from.address_info().cstr);
+				return;
+			}
+
 			if (!WCPPACK_TEST_FLAG( *pack, WCP_FLAG_SYN)) {
-				WAWO_WARN("[wcp]WCB::accept, invalid WCB_pack, expect WCP_FLAG_SYN, remote addr: %s, reply rst", from.address_info().cstr);
+				WAWO_WARN("[wcp]WCB::accept, flag none WCP_FLAG_SYN, flag: %u, remote addr: %s, reply rst", pack->header.flag, from.address_info().cstr);
 				reply_rst_to_address(so, pack->header.ack, from);
 				continue;
 			}

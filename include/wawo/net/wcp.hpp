@@ -147,7 +147,6 @@ namespace wawo { namespace net {
 	};
 
 	enum WCB_flag {
-
 		RCV_ARRIVE_NEW = 1<<0,
 
 		SND_BIGGEST_SACK_UPDATE = 1<<1,
