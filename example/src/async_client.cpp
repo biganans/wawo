@@ -69,7 +69,7 @@ int main( int argc, char** argv ) {
 	addr_info.so_address = remote_addr;
 
 
-	WWRP<client_node> node = wawo::make_ref< client_node>(256, addr_info ) ;
+	WWRP<client_node> node = wawo::make_ref< client_node>(1024, addr_info ) ;
 	WWRP<client_node::SPT> echo_service = wawo::make_ref<EchoProvider_Client>(services::S_ECHO) ;
 	node->add_service( services::S_ECHO, echo_service );
 

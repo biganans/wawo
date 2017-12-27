@@ -798,14 +798,14 @@ namespace wawo { namespace net {
 			u32_t ntotal_bytes = pack->header.dlen + WCP_HeaderLen;
 			if ( ((ntotal_bytes + snd_nflight_bytes) >= WAWO_MIN(snd_info.cwnd, snd_info.rwnd)) )
 			{
-				WCP_TRACE("[wcp]congest seq: %u,flag: %u,size: %u,una: %u,cwnd: %u,rwnd: %u,flight: %u,ssthresh: %u,rto: %d,srtt: %d,rttvar: %d",
+				WCP_TRACE("[wcp]congest seq: %u,flag: %u,size: %u,una: %u,cwnd: %u,rwnd: %u,flight: %u,ssthresh: %u,rto: %u,srtt: %u,rttvar: %u",
 					pack->header.seq, pack->header.flag, ntotal_bytes,snd_info.una, snd_info.cwnd, snd_info.rwnd, snd_nflight_bytes, snd_info.ssthresh, rto,srtt,rttvar
 				);
 				break;
 			}
 
-			WAWO_ASSERT(pack->header.seq == snd_info.next);
-			WAWO_ASSERT(pack->header.seq >= snd_info.una, "seq: %u, una: %u, flag: %u", pack->header.seq, snd_info.una, pack->header.flag );
+			WAWO_ASSERT(pack->header.seq == snd_info.next, "[wcp][%d]seq: %u, una: %u, flag: %u, next: %u", fd, pack->header.seq, snd_info.una, pack->header.flag, snd_info.next );
+			WAWO_ASSERT(pack->header.seq >= snd_info.una, "[wcp][%d]seq: %u, una: %u, flag: %u",fd, pack->header.seq, snd_info.una, pack->header.flag );
 
 			int sndrt = send_pack(pack);
 			if (sndrt != wawo::OK) {
