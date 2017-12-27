@@ -677,12 +677,12 @@ namespace wawo { namespace net {
 						wcb_errno = sndrt;
 						s_flag |= WRITE_SEND_ERROR;
 
-						WAWO_ERR("[wcp][rt][%s]skip: %d,seq: %u ,failed: %d,stimes: %u,una: %u,cwnd: %u,rwnd: %u,nflight: %u,ssthresh: %u,rto: %d,srtt: %d,rttvar: %d",
+						WAWO_ERR("[wcp][rt][%s]skip: %d,seq: %u ,failed: %d,stimes: %u,una: %u,cwnd: %u,rwnd: %u,nflight: %u,ssthresh: %u,rto: %u,srtt: %u,rttvar: %u",
 							retransmit_reason[retransmit], skip, flight_pack->header.seq, sndrt, flight_pack->sent_times, snd_info.una, snd_info.cwnd, snd_info.rwnd, snd_nflight_bytes, snd_info.ssthresh, rto, srtt, rttvar
 						);
 					}
 
-					WCP_TRACE("[wcp][rt][%s]skip: %d,seq: %u,failed: %d,stimes: %u,una: %u,cwnd: %u,rwnd: %u,nflight: %u,ssthresh: %u,rto: %d,srtt: %d,rttvar: %d",
+					WCP_TRACE("[wcp][rt][%s]skip: %d,seq: %u,failed: %d,stimes: %u,una: %u,cwnd: %u,rwnd: %u,nflight: %u,ssthresh: %u,rto: %u,srtt: %u,rttvar: %u",
 						retransmit_reason[retransmit], skip, flight_pack->header.seq, sndrt, flight_pack->sent_times, snd_info.una, snd_info.cwnd, snd_info.rwnd, snd_nflight_bytes, snd_info.ssthresh, rto, srtt, rttvar
 					);
 					break;
