@@ -691,7 +691,7 @@ namespace wawo { namespace net {
 				flight_pack->sent_ts = now;
 				flight_pack->sent_times++;
 
-				WCP_TRACE("[wcp][rt][%s]td: %u,skip: %d,seq: %u,stimes: %u,una: %u,cwnd: %u,rwnd: %u,nflight: %u,ssthresh: %u,rto: %d,srtt: %d,rttvar: %d",
+				WCP_TRACE("[wcp][rt][%s]td: %u,skip: %d,seq: %u,stimes: %u,una: %u,cwnd: %u,rwnd: %u,nflight: %u,ssthresh: %u,rto: %u,srtt: %u,rttvar: %u",
 					retransmit_reason[retransmit], timediff, skip, flight_pack->header.seq, flight_pack->sent_times, snd_info.una, snd_info.cwnd, snd_info.rwnd, snd_nflight_bytes, snd_info.ssthresh, rto, srtt, rttvar
 				);
 			}
