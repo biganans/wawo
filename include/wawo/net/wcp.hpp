@@ -120,9 +120,9 @@ namespace wawo { namespace net {
 		address	from;
 	};
 
-	inline bool WCP_seq_asc_compare(WWSP<WCB_received_pack> const& left, WWSP<WCB_received_pack> const& right) {
-		return left->header.seq < right->header.seq;
-	}
+//	inline bool WCP_seq_asc_compare(WWSP<WCB_received_pack> const& left, WWSP<WCB_received_pack> const& right) {
+//		return left->header.seq < right->header.seq;
+//	}
 
 	typedef std::list <WWSP<WCB_pack>> WCB_PackList;
 	typedef std::queue<WWSP<WCB_pack>> WCB_PackQueue;
