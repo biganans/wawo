@@ -68,7 +68,7 @@ namespace wawo {
 			WAWO_CONDITION_CHECK(m_right_capacity != 0);
 
 			WAWO_ASSERT(m_buffer != NULL);
-			WAWO_CONDITION_CHECK(( m_right_capacity + PACK_INCREMENT_RIGHT_SIZE) <= PACK_MAX_RIGHT_CAPACITY));
+			WAWO_CONDITION_CHECK(( m_right_capacity + PACK_INCREMENT_RIGHT_SIZE) <= PACK_MAX_RIGHT_CAPACITY);
 			m_right_capacity += PACK_INCREMENT_RIGHT_SIZE;
 			byte_t* _newbuffer = (byte_t*)::realloc(m_buffer, _capacity());
 			WAWO_ALLOC_CHECK(_newbuffer, _capacity());
