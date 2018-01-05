@@ -48,7 +48,7 @@ namespace wawo {
 		inline void _extend_leftbuffer_capacity__() {
 
 			WAWO_ASSERT(m_buffer != NULL);
-			WAWO_CONDITION_CHECK(((_capacity() + PACK_INCREMENT_LEFT_SIZE) <= PACK_MAX_LEFT_CAPACITY));
+			WAWO_CONDITION_CHECK((( m_left_capacity + PACK_INCREMENT_LEFT_SIZE) <= PACK_MAX_LEFT_CAPACITY));
 			m_left_capacity += PACK_INCREMENT_LEFT_SIZE;
 			byte_t* _newbuffer = (byte_t*)::realloc(m_buffer, _capacity());
 			WAWO_ALLOC_CHECK(_newbuffer, _capacity());
@@ -65,10 +65,10 @@ namespace wawo {
 		}
 
 		inline void _extend_rightbuffer_capacity__() {
-			WAWO_CONDITION_CHECK(_capacity() != 0);
+			WAWO_CONDITION_CHECK(m_right_capacity != 0);
 
 			WAWO_ASSERT(m_buffer != NULL);
-			WAWO_CONDITION_CHECK(((_capacity() + PACK_INCREMENT_RIGHT_SIZE) <= PACK_MAX_RIGHT_CAPACITY));
+			WAWO_CONDITION_CHECK(( m_right_capacity + PACK_INCREMENT_RIGHT_SIZE) <= PACK_MAX_RIGHT_CAPACITY));
 			m_right_capacity += PACK_INCREMENT_RIGHT_SIZE;
 			byte_t* _newbuffer = (byte_t*)::realloc(m_buffer, _capacity());
 			WAWO_ALLOC_CHECK(_newbuffer, _capacity());
