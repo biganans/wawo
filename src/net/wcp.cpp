@@ -892,7 +892,7 @@ namespace wawo { namespace net {
 			if (WCPPACK_TEST_FLAG( *pack, WCP_FLAG_RST)) {
 				WAWO_ASSERT(state == WCB_LISTEN);
 				WAWO_WARN("[wcp]WCB::accept, flag none WCP_FLAG_SYN, flag: %u, ignore, remote addr: %s, reply rst", pack->header.flag, from.address_info().cstr);
-				return;
+				continue;
 			}
 
 			if (!WCPPACK_TEST_FLAG( *pack, WCP_FLAG_SYN)) {
