@@ -749,13 +749,12 @@ namespace wawo { namespace net {
 			WAWO_ASSERT( wcb != NULL) ;
 			WAWO_ASSERT( wcb->four_tuple_hash_id != 0 );
 
-			FourTupleWCBMap::iterator const& it = m_wcb_four_tuple_map.find( wcb->four_tuple_hash_id );
-
 			if (m_wcb_four_tuple_map.size() >= WCBFD_MAX) {
 				wawo::set_last_errno(wawo::E_EMFILE);
 				return wawo::E_EMFILE;
 			}
 
+			FourTupleWCBMap::iterator const& it = m_wcb_four_tuple_map.find(wcb->four_tuple_hash_id);
 			if (it != m_wcb_four_tuple_map.end()) {
 				wawo::set_last_errno(wawo::E_EADDRINUSE);
 				return wawo::E_EADDRINUSE;
