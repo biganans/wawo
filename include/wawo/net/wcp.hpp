@@ -712,10 +712,10 @@ namespace wawo { namespace net {
 
 	public:
 
-#define WCBFD_MAX (2048)
+#define WCP_FD_MAX (2048)
 
 		static inline int make_wcb_fd() {
-			return (wawo::atomic_increment(&s_wcb_auto_increament_id) % WCBFD_MAX) + 0xFFFFFF;
+			return (wawo::atomic_increment(&s_wcb_auto_increament_id) % WCP_FD_MAX) + 0xFFFFFF;
 		}
 
 		int socket(int const& family, int const& socket_type, int const& protocol);
@@ -749,7 +749,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT( wcb != NULL) ;
 			WAWO_ASSERT( wcb->four_tuple_hash_id != 0 );
 
-			if (m_wcb_four_tuple_map.size() >= WCBFD_MAX) {
+			if (m_wcb_four_tuple_map.size() >= WCP_FD_MAX) {
 				wawo::set_last_errno(wawo::E_EMFILE);
 				return wawo::E_EMFILE;
 			}
