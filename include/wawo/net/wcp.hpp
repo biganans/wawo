@@ -120,10 +120,6 @@ namespace wawo { namespace net {
 		address	from;
 	};
 
-//	inline bool WCP_seq_asc_compare(WWSP<WCB_received_pack> const& left, WWSP<WCB_received_pack> const& right) {
-//		return left->header.seq < right->header.seq;
-//	}
-
 	typedef std::list <WWSP<WCB_pack>> WCB_PackList;
 	typedef std::queue<WWSP<WCB_pack>> WCB_PackQueue;
 
@@ -158,8 +154,9 @@ namespace wawo { namespace net {
 
 		WCB_FLAG_IS_LISTENER = 1<<7,
 		WCB_FLAG_IS_PASSIVE_OPEN = 1<<8,
-		WCB_FLAG_FIRST_RTT_DONE = 1<<9,
-		WCB_FLAG_CLOSED_CALLED = 1<<10,
+		WCB_FLAG_IS_ACTIVE_OPEN	= 1<<9,
+		WCB_FLAG_FIRST_RTT_DONE = 1<<10,
+		WCB_FLAG_CLOSED_CALLED = 1<<11,
 	};
 
 	struct WCB_SndInfo {
