@@ -705,7 +705,7 @@ namespace wawo { namespace net {
 				(void)last_flight_max;
 
 				u32_t half_flight_max = snd_nflight_bytes_max >> 1;
-				u32_t new_ssthresh = WAWO_MAX(half_flight_max, 4 * WCP_MTU);
+				u32_t new_ssthresh = WAWO_MAX(half_flight_max,  WCP_SND_SSTHRESH_MIN );
 				WAWO_ASSERT( snd_nflight_bytes_max >= snd_nflight_bytes );
 
 				snd_lost_cwnd_for_fast_recovery_compensation = (new_ssthresh-(snd_nflight_bytes>>1));
@@ -884,7 +884,7 @@ namespace wawo { namespace net {
 				lock_guard<spin_mutex> lg_r_mutex(r_mutex);
 				if ((backlogq.size() + backloglist_pending.size()) == backlog_size) {
 					reply_rst_to_address( so, pack->header.ack, from );
-					break;
+					continue;
 				}
 			}
 
@@ -1616,10 +1616,13 @@ namespace wawo { namespace net {
 			return wcb->wcb_errno;
 		}
 
-		if (wcb->wcb_errno != 0) {
-			wawo::set_last_errno(wcb->wcb_errno);
-			return WAWO_NEGATIVE(wcb->wcb_errno);
-		}
+		//@NOTICE, 2018.01.10
+		WAWO_ASSERT(wcb->wcb_errno == 0);
+
+		//if (wcb->wcb_errno != 0) {
+		//	wawo::set_last_errno(wcb->wcb_errno);
+		//	return WAWO_NEGATIVE(wcb->wcb_errno);
+		//}
 
 		if (wcb->wcb_option&WCP_O_NONBLOCK) {
 			wawo::set_last_errno(EWOULDBLOCK);
