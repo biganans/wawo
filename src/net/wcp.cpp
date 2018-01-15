@@ -321,7 +321,7 @@ namespace wawo { namespace net {
 						WCP_TRACE("[wcp]check_recv, duplicate (new), update rwnd, seq: %u, flag: %u, wnd: %u, ack: %u, expect: %u",
 							pack->header.seq, pack->header.flag, pack->header.wnd, pack->header.ack, rcv_info.next);
 
-						goto _end_current_loop;
+						goto _end_insert_loop;
 					}
 					else if (seq < pack->header.seq) {
 						++it;
@@ -332,7 +332,7 @@ namespace wawo { namespace net {
 				}
 				rcv_received.insert(it, pack);
 				//wcb_flag |= RCV_ARRIVE_NEW;
-			_end_current_loop:
+			_end_insert_loop:
 				(void)it;//for compile grammar
 			}
 
@@ -575,16 +575,16 @@ namespace wawo { namespace net {
 			WAWO_ASSERT( rb_standby->count() != 0 );
 			if (rb->count() == 0) {
 				rb.swap(rb_standby);
-			}
-			WAWO_ASSERT(rb->count() != 0);
 
-			if (r_flag&READ_RWND_LESS_THAN_MTU) {
-				r_flag |= READ_RWND_MORE_THAN_MTU;
-				rcv_info.wnd = rb_standby->left_capacity();
-			}
+				WAWO_ASSERT(rb->count() != 0);
+				if (r_flag&READ_RWND_LESS_THAN_MTU) {
+					r_flag |= READ_RWND_MORE_THAN_MTU;
+					rcv_info.wnd = rb_standby->left_capacity();
+				}
 
-			if (!(wcb_option&WCP_O_NONBLOCK)) {
-				r_cond.notify_all();
+				if (!(wcb_option&WCP_O_NONBLOCK)) {
+					r_cond.notify_all();
+				}
 			}
 		}
 
