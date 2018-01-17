@@ -18,7 +18,6 @@
 				<Option createDefFile="1" />
 				<Compiler>
 					<Add option="-Wall" />
-					<Add option="-g" />
 					<Add option="-O0 -rdynamic" />
 					<Add option="-DDEBUG" />
 				</Compiler>
@@ -46,14 +45,15 @@
 					<Add option="-O3" />
 					<Add option="-DNDEBUG" />
 				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-std=c++11" />
 			<Add option="-m64" />
-			<Add option="-g" />
-			<Add option="-rdynamic" />
 			<Add option="-D__WAWO__" />
 			<Add directory="../../../include" />
 		</Compiler>
