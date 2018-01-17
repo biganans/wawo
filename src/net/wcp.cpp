@@ -1650,6 +1650,10 @@ namespace wawo { namespace net {
 		WAWO_ASSERT(wcb != NULL);
 		WAWO_ASSERT(wcb->so != NULL);
 
+		if (wcb->local_addr.is_null()) {
+			wcb->local_addr = wcb->so->get_local_addr() ;
+		}
+
 		sockaddr_in* addr_in = (sockaddr_in*)addr;
 		addr_in->sin_family = SOCK_DGRAM;
 		addr_in->sin_port = wcb->local_addr.get_netsequence_port();
