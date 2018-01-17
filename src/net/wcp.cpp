@@ -1129,7 +1129,7 @@ namespace wawo { namespace net {
 			state = WCB_CLOSED;
 		} 
 		
-		if (state == WCB_SYN_SENT || state == WCB_SYNING) {
+		if (state == WCB_SYN_SENT || state == WCB_SYNING || WCB_SYN_RECEIVED ) {
 			state = WCB_CLOSED;
 			if (wcb_errno == wawo::OK) {
 				wcb_errno = wawo::E_ECONNABORTED;
@@ -1147,8 +1147,8 @@ namespace wawo { namespace net {
 			return wawo::OK;
 		}
 
-		if (state == WCB_SYN_RECEIVED ||
-			state == WCB_ESTABLISHED
+		if (state == WCB_ESTABLISHED ||
+			state == WCB_CLOSE_WAIT
 			) {
 
 			lock_guard<spin_mutex> lg_s_mutex(s_mutex);
@@ -1159,21 +1159,6 @@ namespace wawo { namespace net {
 
 			lock_guard<spin_mutex> lg_r_mutex(r_mutex);
 			if ( !(r_flag&READ_LOCAL_READ_SHUTDOWNED) ) {
-				r_flag |= READ_LOCAL_READ_SHUTDOWNED;
-			}
-			r_cond.notify_all();
-			return wawo::OK;
-		}
-
-		if (state == WCB_CLOSE_WAIT) {
-			lock_guard<spin_mutex> lg_s_mutex(s_mutex);
-			if ( !(s_flag&WRITE_LOCAL_WRITE_SHUTDOWNED)) {
-				FIN();
-				s_flag |= WRITE_LOCAL_WRITE_SHUTDOWNED;
-			}
-
-			lock_guard<spin_mutex> lg_r_mutex(r_mutex);
-			if ( !(r_flag&READ_LOCAL_READ_SHUTDOWNED)) {
 				r_flag |= READ_LOCAL_READ_SHUTDOWNED;
 			}
 			r_cond.notify_all();
