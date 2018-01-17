@@ -442,8 +442,7 @@ namespace wawo { namespace net {
 		}
 
 		inline void SACK(WWSP<wawo::packet> const& sacked_packet) {
-			static u32_t pack_acked_max = WCP_MDU/sizeof(u32_t);
-			static u32_t pack_acked_max_bytes = pack_acked_max*sizeof(u32_t);
+			static u32_t pack_acked_max_bytes = (WCP_MDU / sizeof(u32_t) )*sizeof(u32_t);
 
 			while ( sacked_packet->len() ) {
 				WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();

@@ -76,7 +76,7 @@ ifeq ($(PRJ_BUILD),debug)
 	DEFINES:=$(DEFINES) DEBUG
 	CC_MISC:=$(CC_MISC) -rdynamic -g -Wall -O0
 else
-	DEFINES:=$(DEFINES) RELEASE
+	DEFINES:=$(DEFINES) RELEASE NDEBUG
 	CC_MISC:=$(CC_MISC) -fexpensive-optimizations -O3
 endif
 
@@ -138,6 +138,7 @@ $(LIB_BUILD_DIR)/%.o : $(LIB_SOURCE_DIR)/%.cpp
 	@echo "------build cpp file end------"
 	
 	$(CXX) -fPIC -MMD -MP -MF $(DEFINES) $(INCLUDES) $(CC_MISC)  $(CC_C11) $< -o $@
+	#$(CXX) $(DEFINES) $(INCLUDES) $(CC_MISC)  $(CC_C11) $< -o $@
 
 $(LIB_3RD_CPP_BUILD_DIR)/%.o : $(LIB_3RD_DIR)/%.cpp
 	@if [ ! -d $(@D) ] ; then \

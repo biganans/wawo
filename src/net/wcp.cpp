@@ -726,6 +726,12 @@ namespace wawo { namespace net {
 	//@issue 1: we did not considerate faireness for each session for current implementation
 	void WCB::check_send(u64_t const& now) {
 
+		if (s_flag&WRITE_SEND_ERROR) {
+			WAWO_WARN("[wcp][%u]WCB::check_send, send error already: %s", fd, remote_addr.address_info().cstr);
+			return;
+		}
+
+		
 		{
 			//update rwnd manually
 			if ( (r_flag&READ_RWND_MORE_THAN_MTU) && (now - r_timer_last_rwnd_update)>WCP_RWND_CHECK_GRANULARITY) {
@@ -741,7 +747,6 @@ namespace wawo { namespace net {
 			}
 
 			while (s_sending_ignore_seq_space.size()) {
-
 				WWSP<WCB_pack>& pack = s_sending_ignore_seq_space.front();
 				int sndrt = send_pack(pack);
 				if (sndrt != wawo::OK) {
@@ -754,35 +759,10 @@ namespace wawo { namespace net {
 				}
 				s_sending_ignore_seq_space.pop();
 			}
-
-			lock_guard<spin_mutex> lg_s_mutex(s_mutex);
-			if (s_flag&WRITE_SEND_ERROR) {
-				WAWO_WARN("[wcp][%u]WCB::check_send, send error already: %s", fd, remote_addr.address_info().cstr);
-				return;
-			}
-
-			while ( s_sending_standby.size() ) {
-				snd_sending.push(s_sending_standby.front());
-				s_sending_standby.pop();
-			}
-
-			//split sending buffer into segment if allowed
-			while ( !(s_flag&WRITE_LOCAL_FIN_SENT) && (snd_sending.size() ==0) && (snd_info.cwnd- snd_nflight_bytes)>= WCP_MTU && (sb->count()>0) ) {
-				WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
-				opack->header.seq = snd_info.dsn++;
-				opack->header.flag = WCP_FLAG_DAT | WCP_FLAG_ACK;
-
-				WWSP<wawo::packet> data = wawo::make_shared<wawo::packet>(WCP_MDU);
-				u32_t nread = sb->read(data->begin(), WCP_MDU);
-				data->forward_write_index(nread);
-				opack->data = data;
-				opack->header.dlen = nread&0xFFFF;
-
-				snd_sending.push(opack);
-			}
 		}
-
-		while ( snd_sending.size()) {
+		
+_begin_send:
+		while ( snd_sending.size() ) {
 			WWSP<WCB_pack>& pack = snd_sending.front();
 
 			u32_t ntotal_bytes = pack->header.dlen + WCP_HeaderLen;
@@ -791,7 +771,8 @@ namespace wawo { namespace net {
 				WCP_TRACE("[wcp]congest seq: %u,flag: %u,size: %u,una: %u,cwnd: %u,rwnd: %u,flight: %u,ssthresh: %u,rto: %u,srtt: %u,rttvar: %u",
 					pack->header.seq, pack->header.flag, ntotal_bytes,snd_info.una, snd_info.cwnd, snd_info.rwnd, snd_nflight_bytes, snd_info.ssthresh, rto,srtt,rttvar
 				);
-				break;
+				
+				goto _end_send;
 			}
 
 			WAWO_ASSERT(pack->header.seq == snd_info.next, "[wcp][%d]seq: %u, una: %u, flag: %u, next: %u", fd, pack->header.seq, snd_info.una, pack->header.flag, snd_info.next );
@@ -804,7 +785,7 @@ namespace wawo { namespace net {
 					wcb_errno = sndrt;
 					s_flag |= WRITE_SEND_ERROR;
 				}
-				break;
+				goto _end_send;
 			}
 
 			WAWO_ASSERT(!WCPPACK_TEST_FLAG(*pack, (WCP_FLAG_SACK | WCP_FLAG_KEEP_ALIVE | WCP_FLAG_KEEP_ALIVE_REPLY)));
@@ -859,6 +840,40 @@ namespace wawo { namespace net {
 
 			snd_sending.pop();
 		}
+
+		
+		while (s_sending_standby.size()) {
+			snd_sending.push(s_sending_standby.front());
+			s_sending_standby.pop();
+		}
+
+		u32_t nmax_try_bytes = snd_info.cwnd - snd_nflight_bytes;
+		if ( !(s_flag&WRITE_LOCAL_FIN_SENT) && (nmax_try_bytes) > WCP_MTU) {
+
+			lock_guard<spin_mutex> lg_s_mutex(s_mutex);
+			while ( (sb->count()>0) && (nmax_try_bytes>0) ) {
+
+				WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
+				opack->header.seq = snd_info.dsn++;
+				opack->header.flag = WCP_FLAG_DAT | WCP_FLAG_ACK;
+
+				WWSP<wawo::packet> data = wawo::make_shared<wawo::packet>(WCP_MDU);
+				u32_t nread = sb->read(data->begin(), WCP_MDU);
+				data->forward_write_index(nread);
+				opack->data = data;
+				opack->header.dlen = nread & 0xFFFF;
+				snd_sending.push(opack);
+
+				nmax_try_bytes -= nread;
+			}			
+		}
+
+		if (snd_sending.size()) {
+			goto _begin_send;
+		}
+		
+_end_send:
+		(void)1;
 	}
 
 	int WCB::send_pack(WWSP<WCB_pack> const& pack) {
@@ -1129,7 +1144,7 @@ namespace wawo { namespace net {
 			state = WCB_CLOSED;
 		} 
 		
-		if (state == WCB_SYN_SENT || state == WCB_SYNING) {
+		if (state == WCB_SYN_SENT || state == WCB_SYNING || WCB_SYN_RECEIVED ) {
 			state = WCB_CLOSED;
 			if (wcb_errno == wawo::OK) {
 				wcb_errno = wawo::E_ECONNABORTED;
@@ -1147,8 +1162,8 @@ namespace wawo { namespace net {
 			return wawo::OK;
 		}
 
-		if (state == WCB_SYN_RECEIVED ||
-			state == WCB_ESTABLISHED
+		if (state == WCB_ESTABLISHED ||
+			state == WCB_CLOSE_WAIT
 			) {
 
 			lock_guard<spin_mutex> lg_s_mutex(s_mutex);
@@ -1159,21 +1174,6 @@ namespace wawo { namespace net {
 
 			lock_guard<spin_mutex> lg_r_mutex(r_mutex);
 			if ( !(r_flag&READ_LOCAL_READ_SHUTDOWNED) ) {
-				r_flag |= READ_LOCAL_READ_SHUTDOWNED;
-			}
-			r_cond.notify_all();
-			return wawo::OK;
-		}
-
-		if (state == WCB_CLOSE_WAIT) {
-			lock_guard<spin_mutex> lg_s_mutex(s_mutex);
-			if ( !(s_flag&WRITE_LOCAL_WRITE_SHUTDOWNED)) {
-				FIN();
-				s_flag |= WRITE_LOCAL_WRITE_SHUTDOWNED;
-			}
-
-			lock_guard<spin_mutex> lg_r_mutex(r_mutex);
-			if ( !(r_flag&READ_LOCAL_READ_SHUTDOWNED)) {
 				r_flag |= READ_LOCAL_READ_SHUTDOWNED;
 			}
 			r_cond.notify_all();
