@@ -772,7 +772,7 @@ _begin_send:
 					pack->header.seq, pack->header.flag, ntotal_bytes,snd_info.una, snd_info.cwnd, snd_info.rwnd, snd_nflight_bytes, snd_info.ssthresh, rto,srtt,rttvar
 				);
 				
-				goto _end_send;
+				return ;
 			}
 
 			WAWO_ASSERT(pack->header.seq == snd_info.next, "[wcp][%d]seq: %u, una: %u, flag: %u, next: %u", fd, pack->header.seq, snd_info.una, pack->header.flag, snd_info.next );
@@ -785,7 +785,7 @@ _begin_send:
 					wcb_errno = sndrt;
 					s_flag |= WRITE_SEND_ERROR;
 				}
-				goto _end_send;
+				return;
 			}
 
 			WAWO_ASSERT(!WCPPACK_TEST_FLAG(*pack, (WCP_FLAG_SACK | WCP_FLAG_KEEP_ALIVE | WCP_FLAG_KEEP_ALIVE_REPLY)));
@@ -871,9 +871,6 @@ _begin_send:
 		if (snd_sending.size()) {
 			goto _begin_send;
 		}
-		
-_end_send:
-		(void)1;
 	}
 
 	int WCB::send_pack(WWSP<WCB_pack> const& pack) {
