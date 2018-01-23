@@ -156,7 +156,7 @@ namespace wawo {
 		}
 
 		inline void swap( sp_counter& r ) _WW_NOEXCEPT {
-			wawo::swap(base,r.base);
+			std::swap(base,r.base);
 		}
 
 		inline void reset() _WW_NOEXCEPT {
@@ -221,7 +221,7 @@ namespace wawo {
 		}
 
 		void swap( sp_weak_counter& r ) _WW_NOEXCEPT {
-			wawo::swap(base,r.base);
+			std::swap(base,r.base);
 		}
 
 		bool operator == ( sp_weak_counter const& r ) const {
@@ -347,7 +347,7 @@ namespace wawo {
 		}
 
 		inline void swap( THIS_TYPE& r ) _WW_NOEXCEPT {
-			wawo::swap( sp_ct, r.sp_ct );
+			std::swap( sp_ct, r.sp_ct );
 		}
 
 		shared_ptr(WEAK_POINTER_TYPE const& weak) _WW_NOEXCEPT:
@@ -534,7 +534,7 @@ _VARIADIC_EXPAND_0X(_ALLOCATE_MAKE_SHARED, , , , )
 		}
 
 		void swap( THIS_TYPE& r ) {
-			wawo::swap(r.weak_ct,weak_ct);
+			std::swap(r.weak_ct,weak_ct);
 		}
 
 		THIS_TYPE& operator = (THIS_TYPE const& r) {
@@ -680,7 +680,7 @@ namespace wawo {
 
 		void swap(THIS_TYPE& other) _WW_NOEXCEPT
 		{
-			wawo::swap( _p, other._p );
+			std::swap( _p, other._p );
 		}
 
 		long ref_count() const _WW_NOEXCEPT { return (_p==0)?0:_p->_ref_count(); }

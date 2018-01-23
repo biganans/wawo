@@ -145,11 +145,11 @@ namespace wawo {
 		}
 
 		void swap( packet& other ) {
-			wawo::swap( m_buffer, other.m_buffer );
-			wawo::swap( m_left_capacity, other.m_left_capacity );
-			wawo::swap( m_read_idx, other.m_read_idx );
-			wawo::swap( m_right_capacity, other.m_right_capacity );
-			wawo::swap( m_write_idx, other.m_write_idx );
+			std::swap( m_buffer, other.m_buffer );
+			std::swap( m_left_capacity, other.m_left_capacity );
+			std::swap( m_read_idx, other.m_read_idx );
+			std::swap( m_right_capacity, other.m_right_capacity );
+			std::swap( m_write_idx, other.m_write_idx );
 		}
 
 		inline u32_t left_left_capacity() { return (m_buffer == NULL) ? 0 : m_read_idx; }

@@ -178,7 +178,7 @@ namespace wawo { namespace task {
 
 			WAWO_ASSERT( m_assigning->empty() );
 			WAWO_ASSERT( !m_standby->empty());
-			wawo::swap( m_standby, m_assigning );
+			std::swap( m_standby, m_assigning );
 			WAWO_ASSERT( !m_assigning->empty() );
 			WAWO_ASSERT( m_standby->empty() );
 			m_state = S_RUN;

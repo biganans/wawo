@@ -68,8 +68,8 @@ namespace wawo { namespace net { namespace peer { namespace message {
 		}
 
 		void swap( ros& other ) {
-			wawo::swap(net_id,other.net_id);
-			wawo::swap(type,other.type);
+			std::swap(net_id,other.net_id);
+			std::swap(type,other.type);
 			data.swap( other.data );
 		}
 
