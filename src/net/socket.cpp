@@ -584,7 +584,7 @@ namespace wawo { namespace net {
 			{
 				lock_guard<spin_mutex> lg_rq_standby(m_rps_q_standby_mutex);
 				if (m_rps_q_standby->size()) {
-					wawo::swap(m_rps_q, m_rps_q_standby);
+					std::swap(m_rps_q, m_rps_q_standby);
 					WAWO_ASSERT(m_rps_q_standby->size() == 0);
 					WAWO_ASSERT(m_rps_q->size() != 0);
 				}

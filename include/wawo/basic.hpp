@@ -51,13 +51,16 @@ namespace wawo {
 		return !is_big_endian();
 	}
 
-	//non-atomic ,,, be carefully,,
-	template <typename T>
-	inline void swap(T& a, T& b) _WW_NOEXCEPT {
-		WAWO_ASSERT(&a != &b);
-		T tmp(std::move(a));
-		a = std::move(b);
-		b = std::move(tmp);
+	namespace deprecated {
+		//@2018-01-23 deprecated, please use std::swap instead
+		//non-atomic ,,, be carefully,,
+		template <typename T>
+		inline void swap(T& a, T& b) _WW_NOEXCEPT {
+			WAWO_ASSERT(&a != &b);
+			T tmp(std::move(a));
+			a = std::move(b);
+			b = std::move(tmp);
+		}
 	}
 
 	template <class L, class R>

@@ -772,7 +772,7 @@ _begin_send:
 					pack->header.seq, pack->header.flag, ntotal_bytes,snd_info.una, snd_info.cwnd, snd_info.rwnd, snd_nflight_bytes, snd_info.ssthresh, rto,srtt,rttvar
 				);
 				
-				return;
+				return ;
 			}
 
 			WAWO_ASSERT(pack->header.seq == snd_info.next, "[wcp][%d]seq: %u, una: %u, flag: %u, next: %u", fd, pack->header.seq, snd_info.una, pack->header.flag, snd_info.next );
@@ -785,7 +785,7 @@ _begin_send:
 					wcb_errno = sndrt;
 					s_flag |= WRITE_SEND_ERROR;
 				}
-				return ;
+				return;
 			}
 
 			WAWO_ASSERT(!WCPPACK_TEST_FLAG(*pack, (WCP_FLAG_SACK | WCP_FLAG_KEEP_ALIVE | WCP_FLAG_KEEP_ALIVE_REPLY)));
@@ -840,6 +840,7 @@ _begin_send:
 
 			snd_sending.pop();
 		}
+
 		
 		while (s_sending_standby.size()) {
 			snd_sending.push(s_sending_standby.front());
@@ -864,7 +865,7 @@ _begin_send:
 				snd_sending.push(opack);
 
 				nmax_try_bytes -= nread;
-			}
+			}			
 		}
 
 		if (snd_sending.size()) {
