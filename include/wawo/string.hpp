@@ -342,8 +342,8 @@ namespace wawo {
 		}
 
 		void swap(len_cstr_impl& other ) {
-			wawo::swap( cstr,other.cstr );
-			wawo::swap( len, other.len );
+			std::swap( cstr,other.cstr );
+			std::swap( len, other.len );
 		}
 
 		len_cstr_impl(len_cstr_impl const& other ) :

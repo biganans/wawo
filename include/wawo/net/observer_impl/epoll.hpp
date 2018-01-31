@@ -39,10 +39,8 @@ namespace wawo { namespace net { namespace observer_impl {
 			u16_t epoll_op ;
 
 			WWRP<observer_ctx> ctx;
-			typename observer_ctx_vector::iterator it = std::find_if( m_ctxs.begin(), m_ctxs.end(), [&]( WWRP<observer_ctx> const& ctx_ ) {
-				return ctx_->fd == fd;
-			});
-
+			typename observer_ctx_map::iterator it = m_ctxs.find(fd);
+			
 			if( it == m_ctxs.end() ) {
 				epoll_op = EPOLL_CTL_ADD;
 
@@ -53,7 +51,7 @@ namespace wawo { namespace net { namespace observer_impl {
 
 				ctx = _ctx;
 			} else {
-				ctx = *it;
+				ctx = it->second ;
 				epoll_op = EPOLL_CTL_MOD;
 			}
 
@@ -91,7 +89,7 @@ namespace wawo { namespace net { namespace observer_impl {
 
 			if (epoll_op == EPOLL_CTL_ADD) {
 				TRACE_IOE("[EPOLL][##%d][#%d][watch]epoll op success, op code: %d, op flag: %d, EPOLL_CTL_ADD, add to ctxs", m_epfd, fd, epoll_op, flag);
-				m_ctxs.push_back(ctx);
+				m_ctxs.insert({ fd,ctx });
 			}
 			TRACE_IOE("[EPOLL][##%d][#%d][watch]epoll op success, op code: %d, op flag: %d, new flag: %d", m_epfd, fd, epoll_op, flag, ctx->flag);
 		}
@@ -101,13 +99,11 @@ namespace wawo { namespace net { namespace observer_impl {
 			WAWO_ASSERT(fd > 0);
 			WAWO_ASSERT( m_epfd > 0 );
 
-			observer_ctx_vector::iterator it = std::find_if( m_ctxs.begin(), m_ctxs.end(), [&]( WWRP<observer_ctx> const& ctx_ ) {
-				return ctx_->fd == fd;
-			});
-
+			observer_ctx_map::iterator it = m_ctxs.find(fd);
+			
 			if( it == m_ctxs.end() ) { return ; }
 
-			WWRP<observer_ctx> ctx = *it;
+			WWRP<observer_ctx> ctx = it->second;
 
 			u16_t epoll_op = ( !((ctx->flag&(IOE_READ|IOE_WRITE))&(~flag)) ) ? EPOLL_CTL_DEL : EPOLL_CTL_MOD;
 

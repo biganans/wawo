@@ -930,3 +930,524 @@
 	<wawo/thread/mutex.hpp>
 	<wawo/task/scheduler.hpp>
 
+1513414188 source:/mnt/hgfs/git/github/libs/wawo/test/wcp/src/server.cpp
+	<wawo.h>
+	"shared.hpp"
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo.h
+	<wawo/core.hpp>
+	<wawo/smart_ptr.hpp>
+	<wawo/singleton.hpp>
+	<wawo/bytes_helper.hpp>
+	<wawo/ringbuffer.hpp>
+	<wawo/packet.hpp>
+	<wawo/bytes_ringbuffer.hpp>
+	<wawo/thread/mutex.hpp>
+	<wawo/thread/condition.hpp>
+	<wawo/thread/thread.hpp>
+	<wawo/thread/ticker.hpp>
+	<wawo/log/logger_manager.h>
+	<wawo/log/console_logger.h>
+	<wawo/log/file_logger.h>
+	<wawo/log/sys_logger.h>
+	<wawo/task/scheduler.hpp>
+	<wawo/security/dh.hpp>
+	<wawo/security/xxtea.hpp>
+	<wawo/net/tlp/stream.hpp>
+	<wawo/net/tlp/hlen_packet.hpp>
+	<wawo/net/tlp/dh_symmetric_encrypt.hpp>
+	<wawo/net/protocol/icmp.hpp>
+	<wawo/net/wcp.hpp>
+	<wawo/net/net_event.hpp>
+	<wawo/net/address.hpp>
+	<wawo/net/socket.hpp>
+	<wawo/net/socket_observer.hpp>
+	<wawo/net/peer/cargo.hpp>
+	<wawo/net/peer/ros.hpp>
+	<wawo/net/peer/http.hpp>
+	<wawo/net/peer/mux_cargo.hpp>
+	<wawo/net/service_pool.hpp>
+	<wawo/net/peer_proxy.hpp>
+	<wawo/net/node_abstract.hpp>
+	<wawo/net/http_node.hpp>
+	<wawo/net/ros_node.hpp>
+	<wawo/net/messenger.hpp>
+	<wawo/env/env.hpp>
+	<wawo/app.hpp>
+	<wawo/signal/signal_manager.h>
+	<wawo/__init__.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/core.hpp
+	<wawo/config/compiler.h>
+	<wawo/config/platform.h>
+	<cstddef>
+	<cstdio>
+	<csignal>
+	<cstdlib>
+	<cstdarg>
+	<cstring>
+	<cassert>
+	<atomic>
+	<wawo/macros.h>
+	<wawo/config/config.h>
+	<wawo/constants.h>
+	<wawo/basic.hpp>
+	<wawo/time/time.hpp>
+	<wawo/exception.hpp>
+	<wawo/memory.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/config/compiler.h
+
+1513665538 /mnt/hgfs/git/github/libs/wawo/include/wawo/config/platform.h
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/macros.h
+	<cassert>
+	<wawo/config/compiler.h>
+	<wawo/config/platform.h>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/config/config.h
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/constants.h
+	<climits>
+	<wawo/config/compiler.h>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/basic.hpp
+	<utility>
+	<atomic>
+	<wawo/config/compiler.h>
+	<wawo/config/platform.h>
+	<wawo/macros.h>
+	<wawo/constants.h>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/time/time.hpp
+	<ctime>
+	<wawo/core.hpp>
+	<wawo/string.hpp>
+	<chrono>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/string.hpp
+	<vector>
+	<cstring>
+	<cwchar>
+	<algorithm>
+	<wawo/config/platform.h>
+	<wawo/macros.h>
+	<wawo/memory.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/memory.hpp
+	<wawo/exception.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/exception.hpp
+	<wawo/config/platform.h>
+	<wawo/basic.hpp>
+	<execinfo.h>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/smart_ptr.hpp
+	<wawo/config/compiler.h>
+	<wawo/basic.hpp>
+	<wawo/exception.hpp>
+	<type_traits>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/singleton.hpp
+	<mutex>
+	<wawo/core.hpp>
+	<wawo/exception.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/bytes_helper.hpp
+	<wawo/core.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/ringbuffer.hpp
+	<wawo/core.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/packet.hpp
+	<wawo/core.hpp>
+	<wawo/smart_ptr.hpp>
+	<wawo/bytes_helper.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/bytes_ringbuffer.hpp
+	<wawo/smart_ptr.hpp>
+	<wawo/bytes_helper.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/thread/mutex.hpp
+	<wawo/thread/impl/mutex.hpp>
+	<wawo/thread/impl/spin_mutex.hpp>
+	<wawo/thread/impl/shared_mutex.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/thread/impl/mutex.hpp
+	<mutex>
+	<wawo/core.hpp>
+	<wawo/thread/impl/mutex_basic.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/thread/impl/mutex_basic.hpp
+	<wawo/macros.h>
+	<wawo/log/logger_manager.h>
+	<set>
+	<wawo/thread/tls.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/log/logger_manager.h
+	<vector>
+	<wawo/singleton.hpp>
+	<wawo/smart_ptr.hpp>
+	<wawo/log/logger_abstract.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/log/logger_abstract.hpp
+	<wawo/core.hpp>
+	<wawo/smart_ptr.hpp>
+	<wawo/log/format_interface.h>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/log/format_interface.h
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/thread/tls.hpp
+	<algorithm>
+	<thread>
+	<mutex>
+	<wawo/singleton.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/thread/impl/spin_mutex.hpp
+	<atomic>
+	<wawo/core.hpp>
+	<pthread.h>
+	<wawo/thread/impl/mutex_basic.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/thread/impl/shared_mutex.hpp
+	<wawo/core.hpp>
+	<wawo/thread/condition.hpp>
+	<wawo/thread/impl/mutex_basic.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/thread/condition.hpp
+	<condition_variable>
+	<wawo/core.hpp>
+	<wawo/thread/impl/mutex.hpp>
+	<wawo/thread/thread.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/thread/thread.hpp
+	<thread>
+	<exception>
+	<wawo/core.hpp>
+	<wawo/exception.hpp>
+	<wawo/log/logger_manager.h>
+	<wawo/thread/impl/spin_mutex.hpp>
+	<wawo/thread/impl/mutex.hpp>
+	<wawo/thread/impl/condition.hpp>
+	<wawo/thread/tls.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/thread/impl/condition.hpp
+	<mutex>
+	<condition_variable>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/thread/ticker.hpp
+	<chrono>
+	<queue>
+	<wawo/thread/thread.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/log/console_logger.h
+	<wawo/log/logger_abstract.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/log/file_logger.h
+	<wawo/log/logger_abstract.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/log/sys_logger.h
+	<wawo/log/logger_abstract.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/task/scheduler.hpp
+	<vector>
+	<wawo/core.hpp>
+	<wawo/smart_ptr.hpp>
+	<wawo/singleton.hpp>
+	<wawo/thread/thread.hpp>
+	<wawo/task/task.hpp>
+	<wawo/task/runner.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/task/task.hpp
+	<functional>
+	<vector>
+	<queue>
+	<wawo/core.hpp>
+	<wawo/smart_ptr.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/task/runner.hpp
+	<wawo/core.hpp>
+	<wawo/smart_ptr.hpp>
+	<wawo/thread/mutex.hpp>
+	<wawo/thread/thread_run_object_abstract.hpp>
+	<wawo/thread/condition.hpp>
+	<wawo/task/task.hpp>
+	<queue>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/thread/thread_run_object_abstract.hpp
+	<wawo/core.hpp>
+	<wawo/thread/thread.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/security/dh.hpp
+	<wawo/core.hpp>
+	<wawo/math/formula.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/math/formula.hpp
+	<wawo/core.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/security/xxtea.hpp
+	<wawo/core.hpp>
+	<wawo/packet.hpp>
+	<wawo/security/cipher_abstract.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/security/cipher_abstract.hpp
+	<wawo/core.hpp>
+	<wawo/packet.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/tlp/stream.hpp
+	<wawo/packet.hpp>
+	<wawo/bytes_ringbuffer.hpp>
+	<wawo/net/tlp_abstract.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/tlp_abstract.hpp
+	<wawo/smart_ptr.hpp>
+	<wawo/packet.hpp>
+	<wawo/bytes_ringbuffer.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/tlp/hlen_packet.hpp
+	<wawo/packet.hpp>
+	<wawo/log/logger_manager.h>
+	<wawo/net/tlp_abstract.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/tlp/dh_symmetric_encrypt.hpp
+	<wawo/net/tlp/symmetric_encrypt.hpp>
+	<wawo/security/dh.hpp>
+	<wawo/security/obfuscate.hpp>
+	<wawo/security/xxtea.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/tlp/symmetric_encrypt.hpp
+	<wawo/packet.hpp>
+	<wawo/security/cipher_abstract.hpp>
+	<wawo/net/tlp/hlen_packet.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/security/obfuscate.hpp
+	<wawo/core.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/protocol/icmp.hpp
+	<wawo/core.hpp>
+	<wawo/app.hpp>
+	<wawo/net/socket.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/app.hpp
+	<wawo/core.hpp>
+	<wawo/signal/signal_handler_abstract.h>
+	<wawo/signal/signal_manager.h>
+	<wawo/log/logger_manager.h>
+	<wawo/time/time.hpp>
+	<wawo/net/socket_observer.hpp>
+	<wawo/net/wcp.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/signal/signal_handler_abstract.h
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/signal/signal_manager.h
+	<map>
+	<vector>
+	<wawo/core.hpp>
+	<wawo/singleton.hpp>
+	<wawo/signal/signal_handler_abstract.h>
+	<signal.h>
+	<vector>
+	<wawo/singleton.hpp>
+	<wawo/thread/mutex.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/socket_observer.hpp
+	<queue>
+	<wawo/core.hpp>
+	<wawo/smart_ptr.hpp>
+	<wawo/thread/ticker.hpp>
+	<wawo/net/observer_abstract.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/observer_abstract.hpp
+	<wawo/smart_ptr.hpp>
+	<wawo/thread/mutex.hpp>
+	<wawo/task/scheduler.hpp>
+
+1513860779 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/wcp.hpp
+	<map>
+	<unordered_map>
+	<queue>
+	<list>
+	<wawo/core.hpp>
+	<wawo/singleton.hpp>
+	<wawo/thread/mutex.hpp>
+	<wawo/thread/ticker.hpp>
+	<wawo/bytes_ringbuffer.hpp>
+	<wawo/packet.hpp>
+	<wawo/net/address.hpp>
+	<wawo/log/logger_manager.h>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/address.hpp
+	<wawo/core.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/socket.hpp
+	<queue>
+	<wawo/smart_ptr.hpp>
+	<wawo/time/time.hpp>
+	<wawo/thread/mutex.hpp>
+	<wawo/net/dispatcher_abstract.hpp>
+	<wawo/packet.hpp>
+	<wawo/bytes_ringbuffer.hpp>
+	<wawo/net/address.hpp>
+	<wawo/net/tlp_abstract.hpp>
+	<wawo/net/net_event.hpp>
+	<wawo/net/socket_base.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/dispatcher_abstract.hpp
+	<vector>
+	<queue>
+	<wawo/smart_ptr.hpp>
+	<wawo/thread/mutex.hpp>
+	<wawo/log/logger_manager.h>
+	<wawo/net/net_event.hpp>
+	<wawo/net/listener_abstract.hpp>
+	<wawo/task/scheduler.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/net_event.hpp
+	<wawo/net/event.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/event.hpp
+	<wawo/core.hpp>
+	<wawo/packet.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/listener_abstract.hpp
+	<wawo/smart_ptr.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/socket_base.hpp
+	<wawo/core.hpp>
+	<wawo/thread/thread.hpp>
+	<wawo/log/logger_manager.h>
+	<wawo/net/address.hpp>
+	<wawo/net/tlp_abstract.hpp>
+	<wawo/net/socket_observer.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/peer/cargo.hpp
+	<wawo/net/tlp/hlen_packet.hpp>
+	<wawo/net/listener_abstract.hpp>
+	<wawo/net/dispatcher_abstract.hpp>
+	<wawo/net/peer_abstract.hpp>
+	<wawo/net/peer/message/cargo.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/peer_abstract.hpp
+	<vector>
+	<wawo/smart_ptr.hpp>
+	<wawo/net/socket.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/peer/message/cargo.hpp
+	<wawo/core.hpp>
+	<wawo/packet.hpp>
+
+1513847654 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/peer/ros.hpp
+	<wawo/thread/mutex.hpp>
+	<wawo/net/tlp/hlen_packet.hpp>
+	<wawo/net/peer/message/ros.hpp>
+	<wawo/net/peer_abstract.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/peer/message/ros.hpp
+	<wawo/core.hpp>
+	<wawo/packet.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/peer/http.hpp
+	<wawo/core.hpp>
+	<wawo/thread/mutex.hpp>
+	<wawo/net/listener_abstract.hpp>
+	<wawo/net/dispatcher_abstract.hpp>
+	<wawo/net/tlp/stream.hpp>
+	<wawo/net/net_event.hpp>
+	<wawo/net/peer_abstract.hpp>
+	<wawo/net/peer/message/http.hpp>
+	<wawo/net/socket.hpp>
+	<wawo/net/protocol/http.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/peer/message/http.hpp
+	<map>
+	<wawo/core.hpp>
+	<wawo/net/protocol/http.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/protocol/http.hpp
+	<unordered_map>
+	<list>
+	"./../../../../3rd/http_parser/http_parser.h"
+	<wawo/core.hpp>
+	<wawo/packet.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/3rd/http_parser/http_parser.h
+	<stddef.h>
+	<BaseTsd.h>
+	<stdint.h>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/peer/mux_cargo.hpp
+	<atomic>
+	<vector>
+	<list>
+	<map>
+	<wawo/core.hpp>
+	<wawo/net/peer/_mux.hpp>
+	<wawo/net/peer/message/mux_cargo.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/peer/_mux.hpp
+	<atomic>
+	<wawo/core.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/peer/message/mux_cargo.hpp
+	<wawo/net/peer/_mux.hpp>
+	<wawo/packet.hpp>
+	<wawo/bytes_ringbuffer.hpp>
+	<wawo/thread/thread.hpp>
+	<wawo/net/socket.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/service_pool.hpp
+	<wawo/thread/mutex.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/peer_proxy.hpp
+	<map>
+	<wawo/core.hpp>
+	<wawo/net/net_event.hpp>
+	<wawo/net/listener_abstract.hpp>
+	<wawo/thread/ticker.hpp>
+	<wawo/singleton.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/node_abstract.hpp
+	<wawo/core.hpp>
+	<wawo/net/listener_abstract.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/http_node.hpp
+	<wawo/net/peer/http.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/ros_node.hpp
+	<wawo/net/service_provider_abstract.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/service_provider_abstract.hpp
+	<wawo/net/listener_abstract.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/net/messenger.hpp
+	<wawo/smart_ptr.hpp>
+	<wawo/packet.hpp>
+	<wawo/net/peer/http.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/env/env.hpp
+	<wawo/core.hpp>
+	<wawo/singleton.hpp>
+	<wawo/env/env_impl_win32.hpp>
+	<wawo/env/env_impl_gnu.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/env/env_impl_win32.hpp
+	<wawo/core.hpp>
+	<iphlpapi.h>
+	<wawo/log/logger_manager.h>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/env/env_impl_gnu.hpp
+	<arpa/inet.h>
+	<sys/socket.h>
+	<netdb.h>
+	<ifaddrs.h>
+	<unistd.h>
+	<vector>
+	<wawo/net/address.hpp>
+
+1513414187 /mnt/hgfs/git/github/libs/wawo/include/wawo/__init__.hpp
+	<wawo/thread/mutex.hpp>
+	<wawo/thread/thread.hpp>
+
+1513414188 /mnt/hgfs/git/github/libs/wawo/test/wcp/src/shared.hpp
+	<wawo.h>
+

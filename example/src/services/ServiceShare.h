@@ -97,18 +97,20 @@ namespace services {
 
 				//resend
 				//int cid = wawo::net::client::service::Echo<ClientType>::C_TEST ;
-				WWSP<wawo::packet> packet_o(new wawo::packet(256));
+				WWSP<wawo::packet> packet_o = wawo::make_shared<wawo::packet>(256);
 				packet_o->write<wawo::u32_t>(services::C_ECHO_STRING_REQUEST_TEST);
 				wawo::u32_t to_snd_len = (++LAST_LEN%MAX_SND_LEN);
 
 				packet_o->write<wawo::u32_t>(to_snd_len);
 				packet_o->write((wawo::byte_t*)bytes_buffer, to_snd_len);
 
-				WWSP<wawo::packet> packet_t1(new wawo::packet(*packet_o));
+				WWSP<wawo::packet> packet_t1 = wawo::make_shared<wawo::packet>(*packet_o);
+
 				packet_t1->write_left < wawo::net::service_id_t >(services::S_ECHO);
-				WWSP<wawo::net::peer::message::ros> message_r1(new wawo::net::peer::message::ros(packet_t1));
+				WWSP<wawo::net::peer::message::ros> request_message = wawo::make_shared<wawo::net::peer::message::ros>(packet_t1);
 				int rt;
-				rt = peer->request(message_r1, WWRP<wawo::net::peer::ros_callback_abstract>(this) );
+
+				rt = peer->request(request_message, WWRP<wawo::net::peer::ros_callback_abstract>(this) );
 
 //				WAWO_CHECK_SOCKET_SEND_RETURN_V(rt);
 

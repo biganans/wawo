@@ -334,8 +334,8 @@ namespace wawo { namespace net { namespace peer { namespace message {
 		}
 
 		void swap(mux_cargo& other) {
-			wawo::swap(s,other.s);
-			wawo::swap(type, other.type);
+			std::swap(s,other.s);
+			std::swap(type, other.type);
 			data.swap(other.data);
 		}
 

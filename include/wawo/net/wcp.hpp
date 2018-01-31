@@ -62,7 +62,7 @@
 
 #define WCP_RTO_CLOCK_GRANULARITY 5
 #define WCP_RTO_INIT 1000
-#define WCP_RTO_MIN 200
+#define WCP_RTO_MIN 100
 #define WCP_RTO_MAX (60*1000)
 
 #define WCP_LOST_THRESHOLD 3
@@ -87,7 +87,7 @@ namespace wawo { namespace net {
 		WCP_FLAG_SACK =	1 << 2,
 		WCP_FLAG_FIN =	1 << 3,
 		WCP_FLAG_RST =	1 << 4,
-		WCP_FLAG_WND =	1 << 5,
+		WCP_FLAG_WND =	1 << 5, //force update wnd any way
 		WCP_FLAG_DAT =	1 << 6,
 		WCP_FLAG_KEEP_ALIVE =	1 << 7,
 		WCP_FLAG_KEEP_ALIVE_REPLY = 1<<8,
@@ -120,10 +120,6 @@ namespace wawo { namespace net {
 		address	from;
 	};
 
-	inline bool WCP_seq_asc_compare(WWSP<WCB_received_pack> const& left, WWSP<WCB_received_pack> const& right) {
-		return left->header.seq < right->header.seq;
-	}
-
 	typedef std::list <WWSP<WCB_pack>> WCB_PackList;
 	typedef std::queue<WWSP<WCB_pack>> WCB_PackQueue;
 
@@ -147,7 +143,6 @@ namespace wawo { namespace net {
 	};
 
 	enum WCB_flag {
-
 		RCV_ARRIVE_NEW = 1<<0,
 
 		SND_BIGGEST_SACK_UPDATE = 1<<1,
@@ -159,8 +154,9 @@ namespace wawo { namespace net {
 
 		WCB_FLAG_IS_LISTENER = 1<<7,
 		WCB_FLAG_IS_PASSIVE_OPEN = 1<<8,
-		WCB_FLAG_FIRST_RTT_DONE = 1<<9,
-		WCB_FLAG_CLOSED_CALLED = 1<<10,
+		WCB_FLAG_IS_ACTIVE_OPEN	= 1<<9,
+		WCB_FLAG_FIRST_RTT_DONE = 1<<10,
+		WCB_FLAG_CLOSED_CALLED = 1<<11,
 	};
 
 	struct WCB_SndInfo {
@@ -199,7 +195,7 @@ namespace wawo { namespace net {
 
 
 	struct WCB;
-	typedef std::vector< WWRP<WCB> > WCBVector;
+	typedef std::vector< WWRP<WCB> > WCBList;
 	typedef std::queue< WWRP<WCB> > WCBQueue;
 
 	class socket;
@@ -249,7 +245,7 @@ namespace wawo { namespace net {
 		WWRP<wawo::bytes_ringbuffer> rb_standby;
 		u64_t r_timer_last_rwnd_update;
 
-		WCBVector backlogvec_pending;
+		WCBList backloglist_pending;
 		WCBQueue backlogq;
 		u32_t backlog_size;
 
@@ -432,7 +428,7 @@ namespace wawo { namespace net {
 		inline void FIN() {
 			WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
 			opack->header.seq = snd_info.dsn++;
-			opack->header.flag = WCP_FLAG_FIN;
+			opack->header.flag = WCP_FLAG_FIN ;
 			opack->header.dlen = 0;
 			s_sending_standby.push(opack);
 		}
@@ -446,8 +442,7 @@ namespace wawo { namespace net {
 		}
 
 		inline void SACK(WWSP<wawo::packet> const& sacked_packet) {
-			static u32_t pack_acked_max = WCP_MDU/sizeof(u32_t);
-			static u32_t pack_acked_max_bytes = pack_acked_max*sizeof(u32_t);
+			static u32_t pack_acked_max_bytes = (WCP_MDU / sizeof(u32_t) )*sizeof(u32_t);
 
 			while ( sacked_packet->len() ) {
 				WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
@@ -713,10 +708,10 @@ namespace wawo { namespace net {
 
 	public:
 
-#define WCBFD_MAX (2048)
+#define WCP_FD_MAX (2048)
 
 		static inline int make_wcb_fd() {
-			return (wawo::atomic_increment(&s_wcb_auto_increament_id) % WCBFD_MAX) + 0xFFFFFF;
+			return (wawo::atomic_increment(&s_wcb_auto_increament_id) % WCP_FD_MAX) + 0xFFFFFF;
 		}
 
 		int socket(int const& family, int const& socket_type, int const& protocol);
@@ -750,13 +745,12 @@ namespace wawo { namespace net {
 			WAWO_ASSERT( wcb != NULL) ;
 			WAWO_ASSERT( wcb->four_tuple_hash_id != 0 );
 
-			FourTupleWCBMap::iterator const& it = m_wcb_four_tuple_map.find( wcb->four_tuple_hash_id );
-
-			if (m_wcb_four_tuple_map.size() >= WCBFD_MAX) {
+			if (m_wcb_four_tuple_map.size() >= WCP_FD_MAX) {
 				wawo::set_last_errno(wawo::E_EMFILE);
 				return wawo::E_EMFILE;
 			}
 
+			FourTupleWCBMap::iterator const& it = m_wcb_four_tuple_map.find(wcb->four_tuple_hash_id);
 			if (it != m_wcb_four_tuple_map.end()) {
 				wawo::set_last_errno(wawo::E_EADDRINUSE);
 				return wawo::E_EADDRINUSE;

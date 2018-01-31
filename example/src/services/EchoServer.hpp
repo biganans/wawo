@@ -117,7 +117,7 @@ namespace services {
 				(void) rt;
 				//WAWO_CHECK_SOCKET_SEND_RETURN_V(rt);
 			} else {
-				WAWO_THROW_EXCEPTION("invalid echo command");
+				WAWO_THROW("invalid echo command");
 			}
 		}
 

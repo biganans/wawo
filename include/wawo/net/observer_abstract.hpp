@@ -1,6 +1,8 @@
 #ifndef _WAWO_NET_OBSERVER_IMPL_SOCKET_OBSERVER_ABSTRACT_HPP_
 #define _WAWO_NET_OBSERVER_IMPL_SOCKET_OBSERVER_ABSTRACT_HPP_
 
+#include <map>
+
 #include <wawo/smart_ptr.hpp>
 #include <wawo/thread/mutex.hpp>
 #include <wawo/task/scheduler.hpp>
@@ -112,12 +114,15 @@ namespace wawo { namespace net {
 	};
 
 
-	typedef std::vector< WWRP<observer_ctx> > observer_ctx_vector;
+	//typedef std::vector< WWRP<observer_ctx> > observer_ctx_vector;
+
+	typedef std::map<int, WWRP<observer_ctx>> observer_ctx_map;
+	typedef std::pair<int, WWRP<observer_ctx>> fd_ctx_pair;
 
 	class observer_abstract
 	{
 	protected:
-		observer_ctx_vector m_ctxs;
+		observer_ctx_map m_ctxs;
 
 	public:
 		observer_abstract():
@@ -191,10 +196,10 @@ namespace wawo { namespace net {
 			}
 		}
 
-		inline void ctxs_cancel_all(observer_ctx_vector& ctx_vec) {
-			observer_ctx_vector::iterator it = ctx_vec.begin();
+		inline void ctxs_cancel_all(observer_ctx_map& ctx_map ) {
+			observer_ctx_map::iterator it = ctx_map.begin();
 			while (it != m_ctxs.end()) {
-				WWRP<observer_ctx> const& ctx = *it;
+				WWRP<observer_ctx> const& ctx = it->second ;
 				++it;
 
 				if (ctx->fd > 0) {

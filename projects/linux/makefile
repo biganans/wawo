@@ -69,14 +69,14 @@ LIB_FULL_PATH_NAME	:= $(LIB_BIN_DIR)/$(LIB_FULL_NAME)
 
 DEFINES	:= $(DEFINES) __WAWO__
 
-CC_MISC		:= -c -rdynamic
+CC_MISC		:= -c
 CC_C11		:= -std=c++11
 
 ifeq ($(PRJ_BUILD),debug)
 	DEFINES:=$(DEFINES) DEBUG
-	CC_MISC:=$(CC_MISC) -g -Wall -O0
+	CC_MISC:=$(CC_MISC) -rdynamic -g -Wall -O0
 else
-	DEFINES:=$(DEFINES) RELEASE
+	DEFINES:=$(DEFINES) RELEASE NDEBUG
 	CC_MISC:=$(CC_MISC) -fexpensive-optimizations -O3
 endif
 
@@ -138,6 +138,7 @@ $(LIB_BUILD_DIR)/%.o : $(LIB_SOURCE_DIR)/%.cpp
 	@echo "------build cpp file end------"
 	
 	$(CXX) -fPIC -MMD -MP -MF $(DEFINES) $(INCLUDES) $(CC_MISC)  $(CC_C11) $< -o $@
+	#$(CXX) $(DEFINES) $(INCLUDES) $(CC_MISC)  $(CC_C11) $< -o $@
 
 $(LIB_3RD_CPP_BUILD_DIR)/%.o : $(LIB_3RD_DIR)/%.cpp
 	@if [ ! -d $(@D) ] ; then \

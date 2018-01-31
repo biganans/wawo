@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
 		}
 
 connect:
-	remote_addr.so_address = wawo::net::address("192.168.2.42", 32310);
+	remote_addr.so_address = wawo::net::address("100.64.15.195", 32310);
 //	remote_addr.so_address = wawo::net::address("192.168.2.170", 32310);
 
 	WWRP<wawo::net::socket> so = wawo::make_ref<wawo::net::socket>(sbc, remote_addr.so_family, remote_addr.so_type, remote_addr.so_protocol);

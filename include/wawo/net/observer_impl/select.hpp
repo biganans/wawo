@@ -90,10 +90,8 @@ namespace wawo { namespace net { namespace observer_impl {
 				WAWO_ASSERT(fn != NULL);
 
 				WWRP<observer_ctx> ctx;
-				observer_ctx_vector::iterator it = std::find_if( m_ctxs.begin(), m_ctxs.end(), [&](WWRP<observer_ctx> const& ctx_) {
-					return ctx_->fd == fd;
-				});
-
+				observer_ctx_map::iterator it = m_ctxs.find(fd);
+				
 				if (it == m_ctxs.end()) {
 					TRACE_IOE("[observer_abstract][#%d]watch_ioe: make new, flag: %u", fd, flag );
 					WWRP<observer_ctx> _ctx = wawo::make_ref<observer_ctx>();
@@ -101,11 +99,11 @@ namespace wawo { namespace net { namespace observer_impl {
 					_ctx->poll_type = T_SELECT;
 					_ctx->flag = 0;
 
-					m_ctxs.push_back(_ctx);
+					m_ctxs.insert({fd,_ctx});
 					ctx = _ctx;
 				}
 				else {
-					ctx = *it;
+					ctx = it->second;
 				}
 
 				ctx_update_for_watch(ctx, flag, fd, cookie, fn, err);
@@ -117,12 +115,10 @@ namespace wawo { namespace net { namespace observer_impl {
 				WAWO_ASSERT(fd>0);
 				WAWO_ASSERT(flag > 0 && flag <= 0xFF);
 
-				observer_ctx_vector::iterator it = std::find_if(m_ctxs.begin(), m_ctxs.end(), [&](WWRP<observer_ctx> const& ctx_) {
-					return ctx_->fd == fd;
-				});
-
+				observer_ctx_map::iterator it = m_ctxs.find(fd); 
+				
 				if (it == m_ctxs.end()) return;
-				WWRP<observer_ctx> ctx = *it;
+				WWRP<observer_ctx> ctx = it->second ;
 
 				ctx_update_for_unwatch(ctx, flag, fd);
 
@@ -154,10 +150,10 @@ namespace wawo { namespace net { namespace observer_impl {
 			int fd_added_count = 0;
 			int idx = 0;
 
-			observer_ctx_vector::iterator it = m_ctxs.begin();
+			observer_ctx_map::iterator it = m_ctxs.begin();
 			while( it != m_ctxs.end() ) {
 
-				WWRP<observer_ctx> const& ctx = (*it);
+				WWRP<observer_ctx> const& ctx = it->second ;
 				{
 					unique_lock<spin_mutex> ulock(ctx->r_mutex, wawo::thread::try_to_lock);
 					bool lock_ok = ulock.own_lock();
@@ -236,7 +232,6 @@ namespace wawo { namespace net { namespace observer_impl {
 	public:
 		void init() {
 			observer_abstract::init();
-			m_ctxs.reserve( WAWO_SELECT_LIMIT );
 
 			for( int i=0;i<WAWO_SELECT_BUCKET_MAX;++i ) {
 				m_ctxs_to_check[i] = new ctxs_to_check();
