@@ -314,27 +314,29 @@ namespace wawo { namespace net {
 					continue;
 				}
 
-				WCB_ReceivedPackList::iterator it = rcv_received.begin();
-				while (it != rcv_received.end()) {
+				WCB_ReceivedPackList::reverse_iterator it = rcv_received.rbegin();
+				while (it != rcv_received.rend()) {
 					u32_t& seq = (*it)->header.seq;
-					if ( seq == pack->header.seq) {
+					if (seq == pack->header.seq) {
+
 						WCP_TRACE("[wcp]check_recv, duplicate (new), update rwnd, seq: %u, flag: %u, wnd: %u, ack: %u, expect: %u",
 							pack->header.seq, pack->header.flag, pack->header.wnd, pack->header.ack, rcv_info.next);
 
-						goto _end_insert_loop;
+						goto _end_current_loop;
 					}
-					else if (seq < pack->header.seq) {
+					else if (pack->header.seq < seq) {
 						++it;
 					}
 					else {
 						break;
 					}
 				}
-				rcv_received.insert(it, pack);
+				rcv_received.insert(it.base(), pack);
 				//wcb_flag |= RCV_ARRIVE_NEW;
-			_end_insert_loop:
+			_end_current_loop:
 				(void)it;//for compile grammar
 			}
+
 
 			if (snd_sacked_pack_tmp->len()) {
 				//lock_guard<spin_mutex> lg_s_mutex(s_mutex);
