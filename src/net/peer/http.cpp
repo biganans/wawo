@@ -164,14 +164,12 @@ namespace wawo { namespace net { namespace peer {
 
 			WWRP<self_t> __HOLD_MYSELF__(this);
 			m_hparser->data = this;
-			int packet_parse_ec = wawo::OK;
 			size_t nparsered = http_parser_execute(m_hparser, &settings, (char*)inpack->begin(), inpack->len());
-			WAWO_ASSERT(nparsered == inpack->len());
 			m_hparser->data = NULL;
 
-			if (packet_parse_ec != wawo::OK) {
+			if (m_hparser->http_errno != wawo::OK) {
 				WAWO_ASSERT(evt->so != NULL);
-				evt->so->close(packet_parse_ec);
+				evt->so->close(m_hparser->http_errno);
 			}
 
 			(void)nparsered;
