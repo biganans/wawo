@@ -170,6 +170,7 @@ namespace wawo { namespace net {
 				state = WCB_CLOSED;
 				wcb_errno = wawo::E_ETIMEOUT;
 				cond.notify_all();
+				WCP_TRACE("[wcp][%u:%s]connection syn timeout", fd, remote_addr.address_info().cstr);
 			} else {
 				check_recv(now);
 				check_flights(now);
