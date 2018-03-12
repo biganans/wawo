@@ -614,7 +614,7 @@ namespace wawo {
 		template <typename _Tp_rel
 #ifdef _WW_NO_CXX11_CLASS_TEMPLATE_DEFAULT_TYPE
 		>
-		ref_ptr(ref_ptr<_Tp_rel>& r, typename
+		ref_ptr(ref_ptr<_Tp_rel> const& r, typename
 			std::enable_if<std::is_convertible<_Tp_rel*, ELEMENT_TYPE*>::value>::type ** = 0 )
 #else
 		, class = typename std::enable_if<std::is_convertible<_Tp_rel*, ELEMENT_TYPE*>::value>::type
