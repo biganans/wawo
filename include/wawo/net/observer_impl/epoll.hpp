@@ -6,6 +6,9 @@
 #include <wawo/core.hpp>
 #include <wawo/net/observer_abstract.hpp>
 
+#include <syscall.h>
+#include <poll.h>
+
 namespace wawo { namespace net { namespace observer_impl {
 
 	using namespace wawo::thread;
@@ -40,7 +43,7 @@ namespace wawo { namespace net { namespace observer_impl {
 
 			WWRP<observer_ctx> ctx;
 			typename observer_ctx_map::iterator it = m_ctxs.find(fd);
-			
+
 			if( it == m_ctxs.end() ) {
 				epoll_op = EPOLL_CTL_ADD;
 
@@ -100,7 +103,7 @@ namespace wawo { namespace net { namespace observer_impl {
 			WAWO_ASSERT( m_epfd > 0 );
 
 			observer_ctx_map::iterator it = m_ctxs.find(fd);
-			
+
 			if( it == m_ctxs.end() ) { return ; }
 
 			WWRP<observer_ctx> ctx = it->second;
