@@ -783,74 +783,7 @@ namespace wawo { namespace net {
 			WAWO_ERR("[socket][#%d:%s]socket bind error, errno: %d", m_fd, m_addr.address_info().cstr, bindrt);
 			return bindrt;
 		}
-
-		int socket_base::listen(int const& backlog) {
-			lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
-
-			WAWO_ASSERT(m_sm == SM_NONE);
-			WAWO_ASSERT(m_state == S_BINDED);
-			WAWO_ASSERT( m_fd>0 );
-
-			int listenrt;
-
-			if (m_protocol == P_UDP) {
-				listenrt = wawo::OK;
-			}
-			else {
-				listenrt = m_fn_listen(m_fd, backlog);
-			}
-
-			if (listenrt == 0) {
-				m_sm = SM_LISTENER;
-				m_state = S_LISTEN;
-				WAWO_TRACE_SOCKET("[socket][#%d:%s]socket listen success, protocol: %s", m_fd, m_addr.address_info().cstr, protocol_str[m_protocol]  );
-				return wawo::OK;
-			}
-
-			WAWO_ERR("[socket][#%d:%s]socket listen error, errno: %d", m_fd, m_addr.address_info().cstr, listenrt);
-			return listenrt;
-		}
-
-		u32_t socket_base::accept(WWRP<socket_base> sockets[], u32_t const& size, int& ec_o) {
-
-			WAWO_ASSERT(m_sm == SM_LISTENER);
-			if (m_state != S_LISTEN) {
-				ec_o = wawo::E_INVALID_STATE;
-				return 0;
-			}
-
-			ec_o = wawo::OK;
-			u32_t count = 0;
-			sockaddr_in addr_in;
-			socklen_t addr_length = sizeof(addr_in);
-
-			lock_guard<spin_mutex> lg(m_mutexes[L_READ]);
-			do {
-
-				address addr;
-				int fd = m_fn_accept(m_fd, reinterpret_cast<sockaddr*>(&addr_in), &addr_length);
-				if (fd<0) {
-					if ( WAWO_ABS(fd) == EINTR) continue;
-					if (!IS_ERRNO_EQUAL_WOULDBLOCK(WAWO_ABS(fd))) {
-						ec_o = fd;
-					}
-					break;
-				}
-
-				addr.set_netsequence_port((addr_in.sin_port));
-				addr.set_netsequence_ulongip((addr_in.sin_addr.s_addr));
-
-				WWRP<socket_base> socket = wawo::make_ref<socket_base>(fd, addr, SM_PASSIVE, m_sbc, m_family, m_type, m_protocol, OPTION_NONE);
-				sockets[count++] = socket;
-			} while (count < size);
-
-			if (count == size) {
-				ec_o = wawo::E_TRY_AGAIN;
-			}
-
-			return count;
-		}
-
+	
 		int socket_base::connect(address const& addr) {
 			lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
 			if ( !(m_state == S_OPENED || m_state == S_BINDED) ) {

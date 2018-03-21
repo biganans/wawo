@@ -27,10 +27,13 @@ namespace wawo { namespace net {
 		F_SEND_USE_SND_BUFFER			= 0x4000000
 	};
 
+	class socket;
+	typedef void (*fn_socket_init)(WWRP<socket> const& so, WWRP<ref_base> const& cookie);
+
 	struct socket_event;
 	class socket:
-		public socket_base,
-		public dispatcher_abstract<socket_event>
+		public socket_base
+		//,public dispatcher_abstract<socket_event>
 	{
 		WWRP<wawo::bytes_ringbuffer> m_sb; // buffer for send
 		WWRP<wawo::bytes_ringbuffer> m_rb; // buffer for recv
@@ -46,6 +49,9 @@ namespace wawo { namespace net {
 
 		std::queue<WWSP<wawo::packet>> *m_rps_q;
 		std::queue<WWSP<wawo::packet>> *m_rps_q_standby;
+
+		fn_socket_init m_fn_socket_init;
+		WWRP<ref_base> m_init_cookie;
 
 		void _init();
 		void _deinit();
@@ -63,7 +69,9 @@ namespace wawo { namespace net {
 			m_delay_wp(WAWO_MAX_ASYNC_WRITE_PERIOD),
 			m_async_wt(0),
 			m_rps_q(NULL),
-			m_rps_q_standby(NULL)
+			m_rps_q_standby(NULL),
+			m_fn_socket_init(NULL),
+			m_init_cookie(NULL)
 		{
 			_init();
 		}
@@ -78,7 +86,9 @@ namespace wawo { namespace net {
 			m_delay_wp(WAWO_MAX_ASYNC_WRITE_PERIOD),
 			m_async_wt(0),
 			m_rps_q(NULL),
-			m_rps_q_standby(NULL)
+			m_rps_q_standby(NULL),
+			m_fn_socket_init(NULL),
+			m_init_cookie(NULL)
 		{
 			_init();
 		}
@@ -94,7 +104,9 @@ namespace wawo { namespace net {
 			m_delay_wp(WAWO_MAX_ASYNC_WRITE_PERIOD),
 			m_async_wt(0),
 			m_rps_q(NULL),
-			m_rps_q_standby(NULL)
+			m_rps_q_standby(NULL),
+			m_fn_socket_init(NULL),
+			m_init_cookie(NULL)
 		{
 			_init();
 		}
@@ -113,12 +125,16 @@ namespace wawo { namespace net {
 		int close(int const& ec=0);
 		int shutdown(u8_t const& flag, int const& ec=0);
 
+		int listen(int const& backlog, fn_socket_init const& cb_accepted, WWRP<ref_base> const& cookie);
 		u32_t accept( WWRP<socket> sockets[], u32_t const& size, int& ec_o ) ;
+
 
 		u32_t send( byte_t const* const buffer, u32_t const& size, int& ec_o, int const& flag = 0) ;
 		u32_t recv( byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag = 0 ) ;
 
 		void flush(u32_t& left, int& ec_o, int const& block_time = __FLUSH_DEFAULT_BLOCK_TIME__ /* in microseconds , -1 == INFINITE */ ) ;
+
+		void handle_async_accept(int& ec_o);
 
 		void handle_async_handshake(int& ec_o);
 		void handle_async_read(int& ec_o);

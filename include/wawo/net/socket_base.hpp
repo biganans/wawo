@@ -119,6 +119,7 @@ namespace wawo { namespace net {
 	void async_handshake(WWRP<ref_base> const& cookie);
 	void async_handshake_error(int const& code, WWRP<ref_base> const& cookie);
 
+	void async_accept(WWRP<ref_base> const& so_);
 	void async_read(WWRP<ref_base> const& so_);
 	void async_write(WWRP<ref_base> const& so_);
 	void async_error(int const& code, WWRP<ref_base> const& so_);
@@ -229,7 +230,7 @@ namespace wawo { namespace net {
 	const static keep_alive_vals default_keep_alive_vals = {1,(60*1000),(30*1000),10};
 
 	class socket_base :
-		virtual public wawo::ref_base
+		public wawo::ref_base
 	{
 
 	protected:
@@ -317,10 +318,11 @@ namespace wawo { namespace net {
 		inline bool is_readwrite_shutdowned() const { return (((m_rflag|m_wflag)&SHUTDOWN_RDWR) == SHUTDOWN_RDWR); }
 
 		int bind(address const& addr);
-		int listen(int const& backlog);
+
+		//int listen(int const& backlog, fn_io_event const& cb_accepted = NULL, WWRP<ref_base> const& cookie = NULL );
 
 		//return socketFd if success, otherwise return -1 if an error is set
-		u32_t accept(WWRP<socket_base> sockets[], u32_t const& size, int& ec_o);
+		//u32_t accept(WWRP<socket_base> sockets[], u32_t const& size, int& ec_o);
 		int connect(address const& addr);
 		int async_connect(address const& addr, WWRP<ref_base> const& cookie, fn_io_event const& success, fn_io_event_error const& error);
 

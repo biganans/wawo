@@ -285,7 +285,7 @@ namespace wawo { namespace net { namespace observer_impl {
 						lock_guard<spin_mutex> lg_ctx(ctx->r_mutex);
 						ctx->r_state = S_READ_POSTED;
 						WWRP<wawo::task::task> _t = wawo::make_ref<io_select_task>(ctx->fn_info[IOE_SLOT_READ].fn, ctx->fn_info[IOE_SLOT_READ].cookie, ctx, static_cast<u8_t>(IOE_READ));
-						WAWO_SCHEDULER->schedule(_t);
+						_t->run();
 					}
 					else {
 
@@ -299,7 +299,7 @@ namespace wawo { namespace net { namespace observer_impl {
 						unwatch(IOE_READ, ctx->fd);
 
 						WWRP<wawo::task::task> _t = wawo::make_ref<io_select_task>( _ctx->fn_info[IOE_SLOT_READ].fn, _ctx->fn_info[IOE_SLOT_READ].cookie, _ctx, static_cast<u8_t>(IOE_READ));
-						WAWO_SCHEDULER->schedule(_t);
+						_t->run();
 					}
 				}
 
@@ -312,7 +312,7 @@ namespace wawo { namespace net { namespace observer_impl {
 						ctx->w_state = S_WRITE_POSTED;
 
 						WWRP<wawo::task::task> _t = wawo::make_ref<io_select_task>(ctx->fn_info[IOE_SLOT_WRITE].fn, ctx->fn_info[IOE_SLOT_WRITE].cookie, ctx, static_cast<u8_t>(IOE_WRITE));
-						WAWO_SCHEDULER->schedule(_t);
+						_t->run();
 					}
 					else {
 						WWRP<observer_ctx> _ctx = wawo::make_ref<observer_ctx>();
@@ -326,7 +326,7 @@ namespace wawo { namespace net { namespace observer_impl {
 						unwatch(IOE_WRITE, ctx->fd);
 
 						WWRP<wawo::task::task> _t = wawo::make_ref<io_select_task>(_ctx->fn_info[IOE_SLOT_WRITE].fn, _ctx->fn_info[IOE_SLOT_WRITE].cookie, _ctx, static_cast<u8_t>(IOE_WRITE));
-						WAWO_SCHEDULER->schedule(_t);
+						_t->run();
 					}
 				}
 
@@ -360,11 +360,15 @@ namespace wawo { namespace net { namespace observer_impl {
 						WAWO_ASSERT(fn_cookie != NULL);
 						fn(ec, fn_cookie);
 					};
-					WAWO_SCHEDULER->schedule(_lambda);
+
+					_lambda();
+
+
+					//WWRP<wawo::task::lambda_task> _lambda_t = wawo::make_ref<wawo::task::lambda_task>(_lambda);
+					//_lambda_t->run();
 				}
 			}
 		}
 	};
-
 }}}
 #endif//

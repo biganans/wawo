@@ -109,6 +109,17 @@ namespace wawo { namespace net {
 		WAWO_TRACE_SOCKET("[socket][#%d:%s]async_handshake error: %d", so->get_fd(), so->get_addr_info().cstr, code );
 	}
 
+	void async_accept(WWRP<ref_base> const& cookie_) {
+	
+		WAWO_ASSERT(cookie_ != NULL);
+		WWRP<async_cookie> cookie = wawo::static_pointer_cast<async_cookie>(cookie_);
+		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie->so);
+		int ec;
+
+		so->handle_async_accept(ec);
+	}
+
+
 	void async_read(WWRP<ref_base> const& cookie_) {
 
 		WAWO_ASSERT(cookie_ != NULL);
@@ -148,6 +159,7 @@ namespace wawo { namespace net {
 
 	void async_write(WWRP<ref_base> const& cookie_) {
 
+		/*
 		WAWO_ASSERT(cookie_ != NULL);
 		WWRP<async_cookie> cookie = wawo::static_pointer_cast<async_cookie>(cookie_);
 		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie->so);
@@ -184,6 +196,7 @@ namespace wawo { namespace net {
 			}
 			break;
 		}
+		*/
 	}
 
 	void async_error(int const& code, WWRP<ref_base> const& cookie_) {
@@ -302,19 +315,26 @@ namespace wawo { namespace net {
 		if (!is_nonblocking()) return closert;
 
 		if (is_listener()) {
-			WWRP<socket_event> evt_close = wawo::make_ref<socket_event>(E_CLOSE, WWRP<socket>(this), udata64(ec));
-			_dispatcher_t::oschedule(evt_close);
-			return closert;
+			//fire close
+
+			//WWRP<socket_event> evt_close = wawo::make_ref<socket_event>(E_CLOSE, WWRP<socket>(this), udata64(ec));
+			//_dispatcher_t::oschedule(evt_close);
+			//return closert;
 		}
 
 		if (old_state != S_CONNECTED) {
 			WAWO_ASSERT(ec !=0 );
-			WWRP<socket_event> evt_error = wawo::make_ref<socket_event>(E_ERROR, WWRP<socket>(this), udata64(ec));
-			_dispatcher_t::oschedule(evt_error);
-			return closert;
+			
+			//fire error
+
+			//WWRP<socket_event> evt_error = wawo::make_ref<socket_event>(E_ERROR, WWRP<socket>(this), udata64(ec));
+			//_dispatcher_t::oschedule(evt_error);
+			//return closert;
 		}
 
-		WWRP<socket> so(this);
+		/*
+		 * fire accordingly
+		WWRP<socket> so(this);		
 		_dispatcher_t::fn_lambda_t lambda_FNR = [so, sflag, ec]() -> void {
 			if (sflag&SHUTDOWN_RD) {
 				WWRP<socket_event> evt_rd = wawo::make_ref<socket_event>(E_RD_SHUTDOWN, so, udata64(ec));
@@ -328,6 +348,7 @@ namespace wawo { namespace net {
 			so->trigger(evt_close);
 		};
 		_dispatcher_t::oschedule(lambda_FNR);
+		*/
 
 		return closert;
 	}
@@ -363,6 +384,9 @@ namespace wawo { namespace net {
 		if (!is_nonblocking()) return shutrt;
 		WAWO_ASSERT(sflag != 0);
 
+		/*
+			fire accordingly
+		
 		WWRP<socket> so(this);
 		_dispatcher_t::fn_lambda_t lambda_FNR = [so, sflag, ec ]() -> void {
 			if (sflag&SHUTDOWN_RD) {
@@ -377,7 +401,48 @@ namespace wawo { namespace net {
 		};
 
 		_dispatcher_t::oschedule(lambda_FNR);
+		*/
+
 		return shutrt;
+	}
+
+	int socket::listen(int const& backlog, fn_socket_init const& fn_init, WWRP<ref_base> const& cookie) {
+		lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
+
+		WAWO_ASSERT(m_sm == SM_NONE);
+		WAWO_ASSERT(m_state == S_BINDED);
+		WAWO_ASSERT(m_fd>0);
+
+		int listenrt;
+
+		if (m_protocol == P_UDP) {
+			listenrt = wawo::OK;
+		}
+		else {
+			listenrt = m_fn_listen(m_fd, backlog);
+		}
+
+		WAWO_RETURN_V_IF_NOT_MATCH(listenrt, listenrt == wawo::OK);
+
+		m_sm = SM_LISTENER;
+		m_state = S_LISTEN;
+
+		if (fn_init != NULL) {
+			if (!is_nonblocking()) {
+				int trt = turnon_nonblocking();
+				if (trt != wawo::OK) {
+					close();
+					return trt;
+				}
+			}
+
+			m_fn_socket_init = fn_init;
+			m_init_cookie = cookie;
+			begin_async_read(WATCH_OPTION_INFINITE, cookie, wawo::net::async_accept, wawo::net::async_error);
+		}
+
+		WAWO_TRACE_SOCKET("[socket][#%d:%s]socket listen success, protocol: %s", m_fd, m_addr.address_info().cstr, protocol_str[m_protocol]);
+		return wawo::OK;
 	}
 
 	u32_t socket::accept( WWRP<socket> sockets[], u32_t const& size, int& ec_o ) {
@@ -424,6 +489,8 @@ namespace wawo { namespace net {
 
 	u32_t socket::send( byte_t const* const buffer, u32_t const& size, int& ec_o, int const& flag ) {
 
+		int sent = 0;
+		/*
 		WAWO_ASSERT( buffer != NULL );
 		WAWO_ASSERT( size > 0 );
 		WAWO_ASSERT( size <= m_sb->capacity() );
@@ -482,7 +549,7 @@ namespace wawo { namespace net {
 
 			_begin_async_write(); //only write once
 		}
-
+		*/
 		return sent;
 	}
 
@@ -514,6 +581,42 @@ namespace wawo { namespace net {
 		WAWO_TRACE_SOCKET("[socket][#%d:%s]pump bytes: %d, ec: %d", m_fd, m_addr.address_info().cstr , recv_BC, ec_o );
 	}
 
+	void socket::handle_async_accept(int& ec_o) {
+
+		do {
+
+			WWRP<socket> accepted_sockets[WAWO_MAX_ACCEPTS_ONE_TIME];
+			u32_t count = accept(accepted_sockets, WAWO_MAX_ACCEPTS_ONE_TIME, ec_o ) ;
+
+			for (u32_t i = 0; i < count; ++i) {
+				WWRP<socket>& so = accepted_sockets[i];
+
+				int nonblocking = so->turnon_nonblocking();
+				if (nonblocking != wawo::OK) {
+					WAWO_ERR("[node_abstract][#%d:%s]turn on nonblocking failed: %d", so->get_fd(), so->get_addr_info().cstr, nonblocking);
+					accepted_sockets[i]->close(nonblocking);
+					continue;
+				}
+
+				int setdefaultkal = so->set_keep_alive_vals(default_keep_alive_vals);
+				if (setdefaultkal != wawo::OK) {
+					WAWO_ERR("[node_abstract][#%d:%s]set_keep_alive_vals failed: %d", so->get_fd(), so->get_addr_info().cstr, setdefaultkal);
+					accepted_sockets[i]->close(nonblocking);
+					continue;
+				}
+
+				WAWO_ASSERT(m_fn_socket_init != NULL);
+				WAWO_ASSERT(m_init_cookie != NULL);
+
+				m_fn_socket_init(accepted_sockets[i], m_init_cookie);
+			}
+		} while (ec_o == wawo::E_TRY_AGAIN);
+
+		if (ec_o != wawo::OK) {
+			close(ec_o);
+		}
+	}
+
 	void socket::handle_async_handshake(int& ec_o) {
 		WAWO_ASSERT(is_data_socket());
 		WAWO_ASSERT(m_rb != NULL);
@@ -542,6 +645,13 @@ namespace wawo { namespace net {
 	}
 
 	void socket::handle_async_read(int& ec_o ) {
+
+		//read from fd
+		//pass msg to pipe for read evt
+
+		WAWO_ASSERT(!"todo");
+		/*
+
 		WAWO_ASSERT( is_data_socket() );
 		WAWO_ASSERT( m_rb != NULL );
 		WAWO_ASSERT( is_nonblocking() );
@@ -597,6 +707,7 @@ namespace wawo { namespace net {
 				m_rps_q->pop();
 			}
 		}
+		*/
 	}
 
 	void socket::flush(u32_t& left, int& ec_o, int const& block_time /* in microseconds*/) {
@@ -636,6 +747,9 @@ namespace wawo { namespace net {
 
 	void socket::handle_async_write( int& ec_o) {
 
+		WAWO_ASSERT(!"TODO");
+
+		/*
 		WAWO_ASSERT( is_nonblocking() );
 		WAWO_ASSERT( m_sb != NULL );
 		ec_o = wawo::OK ;
@@ -679,6 +793,7 @@ namespace wawo { namespace net {
 			}
 		}
 		WAWO_TRACE_SOCKET( "[socket][#%d:%s]handle_async_write, flushed_total: %d, left: %d", m_fd, m_addr.address_info().cstr, flushed_total, left );
+		*/
 	}
 
 	u32_t socket::_flush( u32_t& left, int& ec_o ) {

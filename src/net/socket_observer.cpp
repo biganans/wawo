@@ -70,15 +70,8 @@ namespace wawo { namespace net {
 		_alloc_impl();
 		WAWO_ASSERT( m_impl != NULL );
 		m_impl->init();
-
-		WAWO_ASSERT(m_ticker == NULL);
-		m_ticker = wawo::make_shared<wawo::thread::fn_ticker>(std::bind(&socket_observer::update, this));
-		observer_ticker::instance()->schedule(m_ticker);
 	}
 	void socket_observer::deinit() {
-
-		WAWO_ASSERT(m_ticker != NULL);
-		observer_ticker::instance()->deschedule(m_ticker);
 
 		{
 			lock_guard<spin_mutex> oplg( m_ops_mutex );
