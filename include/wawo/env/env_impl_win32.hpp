@@ -17,7 +17,7 @@ namespace wawo { namespace env {
 		~env_impl() {
 		}
 		//return the ip count if success, and fill in parameter<ips> with local iplist
-		int GetLocalIpList( std::vector<wawo::net::socket_addr>& addrs ) {
+		int GetLocalIpList( std::vector<wawo::net::socketaddr>& addrs ) {
 
 			char _buffer[1024]= {0};
 			DWORD _buffer_length = 1024;
@@ -80,7 +80,7 @@ namespace wawo { namespace env {
 						memset(_buffer, 0,_buffer_length);
 						::inet_ntop(AF_INET, &(sa_in->sin_addr), _buffer, _buffer_length) ;
 						
-						wawo::net::socket_addr info ;
+						wawo::net::socketaddr info ;
 
 						info.so_family= wawo::net::F_AF_INET;
 						info.so_address = wawo::net::address( _buffer, 0);
@@ -92,7 +92,7 @@ namespace wawo { namespace env {
 						memset(_buffer, 0,_buffer_length);
 						inet_ntop(AF_INET6, &(sa_in->sin6_addr), _buffer, _buffer_length) ;
 
-						wawo::net::socket_addr info;
+						wawo::net::socketaddr info;
 
 						if( strlen(_buffer) == 128 ) {
 							info.so_family = wawo::net::F_AF_INET6;
