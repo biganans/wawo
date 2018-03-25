@@ -16,16 +16,16 @@ namespace wawo { namespace net {
 		F_AF_NETBIOS
 	};
 
-	enum sock_type {
-		ST_UNKNOWN,
-		ST_STREAM,
-		ST_DGRAM,
-		ST_RAW,
-		ST_RDM,
-		ST_SEQPACKET
+	enum type {
+		T_UNKNOWN,
+		T_STREAM,
+		T_DGRAM,
+		T_RAW,
+		T_RDM,
+		T_SEQPACKET
 	};
 
-	enum protocol_type {
+	enum protocol {
 		P_UNKNOWN,
 		P_TCP,
 		P_UDP,
@@ -130,24 +130,24 @@ namespace wawo { namespace net {
 		len_cstr address_info() const;
 	};
 
-	struct socket_addr {
+	struct socketaddr {
 
-		socket_addr() :
+		socketaddr() :
 			so_family(F_UNKNOWN),
-			so_type(ST_UNKNOWN),
+			so_type(T_UNKNOWN),
 			so_protocol(P_UNKNOWN),
 			so_address(0)
 		{}
 
 		family so_family;
-		sock_type so_type;
-		protocol_type so_protocol;
+		type so_type;
+		protocol so_protocol;
 
 		address so_address;
 	};
 
 
-	extern int get_addrinfo_by_host(char const* const hostname, char const* const servicename, std::vector<socket_addr>& ips, int const& filter);
+	extern int get_addrinfo_by_host(char const* const hostname, char const* const servicename, std::vector<socketaddr>& ips, int const& filter);
 	extern int get_one_ipaddr_by_host(const char* hostname, len_cstr& ip, int const& filter);
 
 	extern int convert_to_netsequence_ulongip_fromhost(const char* hostname, ipv4::Ip& ip);

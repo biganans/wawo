@@ -1,11 +1,12 @@
 #ifndef _WAWO_NET_OBSERVER_IMPL_SOCKET_OBSERVER_ABSTRACT_HPP_
 #define _WAWO_NET_OBSERVER_IMPL_SOCKET_OBSERVER_ABSTRACT_HPP_
 
-#include <map>
-
 #include <wawo/smart_ptr.hpp>
 #include <wawo/thread/mutex.hpp>
 #include <wawo/task/scheduler.hpp>
+
+#include <map>
+#include <queue>
 
 //#define ENABLE_TRACE_IOE
 #ifdef ENABLE_TRACE_IOE
@@ -114,10 +115,9 @@ namespace wawo { namespace net {
 	};
 
 
-	//typedef std::vector< WWRP<observer_ctx> > observer_ctx_vector;
-
 	typedef std::map<int, WWRP<observer_ctx>> observer_ctx_map;
 	typedef std::pair<int, WWRP<observer_ctx>> fd_ctx_pair;
+
 
 	class observer_abstract
 	{
@@ -223,7 +223,8 @@ namespace wawo { namespace net {
 							_re.wr_err.fn(ec, _re.wr_err.cookie);
 						}
 					};
-					WAWO_SCHEDULER->schedule(_lambda);
+
+					_lambda();
 				}
 			}
 		}

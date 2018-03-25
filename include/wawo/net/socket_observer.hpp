@@ -37,7 +37,7 @@ namespace wawo { namespace net {
 	};
 
 	class socket_observer
-		:virtual public ref_base
+		:public ref_base
 	{
 		enum event_op_code {
 			OP_WATCH,
@@ -86,36 +86,48 @@ namespace wawo { namespace net {
 		}
 
 	private:
-		observer_abstract* m_impl;
+		WWSP<observer_abstract> m_impl;
 		spin_mutex m_ops_mutex;
 		event_op_queue m_ops;
-		WWSP<wawo::thread::fn_ticker> m_ticker;
 		u8_t m_polltype;
 	};
+
+	typedef std::queue<WWRP<wawo::task::task_abstract>> TASK_Q;
 
 	class observer :
 		public wawo::singleton<observer>
 	{
 		WWRP<socket_observer> m_default;
+		WWSP<wawo::thread::fn_ticker> m_ticker_default;
+
 
 #ifdef WAWO_ENABLE_WCP
 		WWRP<socket_observer> m_wcp;
 #endif
+		spin_mutex m_tq_mtx;
+		WWSP<TASK_Q> m_tq_standby;
+		WWSP<TASK_Q> m_tq;
 
 	public:
 		observer()
 		{}
 		~observer() 
 		{
-			//WAWO_ASSERT(m_default == NULL);
-			//WAWO_ASSERT(m_wcp == NULL);
 		}
 
 		void start() {
+
+			m_tq_standby = wawo::make_shared<TASK_Q>();
+			m_tq = wawo::make_shared<TASK_Q>();
+
 			WAWO_ASSERT(m_default == NULL);
 			m_default = wawo::make_ref<socket_observer>(get_os_default_poll_type());
 			WAWO_ALLOC_CHECK(m_default, sizeof(socket_observer) );
 			m_default->init();
+
+			WAWO_ASSERT(m_ticker_default == NULL);
+			m_ticker_default = wawo::make_shared<wawo::thread::fn_ticker>(std::bind(&observer::update, this));
+			observer_ticker::instance()->schedule(m_ticker_default);
 
 #ifdef WAWO_ENABLE_WCP
 			WAWO_ASSERT(m_wcp == NULL);
@@ -123,11 +135,16 @@ namespace wawo { namespace net {
 			WAWO_ALLOC_CHECK(m_wcp, sizeof(socket_observer) );
 			m_wcp->init();
 #endif
+
 		}
 
 		void stop() {
 			WAWO_ASSERT(m_default != NULL);
+
+			WAWO_ASSERT(m_ticker_default != NULL);
+			observer_ticker::instance()->deschedule(m_ticker_default);
 			m_default->deinit();
+
 			//m_default = NULL;
 
 #ifdef WAWO_ENABLE_WCP
@@ -135,6 +152,39 @@ namespace wawo { namespace net {
 			m_wcp->deinit();
 			//m_wcp = NULL;
 #endif
+		}
+
+		void update() {
+			_exec_tasks();
+			m_default->update();
+			_exec_tasks();
+		}
+
+		void _plan_task(WWRP<wawo::task::task_abstract> const& t) {
+			WAWO_ASSERT(t != NULL);
+			m_tq_standby->push(t);
+		}
+
+		void _exec_tasks() {
+			WAWO_ASSERT(m_tq->size() == 0);
+			{
+				lock_guard<spin_mutex> lg(m_tq_mtx);
+				if (m_tq_standby->size() > 0) {
+					std::swap(m_tq, m_tq_standby);
+				}
+			}
+
+			while (m_tq->size()) {
+				WWRP<wawo::task::task_abstract>& t = m_tq->front();
+				WAWO_ASSERT(t != NULL);
+				t->run();
+				m_tq->pop();
+			}
+		}
+
+		void plan(WWRP<wawo::task::task_abstract> const& t) {
+			lock_guard<spin_mutex> lg(m_tq_mtx);
+			_plan_task(t);
 		}
 
 		void watch(u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err);
@@ -145,6 +195,10 @@ namespace wawo { namespace net {
 		void wcp_unwatch(u8_t const& flag, int const& fd);
 #endif
 	};
+
+	inline static void socket_observer_plan(WWRP<wawo::task::task_abstract> const& t) {
+		observer::instance()->plan(t);
+	}
 
 	inline static void watch(bool const& iswcp, u8_t const& flag, int const&fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err) {
 		WAWO_ASSERT(flag > 0);

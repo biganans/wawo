@@ -412,25 +412,18 @@ namespace wawo { namespace net {
 #endif
 	}
 
-
-		socket_base::socket_base(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc, family const& family, sock_type const& sockt, protocol_type const& proto, Option const& option) :
+		socket_base::socket_base(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc, family const& family, type const& sockt, protocol const& proto, option const& opt) :
 			m_sm(sm),
 			m_family(family),
 			m_type(sockt),
 			m_protocol(proto),
-			m_option(option),
+			m_option(opt),
 
 			m_addr(addr),
 			m_bind_addr(),
 
 			m_fd(fd),
-			m_sbc(sbc),
-			m_tlp(NULL),
-			m_ctx(NULL),
-
-			m_state(S_CONNECTED),
-			m_rflag(0),
-			m_wflag(0)
+			m_sbc(sbc)
 		{
 			_socket_fn_init();
 
@@ -439,65 +432,54 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_sbc.rcv_size <= SOCK_RCV_MAX_SIZE && m_sbc.rcv_size >= SOCK_RCV_MIN_SIZE);
 			WAWO_ASSERT(m_sbc.snd_size <= SOCK_SND_MAX_SIZE && m_sbc.snd_size >= SOCK_SND_MIN_SIZE);
 
-			WAWO_TRACE_SOCKET("[socket][#%d:%s]socket::socket(), address: %p", m_fd, m_addr.address_info().cstr, this);
+			WAWO_TRACE_SOCKET("[socket][%s]socket::socket(), address: %p", info().to_lencstr().cstr, this);
 		}
 
-		socket_base::socket_base(family const& family, sock_type const& sockt, protocol_type const& proto, Option const& option) :
+		socket_base::socket_base(family const& family, type const& sockt, protocol const& proto, option const& opt) :
 			m_sm(SM_NONE),
 
 			m_family(family),
 			m_type(sockt),
 			m_protocol(proto),
-			m_option(option),
+			m_option(opt),
 			m_addr(),
 			m_bind_addr(),
 
 			m_fd(-1),
-			m_sbc(socket_buffer_cfgs[BT_MEDIUM]),
-			m_tlp(NULL),
-			m_ctx(NULL),
-
-			m_state(S_CLOSED),
-			m_rflag(SHUTDOWN_RD),
-			m_wflag(SHUTDOWN_WR)
+			m_sbc(socket_buffer_cfgs[BT_MEDIUM])
 		{
 			_socket_fn_init();
 
 			WAWO_ASSERT(m_sbc.rcv_size <= SOCK_RCV_MAX_SIZE && m_sbc.rcv_size >= SOCK_RCV_MIN_SIZE);
 			WAWO_ASSERT(m_sbc.snd_size <= SOCK_SND_MAX_SIZE && m_sbc.snd_size >= SOCK_SND_MIN_SIZE);
-			WAWO_TRACE_SOCKET("[socket][#%d:%s]socket::socket(), dummy socket, address: %p", m_fd, m_addr.address_info().cstr, this);
+			WAWO_TRACE_SOCKET("[socket][%s]socket::socket(), dummy socket, address: %p", info().to_lencstr().cstr, this);
 		}
 
-		socket_base::socket_base(socket_buffer_cfg const& sbc, family const& family, sock_type const& sockt, protocol_type const& proto, Option const& option) :
+		socket_base::socket_base(socket_buffer_cfg const& sbc, family const& family, type const& sockt, protocol const& proto, option const& opt) :
 			m_sm(SM_NONE),
 
 			m_family(family),
 			m_type(sockt),
 			m_protocol(proto),
-			m_option(option),
+			m_option(opt),
 			m_addr(),
 			m_bind_addr(),
 
 			m_fd(-1),
-			m_sbc(sbc),
-			m_tlp(NULL),
-			m_ctx(NULL),
-			m_state(S_CLOSED),
-			m_rflag(SHUTDOWN_RD),
-			m_wflag(SHUTDOWN_WR)
+			m_sbc(sbc)
 		{
 			_socket_fn_init();
 			WAWO_ASSERT(m_sbc.rcv_size <= SOCK_RCV_MAX_SIZE && m_sbc.rcv_size >= SOCK_RCV_MIN_SIZE);
 			WAWO_ASSERT(m_sbc.snd_size <= SOCK_SND_MAX_SIZE && m_sbc.snd_size >= SOCK_SND_MIN_SIZE);
-			WAWO_TRACE_SOCKET("[socket][#%d:%s]socket::socket(), dummy socket, address: %p", m_fd, m_addr.address_info().cstr, this);
+			WAWO_TRACE_SOCKET("[socket][%s]socket::socket(), dummy socket, address: %p", info().to_lencstr().cstr , this);
 		}
 
 		socket_base::~socket_base() {
-			_close();
-			WAWO_TRACE_SOCKET("[socket][#%d:%s]socket::~socket(),address: %p", m_fd, m_addr.address_info().cstr, this);
+			close();
+			WAWO_TRACE_SOCKET("[socket][%s]socket::~socket(),address: %p", info().to_lencstr().cstr, this);
 		}
 
-		address socket_base::get_local_addr() const {
+		address socket_base::local_addr() const {
 			if (is_listener()) {
 				return m_bind_addr;
 			}
@@ -515,9 +497,6 @@ namespace wawo { namespace net {
 
 		int socket_base::open() {
 
-			lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
-
-			WAWO_ASSERT(m_state == S_CLOSED);
 			WAWO_ASSERT(m_fd == -1);
 
 			int soFamily;
@@ -537,17 +516,15 @@ namespace wawo { namespace net {
 				return wawo::E_SOCKET_INVALID_FAMILY;
 			}
 
-			if (m_type == ST_STREAM) {
+			if (m_type == T_STREAM) {
 				soType = SOCK_STREAM;
 			}
-			else if (m_type == ST_DGRAM) {
+			else if (m_type == T_DGRAM) {
 				soType = SOCK_DGRAM;
 			}
-			else if (m_type == ST_RAW) {
+			else if (m_type == T_RAW) {
 				soType = SOCK_RAW;
-			}
-			else {
-
+			} else {
 				char message[128] = { 0 };
 				snprintf(message, 128, "unsupported socket type, %d", m_type);
 				WAWO_ASSERT(!"unsupported socket type", "type: %d", m_type);
@@ -555,51 +532,37 @@ namespace wawo { namespace net {
 				return wawo::E_SOCKET_INVALID_TYPE;
 			}
 
-			if (m_protocol == P_TCP)
-			{
+			if (m_protocol == P_TCP) {
 				soProtocol = IPPROTO_TCP;
-			}
-			else if (m_protocol == P_UDP
+			} else if (m_protocol == P_UDP
 				|| m_protocol == P_WCP
 				) {
 				soProtocol = IPPROTO_UDP;
-			}
-			else if (m_protocol == P_ICMP) {
+			} else if (m_protocol == P_ICMP) {
 				soProtocol = IPPROTO_ICMP;
-			}
-			else {
+			} else {
 				WAWO_ASSERT(!"unsupported ip protocol", "pro: %d", m_protocol);
 				return wawo::E_SOCKET_INVALID_TYPE;
 			}
 
 			int fd = m_fn_socket(soFamily, soType, soProtocol);
 			if (fd < 0) {
-				WAWO_ERR("[socket][#%d:%s]socket::socket() failed, %d", m_fd, m_addr.address_info().cstr, fd );
+				WAWO_ERR("[socket][%s]socket::socket() failed, %d", info().to_lencstr().cstr);
 				return fd;
 			}
 			WAWO_ASSERT( fd>0 );
 
 			m_fd = fd;
 
-			{
-				lock_guard<spin_mutex> lg_r(m_mutexes[L_READ]);
-				m_rflag = 0;
-			}
+			WAWO_TRACE_SOCKET("[socket][%s]socket::socket() ok", info().to_lencstr().cstr );
 
-			{
-				lock_guard<spin_mutex> lg_w(m_mutexes[L_WRITE]);
-				m_wflag = 0;
-			}
-			WAWO_TRACE_SOCKET("[socket][#%d:%s]socket::socket() ok, protocol: %s", m_fd, m_addr.address_info().cstr, protocol_str[m_protocol] );
-
-			int rt = _set_options(m_option);
+			int rt = set_options(m_option);
 
 			if (rt != wawo::OK) {
-				WAWO_ERR("[socket][#%d:%s]socket::_set_options() failed", m_fd, m_addr.address_info().cstr);
+				WAWO_ERR("[socket][%s]socket::_set_options() failed", info().to_lencstr().cstr );
 				return rt;
 			}
 
-			m_state = S_OPENED;
 			if (m_protocol == P_UDP) {
 				return wawo::OK;
 			}
@@ -607,121 +570,49 @@ namespace wawo { namespace net {
 #ifdef _DEBUG
 			u32_t tmp_size;
 			get_snd_buffer_size(tmp_size);
-			WAWO_TRACE_SOCKET("[socket][#%d:%s]current snd buffer size: %d", m_fd, m_addr.address_info().cstr, tmp_size);
+			WAWO_TRACE_SOCKET("[socket][%s]current snd buffer size: %d", info().to_lencstr().cstr, tmp_size);
 #endif
 			rt = set_snd_buffer_size(m_sbc.snd_size);
 			if (rt != wawo::OK) {
-				WAWO_ERR("[socket][#%d:%s]socket::set_snd_buffer_size(%d) failed", m_fd, m_addr.address_info().cstr, m_sbc.snd_size, WAWO_NEGATIVE(socket_get_last_errno()));
+				WAWO_ERR("[socket][%s]socket::set_snd_buffer_size(%d) failed", info().to_lencstr().cstr, m_sbc.snd_size, WAWO_NEGATIVE(socket_get_last_errno()));
 				return rt;
 			}
 #ifdef _DEBUG
 			get_snd_buffer_size(tmp_size);
-			WAWO_TRACE_SOCKET("[socket][#%d:%s]current snd buffer size: %d", m_fd, m_addr.address_info().cstr, tmp_size);
+			WAWO_TRACE_SOCKET("[socket][%s]current snd buffer size: %d", info().to_lencstr().cstr, tmp_size);
 #endif
 
 #ifdef _DEBUG
 			get_rcv_buffer_size(tmp_size);
-			WAWO_TRACE_SOCKET("[socket][#%d:%s]current rcv buffer size: %d", m_fd, m_addr.address_info().cstr, tmp_size);
+			WAWO_TRACE_SOCKET("[socket][%s]current rcv buffer size: %d", info().to_lencstr().cstr, tmp_size);
 #endif
 			rt = set_rcv_buffer_size(m_sbc.rcv_size);
 			if (rt != wawo::OK) {
-				WAWO_ERR("[socket][#%d:%s]socket::set_rcv_buffer_size(%d) failed", m_fd, m_addr.address_info().cstr, m_sbc.rcv_size, WAWO_NEGATIVE(socket_get_last_errno()));
+				WAWO_ERR("[socket][%s]socket::set_rcv_buffer_size(%d) failed", info().to_lencstr().cstr , m_sbc.rcv_size, WAWO_NEGATIVE(socket_get_last_errno()));
 				return rt;
 			}
 #ifdef _DEBUG
 			get_rcv_buffer_size(tmp_size);
-			WAWO_TRACE_SOCKET("[socket][#%d:%s]current rcv buffer size: %d", m_fd, m_addr.address_info().cstr, tmp_size);
+			WAWO_TRACE_SOCKET("[socket][%s]current rcv buffer size: %d", info().to_lencstr().cstr, tmp_size);
 #endif
 			return wawo::OK;
 		}
 
-		int socket_base::close(int const& ec) {
-			lock_guard<spin_mutex> lg(m_mutexes[L_SOCKET]);
-
-			{
-				lock_guard<spin_mutex> lg_r(m_mutexes[L_READ]);
-				m_rflag |= SHUTDOWN_RD;
-				if (is_nonblocking()) {
-					_end_async_read();
-				}
-			}
-
-			{
-				lock_guard<spin_mutex> lg_w(m_mutexes[L_WRITE]);
-				m_wflag |= SHUTDOWN_WR;
-				if (is_nonblocking()) {
-					_end_async_write();
-				}
-			}
-
-			return _close(ec);
-		}
-
-		int socket_base::_close(int const& ec) {
-			if (m_state==S_CLOSED ) { return wawo::E_INVALID_OPERATION; }
-
-			WAWO_ASSERT(m_state != S_CLOSED);
+		int socket_base::close() {
 			int close_rt = m_fn_close(m_fd);
 			WAWO_ASSERT(close_rt == wawo::OK);
-			m_state = S_CLOSED;
 
 			if (close_rt == 0) {
-				WAWO_TRACE_SOCKET("[socket][#%d:%s]socket close, for reason: %d", m_fd, m_addr.address_info().cstr, ec);
+				WAWO_TRACE_SOCKET("[socket][%s]socket close", info().to_lencstr().cstr );
+			} else {
+				WAWO_WARN("[socket][%s]socket close, close_rt: %d, close_ec: %d", info().to_lencstr().cstr , close_rt, WAWO_NEGATIVE(socket_get_last_errno()));
 			}
-			else {
-				WAWO_WARN("[socket][#%d:%s]socket close, for reason: %d, close_rt: %d, close_ec: %d", m_fd, m_addr.address_info().cstr, ec, close_rt, WAWO_NEGATIVE(socket_get_last_errno()));
-			}
-
 			return close_rt;
 		}
 
-		int socket_base::_shutdown(u8_t const& flag, u8_t& sflag) {
+		int socket_base::shutdown(int const& flag) {
 
 			WAWO_ASSERT(is_data_socket());
-			WAWO_ASSERT(flag == SHUTDOWN_RD ||
-				flag == SHUTDOWN_WR ||
-				flag == SHUTDOWN_RDWR
-			);
-
-			
-			sflag = 0;
-			{
-				lock_guard<spin_mutex> lg_r(m_mutexes[L_READ]);
-				if ((flag&SHUTDOWN_RD) && !(m_rflag&SHUTDOWN_RD)) {
-					m_rflag |= SHUTDOWN_RD;
-					if (is_nonblocking()) {
-						_end_async_read();
-					}
-					sflag |= SHUTDOWN_RD;
-				}
-			}
-
-			{
-				lock_guard<spin_mutex> lg_w(m_mutexes[L_WRITE]);
-				if ((flag&SHUTDOWN_WR) && !(m_wflag&SHUTDOWN_WR)) {
-					m_wflag |= SHUTDOWN_WR;
-					if (is_nonblocking()) {
-						_end_async_write();
-					}
-					sflag |= SHUTDOWN_WR;
-				}
-			}
-
-			int _flag;
-			if (sflag == SHUTDOWN_RD) {
-				_flag = SHUT_RD;
-			}
-			else if (sflag == SHUTDOWN_WR) {
-				_flag = SHUT_WR;
-			}
-			else if (sflag == SHUTDOWN_RDWR) {
-				_flag = SHUT_RDWR;
-			}
-			else {
-				WAWO_ASSERT(sflag == 0);
-				WAWO_TRACE_SOCKET("[socket][#%d:%s]ignore shut: %u", m_fd, m_addr.address_info().cstr, flag);
-				return wawo::E_INVALID_OPERATION;
-			}
 
 			const char* shutdown_flag_str[3] = {
 				"SHUT_RD",
@@ -729,26 +620,16 @@ namespace wawo { namespace net {
 				"SHUT_RDWR"
 			};
 
-			int shutrt = m_fn_shutdown(m_fd, _flag);
-			WAWO_TRACE_SOCKET("[socket][#%d:%s]shutdown(%s)", m_fd, m_addr.address_info().cstr, shutdown_flag_str[_flag]);
+			int shutrt = m_fn_shutdown(m_fd, flag);
+			WAWO_TRACE_SOCKET("[socket][%s]shutdown(%s)", info().to_lencstr().cstr, shutdown_flag_str[flag]);
 			if(shutrt != 0) {
-				WAWO_WARN("[socket][#%d:%s]shutdown(%s), shut_rt: %d", m_fd, m_addr.address_info().cstr, shutdown_flag_str[_flag], shutrt);
+				WAWO_WARN("[socket][%s]shutdown(%s), shut_rt: %d", info().to_lencstr().cstr, shutdown_flag_str[flag], shutrt);
 			}
 			return shutrt;
 		}
 
-		int socket_base::shutdown(u8_t const& flag, int const& ec) {
-			lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
-			u8_t sflag;
-			int shutrt = socket_base::_shutdown(flag, sflag );
-			WAWO_TRACE_SOCKET("[socket][#%d:%s]shutdown(%u) for(%u), sflag:%u, shutrt: %d", m_fd, m_addr.address_info().cstr, flag, ec, sflag, shutrt );
-			return shutrt;
-		}
-
 		int socket_base::bind(const address& addr) {
-			lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
 
-			WAWO_ASSERT(m_state == S_OPENED);
 			WAWO_ASSERT(m_sm == SM_NONE);
 			WAWO_ASSERT(m_bind_addr.is_null());
 
@@ -766,31 +647,26 @@ namespace wawo { namespace net {
 				return wawo::E_SOCKET_INVALID_FAMILY;
 			}
 
+			if (m_protocol == wawo::net::P_WCP) {
+				int rt = reuse_addr();
+				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
+
+				rt = reuse_port();
+				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
+			}
+
 			sockaddr_in addr_in;
 			addr_in.sin_family = soFamily;
 			addr_in.sin_port = addr.get_netsequence_port();
 			addr_in.sin_addr.s_addr = addr.get_netsequence_ulongip();
 
-			int bindrt = m_fn_bind(m_fd , reinterpret_cast<sockaddr*>(&addr_in), sizeof(addr_in));
-
-			if (bindrt == 0) {
-				m_bind_addr = addr;
-				m_state = S_BINDED;
-				WAWO_TRACE_SOCKET("[socket][#%d:%s]socket bind ok", m_fd, m_addr.address_info().cstr, m_addr.address_info().cstr);
-				return wawo::OK;
-			}
-			WAWO_ASSERT(bindrt <0 );
-			WAWO_ERR("[socket][#%d:%s]socket bind error, errno: %d", m_fd, m_addr.address_info().cstr, bindrt);
-			return bindrt;
+			m_bind_addr = addr;
+			return m_fn_bind(m_fd , reinterpret_cast<sockaddr*>(&addr_in), sizeof(addr_in));
 		}
 
 		int socket_base::listen(int const& backlog) {
-			lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
-
 			WAWO_ASSERT(m_sm == SM_NONE);
-			WAWO_ASSERT(m_state == S_BINDED);
-			WAWO_ASSERT( m_fd>0 );
-
+			WAWO_ASSERT(m_fd>0);
 			int listenrt;
 
 			if (m_protocol == P_UDP) {
@@ -799,92 +675,16 @@ namespace wawo { namespace net {
 			else {
 				listenrt = m_fn_listen(m_fd, backlog);
 			}
-
-			if (listenrt == 0) {
-				m_sm = SM_LISTENER;
-				m_state = S_LISTEN;
-				WAWO_TRACE_SOCKET("[socket][#%d:%s]socket listen success, protocol: %s", m_fd, m_addr.address_info().cstr, protocol_str[m_protocol]  );
-				return wawo::OK;
-			}
-
-			WAWO_ERR("[socket][#%d:%s]socket listen error, errno: %d", m_fd, m_addr.address_info().cstr, listenrt);
-			return listenrt;
+			WAWO_RETURN_V_IF_NOT_MATCH(listenrt, listenrt == wawo::OK);
+			m_sm = SM_LISTENER;
+			return wawo::OK;
 		}
 
-		u32_t socket_base::accept(WWRP<socket_base> sockets[], u32_t const& size, int& ec_o) {
-
-			WAWO_ASSERT(m_sm == SM_LISTENER);
-			if (m_state != S_LISTEN) {
-				ec_o = wawo::E_INVALID_STATE;
-				return 0;
-			}
-
-			ec_o = wawo::OK;
-			u32_t count = 0;
-			sockaddr_in addr_in;
-			socklen_t addr_length = sizeof(addr_in);
-
-			lock_guard<spin_mutex> lg(m_mutexes[L_READ]);
-			do {
-
-				address addr;
-				int fd = m_fn_accept(m_fd, reinterpret_cast<sockaddr*>(&addr_in), &addr_length);
-				if (fd<0) {
-					if ( WAWO_ABS(fd) == EINTR) continue;
-					if (!IS_ERRNO_EQUAL_WOULDBLOCK(WAWO_ABS(fd))) {
-						ec_o = fd;
-					}
-					break;
-				}
-
-				addr.set_netsequence_port((addr_in.sin_port));
-				addr.set_netsequence_ulongip((addr_in.sin_addr.s_addr));
-
-				WWRP<socket_base> socket = wawo::make_ref<socket_base>(fd, addr, SM_PASSIVE, m_sbc, m_family, m_type, m_protocol, OPTION_NONE);
-				sockets[count++] = socket;
-			} while (count < size);
-
-			if (count == size) {
-				ec_o = wawo::E_TRY_AGAIN;
-			}
-
-			return count;
+		int socket_base::accept(struct sockaddr* addr, socklen_t* addrlen) {
+			return m_fn_accept(m_fd, reinterpret_cast<sockaddr*>(&addr), addrlen);
 		}
-
-		int socket_base::connect(address const& addr) {
-			lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
-			if ( !(m_state == S_OPENED || m_state == S_BINDED) ) {
-				return wawo::E_INVALID_STATE;
-			}
-			return _connect(addr);
-		}
-
-		int socket_base::async_connect(address const& addr, WWRP<ref_base> const& user_cookie, fn_io_event const& success, fn_io_event_error const& error) {
-			int rt = turnon_nonblocking();
-			if (rt != wawo::OK) {
-				return rt;
-			}
-
-			WAWO_ASSERT( success != NULL );
-			WAWO_ASSERT( error != NULL );
-
-			rt = connect(addr);
-			if (rt == wawo::OK) {
-				WWRP<wawo::task::task> _t = wawo::make_ref<wawo::task::task>(success, user_cookie);
-				WAWO_SCHEDULER->schedule(_t);
-				return wawo::OK;
-			}
-			else if (rt == wawo::E_SOCKET_CONNECTING) {
-				TRACE_IOE("[socket_base][#%d:%s][async_connect]watch(IOE_WRITE)", m_fd, get_addr_info().cstr );
-				begin_async_connect( user_cookie, success, error );
-				return wawo::OK;
-			}
-
-			return rt;
-		}
-
-		int socket_base::_connect(wawo::net::address const& addr ) {
-			WAWO_ASSERT(m_state == S_OPENED || m_state == S_BINDED);
+	
+		int socket_base::connect(wawo::net::address const& addr ) {
 			WAWO_ASSERT(m_sm == SM_NONE);
 			WAWO_ASSERT(m_addr.is_null());
 
@@ -908,63 +708,48 @@ namespace wawo { namespace net {
 			addr_in.sin_port = addr.get_netsequence_port();
 			addr_in.sin_addr.s_addr = addr.get_netsequence_ulongip();
 			int socklength = sizeof(addr_in);
+			m_addr = addr;
 
-			int connrt = m_fn_connect(m_fd, reinterpret_cast<sockaddr*>(&addr_in), socklength);
-			if (connrt == 0) {
-				m_addr = addr;
-				WAWO_TRACE_SOCKET("[socket][#%d:%s]socket connected, local addr: %s, protocol: %s", m_fd, get_remote_addr().address_info().cstr , get_local_addr().address_info().cstr, protocol_str[m_protocol] );
-				m_state = S_CONNECTED;
-				return wawo::OK;
-			}
-
-			WAWO_ASSERT(connrt<0);
-			if (is_nonblocking() && (IS_ERRNO_EQUAL_CONNECTING( WAWO_ABS(connrt) ))) {
-				m_state = S_CONNECTING;
-				m_addr = addr;
-				WAWO_TRACE_SOCKET("[socket][#%d:%s]socket connecting, local addr: %s, protocol: %s", m_fd, get_remote_addr().address_info().cstr, get_local_addr().address_info().cstr, protocol_str[m_protocol]);
-				return wawo::E_SOCKET_CONNECTING;
-			}
-
-			return connrt ;
+			return m_fn_connect(m_fd, reinterpret_cast<sockaddr*>(&addr_in), socklength);
 		}
 
 		int socket_base::turnoff_nodelay() {
-			lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
+			lock_guard<spin_mutex> _lg(m_option_mutex);
 
 			if (!(m_option & OPTION_NODELAY)) {
 				return wawo::OK;
 			}
 
-			return _set_options((m_option & ~OPTION_NODELAY));
+			return set_options((m_option & ~OPTION_NODELAY));
 		}
 
 		int socket_base::turnon_nodelay() {
-			lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
+			lock_guard<spin_mutex> _lg(m_option_mutex);
 
 			if ((m_option & OPTION_NODELAY)) {
 				return wawo::OK;
 			}
 
-			return _set_options((m_option | OPTION_NODELAY));
+			return set_options((m_option | OPTION_NODELAY));
 		}
 
 		int socket_base::turnon_nonblocking() {
-			lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
+			lock_guard<spin_mutex> _lg(m_option_mutex);
 
 			if ((m_option & OPTION_NON_BLOCKING)) {
 				return wawo::OK;
 			}
 
-			int op = _set_options(m_option | OPTION_NON_BLOCKING);
+			int op = set_options(m_option | OPTION_NON_BLOCKING);
 			return op;
 		}
 
 		int socket_base::turnoff_nonblocking() {
-			lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
+			lock_guard<spin_mutex> _lg(m_option_mutex);
 			if (!(m_option & OPTION_NON_BLOCKING)) {
 				return true;
 			}
-			return _set_options(m_option & ~OPTION_NON_BLOCKING);
+			return set_options(m_option & ~OPTION_NON_BLOCKING);
 		}
 
 		int socket_base::set_snd_buffer_size(u32_t const& size) {
@@ -976,7 +761,7 @@ namespace wawo { namespace net {
 				return wawo::OK;
 			}
 
-			WAWO_ERR("[socket][#%d:%s]setsockopt(SO_SNDBUF) == %d failed, error code: %d", m_fd, m_addr.address_info().cstr, size, rt); \
+			WAWO_ERR("[socket][%s]setsockopt(SO_SNDBUF) == %d failed, error code: %d", info().to_lencstr().cstr , size, rt); \
 			return rt;
 		}
 
@@ -992,7 +777,7 @@ namespace wawo { namespace net {
 				return wawo::OK;
 			}
 
-			WAWO_ERR("[socket][#%d:%s]getsockopt(SO_SNDBUF) failed, error code: %d", m_fd, m_addr.address_info().cstr, rt);
+			WAWO_ERR("[socket][%s]getsockopt(SO_SNDBUF) failed, error code: %d", info().to_lencstr().cstr, rt);
 			return rt;
 		}
 
@@ -1039,7 +824,7 @@ namespace wawo { namespace net {
 				return wawo::OK;
 			}
 
-			WAWO_ERR("[socket][#%d:%s]setsockopt(SO_RCVBUF) == %d failed, error code: %d", m_fd, m_addr.address_info().cstr, size, rt);
+			WAWO_ERR("[socket][%s]setsockopt(SO_RCVBUF) == %d failed, error code: %d", info().to_lencstr().cstr, size, rt);
 			return rt;
 		}
 
@@ -1055,7 +840,7 @@ namespace wawo { namespace net {
 				return wawo::OK;
 			}
 
-			WAWO_ERR("[socket][#%d:%s]getsockopt(SO_RCVBUF) failed, error code: %d", m_fd, m_addr.address_info().cstr, rt);
+			WAWO_ERR("[socket][%s]getsockopt(SO_RCVBUF) failed, error code: %d", info().to_lencstr().cstr , rt);
 			return rt;
 		}
 
@@ -1085,10 +870,10 @@ namespace wawo { namespace net {
 			return m_fn_setsockopt(m_fd, SOL_SOCKET, SO_LINGER, (char*)&soLinger, sizeof(soLinger));
 		}
 
-		int socket_base::_set_options(int const& options) {
+		int socket_base::set_options(int const& options) {
 
 			if (m_fd<0) {
-				WAWO_WARN("[socket][#%d:%s]socket set options failed, invalid state", m_fd, m_addr.address_info().cstr);
+				WAWO_WARN("[socket][%s]socket set options failed, invalid state", info().to_lencstr().cstr );
 				return wawo::E_INVALID_STATE;
 			}
 
@@ -1096,7 +881,7 @@ namespace wawo { namespace net {
 
 			int ret = -2;
 			bool should_set;
-			if (m_type == ST_DGRAM) {
+			if (m_type == T_DGRAM) {
 
 				should_set = ((m_option&OPTION_BROADCAST) && ((options&OPTION_BROADCAST) == 0)) ||
 					(((m_option&OPTION_BROADCAST) == 0) && ((options&OPTION_BROADCAST)));
@@ -1114,7 +899,7 @@ namespace wawo { namespace net {
 						}
 					}
 					else {
-						WAWO_ERR("[socket][#%d:%s]socket set socket::OPTION_BROADCAST failed, errno: %d", m_fd, m_addr.address_info().cstr, ret );
+						WAWO_ERR("[socket][%s]socket set socket::OPTION_BROADCAST failed, errno: %d", info().to_lencstr().cstr, ret );
 						return ret;
 					}
 				}
@@ -1125,7 +910,6 @@ namespace wawo { namespace net {
 					(((m_option&OPTION_REUSEADDR) == 0) && ((options&OPTION_REUSEADDR))));
 
 				if (should_set) {
-					WAWO_ASSERT(m_state == S_OPENED);
 
 					optval = (options & OPTION_REUSEADDR) ? 1 : 0;
 					ret = m_fn_setsockopt(m_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
@@ -1139,7 +923,7 @@ namespace wawo { namespace net {
 						}
 					}
 					else {
-						WAWO_ERR("[socket][#%d:%s]socket set socket::OPTION_REUSEADDR failed, errno: %d", m_fd, m_addr.address_info().cstr, ret );
+						WAWO_ERR("[socket][%s]socket set socket::OPTION_REUSEADDR failed, errno: %d", info().to_lencstr().cstr, ret );
 						return ret;
 					}
 				}
@@ -1152,7 +936,6 @@ namespace wawo { namespace net {
 					(((m_option&OPTION_REUSEPORT) == 0) && ((options&OPTION_REUSEPORT))));
 
 				if (should_set) {
-					WAWO_ASSERT(m_state == S_OPENED);
 
 					optval = (options & OPTION_REUSEPORT) ? 1 : 0;
 					ret = m_fn_setsockopt(m_fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
@@ -1166,7 +949,7 @@ namespace wawo { namespace net {
 						}
 					}
 					else {
-						WAWO_ERR("[socket][#%d:%s]socket set socket::OPTION_REUSEPORT failed, errno: %d", m_fd, m_addr.address_info().cstr, ret);
+						WAWO_ERR("[socket][%s]socket set socket::OPTION_REUSEPORT failed, errno: %d", info().to_lencstr().cstr, ret);
 						return ret;
 					}
 				}
@@ -1217,8 +1000,6 @@ namespace wawo { namespace net {
 			}
 
 			if (_nonblocking_should_set) {
-				//WAWO_DEBUG( "[socket][#%d:%s] socket set socket::OPTION_NON_BLOCKING, opval: %d, op ret: %d", m_fd, m_addr.address_info().cstr, optval, ret );
-
 				if (ret == 0) {
 					if (optval == 1) {
 						m_option |= OPTION_NON_BLOCKING;
@@ -1228,12 +1009,12 @@ namespace wawo { namespace net {
 					}
 				}
 				else {
-					WAWO_ERR("[socket][#%d:%s]socket set socket::OPTION_NON_BLOCKING failed, errno: %d", m_fd, m_addr.address_info().cstr, ret );
+					WAWO_ERR("[socket][%s]socket set socket::OPTION_NON_BLOCKING failed, errno: %d", info().to_lencstr().cstr, ret );
 					return ret;
 				}
 			}
 
-			if (m_type == ST_STREAM) {
+			if (m_type == T_STREAM) {
 
 				should_set = (((m_option&OPTION_NODELAY) && ((options&OPTION_NODELAY) == 0)) ||
 					(((m_option&OPTION_NODELAY) == 0) && ((options&OPTION_NODELAY))));
@@ -1241,7 +1022,6 @@ namespace wawo { namespace net {
 				if (should_set) {
 					optval = (options & OPTION_NODELAY) ? 1 : 0;
 					ret = m_fn_setsockopt(m_fd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval));
-					//WAWO_DEBUG( "[socket][#%d:%s] socket set socket::OPTION_NODELAY, optval: %d, op ret: %d", m_fd , m_addr.address_info().cstr, optval, ret );
 
 					if (ret == 0) {
 						if (optval == 1) {
@@ -1252,7 +1032,7 @@ namespace wawo { namespace net {
 						}
 					}
 					else {
-						WAWO_ERR("[socket][#%d:%s]socket set socket::OPTION_NODELAY failed, errno: %d", m_fd, m_addr.address_info().cstr, ret );
+						WAWO_ERR("[socket][%s]socket set socket::OPTION_NODELAY failed, errno: %d", info().to_lencstr().cstr, ret );
 						return ret;
 					}
 				}
@@ -1375,37 +1155,40 @@ namespace wawo { namespace net {
 		}
 
 		int socket_base::reuse_addr() {
-			return _set_options(m_option | OPTION_REUSEADDR);
+			return set_options(m_option | OPTION_REUSEADDR);
 		}
 		int socket_base::reuse_port() {
-			return _set_options(m_option | OPTION_REUSEPORT);
+			return set_options(m_option | OPTION_REUSEPORT);
 		}
 
 		u32_t socket_base::sendto(wawo::byte_t const* const buffer, wawo::u32_t const& len, const wawo::net::address& addr, int& ec_o, int const& flag) {
+
+			WAWO_ASSERT(!"TOCHECK FOR WCP");
 
 			WAWO_ASSERT(buffer != NULL);
 			WAWO_ASSERT(len > 0);
 			ec_o = wawo::OK;
 
-			if (m_wflag&SHUTDOWN_WR) {
-				ec_o = wawo::E_SOCKET_WR_SHUTDOWN_ALREADY;
-				return 0;
-			}
+			//if (m_wflag&SHUTDOWN_WR) {
+			//	ec_o = wawo::E_SOCKET_WR_SHUTDOWN_ALREADY;
+			//	return 0;
+			//}
 
-			if (m_state == S_CONNECTED) {
-				(void)addr;
+			//if (m_state == S_CONNECTED) {
+			//	(void)addr;
 #ifdef _DEBUG
-				WAWO_ASSERT( addr == m_addr );
+			//	WAWO_ASSERT( addr == m_addr );
 #endif
-				return m_fn_send(m_fd, buffer, len, ec_o, flag);
-			}
+			//	return m_fn_send(m_fd, buffer, len, ec_o, flag);
+			//}
 
 			return m_fn_sendto(m_fd, buffer, len, addr, ec_o, flag);
 		}
 
 		u32_t socket_base::recvfrom(byte_t* const buffer_o, wawo::u32_t const& size, address& addr_o, int& ec_o) {
 			ec_o = wawo::OK;
-
+			WAWO_ASSERT(!"TOCHECK FOR WCP");
+			/*
 			if (m_rflag&SHUTDOWN_RD) {
 				ec_o = wawo::E_SOCKET_RD_SHUTDOWN_ALREADY;
 				return 0;
@@ -1418,7 +1201,7 @@ namespace wawo { namespace net {
 				addr_o = m_addr;
 				return m_fn_recv(m_fd, buffer_o, size, ec_o, 0);
 			}
-
+			*/
 			return m_fn_recvfrom(m_fd, buffer_o, size, addr_o, ec_o,0);
 		}
 
@@ -1426,22 +1209,12 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(buffer != NULL);
 			WAWO_ASSERT(length > 0);
 
-			if (m_wflag&SHUTDOWN_WR) {
-				ec_o = wawo::E_SOCKET_WR_SHUTDOWN_ALREADY;
-				return 0;
-			}
-
 			return m_fn_send(m_fd, buffer, length, ec_o, flag);
 		}
 
 		u32_t socket_base::recv(byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag) {
 			WAWO_ASSERT(buffer_o != NULL);
 			WAWO_ASSERT(size > 0);
-
-			if (m_rflag&SHUTDOWN_RD) {
-				ec_o = wawo::E_SOCKET_RD_SHUTDOWN_ALREADY;
-				return 0;
-			}
 
 			return m_fn_recv(m_fd, buffer_o, size, ec_o, flag);
 		}

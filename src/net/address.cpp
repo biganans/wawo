@@ -23,7 +23,7 @@ namespace wawo { namespace net {
 	 *		for a list of service names , u could refer to %WINDOW%/system32/drivers/etc/services on windows
 	 *
 	 */
-	int get_addrinfo_by_host( char const* const hostname, char const* const servicename, std::vector<socket_addr>& addrs, int const& filter ) {
+	int get_addrinfo_by_host( char const* const hostname, char const* const servicename, std::vector<socketaddr>& addrs, int const& filter ) {
 
 		WAWO_ASSERT( (hostname != NULL && wawo::strlen(hostname)) ||
 					 (servicename != NULL && wawo::strlen(servicename))
@@ -78,7 +78,7 @@ namespace wawo { namespace net {
 
 		for( ptr=result;ptr!=NULL; ptr = ptr->ai_next ) {
 
-			socket_addr info;
+			socketaddr info;
 
 			switch( ptr->ai_family ) {
 			case AF_UNSPEC:
@@ -123,7 +123,7 @@ namespace wawo { namespace net {
 
 	extern int get_one_ipaddr_by_host( const char* hostname, len_cstr& ip_o, int const& filter ) {
 
-		std::vector<socket_addr> infos;
+		std::vector<socketaddr> infos;
 		int retval = get_addrinfo_by_host( hostname, "", infos, filter );
 
 		if( retval != 0 ) {
