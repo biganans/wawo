@@ -86,7 +86,7 @@ namespace wawo { namespace net {
 		}
 
 	private:
-		observer_abstract* m_impl;
+		WWSP<observer_abstract> m_impl;
 		spin_mutex m_ops_mutex;
 		event_op_queue m_ops;
 		u8_t m_polltype;
@@ -155,6 +155,7 @@ namespace wawo { namespace net {
 		}
 
 		void update() {
+			_exec_tasks();
 			m_default->update();
 			_exec_tasks();
 		}
@@ -181,7 +182,7 @@ namespace wawo { namespace net {
 			}
 		}
 
-		void plan(WWRP<wawo::task::task> const& t) {
+		void plan(WWRP<wawo::task::task_abstract> const& t) {
 			lock_guard<spin_mutex> lg(m_tq_mtx);
 			_plan_task(t);
 		}
@@ -195,7 +196,7 @@ namespace wawo { namespace net {
 #endif
 	};
 
-	inline static void socket_observer_plan(WWRP<wawo::task::task> const& t) {
+	inline static void socket_observer_plan(WWRP<wawo::task::task_abstract> const& t) {
 		observer::instance()->plan(t);
 	}
 

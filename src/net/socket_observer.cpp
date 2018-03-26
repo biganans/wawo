@@ -19,14 +19,14 @@ namespace wawo { namespace net {
 		switch (m_polltype) {
 		case T_SELECT:
 		{
-			m_impl = new observer_impl::select();
+			m_impl = wawo::make_shared<observer_impl::select>();
 			WAWO_ALLOC_CHECK(m_impl, sizeof(observer_impl::select));
 		}
 		break;
 #if WAWO_ISGNU
 		case T_EPOLL:
 		{
-			m_impl = new observer_impl::epoll();
+			m_impl = wawo::make_shared<observer_impl::epoll>();
 			WAWO_ALLOC_CHECK(m_impl, sizeof(observer_impl::epoll));
 		}
 		break;
@@ -35,7 +35,7 @@ namespace wawo { namespace net {
 #ifdef WAWO_ENABLE_WCP
 		case T_WPOLL:
 		{
-			m_impl = new observer_impl::wpoll();
+			m_impl = wawo::make_shared<observer_impl::wpoll>();
 			WAWO_ALLOC_CHECK(m_impl, sizeof(observer_impl::wpoll));
 		}
 		break;
@@ -50,10 +50,9 @@ namespace wawo { namespace net {
 
 	void socket_observer::_dealloc_impl() {
 		WAWO_ASSERT(m_impl != NULL);
-		WAWO_DELETE(m_impl);
 	}
 
-	socket_observer::socket_observer(u8_t const& type ) :
+	socket_observer::socket_observer(u8_t const& type ):
 		m_impl(NULL),
 		m_ops_mutex(),
 		m_ops(),

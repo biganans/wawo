@@ -21,14 +21,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\src\services\EchoClient.hpp">
-      <Filter>Resource Files\src\services</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\src\services\ServiceCommand.h">
-      <Filter>Resource Files\src\services</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\..\..\src\async_client.cpp">
       <Filter>Resource Files\src</Filter>
     </ClCompile>

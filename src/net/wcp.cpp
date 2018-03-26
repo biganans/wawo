@@ -58,7 +58,7 @@ namespace wawo { namespace net {
 	void wcb_pump_packs(WWRP<ref_base> const& cookie_) {
 		WAWO_ASSERT(cookie_ != NULL );
 		WWRP<async_cookie> cookie = wawo::static_pointer_cast<async_cookie>(cookie_);
-		WWRP<WCB> wcb = wawo::static_pointer_cast<WCB>(cookie->user_cookie);
+		WWRP<WCB> wcb = wawo::static_pointer_cast<WCB>(cookie->cookie);
 		WAWO_ASSERT(wcb != NULL);
 		wcb->pump_packs();
 	}
@@ -66,10 +66,10 @@ namespace wawo { namespace net {
 	void wcb_socket_error(int const& code, WWRP<ref_base> const& cookie_) {
 		WAWO_ASSERT(cookie_ != NULL);
 		WWRP<async_cookie> cookie = wawo::static_pointer_cast<async_cookie>(cookie_);
-		WWRP<WCB> wcb = wawo::static_pointer_cast<WCB>(cookie->user_cookie);
+		WWRP<WCB> wcb = wawo::static_pointer_cast<WCB>(cookie->cookie);
 		WAWO_ASSERT(wcb->so != NULL);
 		wcb->so->close(code);
-		WAWO_ERR("[wcp][wcb][#%d:%s]wcb_socket_error: %d", wcb->so->get_fd(), wcb->so->get_addr_info().cstr, code );
+		WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", wcb->so->info().to_lencstr().cstr, code );
 	}
 
 	inline wawo::u32_t four_tuple_hash(wawo::net::address const& addr1, wawo::net::address const& addr2) {
@@ -104,7 +104,7 @@ namespace wawo { namespace net {
 		rst->header.flag = WCP_FLAG_RST;
 		rst->header.dlen = 0;
 
-		WCP_TRACE("[wcp][rst]reply rst from: %d:%s to %s", so->get_fd(), so->get_addr_info().cstr, to.address_info().cstr );
+		WCP_TRACE("[wcp][rst]reply rst from: %d:%s to %s", so->fd(), so->addr_info().cstr, to.address_info().cstr );
 		return inject_to_address(so, rst, to);
 	}
 
@@ -916,7 +916,7 @@ _begin_send:
 			}
 
 			WAWO_DEBUG("[wcp]WCB::accept, receive new syn from: %s", from.address_info().cstr);
-			WWRP<socket> accepted_so = wawo::make_ref<socket>(so->get_buffer_cfg(), F_PF_INET, ST_DGRAM, P_UDP, OPTION_NONE);
+			WWRP<socket> accepted_so = wawo::make_ref<socket>(so->buffer_cfg(), F_PF_INET, T_DGRAM, P_UDP, OPTION_NONE);
 
 			int openrt = accepted_so->open();
 			if (openrt != wawo::OK) {
@@ -989,7 +989,7 @@ _begin_send:
 			wcb->init();
 			wcb->wcb_flag |= WCB_FLAG_IS_PASSIVE_OPEN;
 			wcb->four_tuple_hash_id = _four_tuple_hash_id;
-			wcb->local_addr = accepted_so->get_local_addr();
+			wcb->local_addr = accepted_so->local_addr();
 			wcb->remote_addr = from;
 			wcb->so = accepted_so;
 			wcb->fd = wcp::make_wcb_fd();
@@ -1317,7 +1317,7 @@ _begin_send:
 		WAWO_ASSERT(socket_type == SOCK_DGRAM);
 		WAWO_ASSERT(protocol == IPPROTO_UDP);
 
-		WWRP<wawo::net::socket> udpsocket = wawo::make_ref<wawo::net::socket>(F_AF_INET, ST_DGRAM, P_UDP);
+		WWRP<wawo::net::socket> udpsocket = wawo::make_ref<wawo::net::socket>(F_AF_INET, T_DGRAM, P_UDP);
 		int openrt = udpsocket->open();
 		WAWO_RETURN_V_IF_NOT_MATCH( WAWO_NEGATIVE(socket_get_last_errno()) , openrt == wawo::OK);
 
@@ -1635,7 +1635,7 @@ _begin_send:
 		WAWO_ASSERT(wcb->so != NULL);
 
 		if (wcb->local_addr.is_null()) {
-			wcb->local_addr = wcb->so->get_local_addr() ;
+			wcb->local_addr = wcb->so->local_addr() ;
 		}
 
 		sockaddr_in* addr_in = (sockaddr_in*)addr;

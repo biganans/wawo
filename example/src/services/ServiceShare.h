@@ -4,11 +4,8 @@
 #include <wawo.h>
 namespace services {
 
-	typedef wawo::net::peer::ros<> peer_t;
-	typedef typename peer_t::message_t MessageT;
-
 	enum ServicesId {
-		S_ECHO = wawo::net::S_CUSTOM_ID_BEGIN
+		S_ECHO = 100
 	};
 
 	enum EchoCommand {
@@ -48,28 +45,15 @@ namespace services {
 		free(bytes_buffer);
 	}
 
-	class HelloRequestCallBack;
-
-
-	class HelloRequestCallBack : public wawo::net::peer::ros_callback_abstract
-	{
-		WWRP<peer_t> m_peer;
+	class HelloProcessor {
 
 	public:
-		HelloRequestCallBack(WWRP<peer_t> peer) :
-			m_peer(peer)
+
+		HelloProcessor()
 		{
 		}
 
-		virtual void on_respond(wawo::u32_t const& net_id, WWSP < wawo::packet > const& packet) {
-			HandlePeerResp( m_peer, packet);
-		}
-
-		virtual void on_error(wawo::u32_t const& net_id, int const& ec) {
-
-		}
-
-		void HandlePeerResp(WWRP<peer_t> const& peer, WWSP<wawo::packet> const& resp_pack ) {
+		void HandleResp(WWRP<wawo::net::socket_handler_context> const& ctx, WWSP<wawo::packet> const& resp_pack ) {
 			WWSP<wawo::packet> const& packet = resp_pack;
 			wawo::u32_t command = packet->read<wawo::u32_t>();
 
@@ -106,11 +90,8 @@ namespace services {
 
 				WWSP<wawo::packet> packet_t1 = wawo::make_shared<wawo::packet>(*packet_o);
 
-				packet_t1->write_left < wawo::net::service_id_t >(services::S_ECHO);
-				WWSP<wawo::net::peer::message::ros> request_message = wawo::make_shared<wawo::net::peer::message::ros>(packet_t1);
-				int rt;
-
-				rt = peer->request(request_message, WWRP<wawo::net::peer::ros_callback_abstract>(this) );
+				packet_t1->write_left < wawo::u8_t >(services::S_ECHO);
+				ctx->write(packet_t1);
 
 //				WAWO_CHECK_SOCKET_SEND_RETURN_V(rt);
 
@@ -149,7 +130,7 @@ namespace services {
 				//int rt;
 				//PEER_REQ_HELLO(peer, rt);
 
-				int rt = ReqHello(peer);
+				SendHello(ctx);
 			}
 			break;
 			default:
@@ -160,20 +141,17 @@ namespace services {
 			}
 		}
 
-		static int ReqHello(WWRP<peer_t> peer) {
+		static void SendHello(WWRP<wawo::net::socket_handler_context> const& ctx) {
+
 			WWSP<wawo::packet> packet(new wawo::packet(256));
 			wawo::len_cstr hello_string = "hello server";
 			packet->write<wawo::u32_t>(services::C_ECHO_HELLO);
 			packet->write<wawo::u32_t>(hello_string.len);
 			packet->write((wawo::byte_t const* const)hello_string.cstr, hello_string.len);
-			packet->write_left<wawo::net::service_id_t>(services::S_ECHO);
-			WWSP<typename peer_t::message_t> message(new typename peer_t::message_t(packet));
 
-			WWRP<HelloRequestCallBack> cb = wawo::make_ref<HelloRequestCallBack>(peer);
-			return peer->request(message, cb);
+			packet->write_left<wawo::u8_t>(services::S_ECHO);
+			ctx->write(packet);
 		}
-		
-
 	};
 }
 

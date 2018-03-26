@@ -162,10 +162,6 @@
       <Project>{cdce0809-6c77-480b-8912-09c043b9c268}</Project>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\..\src\services\EchoClient.hpp" />
-    <ClInclude Include="..\..\..\src\services\ServiceCommand.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

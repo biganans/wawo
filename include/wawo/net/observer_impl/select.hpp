@@ -282,8 +282,10 @@ namespace wawo { namespace net { namespace observer_impl {
 					--ready_c ;
 
 					if ( WAWO_LIKELY(ctx->flag&IOE_INFINITE_WATCH_READ)) {
-						lock_guard<spin_mutex> lg_ctx(ctx->r_mutex);
-						ctx->r_state = S_READ_POSTED;
+						{
+							lock_guard<spin_mutex> lg_ctx(ctx->r_mutex);
+							ctx->r_state = S_READ_POSTED;
+						}
 						WWRP<wawo::task::task> _t = wawo::make_ref<io_select_task>(ctx->fn_info[IOE_SLOT_READ].fn, ctx->fn_info[IOE_SLOT_READ].cookie, ctx, static_cast<u8_t>(IOE_READ));
 						_t->run();
 					}
@@ -308,8 +310,10 @@ namespace wawo { namespace net { namespace observer_impl {
 					--ready_c;
 
 					if ( WAWO_LIKELY(ctx->flag&IOE_INFINITE_WATCH_WRITE)) {
-						lock_guard<spin_mutex> lg_ctx(ctx->w_mutex);
-						ctx->w_state = S_WRITE_POSTED;
+						{
+							lock_guard<spin_mutex> lg_ctx(ctx->w_mutex);
+							ctx->w_state = S_WRITE_POSTED;
+						}
 
 						WWRP<wawo::task::task> _t = wawo::make_ref<io_select_task>(ctx->fn_info[IOE_SLOT_WRITE].fn, ctx->fn_info[IOE_SLOT_WRITE].cookie, ctx, static_cast<u8_t>(IOE_WRITE));
 						_t->run();
@@ -362,10 +366,6 @@ namespace wawo { namespace net { namespace observer_impl {
 					};
 
 					_lambda();
-
-
-					//WWRP<wawo::task::lambda_task> _lambda_t = wawo::make_ref<wawo::task::lambda_task>(_lambda);
-					//_lambda_t->run();
 				}
 			}
 		}

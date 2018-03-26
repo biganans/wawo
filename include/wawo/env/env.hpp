@@ -21,20 +21,19 @@ namespace wawo { namespace env {
 	class env: public wawo::singleton<env> {
 
 	private:
-		env_impl* m_impl;
+		WWSP<env_impl> m_impl;
 	public:
 		env() 
 		{
-			m_impl = new env_impl();
+			m_impl = wawo::make_shared<env_impl>();
 			WAWO_ALLOC_CHECK(m_impl, sizeof(env_impl));
 		}
 
 		~env() 
 		{
-			WAWO_DELETE( m_impl );
 		}
 
-		int GetLocalIpList( std::vector<wawo::net::socket_addr>& addrs ) {
+		int GetLocalIpList( std::vector<wawo::net::socketaddr>& addrs ) {
 			return m_impl->GetLocalIpList(addrs);
 		}
 

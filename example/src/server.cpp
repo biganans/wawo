@@ -1,126 +1,118 @@
 #include <wawo.h>
 
-/*
-#include "services/EchoServer.hpp"
-typedef wawo::net::peer::ros<> PeerT;
-typedef wawo::net::ros_node<PeerT> NodeT;
-typedef services::EchoServer<PeerT>	EchoProvider_Server;
-
-using namespace wawo::net;
-
-
-int main( int argc, char** argv ) {
-
-	wawo::app application ;
-	WWRP<NodeT> node = wawo::make_ref<NodeT>() ;
-
-	int start_rt = node->start();
-	if( start_rt != wawo::OK )
-	{
-		return start_rt;
-	}
-
-	WWRP<NodeT::SPT> echo_service_server = wawo::make_ref<EchoProvider_Server>(services::S_ECHO) ;
-	node->add_service( services::S_ECHO, echo_service_server );
-
-	wawo::net::socket_addr laddr;
-	laddr.so_family = wawo::net::F_AF_INET;
-	laddr.so_type = wawo::net::ST_STREAM;
-
-	if (argc == 2) {
-		laddr.so_type = wawo::net::ST_DGRAM;
-		laddr.so_protocol = wawo::net::P_WCP;
-	}
-	else {
-		laddr.so_type = wawo::net::ST_STREAM;
- 		laddr.so_protocol = wawo::net::P_TCP;
-	}
-
-	laddr.so_address = wawo::net::address( "0.0.0.0",22310 );
-
-	WAWO_LOG_WARN( "[main]start listen on : %s", laddr.so_address.address_info().cstr ) ;
-
-//	int listen_rt = node->StartListen(addr);
-	int listen_rt = node->start_listen(laddr);
-
-	if( listen_rt != wawo::OK ) {
-		WAWO_ERR("[main]start socket server failed: %d", start_rt );
-		return listen_rt;
-	}
-
-	application.run_for();
-	node->stop();
-
-	WAWO_LOG_WARN( "main", "socket server exit ..." ) ;
-	return wawo::OK;
-}
-*/
-
-
-//class A {};
-//class B : public A {};
-
 //using namespace wawo;
 //using namespace wawo::net;
 
-static void cb_async_accept(WWRP<wawo::net::socket> const& newso, WWRP<wawo::ref_base> const& cookie_) {
-	WAWO_ASSERT(cookie_ != NULL);
+class log_handler :
+	public wawo::net::socket_inbound_handler_abstract,
+	public wawo::net::socket_outbound_handler_abstract,
+	public wawo::net::socket_activity_handler_abstract
+{
+public:
+	void read(WWRP<wawo::net::socket_handler_context> const& ctx, WWSP<wawo::packet> const& income)
+	{
+		WAWO_INFO("<<<: %u bytes", income->len() );
+		ctx->fire_read(income);
+	}
 
-	WAWO_INFO("new connection accepted");
-
-	//init pipeline
+	void write(WWRP<wawo::net::socket_handler_context> const& ctx, WWSP<wawo::packet> const& outlet)
+	{
+		WAWO_INFO(">>>: %u bytes", outlet->len() );
+		ctx->write(outlet);
+	}
 	
-	return;
-	/*
-	WWRP<wawo::net::async_cookie> cookie = wawo::static_pointer_cast<wawo::net::async_cookie>(cookie_);
-	WWRP<wawo::net::async_accept_cookie> user_cookie = wawo::static_pointer_cast<wawo::net::async_accept_cookie>(cookie->user_cookie);
-	WAWO_ASSERT(user_cookie->node != NULL);
+	void connected(WWRP<wawo::net::socket_handler_context> const& ctx) {
+		WAWO_INFO("connected: %d", ctx->PIPE->SO->fd() );
+		ctx->fire_connected();
+	}
 
-	WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie->so);
-	WAWO_ASSERT(cookie->so != NULL);
+	void closed(WWRP<wawo::net::socket_handler_context> const& ctx) {
+		WAWO_INFO("closed: %d", ctx->PIPE->SO->fd());
+		ctx->fire_closed();
+	}	
 
-	user_cookie->node->handle_async_accept(so);
-	*/
-}
+	void read_shutdowned(WWRP<wawo::net::socket_handler_context> const& ctx) {
+		WAWO_INFO("read_shutdowned: %d", ctx->PIPE->SO->fd());
+		ctx->PIPE->SO->shutdown(wawo::net::SHUTDOWN_WR);
+		ctx->fire_read_shutdowned();
+	}
+	void write_shutdowned(WWRP<wawo::net::socket_handler_context> const& ctx) {
+		WAWO_INFO("write_shutdowned: %d", ctx->PIPE->SO->fd());
+		ctx->fire_write_shutdowned();
+	}
+
+	void write_block(WWRP<wawo::net::socket_handler_context> const& ctx) {
+		WAWO_INFO("write_block: %d", ctx->PIPE->SO->fd());
+		ctx->fire_write_block();
+	}
+	void write_unblock(WWRP<wawo::net::socket_handler_context> const& ctx) {
+		WAWO_INFO("write_unblock: %d", ctx->PIPE->SO->fd());
+		ctx->fire_write_unblock();
+	}
+
+};
+
+
+class echo_handler :
+	public wawo::net::socket_inbound_handler_abstract,
+	public wawo::net::socket_activity_handler_abstract
+{
+public:
+	void read(WWRP<wawo::net::socket_handler_context> const& ctx, WWSP<wawo::packet> const& income)
+	{
+		ctx->write(income);
+	}
+
+	void connected(WWRP<wawo::net::socket_handler_context> const& ctx) {
+		ctx->fire_connected();
+	}
+
+	void closed(WWRP<wawo::net::socket_handler_context> const& ctx, int const& code) {
+		ctx->fire_closed();
+	}
+};
+
+class listen_server_handler:
+	public wawo::net::socket_activity_handler_abstract,
+	public wawo::net::socket_accept_handler_abstract
+{
+public:
+	void accepted(WWRP<wawo::net::socket_handler_context> const& ctx, WWRP<wawo::net::socket> const& newsocket)
+	{
+		WWRP<wawo::net::socket_handler_abstract> log = wawo::make_ref<log_handler>();
+		newsocket->pipeline()->add_last(log);
+
+		WWRP<echo_handler> echo = wawo::make_ref<echo_handler>();
+		newsocket->pipeline()->add_last(echo);
+
+		(void) ctx;
+	}
+};
 
 
 int main(int argc, char** argv) {
 	wawo::app app;
 
-	wawo::net::socket_addr laddr;
+	wawo::net::socketaddr laddr;
 	laddr.so_family = wawo::net::F_AF_INET;
-	laddr.so_type = wawo::net::ST_STREAM;
+	laddr.so_type = wawo::net::T_STREAM;
 
 	if (argc == 2) {
-		laddr.so_type = wawo::net::ST_DGRAM;
+		laddr.so_type = wawo::net::T_DGRAM;
 		laddr.so_protocol = wawo::net::P_WCP;
 	} else {
-		laddr.so_type = wawo::net::ST_STREAM;
+		laddr.so_type = wawo::net::T_STREAM;
 		laddr.so_protocol = wawo::net::P_TCP;
 	}
 
 	laddr.so_address = wawo::net::address("0.0.0.0", 22310);
 	WWRP<wawo::net::socket> lsocket = wawo::make_ref<wawo::net::socket>(laddr.so_family, laddr.so_type, laddr.so_protocol);
 
-
 	int open = lsocket->open();
 
 	if (open != wawo::OK) {
 		lsocket->close(open);
 		return open;
-	}
-
-	if (laddr.so_protocol == wawo::net::P_WCP) {
-		int reusert = lsocket->reuse_addr();
-		if (reusert != wawo::OK) {
-			lsocket->close(reusert);
-			return reusert;
-		}
-		reusert = lsocket->reuse_port();
-		if (reusert != wawo::OK) {
-			lsocket->close(reusert);
-			return reusert;
-		}
 	}
 
 	int bind = lsocket->bind(laddr.so_address);
@@ -130,6 +122,21 @@ int main(int argc, char** argv) {
 	}
 
 	int turn_on_nonblocking = lsocket->turnon_nonblocking();
+
+	if (turn_on_nonblocking != wawo::OK) {
+		lsocket->close(turn_on_nonblocking);
+		return turn_on_nonblocking;
+	}
+
+	WWRP<wawo::net::socket_handler_abstract> l_handler = wawo::make_ref<listen_server_handler>();
+	lsocket->pipeline()->add_last(l_handler);
+
+	int listen_rt = lsocket->listen();
+	if (listen_rt != wawo::OK) {
+		lsocket->close(listen_rt);
+		return listen_rt;
+	}
+	app.run_for();
 
 	if (turn_on_nonblocking != wawo::OK) {
 		lsocket->close(turn_on_nonblocking);

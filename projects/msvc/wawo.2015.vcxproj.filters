@@ -52,12 +52,6 @@
     <Filter Include="Header Files\wawo\config\platform">
       <UniqueIdentifier>{373666bd-5644-44d0-80cb-e1ba2699d77b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\wawo\net\peer">
-      <UniqueIdentifier>{f62e7a13-4fab-4b62-b3d4-efd19efc01e3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\wawo\net\peer\message">
-      <UniqueIdentifier>{3894aaf7-546f-4feb-9f24-ede195bd3866}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\src">
       <UniqueIdentifier>{dcd78f91-04a6-4b80-8e02-5e99efe28c7c}</UniqueIdentifier>
     </Filter>
@@ -82,9 +76,6 @@
     <Filter Include="Header Files\wawo\math">
       <UniqueIdentifier>{9d4666f2-d057-431b-b150-77a2d3666934}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\src\net\peer">
-      <UniqueIdentifier>{c2c87ca7-b8ec-4c54-9193-02acc1d2d990}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\wawo\thread\impl">
       <UniqueIdentifier>{1f94cd76-49df-4ee2-8aea-41a9908a10b0}</UniqueIdentifier>
     </Filter>
@@ -97,23 +88,11 @@
     <Filter Include="Source Files\src\context">
       <UniqueIdentifier>{2bfb8462-d0b8-4865-a8d8-90298ffc3923}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\wawo\net\tlp">
-      <UniqueIdentifier>{d824cb88-c672-4155-8513-d5f7870cdc7a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\wawo\net\observer_impl">
       <UniqueIdentifier>{80026568-fcac-4a41-944a-2eb02afb7008}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\src\net\peer\message">
-      <UniqueIdentifier>{f967a4ac-43e0-4618-9b4c-637c66a5691b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="3rd\stack_walker">
       <UniqueIdentifier>{932e0e04-f05e-4085-a689-c60a1088183d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\wawo\net\protocol">
-      <UniqueIdentifier>{eddb4dc2-a98c-4b4e-96e7-d042a06f478f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\src\net\protocol">
-      <UniqueIdentifier>{496680a5-764d-4b44-a164-6fe6f84ab52a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -140,9 +119,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\log\sys_logger.cpp">
       <Filter>Source Files\src\log</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\net\peer\http.cpp">
-      <Filter>Source Files\src\net\peer</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\net\address.cpp">
       <Filter>Source Files\src\net</Filter>
@@ -171,9 +147,6 @@
     <ClCompile Include="..\..\src\exception.cpp">
       <Filter>Source Files\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\net\peer\message\mux_cargo.cpp">
-      <Filter>Source Files\src\net\peer\message</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\task\scheduler.cpp">
       <Filter>Source Files\src\task</Filter>
     </ClCompile>
@@ -183,8 +156,11 @@
     <ClCompile Include="..\..\3rd\stack_walker\win_stack_walker.cpp">
       <Filter>3rd\stack_walker</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\net\protocol\http_utils.cpp">
-      <Filter>Source Files\src\net\protocol</Filter>
+    <ClCompile Include="..\..\src\net\socket_handler.cpp">
+      <Filter>Source Files\src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\net\socket_pipeline.cpp">
+      <Filter>Source Files\src\net</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -266,16 +242,7 @@
     <ClInclude Include="..\..\include\wawo\log\sys_logger.h">
       <Filter>Header Files\wawo\log</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\peer\message\http.hpp">
-      <Filter>Header Files\wawo\net\peer\message</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\peer\http.hpp">
-      <Filter>Header Files\wawo\net\peer</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\address.hpp">
-      <Filter>Header Files\wawo\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\net_event.hpp">
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\socket.hpp">
@@ -365,24 +332,6 @@
     <ClInclude Include="..\..\include\wawo\string.hpp">
       <Filter>Header Files\wawo</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\peer\ros.hpp">
-      <Filter>Header Files\wawo\net\peer</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\peer\message\ros.hpp">
-      <Filter>Header Files\wawo\net\peer\message</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\tlp\dh_symmetric_encrypt.hpp">
-      <Filter>Header Files\wawo\net\tlp</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\tlp\hlen_packet.hpp">
-      <Filter>Header Files\wawo\net\tlp</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\tlp\stream.hpp">
-      <Filter>Header Files\wawo\net\tlp</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\tlp\symmetric_encrypt.hpp">
-      <Filter>Header Files\wawo\net\tlp</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\observer_impl\epoll.hpp">
       <Filter>Header Files\wawo\net\observer_impl</Filter>
     </ClInclude>
@@ -397,18 +346,6 @@
     </ClInclude>
     <ClInclude Include="..\..\include\wawo\smart_ptr.hpp">
       <Filter>Header Files\wawo</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\peer\message\cargo.hpp">
-      <Filter>Header Files\wawo\net\peer\message</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\peer\cargo.hpp">
-      <Filter>Header Files\wawo\net\peer</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\peer\message\mux_cargo.hpp">
-      <Filter>Header Files\wawo\net\peer\message</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\peer\mux_cargo.hpp">
-      <Filter>Header Files\wawo\net\peer</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\wawo\task\scheduler.hpp">
       <Filter>Header Files\wawo\task</Filter>
@@ -428,16 +365,13 @@
     <ClInclude Include="..\..\include\wawo\core.hpp">
       <Filter>Header Files\wawo</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\protocol\http.hpp">
-      <Filter>Header Files\wawo\net\protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\protocol\icmp.hpp">
-      <Filter>Header Files\wawo\net\protocol</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\peer\_mux.hpp">
-      <Filter>Header Files\wawo\net\peer</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\socket_pipeline.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\socket_invoker.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\socket_handler.hpp">
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
   </ItemGroup>
