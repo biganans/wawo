@@ -62,14 +62,6 @@ public:
 	{
 		ctx->write(income);
 	}
-
-	void connected(WWRP<wawo::net::socket_handler_context> const& ctx) {
-		ctx->fire_connected();
-	}
-
-	void closed(WWRP<wawo::net::socket_handler_context> const& ctx, int const& code) {
-		ctx->fire_closed();
-	}
 };
 
 class listen_server_handler:
