@@ -94,6 +94,12 @@
     <Filter Include="3rd\stack_walker">
       <UniqueIdentifier>{932e0e04-f05e-4085-a689-c60a1088183d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\wawo\net\handler">
+      <UniqueIdentifier>{3cefb320-fd7c-4f91-99e1-b99ad63b01a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src\net\handler">
+      <UniqueIdentifier>{c0a63d2f-87c7-48b4-9a0d-566ba3c1c40c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -161,6 +167,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\net\socket_pipeline.cpp">
       <Filter>Source Files\src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\net\handler\websocket.cpp">
+      <Filter>Source Files\src\net\handler</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -373,6 +382,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\socket_handler.hpp">
       <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\handler\websocket.hpp">
+      <Filter>Header Files\wawo\net\handler</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

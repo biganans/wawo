@@ -32,6 +32,8 @@
 #include <wawo/net/socket.hpp>
 #include <wawo/net/socket_observer.hpp>
 
+#include <wawo/net/handler/websocket.hpp>
+
 #include <wawo/env/env.hpp>
 #include <wawo/app.hpp>
 #include <wawo/signal/signal_manager.h>
