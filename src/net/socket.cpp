@@ -49,18 +49,6 @@ namespace wawo { namespace net {
 		so->handle_async_accept(ec);
 	}
 
-
-	void async_accept(WWRP<ref_base> const& cookie_) {
-	
-		WAWO_ASSERT(cookie_ != NULL);
-		WWRP<async_cookie> cookie = wawo::static_pointer_cast<async_cookie>(cookie_);
-		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie->so);
-		int ec;
-
-		so->handle_async_accept(ec);
-	}
-
-
 	void async_read(WWRP<ref_base> const& cookie_) {
 
 		WAWO_ASSERT(cookie_ != NULL);
@@ -99,8 +87,7 @@ namespace wawo { namespace net {
 	}
 
 	void async_write(WWRP<ref_base> const& cookie_) {
-
-		/*
+		
 		WAWO_ASSERT(cookie_ != NULL);
 		WWRP<async_cookie> cookie = wawo::static_pointer_cast<async_cookie>(cookie_);
 		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie->so);
@@ -126,7 +113,6 @@ namespace wawo { namespace net {
 			}
 			break;
 		}
-		*/
 	}
 
 	void async_error(int const& code, WWRP<ref_base> const& cookie_) {
@@ -623,7 +609,7 @@ namespace wawo { namespace net {
 				m_rps_q->pop();
 			}
 		}
-		*/
+		
 	}
 
 	void socket::flush(bool& left, int& ec_o, int const& block_time /* in microseconds*/) {

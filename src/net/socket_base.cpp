@@ -475,7 +475,6 @@ namespace wawo { namespace net {
 		}
 
 		socket_base::~socket_base() {
-			close();
 			WAWO_TRACE_SOCKET("[socket][%s]socket::~socket(),address: %p", info().to_lencstr().cstr, this);
 		}
 
