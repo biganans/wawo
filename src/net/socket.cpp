@@ -460,14 +460,12 @@ namespace wawo { namespace net {
 
 		ec_o = wawo::OK;
 		u32_t count = 0;
-		sockaddr_in addr_in;
-		socklen_t addrlen = sizeof(addr_in);
 
 		lock_guard<spin_mutex> lg( m_mutexes[L_READ] );
 
 		do {
 			address addr;
-			int fd = socket_base::accept(reinterpret_cast<sockaddr*>(&addr_in), &addrlen);
+			int fd = socket_base::accept(addr);
 
 			if( fd<0 ) {
 				if ( WAWO_ABS(fd) == EINTR ) continue;
@@ -476,9 +474,6 @@ namespace wawo { namespace net {
 				}
 				break;
 			}
-
-			addr.set_netsequence_port( (addr_in.sin_port) );
-			addr.set_netsequence_ulongip( (addr_in.sin_addr.s_addr) );
 
 			WWRP<socket> so = wawo::make_ref<socket>(fd, addr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
 			sockets[count++] = so;

@@ -679,8 +679,16 @@ namespace wawo { namespace net {
 			return wawo::OK;
 		}
 
-		int socket_base::accept(struct sockaddr* addr, socklen_t* addrlen) {
-			return m_fn_accept(m_fd, reinterpret_cast<sockaddr*>(&addr), addrlen);
+		int socket_base::accept(address& addr) {
+			sockaddr_in addrin;
+			socklen_t addrlen = sizeof(addrin);
+
+			int fd = m_fn_accept(m_fd, reinterpret_cast<sockaddr*>(&addrin), &addrlen);
+			WAWO_RETURN_V_IF_NOT_MATCH(fd, fd < 0);
+
+			addr.set_netsequence_ulongip(addrin.sin_addr.s_addr);
+			addr.set_netsequence_port(addrin.sin_port);
+			return fd;
 		}
 	
 		int socket_base::connect(wawo::net::address const& addr ) {
