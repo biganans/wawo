@@ -136,30 +136,7 @@ int main(int argc, char** argv) {
 		lsocket->close(listen_rt);
 		return listen_rt;
 	}
+
 	app.run_for();
-
-	if (turn_on_nonblocking != wawo::OK) {
-		lsocket->close(turn_on_nonblocking);
-		return turn_on_nonblocking;
-	}
-
-	int listen_rt = lsocket->listen(WAWO_LISTEN_BACK_LOG);
-	if (listen_rt != wawo::OK) {
-		lsocket->close(listen_rt);
-		return listen_rt;
-	}
-
-	WAWO_INFO("[peer_proxy]listen on: %s success, protocol: %s", lsocket->get_local_addr().address_info().cstr, wawo::net::protocol_str[laddr.so_protocol]);
-
-	m_listen_sockets.insert(socket_pair(laddr.so_address, lsocket));
-
-	WWRP<async_accept_cookie> cookie = wawo::make_ref<async_accept_cookie>();
-	cookie->node = WWRP<node_t>(this);
-
-	lsocket->begin_async_read(WATCH_OPTION_INFINITE, cookie, node_t::cb_async_accept, node_abstract::cb_async_accept_error);
-
 	return wawo::OK;
-	if (std::is_base_of<A, B>::value) {	
-		printf("A->B ok");
-	}
 }
