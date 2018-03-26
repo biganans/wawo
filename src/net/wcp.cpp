@@ -1207,17 +1207,19 @@ _begin_send:
 	wcp::~wcp() { WAWO_ASSERT(m_state == S_IDLE || m_state == S_EXIT); }
 
 	void wcp::on_start() {
+		//@TODO
 		lock_guard<shared_mutex> lg(m_mutex);
 		m_state = S_RUN;
 
 		m_self_ticker = wawo::make_shared<wawo::thread::fn_ticker>(std::bind(&wcp::run, this) );
-		observer_ticker::instance()->schedule(m_self_ticker);
+		//observer_ticker::instance()->schedule(m_self_ticker);
 	}
 
 	void wcp::on_stop() {
+		//@TODO
 
 		if (m_self_ticker != NULL) {
-			observer_ticker::instance()->deschedule(m_self_ticker);
+			//observer_ticker::instance()->deschedule(m_self_ticker);
 		}
 
 		lock_guard<shared_mutex> lg(m_mutex);

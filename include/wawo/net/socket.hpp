@@ -92,6 +92,7 @@ namespace wawo { namespace net {
 
 		WWSP<std::queue<WWSP<wawo::packet>>> m_outs;
 
+		WWRP<observer> m_observer;
 		WWRP<socket_pipeline> m_pipeline;
 
 		int m_ec;
@@ -110,6 +111,7 @@ namespace wawo { namespace net {
 			m_async_wt(0),
 			m_rps_q(NULL),
 			m_rps_q_standby(NULL),
+			m_observer(NULL),
 			m_pipeline(NULL),
 			m_ec(0)
 		{
@@ -127,6 +129,7 @@ namespace wawo { namespace net {
 			m_async_wt(0),
 			m_rps_q(NULL),
 			m_rps_q_standby(NULL),
+			m_observer(NULL),
 			m_pipeline(NULL),
 			m_ec(0)
 		{
@@ -144,6 +147,7 @@ namespace wawo { namespace net {
 			m_async_wt(0),
 			m_rps_q(NULL),
 			m_rps_q_standby(NULL),
+			m_observer(NULL),
 			m_pipeline(NULL),
 			m_ec(0)
 		{
@@ -183,8 +187,11 @@ namespace wawo { namespace net {
 			return ((m_outs->size()>0) && (m_async_wt != 0) && (now>(m_async_wt + m_delay_wp)));
 		}
 
-		WWRP<socket_pipeline> pipeline() 
-		{
+		inline WWRP<observer> observer() const {
+			return m_observer;
+		}
+
+		inline WWRP<socket_pipeline> pipeline() const {
 			return m_pipeline;
 		}
 
@@ -261,7 +268,7 @@ namespace wawo { namespace net {
 			if ((m_rflag&WATCH_READ) && is_nonblocking()) {
 				m_rflag &= ~(WATCH_READ | WATCH_OPTION_INFINITE);
 				TRACE_IOE("[socket][%s][end_async_read]unwatch IOE_READ", info().to_lencstr()().cstr);
-				unwatch(is_wcp(), IOE_READ, fd() );
+				m_observer->unwatch(IOE_READ, fd(), is_wcp() );
 			}
 #ifdef _DEBUG
 			else {
@@ -274,7 +281,7 @@ namespace wawo { namespace net {
 			if ((m_wflag&WATCH_WRITE) && is_nonblocking()) {
 				m_wflag &= ~(WATCH_WRITE | WATCH_OPTION_INFINITE);
 				TRACE_IOE("[socket][%s][end_async_write]unwatch IOE_WRITE", info().to_lencstr().cstr );
-				unwatch(is_wcp(), IOE_WRITE, fd() );
+				m_observer->unwatch(IOE_WRITE, fd(), is_wcp());
 			}
 #ifdef _DEBUG
 			else {
@@ -300,7 +307,7 @@ namespace wawo { namespace net {
 			_cookie->success = fn;
 			_cookie->error = err;
 
-			watch(is_wcp(), IOE_WRITE, fd(), _cookie, wawo::net::async_connected, wawo::net::async_connect_error);
+			m_observer->watch( IOE_WRITE, fd(), _cookie, wawo::net::async_connected, wawo::net::async_connect_error, is_wcp() );
 		}
 
 		inline void end_async_connect() {
@@ -322,7 +329,7 @@ namespace wawo { namespace net {
 				};
 
 				WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda);
-				socket_observer_plan(_t);
+				m_observer->plan(_t);
 				return;
 			}
 
@@ -340,7 +347,7 @@ namespace wawo { namespace net {
 			if (async_flag&WATCH_OPTION_INFINITE) {
 				flag |= IOE_INFINITE_WATCH_READ;
 			}
-			watch(is_wcp(), flag, fd(), _cookie, fn, err);
+			m_observer->watch( flag, fd(), _cookie, fn, err, is_wcp() );
 		}
 
 		inline void begin_async_read(u8_t const& async_flag = 0, WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn = wawo::net::async_read, fn_io_event_error const& err = wawo::net::async_error) {
@@ -367,7 +374,7 @@ namespace wawo { namespace net {
 					err(wawo::E_INVALID_STATE, _cookie);
 				};
 				WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda);
-				socket_observer_plan(_t);
+				m_observer->plan(_t);
 				return;
 			}
 
@@ -383,7 +390,7 @@ namespace wawo { namespace net {
 			if (async_flag&WATCH_OPTION_INFINITE) {
 				flag |= IOE_INFINITE_WATCH_WRITE;
 			}
-			watch(is_wcp(), flag, fd(), _cookie, fn, err);
+			m_observer->watch( flag, fd(), _cookie, fn, err, is_wcp());
 		}
 
 		inline void begin_async_write(u8_t const& async_flag = 0, WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn = wawo::net::async_write, fn_io_event_error const& err = wawo::net::async_error) {

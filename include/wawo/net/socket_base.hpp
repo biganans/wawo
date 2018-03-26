@@ -309,7 +309,7 @@ namespace wawo { namespace net {
 		int close();
 		int bind(address const& addr);
 		int listen(int const& backlog);
-		int accept(struct sockaddr* addr, socklen_t* addrlen);
+		int accept(address& addr);
 		int connect(address const& addr);
 		u32_t send(byte_t const* const buffer, u32_t const& size, int& ec_o, int const& flag = 0);
 		u32_t recv(byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag = 0);

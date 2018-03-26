@@ -30,12 +30,6 @@ namespace wawo { namespace net {
 #endif
 #endif
 
-	class observer_ticker :
-		public ticker<observer_checker_interval, 8>,
-		public wawo::singleton<observer_ticker>
-	{
-	};
-
 	class socket_observer
 		:public ref_base
 	{
@@ -95,11 +89,11 @@ namespace wawo { namespace net {
 	typedef std::queue<WWRP<wawo::task::task_abstract>> TASK_Q;
 
 	class observer :
-		public wawo::singleton<observer>
+		public wawo::ref_base,
+		public wawo::net::thread_run_object_abstract
 	{
 		WWRP<socket_observer> m_default;
 		WWSP<wawo::thread::fn_ticker> m_ticker_default;
-
 
 #ifdef WAWO_ENABLE_WCP
 		WWRP<socket_observer> m_wcp;
@@ -111,11 +105,11 @@ namespace wawo { namespace net {
 	public:
 		observer()
 		{}
-		~observer() 
+		~observer()
 		{
 		}
 
-		void start() {
+		void on_start() {
 
 			m_tq_standby = wawo::make_shared<TASK_Q>();
 			m_tq = wawo::make_shared<TASK_Q>();
@@ -124,10 +118,6 @@ namespace wawo { namespace net {
 			m_default = wawo::make_ref<socket_observer>(get_os_default_poll_type());
 			WAWO_ALLOC_CHECK(m_default, sizeof(socket_observer) );
 			m_default->init();
-
-			WAWO_ASSERT(m_ticker_default == NULL);
-			m_ticker_default = wawo::make_shared<wawo::thread::fn_ticker>(std::bind(&observer::update, this));
-			observer_ticker::instance()->schedule(m_ticker_default);
 
 #ifdef WAWO_ENABLE_WCP
 			WAWO_ASSERT(m_wcp == NULL);
@@ -138,14 +128,11 @@ namespace wawo { namespace net {
 
 		}
 
-		void stop() {
+		void on_stop() {
 			WAWO_ASSERT(m_default != NULL);
 
-			WAWO_ASSERT(m_ticker_default != NULL);
-			observer_ticker::instance()->deschedule(m_ticker_default);
 			m_default->deinit();
-
-			//m_default = NULL;
+			m_default = NULL;
 
 #ifdef WAWO_ENABLE_WCP
 			WAWO_ASSERT(m_wcp != NULL);
@@ -154,7 +141,7 @@ namespace wawo { namespace net {
 #endif
 		}
 
-		void update() {
+		void run() {
 			_exec_tasks();
 			m_default->update();
 			_exec_tasks();
@@ -187,54 +174,52 @@ namespace wawo { namespace net {
 			_plan_task(t);
 		}
 
-		void watch(u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err);
-		void unwatch(u8_t const& flag, int const& fd );
+		void watch(u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err, bool const& is_wcp = false );
+		void unwatch(u8_t const& flag, int const& fd, bool const& is_wcp = false );
 
 #ifdef WAWO_ENABLE_WCP
+		/*
 		void wcp_watch(u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err);
 		void wcp_unwatch(u8_t const& flag, int const& fd);
+		*/
 #endif
 	};
 
-	inline static void socket_observer_plan(WWRP<wawo::task::task_abstract> const& t) {
-		observer::instance()->plan(t);
-	}
+	typedef std::vector<WWRP<observer>> observer_vectors;
+	class observers : public wawo::singleton<observers>
+	{
 
-	inline static void watch(bool const& iswcp, u8_t const& flag, int const&fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err) {
-		WAWO_ASSERT(flag > 0);
-		WAWO_ASSERT(fd > 0);
-		WAWO_ASSERT(cookie != NULL);
-		WAWO_ASSERT(fn != NULL);
-		WAWO_ASSERT(err != NULL);
+	private:
+		std::atomic<int> m_curr;
+		observer_vectors m_observers;
 
-#ifdef WAWO_ENABLE_WCP
-		if (WAWO_UNLIKELY(iswcp)) {
-			observer::instance()->wcp_watch(flag, fd, cookie, fn, err);
+	public:
+		observers()
+			:m_curr(0)
+		{}
+
+		void init() {
+			int i = std::thread::hardware_concurrency();
+			while (i-- > 0) {
+				WWRP<observer> o = wawo::make_ref<observer>();
+				int rt = o->start();
+				WAWO_ASSERT(rt == wawo::OK);
+				m_observers.push_back(o);
+			}
 		}
-		else {
-#endif
-			observer::instance()->watch(flag, fd, cookie, fn, err);
-#ifdef WAWO_ENABLE_WCP
+
+		WWRP<observer> next() {
+			int i = m_curr.load() % m_observers.size() ;
+			wawo::atomic_increment(&m_curr);
+			return m_observers[i% m_observers.size()];
 		}
-#endif
-	}
 
-	inline static void unwatch(bool const& iswcp, u8_t const& flag, int const& fd) {
-
-		WAWO_ASSERT(flag > 0);
-		WAWO_ASSERT(fd > 0);
-
-#ifdef WAWO_ENABLE_WCP
-		if (WAWO_UNLIKELY(iswcp)) {
-			observer::instance()->wcp_unwatch(flag, fd);
+		void deinit() {
+			std::for_each(m_observers.begin(), m_observers.end(), [](WWRP<observer> const& o) {
+				o->stop();
+			});
+			m_observers.clear();
 		}
-		else {
-#endif
-			observer::instance()->unwatch(flag, fd);
-#ifdef WAWO_ENABLE_WCP
-		}
-#endif
-	}
-
+	};
 }} //ns of wawo::net
 #endif //

@@ -5,8 +5,8 @@
 
 namespace wawo { namespace net {
 
-	socket_handler_context::socket_handler_context(WWRP<socket_pipeline> const& p, WWRP<socket_handler_abstract> const& h)
-		:PIPE(p), m_h(h), m_flag(0)
+	socket_handler_context::socket_handler_context(WWRP<socket> const& so_, WWRP<socket_handler_abstract> const& h)
+		:so(so_), m_h(h), m_flag(0)
 	{
 		if (wawo::dynamic_pointer_cast<socket_activity_handler_abstract>(h) != NULL) {
 			m_flag |= F_ACTIVITY;
@@ -141,7 +141,7 @@ namespace wawo { namespace net {
 
 	void socket_handler_head::write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet)
 	{
-		ctx->PIPE->SO->send_packet(outlet);
+		ctx->so->send_packet(outlet);
 	}
 
 	//--

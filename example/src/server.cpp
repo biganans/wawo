@@ -22,31 +22,31 @@ public:
 	}
 	
 	void connected(WWRP<wawo::net::socket_handler_context> const& ctx) {
-		WAWO_INFO("connected: %d", ctx->PIPE->SO->fd() );
+		WAWO_INFO("connected: %d", ctx->so->fd() );
 		ctx->fire_connected();
 	}
 
 	void closed(WWRP<wawo::net::socket_handler_context> const& ctx) {
-		WAWO_INFO("closed: %d", ctx->PIPE->SO->fd());
+		WAWO_INFO("closed: %d", ctx->so->fd());
 		ctx->fire_closed();
 	}	
 
 	void read_shutdowned(WWRP<wawo::net::socket_handler_context> const& ctx) {
-		WAWO_INFO("read_shutdowned: %d", ctx->PIPE->SO->fd());
-		ctx->PIPE->SO->shutdown(wawo::net::SHUTDOWN_WR);
+		WAWO_INFO("read_shutdowned: %d", ctx->so->fd());
+		ctx->so->shutdown(wawo::net::SHUTDOWN_WR);
 		ctx->fire_read_shutdowned();
 	}
 	void write_shutdowned(WWRP<wawo::net::socket_handler_context> const& ctx) {
-		WAWO_INFO("write_shutdowned: %d", ctx->PIPE->SO->fd());
+		WAWO_INFO("write_shutdowned: %d", ctx->so->fd());
 		ctx->fire_write_shutdowned();
 	}
 
 	void write_block(WWRP<wawo::net::socket_handler_context> const& ctx) {
-		WAWO_INFO("write_block: %d", ctx->PIPE->SO->fd());
+		WAWO_INFO("write_block: %d", ctx->so->fd());
 		ctx->fire_write_block();
 	}
 	void write_unblock(WWRP<wawo::net::socket_handler_context> const& ctx) {
-		WAWO_INFO("write_unblock: %d", ctx->PIPE->SO->fd());
+		WAWO_INFO("write_unblock: %d", ctx->so->fd());
 		ctx->fire_write_unblock();
 	}
 

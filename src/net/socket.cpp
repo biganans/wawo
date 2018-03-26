@@ -171,6 +171,9 @@ namespace wawo { namespace net {
 
 	void socket::init_pipeline()
 	{
+		WAWO_ASSERT(m_observer == NULL);
+		m_observer = wawo::net::observers::instance()->next();
+
 		m_pipeline = wawo::make_ref<socket_pipeline>(WWRP<socket>(this));
 		m_pipeline->init();
 		WAWO_ALLOC_CHECK(m_pipeline, sizeof(socket_pipeline));
@@ -178,6 +181,7 @@ namespace wawo { namespace net {
 
 	void socket::deinit_pipeline()
 	{
+		m_observer = NULL;
 		if (m_pipeline != NULL) {
 			m_pipeline->deinit();
 			m_pipeline = NULL;
@@ -281,7 +285,7 @@ namespace wawo { namespace net {
 			};
 
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-			socket_observer_plan(_t);
+			m_observer->plan(_t);
 			return closert;
 		}
 
@@ -298,7 +302,7 @@ namespace wawo { namespace net {
 			};
 
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-			socket_observer_plan(_t);
+			m_observer->plan(_t);
 			return closert;
 		}
 		
@@ -328,7 +332,7 @@ namespace wawo { namespace net {
 		};
 
 		WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-		socket_observer_plan(_t);
+		m_observer->plan(_t);
 
 		return closert;
 	}
@@ -407,7 +411,7 @@ namespace wawo { namespace net {
 		};
 
 		WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-		socket_observer_plan(_t);
+		m_observer->plan(_t);
 
 		return shutrt;
 	}
@@ -503,7 +507,7 @@ namespace wawo { namespace net {
 			};
 
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(_lambda);
-			socket_observer_plan(_t);
+			m_observer->plan(_t);
 			return wawo::OK;
 		} else if (rt == wawo::E_SOCKET_CONNECTING) {
 			TRACE_IOE("[socket_base][%s][async_connect]watch(IOE_WRITE)", info().to_lencstr().cstr );
@@ -671,7 +675,7 @@ namespace wawo { namespace net {
 					so->pipeline()->fire_write_unblock();
 				};
 				WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda);
-				socket_observer_plan(_t);
+				m_observer->plan(_t);
 			}
 		} else {
 			WAWO_ASSERT(m_async_wt != 0);

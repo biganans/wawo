@@ -17,21 +17,20 @@ namespace wawo { namespace net {
 		public socket_inbound_invoker_abstract,
 		public socket_outbound_invoker_abstract
 	{
+		WWRP<socket> m_so;
+
 		WWRP<socket_handler_context> m_head;
 		WWRP<socket_handler_context> m_tail;
 
 	public:
-		WWRP<socket> SO;
 		socket_pipeline(WWRP<socket> const& so);
+		virtual ~socket_pipeline();
 
 		void init();
 		void deinit();
 
-		//@TODO, MEM RELEASE
-		virtual ~socket_pipeline();
-
 		WWRP<socket_pipeline> add_last(WWRP<socket_handler_abstract> const& h) {
-			WWRP<socket_handler_context> ctx = wawo::make_ref<socket_handler_context>( WWRP<socket_pipeline>(this), h );
+			WWRP<socket_handler_context> ctx = wawo::make_ref<socket_handler_context>( m_so, h );
 			WWRP<socket_handler_context> tail_P = m_tail->P;
 
 			ctx->N = m_tail;

@@ -50,6 +50,7 @@ namespace wawo { namespace net {
 
 	void socket_observer::_dealloc_impl() {
 		WAWO_ASSERT(m_impl != NULL);
+		m_impl = NULL;
 	}
 
 	socket_observer::socket_observer(u8_t const& type ):
@@ -119,17 +120,38 @@ namespace wawo { namespace net {
 		}
 	}
 
-	void observer::watch(u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err)
+	void observer::watch( u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err, bool const& is_wcp )
 	{
-		m_default->watch(flag, fd, cookie, fn , err );
+
+#ifdef WAWO_ENABLE_WCP
+		if (is_wcp) {
+			m_wcp->watch(flag, fd, cooie, fn, err);
+		} else {
+#endif
+		(void)is_wcp;
+		m_default->watch(flag, fd, cookie, fn, err);
+#ifdef WAWO_ENABLE_WCP
+		}
+#endif
 	}
 
-	void observer::unwatch(u8_t const& flag, int const& fd)
+	void observer::unwatch(u8_t const& flag, int const& fd, bool const& is_wcp)
 	{
+#ifdef WAWO_ENABLE_WCP
+		if (is_wcp) {
+			m_wcp->unwatch(flag, fd);
+		}
+		else {
+#endif
+		(void)is_wcp;
 		m_default->unwatch(flag, fd);
+#ifdef WAWO_ENABLE_WCP
+		}
+#endif
 	}
 
 #ifdef WAWO_ENABLE_WCP
+	/*
 	void observer::wcp_watch(u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err)
 	{
 		m_wcp->watch(flag, fd, cookie, fn, err);
@@ -138,6 +160,7 @@ namespace wawo { namespace net {
 	{
 		m_wcp->unwatch(flag, fd);
 	}
+	*/
 #endif
 
 	namespace observer_impl {

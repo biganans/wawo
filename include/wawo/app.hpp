@@ -10,9 +10,6 @@
 #include <wawo/net/socket_observer.hpp>
 #include <wawo/net/wcp.hpp>
 
-
-
-
 namespace wawo {
 
 	class app :
@@ -74,14 +71,14 @@ namespace wawo {
 #ifdef WAWO_ENABLE_WCP
 			wawo::net::wcp::instance()->start();
 #endif
-			wawo::net::observer::instance()->start();
+			wawo::net::observers::instance()->init();
 		}
 
 		void deinit_net() {
 #ifdef WAWO_ENABLE_WCP
 			wawo::net::wcp::instance()->stop();
 #endif
-			wawo::net::observer::instance()->stop();
+			wawo::net::observers::instance()->deinit();
 			WAWO_SCHEDULER->stop();
 		}
 

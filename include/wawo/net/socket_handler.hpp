@@ -70,15 +70,15 @@ namespace wawo { namespace net {
 		u8_t m_flag;
 	public:
 
-		WWRP<socket_pipeline> PIPE;
+		WWRP<socket> so;
 		WWRP<socket_handler_context> P;
 		WWRP<socket_handler_context> N;
 
-		socket_handler_context(WWRP<socket_pipeline> const& p, WWRP<socket_handler_abstract> const& h);
+		socket_handler_context(WWRP<socket> const& so_, WWRP<socket_handler_abstract> const& h);
 		virtual ~socket_handler_context();
 
-		void fire_accepted( WWRP<socket> const& so);
-		void invoke_accepted( WWRP<socket> const& so);
+		void fire_accepted( WWRP<socket> const& newso);
+		void invoke_accepted( WWRP<socket> const& newso);
 
 		void fire_connected();
 		void invoke_connected();
@@ -128,7 +128,7 @@ namespace wawo { namespace net {
 	{
 		void accepted(WWRP<socket_handler_context> const& ctx, WWRP<socket> const& newsocket) ;
 		void read(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& income) ;
-		void write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) ;	
+		void write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) ;
 	};
 }}
 #endif
