@@ -145,6 +145,7 @@ namespace wawo { namespace net {
 			_exec_tasks();
 			m_default->update();
 			_exec_tasks();
+			wawo::this_thread::nsleep(observer_checker_interval);
 		}
 
 		void _plan_task(WWRP<wawo::task::task_abstract> const& t) {

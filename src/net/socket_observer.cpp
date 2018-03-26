@@ -150,19 +150,6 @@ namespace wawo { namespace net {
 #endif
 	}
 
-#ifdef WAWO_ENABLE_WCP
-	/*
-	void observer::wcp_watch(u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err)
-	{
-		m_wcp->watch(flag, fd, cookie, fn, err);
-	}
-	void observer::wcp_unwatch(u8_t const& flag, int const& fd)
-	{
-		m_wcp->unwatch(flag, fd);
-	}
-	*/
-#endif
-
 	namespace observer_impl {
 		void io_select_task::run() {
 			WAWO_ASSERT(ctx != NULL);

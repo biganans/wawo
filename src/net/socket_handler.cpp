@@ -29,20 +29,20 @@ namespace wawo { namespace net {
 	{
 	}
 
-	void socket_handler_context::fire_accepted( WWRP<socket> const& so)
+	void socket_handler_context::fire_accepted( WWRP<socket> const& so_ )
 	{
 		if (N != NULL) {
-			N->invoke_accepted( so);
+			N->invoke_accepted(so_);
 		}
 	}
 
-	void socket_handler_context::invoke_accepted( WWRP<socket> const& so)
+	void socket_handler_context::invoke_accepted( WWRP<socket> const& so_)
 	{
 		if (m_flag&F_ACCEPT) {
 			WWRP<socket_accept_handler_abstract> _h = wawo::dynamic_pointer_cast<socket_accept_handler_abstract>(m_h);
-			_h->accepted(WWRP<socket_handler_context>(this), so);
+			_h->accepted(WWRP<socket_handler_context>(this), so_);
 		} else {
-			fire_accepted( so);
+			fire_accepted(so_);
 		}
 	}
 
