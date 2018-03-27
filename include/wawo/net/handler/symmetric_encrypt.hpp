@@ -41,7 +41,7 @@ namespace wawo { namespace net { namespace handler {
 			WAWO_ASSERT(m_cipher != NULL);
 
 			WWSP<packet> encrypted;
-			int rt = m_cipher->encrypt(in, encrypted);
+			int rt = m_cipher->encrypt(outlet, encrypted);
 			WAWO_ASSERT(rt == wawo::OK);
 
 			ctx->write(encrypted);
