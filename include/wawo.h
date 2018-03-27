@@ -32,7 +32,12 @@
 #include <wawo/net/socket.hpp>
 #include <wawo/net/socket_observer.hpp>
 
+#include <wawo/net/handler/hlen.hpp>
+#include <wawo/net/handler/symmetric_encrypt.hpp>
+#include <wawo/net/handler/dh_symmetric_encrypt.hpp>
 #include <wawo/net/handler/websocket.hpp>
+#include <wawo/net/handler/echo.hpp>
+
 
 #include <wawo/env/env.hpp>
 #include <wawo/app.hpp>

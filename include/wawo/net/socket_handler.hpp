@@ -50,8 +50,6 @@ namespace wawo { namespace net {
 		virtual void write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) = 0;
 	};
 
-	class socket_pipeline;
-	
 	class socket_handler_context :
 		public ref_base,
 		public socket_accept_invoker_abstract,

@@ -6,7 +6,7 @@
 
 namespace wawo { namespace net { namespace handler {
 
-	class hlen_handler :
+	class hlen :
 		public socket_inbound_handler_abstract,
 		public socket_outbound_handler_abstract
 	{
@@ -15,15 +15,15 @@ namespace wawo { namespace net { namespace handler {
 			S_READ_CONTENT
 		};
 
-		WAWO_DECLARE_NONCOPYABLE(hlen_handler)
+		WAWO_DECLARE_NONCOPYABLE(hlen)
 
 		parse_state m_state;
 		u32_t m_size;
 		WWSP<packet> m_tmp;
 
 	public:
-		hlen_handler() :m_state(S_READ_LEN) {}
-		virtual ~hlen_handler() {}
+		hlen() :m_state(S_READ_LEN) {}
+		virtual ~hlen() {}
 
 		void read( WWRP<socket_handler_context> const& ctx, WWSP<packet> const& income ) {
 			WAWO_ASSERT(income != NULL);
@@ -49,14 +49,13 @@ namespace wawo { namespace net { namespace handler {
 							ctx->fire_read(m_tmp);
 							m_state = S_READ_LEN;
 						} else {
+							if (income->len() == 0) {
+								bExit = true;
+							}
 							u32_t nbytes = income->read(m_tmp->begin(), m_size );
 							WAWO_ASSERT(nbytes <= m_size);
 							m_tmp->forward_write_index(nbytes);
 							m_size -= nbytes;
-
-							if (income->len() == 0) {
-								bExit = true;
-							}
 						}
 					}
 					break;

@@ -196,6 +196,7 @@
     <ClInclude Include="..\..\include\wawo\memory.hpp" />
     <ClInclude Include="..\..\include\wawo\net\address.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\dh_symmetric_encrypt.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\handler\echo.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\hlen.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\symmetric_encrypt.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\websocket.hpp" />

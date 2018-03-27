@@ -433,9 +433,10 @@ namespace wawo {namespace net {namespace handler {
 				if (wawo::strncmp((char*)message->begin(), HOK_MESSAGE, wawo::strlen(HOK_MESSAGE)) == 0) {
 					//handshake done
 					m_dhstate = DH_DATA_TRANSFER;
+					ctx->fire_connected();
+				} else {
+					WAWO_ASSERT(!"HANDSHAKE FAILED, WE SHOULD CLOSE SOCKET");
 				}
-
-				WAWO_ASSERT(!"HANDSHAKE FAILED, WE SHOULD CLOSE SOCKET");
 			}
 			break;
 			default:
