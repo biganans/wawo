@@ -4,7 +4,60 @@
 
 namespace wawo { namespace net { namespace protocol { namespace http {
 
-	int parse_url(wawo::len_cstr const& url, url_fields& urlfields, bool is_connect ) {	
+
+	void encode_message(WWSP<message> const& m, WWSP<packet>& out) {
+		WWSP<packet> _out = wawo::make_shared<packet>();
+		if (m->type == T_REQ) {
+
+			if (m->url == "") {
+				m->url = "/";
+			}
+
+			if (!m->h.have("User-Agent")) {
+				m->h.set("User-Agent", "wawo/1.1");
+			}
+
+			char resp[512] = { 0 };
+			snprintf(resp, sizeof(resp) / sizeof(resp[0]), "%s %s HTTP/%d.%d", protocol::http::option_name[m->opt], m->url.cstr, m->ver.major, m->ver.minor);
+			_out->write((wawo::byte_t*)resp, wawo::strlen(resp));
+			_out->write((wawo::byte_t*)WAWO_HTTP_CRLF, wawo::strlen(WAWO_HTTP_CRLF));
+		} else if (m->type == T_RESP) {
+
+			if ((m->status_code == 200) && m->status == "") {
+				m->status = "OK";
+			}
+
+			char resp[128] = { 0 };
+			WAWO_ASSERT(m->status.len > 0);
+
+			snprintf(resp, sizeof(resp) / sizeof(resp[0]), "HTTP/%d.%d %d %s", m->ver.major, m->ver.minor, m->status_code, m->status.cstr);
+			_out->write((wawo::byte_t*)resp, wawo::strlen(resp));
+			_out->write((wawo::byte_t*)WAWO_HTTP_CRLF, wawo::strlen(WAWO_HTTP_CRLF));
+
+			if (!m->h.have("Server")) {
+				m->h.set("Server", "wawo/1.1");
+			}
+		}
+
+		if (m->body.len > 0) {
+			char blength_char[16] = { 0 };
+			snprintf(blength_char, 16, "%d", m->body.len);
+			m->h.set("content-length", blength_char);
+		}
+
+		WWSP<packet> hpacket;
+		int hencrt = m->h.encode(hpacket);
+
+		_out->write(hpacket->begin(), hpacket->len());
+
+		if (m->body.len > 0) {
+			_out->write((wawo::byte_t*)m->body.cstr, m->body.len);
+		}
+
+		out = _out;
+	}
+
+	int parse_url(wawo::len_cstr const& url, url_fields& urlfields, bool is_connect ) {
 
 		http_parser_url u;
 		int rt = http_parser_parse_url(url.cstr, url.len, is_connect, &u);

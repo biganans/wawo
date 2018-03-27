@@ -141,8 +141,6 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		}
 	};
 
-
-
 	struct url_fields {
 		wawo::len_cstr schema;
 		wawo::len_cstr host;
@@ -166,11 +164,10 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		wawo::len_cstr body;
 
 		url_fields urlfields;
-
 		bool is_header_contain_connection_close;
 	};
 
-
+	void encode_message(WWSP<message> const& m, WWSP<packet>& out);
 	int parse_url(wawo::len_cstr const& url, url_fields& urlfields, bool is_connect);
 
 	struct parser;

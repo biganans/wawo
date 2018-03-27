@@ -105,4 +105,7 @@
 
 //#define WAWO_ENABLE_WCP
 
+#define ENABLE_WEBSOCKET
+
+
 #endif // end for _CONFIG_WAWO_CONFIG_H_
