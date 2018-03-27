@@ -5,7 +5,7 @@
 
 namespace wawo { namespace net {
 
-	enum family {
+	enum s_family {
 		F_UNKNOWN,
 		F_PF_INET,
 		F_AF_INET,
@@ -16,7 +16,7 @@ namespace wawo { namespace net {
 		F_AF_NETBIOS
 	};
 
-	enum type {
+	enum s_type {
 		T_UNKNOWN,
 		T_STREAM,
 		T_DGRAM,
@@ -25,7 +25,7 @@ namespace wawo { namespace net {
 		T_SEQPACKET
 	};
 
-	enum protocol {
+	enum s_protocol {
 		P_UNKNOWN,
 		P_TCP,
 		P_UDP,
@@ -139,9 +139,9 @@ namespace wawo { namespace net {
 			so_address(0)
 		{}
 
-		family so_family;
-		type so_type;
-		protocol so_protocol;
+		s_family so_family;
+		s_type so_type;
+		s_protocol so_protocol;
 
 		address so_address;
 	};

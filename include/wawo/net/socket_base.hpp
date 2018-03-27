@@ -178,9 +178,9 @@ namespace wawo { namespace net {
 
 	struct socketinfo {
 		int fd;
-		family f:8;
-		type t:8;
-		protocol p:8;
+		s_family f:8;
+		s_type t:8;
+		s_protocol p:8;
 
 		address laddr;
 		address raddr;
@@ -198,9 +198,9 @@ namespace wawo { namespace net {
 
 	private:
 		socket_mode m_sm; //
-		family	m_family;
-		type m_type;
-		protocol m_protocol;
+		s_family	m_family;
+		s_type m_type;
+		s_protocol m_protocol;
 
 		spin_mutex m_option_mutex;
 		int m_option;
@@ -232,16 +232,16 @@ namespace wawo { namespace net {
 		int set_options(int const& options);
 
 	public:
-		explicit socket_base(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc, family const& family, type const& sockt, protocol const& proto, option const& opt = OPTION_NONE); //by pass a connected socket fd
-		explicit socket_base(family const& family, type const& type, protocol const& protocol, option const& opt = OPTION_NONE);
-		explicit socket_base(socket_buffer_cfg const& sbc, family const& family, type const& sockt, protocol const& proto, option const& option = OPTION_NONE); //init a empty socket object
+		explicit socket_base(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt = OPTION_NONE); //by pass a connected socket fd
+		explicit socket_base(s_family const& family, s_type const& type, s_protocol const& protocol, option const& opt = OPTION_NONE);
+		explicit socket_base(socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& option = OPTION_NONE); //init a empty socket object
 
 		virtual ~socket_base();
 
 		inline socket_buffer_cfg const& buffer_cfg() const { return m_sbc; }
-		inline family const& sock_family() const { return m_family; };
-		inline type const& sock_type() const { return m_type; };
-		inline protocol const& sock_protocol() { return m_protocol; };
+		inline s_family const& sock_family() const { return m_family; };
+		inline s_type const& sock_type() const { return m_type; };
+		inline s_protocol const& sock_protocol() { return m_protocol; };
 
 		inline bool is_passive() const { return m_sm == SM_PASSIVE; }
 		inline bool is_active() const { return m_sm == SM_ACTIVE; }

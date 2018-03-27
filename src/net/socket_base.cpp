@@ -412,7 +412,7 @@ namespace wawo { namespace net {
 #endif
 	}
 
-		socket_base::socket_base(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc, family const& family, type const& sockt, protocol const& proto, option const& opt) :
+		socket_base::socket_base(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
 			m_sm(sm),
 			m_family(family),
 			m_type(sockt),
@@ -435,7 +435,7 @@ namespace wawo { namespace net {
 			WAWO_TRACE_SOCKET("[socket][%s]socket::socket(), address: %p", info().to_lencstr().cstr, this);
 		}
 
-		socket_base::socket_base(family const& family, type const& sockt, protocol const& proto, option const& opt) :
+		socket_base::socket_base(s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
 			m_sm(SM_NONE),
 
 			m_family(family),
@@ -455,7 +455,7 @@ namespace wawo { namespace net {
 			WAWO_TRACE_SOCKET("[socket][%s]socket::socket(), dummy socket, address: %p", info().to_lencstr().cstr, this);
 		}
 
-		socket_base::socket_base(socket_buffer_cfg const& sbc, family const& family, type const& sockt, protocol const& proto, option const& opt) :
+		socket_base::socket_base(socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
 			m_sm(SM_NONE),
 
 			m_family(family),

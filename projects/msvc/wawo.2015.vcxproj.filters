@@ -100,6 +100,12 @@
     <Filter Include="Source Files\src\net\handler">
       <UniqueIdentifier>{c0a63d2f-87c7-48b4-9a0d-566ba3c1c40c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\wawo\net\protocol">
+      <UniqueIdentifier>{b8201fc1-624b-4f4b-af7b-796a069ca2b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\src\net\protocol">
+      <UniqueIdentifier>{4767a31c-c28c-4943-8d71-4940c37c9879}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -170,6 +176,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\net\handler\websocket.cpp">
       <Filter>Source Files\src\net\handler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\net\protocol\http_utils.cpp">
+      <Filter>Source Files\src\net\protocol</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -384,6 +393,21 @@
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\handler\websocket.hpp">
+      <Filter>Header Files\wawo\net\handler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\protocol\http.hpp">
+      <Filter>Header Files\wawo\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\protocol\icmp.hpp">
+      <Filter>Header Files\wawo\net\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\handler\hlen.hpp">
+      <Filter>Header Files\wawo\net\handler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\handler\symmetric_encrypt.hpp">
+      <Filter>Header Files\wawo\net\handler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\handler\dh_symmetric_encrypt.hpp">
       <Filter>Header Files\wawo\net\handler</Filter>
     </ClInclude>
   </ItemGroup>

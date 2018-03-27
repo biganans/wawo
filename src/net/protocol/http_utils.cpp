@@ -47,7 +47,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		WAWO_ASSERT(p != NULL);
 		p->type = (u8_t)p_->type;
 		
-		if (p->on_message_begin != NULL) return p->on_message_begin( WWRP<parser>(p) );
+		if (p->on_message_begin != NULL) return p->on_message_begin();
 		return 0;
 	}
 
@@ -119,7 +119,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		}
 
 		p->url = wawo::len_cstr(data, len);
-		if (p->on_url) return p->on_url(WWRP<parser>(p), data, len);
+		if (p->on_url) return p->on_url(data, len);
 
 		return 0;
 	}
@@ -133,21 +133,21 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		p->ver.major = p_->http_major;
 		p->ver.minor = p_->http_minor;
 
-		if (p->on_status) return p->on_status(WWRP<parser>(p), data, len);
+		if (p->on_status) return p->on_status( data, len);
 		return 0;
 	}
 
 	inline static int _on_header_field(http_parser* p_, char const* data, ::size_t len) {
 		parser* p = (parser*)p_->data;
 		WAWO_ASSERT(p != NULL);
-		if (p->on_header_field) return p->on_header_field(WWRP<parser>(p), data, len);
+		if (p->on_header_field) return p->on_header_field( data, len);
 		return 0;
 	}
 
 	inline static int _on_header_value(http_parser* p_, char const* data, ::size_t len) {
 		parser* p = (parser*)p_->data;
 		WAWO_ASSERT(p != NULL);
-		if (p->on_header_value) return p->on_header_value(WWRP<parser>(p), data, len);
+		if (p->on_header_value) return p->on_header_value( data, len);
 		return 0;
 	}
 
@@ -158,14 +158,14 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		p->ver.major = p_->http_major;
 		p->ver.minor = p_->http_minor;
 
-		if (p->on_headers_complete) return p->on_headers_complete(WWRP<parser>(p));
+		if (p->on_headers_complete) return p->on_headers_complete();
 		return 0;
 	}
 
 	inline static int _on_body(http_parser* p_, char const* data, ::size_t len) {
 		parser* p = (parser*)p_->data;
 		WAWO_ASSERT(p != NULL);
-		if (p->on_body) return p->on_body( WWRP<parser>(p), data, len);
+		if (p->on_body) return p->on_body( data, len);
 		return 0;
 	}
 
@@ -173,21 +173,21 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		parser* p = (parser*)p_->data;
 		WAWO_ASSERT(p != NULL);
 
-		if (p->on_message_complete) return p->on_message_complete(WWRP<parser>(p));
+		if (p->on_message_complete) return p->on_message_complete();
 		return 0;
 	}
 
 	inline static int _on_chunk_header(http_parser* p_) {
 		parser* p = (parser*)p_->data;
 		WAWO_ASSERT(p != NULL);
-		if (p->on_chunk_header) return p->on_chunk_header(WWRP<parser>(p));
+		if (p->on_chunk_header) return p->on_chunk_header();
 		return 0;
 	}
 
 	inline static int _on_chunk_complete(http_parser* p_) {
 		parser* p = (parser*)p_->data;
 		WAWO_ASSERT(p != NULL);
-		if (p->on_chunk_complete) return p->on_chunk_complete(WWRP<parser>(p));
+		if (p->on_chunk_complete) return p->on_chunk_complete();
 		return 0;
 	}
 

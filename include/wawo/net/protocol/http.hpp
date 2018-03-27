@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <list>
+#include <functional>
 
 #include "./../../../../3rd/http_parser/http_parser.h"
 
@@ -174,8 +175,11 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 
 	struct parser;
 
-	typedef int(*parser_cb_data)(WWRP<parser> const&, const char* data, u32_t const& len);
-	typedef int(*parser_cb)(WWRP<parser> const&);
+	//typedef int(*parser_cb_data)(WWRP<parser> const&, const char* data, u32_t const& len);
+	//typedef int(*parser_cb)(WWRP<parser> const&);
+
+	typedef std::function<int(const char* data, u32_t const& len)> parser_cb_data;
+	typedef std::function<int()> parser_cb;
 
 	enum parser_type {
 		PARSER_REQ,

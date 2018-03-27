@@ -149,6 +149,7 @@
     <ClCompile Include="..\..\src\log\sys_logger.cpp" />
     <ClCompile Include="..\..\src\net\address.cpp" />
     <ClCompile Include="..\..\src\net\handler\websocket.cpp" />
+    <ClCompile Include="..\..\src\net\protocol\http_utils.cpp" />
     <ClCompile Include="..\..\src\net\socket.cpp" />
     <ClCompile Include="..\..\src\net\socket_base.cpp" />
     <ClCompile Include="..\..\src\net\socket_handler.cpp" />
@@ -194,11 +195,16 @@
     <ClInclude Include="..\..\include\wawo\math\formula.hpp" />
     <ClInclude Include="..\..\include\wawo\memory.hpp" />
     <ClInclude Include="..\..\include\wawo\net\address.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\handler\dh_symmetric_encrypt.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\handler\hlen.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\handler\symmetric_encrypt.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\websocket.hpp" />
     <ClInclude Include="..\..\include\wawo\net\observer_abstract.hpp" />
     <ClInclude Include="..\..\include\wawo\net\observer_impl\epoll.hpp" />
     <ClInclude Include="..\..\include\wawo\net\observer_impl\select.hpp" />
     <ClInclude Include="..\..\include\wawo\net\observer_impl\wpoll.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\protocol\http.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\protocol\icmp.hpp" />
     <ClInclude Include="..\..\include\wawo\net\socket.hpp" />
     <ClInclude Include="..\..\include\wawo\net\socket_base.hpp" />
     <ClInclude Include="..\..\include\wawo\net\socket_handler.hpp" />

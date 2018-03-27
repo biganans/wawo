@@ -100,7 +100,7 @@ namespace wawo { namespace net {
 		void _deinit();
 
 	public:
-		explicit socket(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc ,family const& family , type const& sockt, protocol const& proto, option const& opt = OPTION_NONE ):
+		explicit socket(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc ,s_family const& family , s_type const& sockt, s_protocol const& proto, option const& opt = OPTION_NONE ):
 			socket_base(fd,addr,sm,sbc,family, sockt,proto,opt),
 			m_state(S_CONNECTED),
 			m_rflag(0),
@@ -118,7 +118,7 @@ namespace wawo { namespace net {
 			_init();
 		}
 
-		explicit socket(family const& family, type const& type, protocol const& proto, option const& opt = OPTION_NONE) :
+		explicit socket(s_family const& family, s_type const& type, s_protocol const& proto, option const& opt = OPTION_NONE) :
 			socket_base(family, type, proto, opt),
 			m_state(S_CLOSED),
 			m_rflag(0),
@@ -136,7 +136,7 @@ namespace wawo { namespace net {
 			_init();
 		}
 
-		explicit socket(socket_buffer_cfg const& sbc, family const& family,type const& type_, protocol const& proto, option const& opt = OPTION_NONE) :
+		explicit socket(socket_buffer_cfg const& sbc, s_family const& family,s_type const& type_, s_protocol const& proto, option const& opt = OPTION_NONE) :
 			socket_base(sbc, family, type_, proto, opt),
 			m_state(S_CLOSED),
 			m_rflag(0),
