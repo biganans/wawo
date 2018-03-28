@@ -413,6 +413,18 @@
     <ClInclude Include="..\..\include\wawo\net\handler\echo.hpp">
       <Filter>Header Files\wawo\net\handler</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\handler\dump_in_text.hpp">
+      <Filter>Header Files\wawo\net\handler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\handler\dump_out_text.hpp">
+      <Filter>Header Files\wawo\net\handler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\handler\dump_in_len.hpp">
+      <Filter>Header Files\wawo\net\handler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\handler\dump_out_len.hpp">
+      <Filter>Header Files\wawo\net\handler</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\src\context\jump_i386_ms_pe_masm.asm">

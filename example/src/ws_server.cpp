@@ -11,6 +11,9 @@ public:
 		WWRP<wawo::net::socket_handler_abstract> ws = wawo::make_ref<wawo::net::handler::websocket>();
 		newsocket->pipeline()->add_last( ws );
 
+		WWRP<wawo::net::socket_handler_abstract> dump = wawo::make_ref<wawo::net::handler::dump_in_len>();
+		newsocket->pipeline()->add_last(dump);
+
 		(void)ctx;
 	}
 };

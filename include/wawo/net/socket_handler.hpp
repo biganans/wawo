@@ -48,6 +48,10 @@ namespace wawo { namespace net {
 	{
 	public:
 		virtual void write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) = 0;
+
+		virtual void close(WWRP<socket_handler_context> const& ctx,int const& code);
+		virtual void close_read(WWRP<socket_handler_context> const& ctx,int const& code);
+		virtual void close_write(WWRP<socket_handler_context> const& ctx,int const& code);
 	};
 
 	class socket_handler_context :
@@ -104,6 +108,15 @@ namespace wawo { namespace net {
 
 		void write(WWSP<packet> const& outlet);
 		void invoke_write(WWSP<packet> const& outlet);
+
+		void close(int const& code =0);
+		void invoke_close(int const& code);
+
+		void close_read(int const& code=0 );
+		void invoke_close_read(int const& code );
+
+		void close_write(int const& code=0 );
+		void invoke_close_write(int const& code );
 	};
 
 	class socket_handler_head :
@@ -116,6 +129,10 @@ namespace wawo { namespace net {
 		void accepted(WWRP<socket_handler_context> const& ctx, WWRP<socket> const& newsocket) ;
 		void read(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& income) ;
 		void write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) ;
+
+		void close(WWRP<socket_handler_context> const& ctx, int const& code);
+		void close_read(WWRP<socket_handler_context> const& ctx, int const& code);
+		void close_write(WWRP<socket_handler_context> const& ctx, int const& code);
 	};
 
 	class socket_handler_tail :

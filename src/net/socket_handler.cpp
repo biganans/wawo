@@ -97,7 +97,6 @@ namespace wawo { namespace net {
 
 	H_TO_T_HANDLER_PACKET_1(read, socket_handler_context::F_INBOUND, socket_inbound_handler_abstract)
 
-
 #define HANDLER_CONTEXT_T_TO_H_PACKET_1(NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
 	void socket_handler_context::invoke_##NAME##(WWSP<packet> const& p) { \
 		if (m_flag&HANDLER_FLAG) { \
@@ -115,19 +114,48 @@ namespace wawo { namespace net {
 
 	HANDLER_CONTEXT_T_TO_H_PACKET_1(write, socket_handler_context::F_OUTBOUND, socket_outbound_handler_abstract)
 
+#define HANDLER_CONTEXT_T_TO_H_INT_1(NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
+	void socket_handler_context::invoke_##NAME##(int const& i) { \
+		if (m_flag&HANDLER_FLAG) { \
+			WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
+			_h->##NAME##(WWRP<socket_handler_context>(this), i); \
+		} else { \
+			NAME##(i); \
+		} \
+	} \
+	 \
+	void socket_handler_context::##NAME##(int const& i) { \
+		WAWO_ASSERT(P != NULL); \
+		P->invoke_##NAME##(i); \
+	}
 
-#define HANDLER_IMPL_0(NAME,HANDLER_NAME) \
+	HANDLER_CONTEXT_T_TO_H_INT_1(close, socket_handler_context::F_OUTBOUND, socket_outbound_handler_abstract)
+	HANDLER_CONTEXT_T_TO_H_INT_1(close_read, socket_handler_context::F_OUTBOUND, socket_outbound_handler_abstract)
+	HANDLER_CONTEXT_T_TO_H_INT_1(close_write, socket_handler_context::F_OUTBOUND, socket_outbound_handler_abstract)
+
+
+#define HANDLER_FIRE_IMPL_0(NAME,HANDLER_NAME) \
 	void HANDLER_NAME##::##NAME##(WWRP<socket_handler_context> const& ctx) { \
 		ctx->fire_##NAME##(); \
 	}
 
-	HANDLER_IMPL_0(connected, socket_activity_handler_abstract)
-	HANDLER_IMPL_0(closed, socket_activity_handler_abstract)
-	HANDLER_IMPL_0(error, socket_activity_handler_abstract)
-	HANDLER_IMPL_0(read_shutdowned, socket_activity_handler_abstract)
-	HANDLER_IMPL_0(write_shutdowned, socket_activity_handler_abstract)
-	HANDLER_IMPL_0(write_block, socket_activity_handler_abstract)
-	HANDLER_IMPL_0(write_unblock, socket_activity_handler_abstract)
+	HANDLER_FIRE_IMPL_0(connected, socket_activity_handler_abstract)
+	HANDLER_FIRE_IMPL_0(closed, socket_activity_handler_abstract)
+	HANDLER_FIRE_IMPL_0(error, socket_activity_handler_abstract)
+	HANDLER_FIRE_IMPL_0(read_shutdowned, socket_activity_handler_abstract)
+	HANDLER_FIRE_IMPL_0(write_shutdowned, socket_activity_handler_abstract)
+	HANDLER_FIRE_IMPL_0(write_block, socket_activity_handler_abstract)
+	HANDLER_FIRE_IMPL_0(write_unblock, socket_activity_handler_abstract)
+
+#define HANDLER_IMPL_INT_1(NAME,HANDLER_NAME) \
+	void HANDLER_NAME##::##NAME##(WWRP<socket_handler_context> const& ctx, int const& code) { \
+		ctx->##NAME##(code); \
+	}
+
+	HANDLER_IMPL_INT_1(close, socket_outbound_handler_abstract)
+	HANDLER_IMPL_INT_1(close_read, socket_outbound_handler_abstract)
+	HANDLER_IMPL_INT_1(close_write, socket_outbound_handler_abstract)
+
 
 	void socket_handler_head::accepted(WWRP<socket_handler_context> const& ctx, WWRP<socket> const& newsocket)
 	{
@@ -142,6 +170,18 @@ namespace wawo { namespace net {
 	void socket_handler_head::write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet)
 	{
 		ctx->so->send_packet(outlet);
+	}
+
+	void socket_handler_head::close(WWRP<socket_handler_context> const& ctx, int const& code) {
+		ctx->so->close(code);
+	}
+
+	void socket_handler_head::close_read(WWRP<socket_handler_context> const& ctx, int const& code) {
+		ctx->so->shutdown(SHUTDOWN_RD, code);
+	}
+
+	void socket_handler_head::close_write(WWRP<socket_handler_context> const& ctx, int const& code) {
+		ctx->so->shutdown(SHUTDOWN_WR,code);
 	}
 
 	//--

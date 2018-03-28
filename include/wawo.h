@@ -38,6 +38,11 @@
 #include <wawo/net/handler/websocket.hpp>
 #include <wawo/net/handler/echo.hpp>
 
+#include <wawo/net/handler/dump_in_text.hpp>
+#include <wawo/net/handler/dump_out_text.hpp>
+
+#include <wawo/net/handler/dump_in_len.hpp>
+#include <wawo/net/handler/dump_out_len.hpp>
 
 #include <wawo/env/env.hpp>
 #include <wawo/app.hpp>

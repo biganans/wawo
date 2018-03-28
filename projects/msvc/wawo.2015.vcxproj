@@ -196,6 +196,10 @@
     <ClInclude Include="..\..\include\wawo\memory.hpp" />
     <ClInclude Include="..\..\include\wawo\net\address.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\dh_symmetric_encrypt.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\handler\dump_in_len.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\handler\dump_in_text.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\handler\dump_out_len.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\handler\dump_out_text.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\echo.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\hlen.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\symmetric_encrypt.hpp" />

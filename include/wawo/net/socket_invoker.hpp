@@ -34,6 +34,9 @@ namespace wawo { namespace net {
 	{
 	public:
 		virtual void write(WWSP<packet> const& out) = 0;
+		virtual void close(int const& code ) = 0;
+		virtual void close_read(int const& code ) = 0;
+		virtual void close_write(int const& code ) = 0;
 	};
 }}
 #endif

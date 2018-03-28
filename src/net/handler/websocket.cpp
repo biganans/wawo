@@ -75,8 +75,28 @@ namespace wawo { namespace net { namespace handler {
 		SHA1_Final(out, &ctx);
 	}
 
+	void websocket::connected(WWRP<socket_handler_context> const& ctx) {
+		m_income_prev = wawo::make_shared<packet>();
+		m_tmp_frame = wawo::make_shared<ws_frame>();
+		m_tmp_frame->appdata = wawo::make_shared<packet>();
+		m_tmp_frame->extdata = wawo::make_shared<packet>();
+
+		m_tmp_message = wawo::make_shared<packet>();
+		ctx->fire_connected();
+	}
+
 	void websocket::read(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& income)
 	{
+		if (income->len() == 0) {
+			WAWO_ASSERT(!"WHAT");
+			return;
+		}
+
+		if ( m_income_prev->len() ) {
+			income->write_left(m_income_prev->begin(), m_income_prev->len());
+			m_income_prev->reset();
+		}
+
 		int ec = 0;
 _CHECK:
 		switch (m_state) {
@@ -109,13 +129,13 @@ _CHECK:
 				u32_t nparsed = m_http_parser->parse( (char*) income->begin(), income->len(), ec );
 				WAWO_ASSERT(ec == wawo::OK);
 				WAWO_ASSERT(nparsed == income->len());
+				income->skip(nparsed);
 				goto _CHECK;
 			}
 			break;
 		case S_UPGRADE_REQ_MESSAGE_DONE:
 			{
 				WAWO_ASSERT(m_upgrade_req != NULL);
-
 				if (!m_upgrade_req->h.have(_H_Upgrade) || wawo::strcmp("websocket", m_upgrade_req->h.get(_H_Upgrade).cstr ) != 0 ) {
 					WAWO_WARN("[websocket]missing %s, or not websocket, force close", _H_Upgrade);
 					WWSP<packet> out = wawo::make_shared<packet>();
@@ -171,18 +191,205 @@ _CHECK:
 				protocol::http::encode_message(reply, o);
 				ctx->write(o);
 
-				m_state = S_OPEN;
-
+				m_state = S_MESSAGE_BEGIN;
 				ctx->fire_connected();
+
 				goto _CHECK;
 			}
 			break;
-		case S_OPEN:
+		case S_MESSAGE_BEGIN:
 			{
-				WAWO_INFO("<<< %u", income->len());
+				WAWO_ASSERT(m_tmp_message != NULL);
+				
+				m_state = S_FRAME_BEGIN;
+				m_fragmented_opcode = OP_TEXT; //default
+				m_fragmented_begin = false;
+				goto _CHECK;
+			}
+			break;
+		case S_FRAME_BEGIN:
+			{
+				m_state = S_FRAME_READ_H;
+				goto _CHECK;
+			}
+		case S_FRAME_READ_H:
+			{
+				//WAWO_INFO("<<< %u", income->len());
+				WAWO_ASSERT(sizeof(ws_frame::H) == 2);
+				if (income->len() >= sizeof(ws_frame::H)) {
+
+					decode_frame_H(income, m_tmp_frame->H);
+
+					//@Note: refer to RFC6455
+					//frame with a control opcode would not be fragmented
+					if (m_tmp_frame->H.fin == 0 && m_fragmented_begin == false ) {
+						WAWO_ASSERT( m_tmp_frame->H.opcode != 0x0);
+						m_fragmented_opcode = m_tmp_frame->H.opcode;
+						m_fragmented_begin = true;
+					}
+
+					m_state = S_FRAME_READ_PAYLOAD_LEN;
+					goto _CHECK;
+				}
+				m_income_prev = income;
+			}
+			break;
+		case S_FRAME_READ_PAYLOAD_LEN:
+			{
+				//WAWO_INFO("<<< %u", income->len());
+				if (m_tmp_frame->H.len == 126) {
+					if (income->len() >= sizeof(u16_t)) {
+						m_tmp_frame->payload_len = income->read<u16_t>();
+						m_state = S_FRAME_READ_MASKING_KEY;
+						goto _CHECK;
+					}
+				}
+				else if (m_tmp_frame->H.len == 127) {
+					if (income->len() >= sizeof(u64_t)) {
+						m_tmp_frame->payload_len = income->read<u64_t>();
+						m_state = S_FRAME_READ_MASKING_KEY;
+						goto _CHECK;
+					}
+				}
+				else {
+					m_tmp_frame->payload_len = m_tmp_frame->H.len;
+					m_state = S_FRAME_READ_MASKING_KEY;
+					goto _CHECK;
+				}
+				m_income_prev = income;
+			}
+			break;
+		case S_FRAME_READ_MASKING_KEY:
+			{
+				if (income->len() >= sizeof(u32_t)) {
+					u32_t key = income->read<u32_t>();
+
+					m_tmp_frame->masking_key_arr[0] = (key >> 24) & 0xff;
+					m_tmp_frame->masking_key_arr[1] = (key >> 16) & 0xff;
+					m_tmp_frame->masking_key_arr[2] = (key >> 8) & 0xff;
+					m_tmp_frame->masking_key_arr[3] = (key) & 0xff;
+
+					m_state = S_FRAME_READ_PAYLOAD;
+					goto _CHECK;
+				}
+				m_income_prev = income;
+			}
+			break;
+		case S_FRAME_READ_PAYLOAD:
+			{
+				u64_t left_to_fill = m_tmp_frame->payload_len - m_tmp_frame->appdata->len();
+				if (income->len() >= left_to_fill) {
+
+					if (m_tmp_frame->H.mask == 0x1) {
+						u64_t i = 0;
+						while (i < left_to_fill) {
+							u8_t _byte = *(income->begin() + (i++)) ^ m_tmp_frame->masking_key_arr[i % 4];
+							m_tmp_frame->appdata->write<u8_t>(_byte);
+						}
+					} else {
+						m_tmp_frame->appdata->write(income->begin(), left_to_fill);
+					}
+
+					income->skip(left_to_fill);
+					m_state = S_FRAME_END;
+					goto _CHECK;
+				}
+				m_income_prev = income;
+			}
+			break;
+		case S_FRAME_END:
+			{
+				//NO EXT SUPPORT NOW
+				WAWO_ASSERT(m_tmp_frame->H.rsv1 == 0);
+				WAWO_ASSERT(m_tmp_frame->H.rsv2 == 0);
+				WAWO_ASSERT(m_tmp_frame->H.rsv3 == 0);
+
+
+				switch (m_tmp_frame->H.opcode) {
+				case OP_CLOSE:
+					{
+						//reply a CLOSE, then do ctx->close();
+						WAWO_DEBUG("<<< op_close");
+						WWSP<ws_frame> _CLOSE = wawo::make_shared<ws_frame>();
+						_CLOSE->H.fin = 0x1;
+						_CLOSE->H.rsv1 = 0x0;
+						_CLOSE->H.rsv2 = 0x0;
+						_CLOSE->H.rsv3 = 0x0;
+						_CLOSE->H.opcode = OP_CLOSE;
+
+						_CLOSE->H.mask = 0x0;
+						_CLOSE->H.len = 0x0 ;
+
+						WWSP<packet> outp_close = wawo::make_shared<packet>();
+						encode_frame_H(_CLOSE->H, outp_close);
+						//outp_close->write<u32_t>(12013);
+
+						ctx->write(outp_close);
+						ctx->close();
+					}
+					break;
+				case OP_PING:
+					{
+						//reply a PONG
+						WWSP<ws_frame> _PONG = wawo::make_shared<ws_frame>();
+						_PONG->H.fin = 0x1;
+						_PONG->H.rsv1 = 0x0;
+						_PONG->H.rsv2 = 0x0;
+						_PONG->H.rsv3 = 0x0;
+						_PONG->H.opcode = OP_PONG;
+
+						_PONG->H.mask = 0x0;
+						_PONG->H.len = m_tmp_frame->appdata->len();
+						_PONG->appdata = m_tmp_frame->appdata;
+					}
+					break;
+				case OP_PONG:
+					{
+						//ignore right now
+						m_state = S_FRAME_BEGIN;
+						goto _CHECK;
+					}
+					break;
+				case OP_TEXT:
+				case OP_BINARY:
+				case OP_CONTINUE:
+					{
+						WAWO_ASSERT(m_tmp_frame->payload_len == m_tmp_frame->appdata->len());
+						m_tmp_message->write(m_tmp_frame->appdata->begin(), m_tmp_frame->appdata->len());
+						m_tmp_frame->appdata->reset();
+
+						if (m_tmp_frame->H.fin == 0x1) {
+							m_state = S_MESSAGE_END;
+						}
+						else {
+							m_state = S_FRAME_BEGIN;
+						}
+						goto _CHECK;
+					}
+					break;
+				default:
+					{
+						WAWO_THROW("unknown websocket opcode");
+					}
+				}
+			}
+			break;
+		case S_MESSAGE_END:
+			{
+				ctx->fire_read(m_tmp_message);
+				m_tmp_message->reset();
+
+				m_state = S_MESSAGE_BEGIN;
+				goto _CHECK;
 			}
 			break;
 		}
+	}
+
+	void websocket::write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) {
+
+
+
 	}
 
 
