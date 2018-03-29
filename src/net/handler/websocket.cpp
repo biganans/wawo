@@ -216,16 +216,17 @@ _CHECK:
 		case S_FRAME_READ_H:
 			{
 				//WAWO_INFO("<<< %u", income->len());
-				WAWO_ASSERT(sizeof(ws_frame::H) == 2);
+				WAWO_ASSERT(sizeof(ws_frame::H) == 2, "%u", sizeof(ws_frame::H));
 				if (income->len() >= sizeof(ws_frame::H)) {
 
-					decode_frame_H(income, m_tmp_frame->H);
+					m_tmp_frame->H.B1.B = income->read<u8_t>();
+					m_tmp_frame->H.B2.B = income->read<u8_t>();
 
 					//@Note: refer to RFC6455
 					//frame with a control opcode would not be fragmented
-					if (m_tmp_frame->H.fin == 0 && m_fragmented_begin == false ) {
-						WAWO_ASSERT( m_tmp_frame->H.opcode != 0x0);
-						m_fragmented_opcode = m_tmp_frame->H.opcode;
+					if (m_tmp_frame->H.B1.Bit.fin == 0 && m_fragmented_begin == false ) {
+						WAWO_ASSERT( m_tmp_frame->H.B1.Bit.opcode != 0x0);
+						m_fragmented_opcode = m_tmp_frame->H.B1.Bit.opcode;
 						m_fragmented_begin = true;
 					}
 
@@ -238,14 +239,14 @@ _CHECK:
 		case S_FRAME_READ_PAYLOAD_LEN:
 			{
 				//WAWO_INFO("<<< %u", income->len());
-				if (m_tmp_frame->H.len == 126) {
+				if (m_tmp_frame->H.B2.Bit.len == 126) {
 					if (income->len() >= sizeof(u16_t)) {
 						m_tmp_frame->payload_len = income->read<u16_t>();
 						m_state = S_FRAME_READ_MASKING_KEY;
 						goto _CHECK;
 					}
 				}
-				else if (m_tmp_frame->H.len == 127) {
+				else if (m_tmp_frame->H.B2.Bit.len == 127) {
 					if (income->len() >= sizeof(u64_t)) {
 						m_tmp_frame->payload_len = income->read<u64_t>();
 						m_state = S_FRAME_READ_MASKING_KEY;
@@ -253,7 +254,7 @@ _CHECK:
 					}
 				}
 				else {
-					m_tmp_frame->payload_len = m_tmp_frame->H.len;
+					m_tmp_frame->payload_len = m_tmp_frame->H.B2.Bit.len;
 					m_state = S_FRAME_READ_MASKING_KEY;
 					goto _CHECK;
 				}
@@ -281,7 +282,7 @@ _CHECK:
 				u64_t left_to_fill = m_tmp_frame->payload_len - m_tmp_frame->appdata->len();
 				if (income->len() >= left_to_fill) {
 
-					if (m_tmp_frame->H.mask == 0x1) {
+					if (m_tmp_frame->H.B2.Bit.mask == 0x1) {
 						u64_t i = 0;
 						while (i < left_to_fill) {
 							u8_t _byte = *(income->begin() + (i++)) ^ m_tmp_frame->masking_key_arr[i % 4];
@@ -301,11 +302,11 @@ _CHECK:
 		case S_FRAME_END:
 			{
 				//NO EXT SUPPORT NOW
-				WAWO_ASSERT(m_tmp_frame->H.rsv1 == 0);
-				WAWO_ASSERT(m_tmp_frame->H.rsv2 == 0);
-				WAWO_ASSERT(m_tmp_frame->H.rsv3 == 0);
+				WAWO_ASSERT(m_tmp_frame->H.B1.Bit.rsv1 == 0);
+				WAWO_ASSERT(m_tmp_frame->H.B1.Bit.rsv2 == 0);
+				WAWO_ASSERT(m_tmp_frame->H.B1.Bit.rsv3 == 0);
 
-				switch (m_tmp_frame->H.opcode) {
+				switch (m_tmp_frame->H.B1.Bit.opcode) {
 				case OP_CLOSE:
 					{
 						//reply a CLOSE, then do ctx->close();
@@ -318,23 +319,24 @@ _CHECK:
 					{
 						//reply a PONG
 						WWSP<ws_frame> _PONG = wawo::make_shared<ws_frame>();
-						_PONG->H.fin = 0x1;
-						_PONG->H.rsv1 = 0x0;
-						_PONG->H.rsv2 = 0x0;
-						_PONG->H.rsv3 = 0x0;
-						_PONG->H.opcode = OP_PONG;
+						_PONG->H.B1.Bit.fin = 0x1;
+						_PONG->H.B1.Bit.rsv1 = 0x0;
+						_PONG->H.B1.Bit.rsv2 = 0x0;
+						_PONG->H.B1.Bit.rsv3 = 0x0;
+						_PONG->H.B1.Bit.opcode = OP_PONG;
 
-						_PONG->H.mask = 0x0;
-						_PONG->H.len = m_tmp_frame->appdata->len();
+						_PONG->H.B2.Bit.mask = 0x0;
+						_PONG->H.B2.Bit.len = m_tmp_frame->appdata->len();
 						_PONG->appdata = m_tmp_frame->appdata;
 
 						WWSP<packet> outp_PONG = wawo::make_shared<packet>();
-						encode_frame_H(_PONG->H, outp_PONG);
+						outp_PONG->write<u8_t>( _PONG->H.B1.B );
+						outp_PONG->write<u8_t>( _PONG->H.B2.B);
+
 						outp_PONG->write(m_tmp_frame->appdata->begin(), m_tmp_frame->appdata->len());
 						m_tmp_frame->appdata->reset();
 
 						ctx->write(outp_PONG);
-
 						m_state = S_FRAME_BEGIN;
 						goto _CHECK;
 					}
@@ -354,7 +356,7 @@ _CHECK:
 						m_tmp_message->write(m_tmp_frame->appdata->begin(), m_tmp_frame->appdata->len());
 						m_tmp_frame->appdata->reset();
 
-						if (m_tmp_frame->H.fin == 0x1) {
+						if (m_tmp_frame->H.B1.Bit.fin == 0x1) {
 							m_state = S_MESSAGE_END;
 						}
 						else {
@@ -389,33 +391,30 @@ _CHECK:
 	void websocket::write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) {
 
 		WWSP<ws_frame> _frame = wawo::make_shared<ws_frame>();
-		_frame->H.fin = 0x1;
-		_frame->H.rsv1 = 0x0;
-		_frame->H.rsv2 = 0x0;
-		_frame->H.rsv3 = 0x0;
-		_frame->H.opcode = OP_TEXT;
-		_frame->H.mask = 0x0;
+		_frame->H.B1.Bit.fin = 0x1;
+		_frame->H.B1.Bit.rsv1 = 0x0;
+		_frame->H.B1.Bit.rsv2 = 0x0;
+		_frame->H.B1.Bit.rsv3 = 0x0;
+		_frame->H.B1.Bit.opcode = OP_TEXT;
+		_frame->H.B2.Bit.mask = 0x0;
 
 		if (outlet->len() > 0xFFFF) {
-			_frame->H.len = 0x7F;
-			WWSP<packet> _h = wawo::make_shared<packet>();
-			encode_frame_H(_frame->H, _h);
-			_h->write<u64_t>(outlet->len());
-			outlet->write_left( _h->begin(), _h->len() );
+			_frame->H.B2.Bit.len = 0x7F;
+			outlet->write_left<u64_t>(outlet->len());
+			outlet->write_left<u8_t>( _frame->H.B2.B );
+			outlet->write_left<u8_t>(_frame->H.B1.B);
 		}
 		else if (outlet->len() > 0x7D) {
 			WAWO_ASSERT(outlet->len() <= 0xFFFF);
-			_frame->H.len = 0x7E;
-			WWSP<packet> _h = wawo::make_shared<packet>();
-			encode_frame_H(_frame->H, _h);
-			_h->write<u16_t>(outlet->len());
-			outlet->write_left(_h->begin(), _h->len());
+			_frame->H.B2.Bit.len = 0x7E;
+			outlet->write_left<u16_t>(outlet->len());
+			outlet->write_left<u8_t>(_frame->H.B2.B);
+			outlet->write_left<u8_t>(_frame->H.B1.B);
 		}
 		else {
-			_frame->H.len = outlet->len();
-			WWSP<packet> _h = wawo::make_shared<packet>();
-			encode_frame_H(_frame->H, _h);
-			outlet->write_left(_h->begin(), _h->len());
+			_frame->H.B2.Bit.len = outlet->len();
+			outlet->write_left<u8_t>(_frame->H.B2.B);
+			outlet->write_left<u8_t>(_frame->H.B1.B);
 		}
 
 		ctx->write(outlet);
@@ -426,17 +425,19 @@ _CHECK:
 		if (m_close_sent == true) { return; }
 
 		WWSP<ws_frame> _CLOSE = wawo::make_shared<ws_frame>();
-		_CLOSE->H.fin = 0x1;
-		_CLOSE->H.rsv1 = 0x0;
-		_CLOSE->H.rsv2 = 0x0;
-		_CLOSE->H.rsv3 = 0x0;
-		_CLOSE->H.opcode = OP_CLOSE;
+		_CLOSE->H.B1.Bit.fin = 0x1;
+		_CLOSE->H.B1.Bit.rsv1 = 0x0;
+		_CLOSE->H.B1.Bit.rsv2 = 0x0;
+		_CLOSE->H.B1.Bit.rsv3 = 0x0;
+		_CLOSE->H.B1.Bit.opcode = OP_CLOSE;
 
-		_CLOSE->H.mask = 0x0;
-		_CLOSE->H.len = 0x0;
+		_CLOSE->H.B2.Bit.mask = 0x0;
+		_CLOSE->H.B2.Bit.len = 0x0;
 
 		WWSP<packet> outp_CLOSE = wawo::make_shared<packet>();
-		encode_frame_H(_CLOSE->H, outp_CLOSE);
+		outp_CLOSE->write<u8_t>( _CLOSE->H.B1.B );
+		outp_CLOSE->write<u8_t>( _CLOSE->H.B2.B );
+
 		ctx->write(outp_CLOSE);
 		m_close_sent = true;
 		ctx->close(code);

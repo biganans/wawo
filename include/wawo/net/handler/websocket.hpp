@@ -46,13 +46,23 @@ namespace wawo { namespace net { namespace handler {
 
 		struct ws_frame {
 			struct _H {
-				u8_t fin : 1;
-				u8_t rsv1 : 1;
-				u8_t rsv2 : 1;
-				u8_t rsv3 : 1;
-				u8_t opcode : 4;
-				u8_t mask : 1;
-				u8_t len : 7;
+				union _B1 {
+					struct _Bit {
+						u8_t opcode : 4;
+						u8_t rsv3 : 1;
+						u8_t rsv2 : 1;
+						u8_t rsv1 : 1;
+						u8_t fin : 1;
+					} Bit;
+					u8_t B;
+				} B1;
+				union _B2 {
+					struct _Bit {
+						u8_t len : 7;
+						u8_t mask : 1;
+					} Bit;
+					u8_t B;
+				} B2;
 			} H;
 
 			u64_t payload_len;
@@ -62,37 +72,6 @@ namespace wawo { namespace net { namespace handler {
 			WWSP<packet> appdata;
 		};
 
-		void decode_frame_H(WWSP<packet> const& p, ws_frame::_H &H) {
-			WAWO_ASSERT(p->len() >= (sizeof(u8_t)*2) );
-			u8_t B1 = p->read<u8_t>();
-
-			H.fin = (B1 >> 7) & 0x1;
-			H.rsv1 = (B1 >> 6) & 0x1;
-			H.rsv2 = (B1 >> 5) & 0x1;
-			H.rsv3 = (B1 >> 4) & 0x1;
-			H.opcode = B1 & 0xF;
-
-			u8_t B2 = p->read<u8_t>();
-
-			H.mask = (B2 >> 7) & 0x1;
-			H.len = B2 & 0x7F;
-		}
-
-		void encode_frame_H(ws_frame::_H const& H, WWSP<packet>& o) {
-			u8_t B1 = 0;
-
-			B1 |= (H.fin & 0x1) << 7;
-			B1 |= (H.rsv1 & 0x1) << 6;
-			B1 |= (H.rsv2 & 0x1) << 5;
-			B1 |= (H.rsv3 & 0x1) << 4;
-			B1 |= (H.opcode & 0xF);
-			o->write(B1);
-
-			u8_t B2 = 0;
-			B2 |= (H.mask & 0x1) << 7;
-			B2 |= (H.len & 0x7F);
-			o->write(B2);
-		}
 
 		wawo::len_cstr m_tmp_for_field;
 		WWSP<protocol::http::message> m_upgrade_req;
@@ -105,7 +84,7 @@ namespace wawo { namespace net { namespace handler {
 		WWSP<packet> m_tmp_message; //for fragmented message
 		u8_t m_fragmented_opcode;
 		u8_t m_fragmented_begin;
-		u8_t m_close_sent;
+		bool m_close_sent;
 	public:
 			websocket() :
 				m_state(S_WAIT_CLIENT_HANDSHAKE_REQ),
