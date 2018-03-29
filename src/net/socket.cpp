@@ -172,7 +172,7 @@ namespace wawo { namespace net {
 	void socket::init_pipeline()
 	{
 		WAWO_ASSERT(m_observer == NULL);
-		m_observer = wawo::net::observers::instance()->next();
+		m_observer = wawo::net::observers::instance()->next( is_wcp() );
 
 		m_pipeline = wawo::make_ref<socket_pipeline>(WWRP<socket>(this));
 		m_pipeline->init();

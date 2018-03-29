@@ -122,32 +122,12 @@ namespace wawo { namespace net {
 
 	void observer::watch( u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err, bool const& is_wcp )
 	{
-
-#ifdef WAWO_ENABLE_WCP
-		if (is_wcp) {
-			m_wcp->watch(flag, fd, cooie, fn, err);
-		} else {
-#endif
-		(void)is_wcp;
-		m_default->watch(flag, fd, cookie, fn, err);
-#ifdef WAWO_ENABLE_WCP
-		}
-#endif
+		m_observer->watch(flag, fd, cookie, fn, err);
 	}
 
 	void observer::unwatch(u8_t const& flag, int const& fd, bool const& is_wcp)
 	{
-#ifdef WAWO_ENABLE_WCP
-		if (is_wcp) {
-			m_wcp->unwatch(flag, fd);
-		}
-		else {
-#endif
-		(void)is_wcp;
-		m_default->unwatch(flag, fd);
-#ifdef WAWO_ENABLE_WCP
-		}
-#endif
+		m_observer->unwatch(flag, fd);
 	}
 
 	namespace observer_impl {
