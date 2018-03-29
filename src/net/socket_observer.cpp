@@ -4,10 +4,7 @@
 #include <wawo/net/observer_impl/epoll.hpp>
 #endif
 
-#ifdef WAWO_ENABLE_WCP
 #include <wawo/net/observer_impl/wpoll.hpp>
-#endif
-
 #include <wawo/net/socket_observer.hpp>
 #include <wawo/net/socket.hpp>
 

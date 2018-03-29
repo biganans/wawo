@@ -375,7 +375,6 @@ namespace wawo { namespace net { namespace wcp_socket {
 namespace wawo { namespace net {
 
 	void socket_base::_socket_fn_init() {
-#ifdef WAWO_ENABLE_WCP
 		if (m_protocol == P_WCP) {
 			m_fn_socket = wawo::net::wcp_socket::socket;
 			m_fn_connect = wawo::net::wcp_socket::connect;
@@ -392,7 +391,6 @@ namespace wawo { namespace net {
 			m_fn_sendto = wawo::net::standard_socket::sendto;
 			m_fn_recvfrom = wawo::net::standard_socket::recvfrom;
 		} else {
-#endif
 			m_fn_socket = wawo::net::standard_socket::socket;
 			m_fn_connect = wawo::net::standard_socket::connect;
 			m_fn_bind = wawo::net::standard_socket::bind;
@@ -407,9 +405,7 @@ namespace wawo { namespace net {
 			m_fn_recv = wawo::net::standard_socket::recv;
 			m_fn_sendto = wawo::net::standard_socket::sendto;
 			m_fn_recvfrom = wawo::net::standard_socket::recvfrom;
-#ifdef WAWO_ENABLE_WCP
 		}
-#endif
 	}
 
 		socket_base::socket_base(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :

@@ -388,7 +388,7 @@ _CHECK:
 	}
 
 
-	void websocket::write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) {
+	int websocket::write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) {
 
 		WWSP<ws_frame> _frame = wawo::make_shared<ws_frame>();
 		_frame->H.B1.Bit.fin = 0x1;
@@ -417,12 +417,12 @@ _CHECK:
 			outlet->write_left<u8_t>(_frame->H.B1.B);
 		}
 
-		ctx->write(outlet);
+		return ctx->write(outlet);
 	}
 
-	void websocket::close(WWRP<socket_handler_context> const& ctx, int const& code ) {
+	int websocket::close(WWRP<socket_handler_context> const& ctx, int const& code ) {
 
-		if (m_close_sent == true) { return; }
+		if (m_close_sent == true) { return wawo::E_HANDLER_WEBSOCKET_CLOSED_ALREADY; }
 
 		WWSP<ws_frame> _CLOSE = wawo::make_shared<ws_frame>();
 		_CLOSE->H.B1.Bit.fin = 0x1;
@@ -440,7 +440,7 @@ _CHECK:
 
 		ctx->write(outp_CLOSE);
 		m_close_sent = true;
-		ctx->close(code);
+		return ctx->close(code);
 	}
 
 

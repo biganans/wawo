@@ -33,10 +33,10 @@ namespace wawo { namespace net {
 	class socket_outbound_invoker_abstract
 	{
 	public:
-		virtual void write(WWSP<packet> const& out) = 0;
-		virtual void close(int const& code ) = 0;
-		virtual void close_read(int const& code ) = 0;
-		virtual void close_write(int const& code ) = 0;
+		virtual int write(WWSP<packet> const& out) = 0;
+		virtual int close(int const& code ) = 0;
+		virtual int close_read(int const& code ) = 0;
+		virtual int close_write(int const& code ) = 0;
 	};
 }}
 #endif

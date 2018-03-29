@@ -96,8 +96,8 @@ namespace wawo { namespace net { namespace handler {
 			void connected(WWRP<socket_handler_context> const& ctx);
 
 			void read(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& income) ;
-			void write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet);
-			void close(WWRP<socket_handler_context> const& ctx, int const& code = 0);
+			int write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet);
+			int close(WWRP<socket_handler_context> const& ctx, int const& code = 0);
 		protected:
 			int http_on_message_begin();
 			int http_on_url(const char* data, u32_t const& len);

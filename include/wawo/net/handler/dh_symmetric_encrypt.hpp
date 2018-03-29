@@ -486,13 +486,13 @@ namespace wawo {namespace net {namespace handler {
 			}
 		}
 
-		void write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) {
+		int write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) {
 			WAWO_ASSERT(m_dhstate == DH_DATA_TRANSFER);
 			WAWO_ASSERT(m_cipher != NULL);
 			WWSP<packet> encrypted;
 			int encrt = m_cipher->encrypt(outlet, encrypted);
 			WAWO_ASSERT(encrt == wawo::OK);
-			ctx->write(encrypted);
+			return ctx->write(encrypted);
 		}
 	};
 }}}

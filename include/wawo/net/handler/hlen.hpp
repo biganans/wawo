@@ -64,9 +64,9 @@ namespace wawo { namespace net { namespace handler {
 			} while (!bExit);
 		}
 
-		void write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) {
+		int write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) {
 			outlet->write_left<u32_t>(outlet->len());
-			ctx->write(outlet);
+			return ctx->write(outlet);
 		}
 	};
 }}}

@@ -60,8 +60,6 @@ namespace wawo { namespace net {
 		switch (ec) {
 			case wawo::OK:
 			case wawo::E_SOCKET_RECV_BLOCK:
-			case wawo::E_TLP_HANDSHAKE_DONE:
-			case wawo::E_TLP_HANDSHAKING:
 			{}
 			break;
 			case wawo::E_SOCKET_GRACE_CLOSE:

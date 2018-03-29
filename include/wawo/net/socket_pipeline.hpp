@@ -71,23 +71,27 @@ namespace wawo { namespace net {
 			m_head->fire_read(income);
 		}
 
-		void write(WWSP<packet> const& out) {
+		int write(WWSP<packet> const& out) {
 			WAWO_ASSERT(!"TODO");
 			(void)out;
+			return wawo::OK;
 		}
 
-		void close(int const& code = 0) {
+		int close(int const& code = 0) {
 			WAWO_ASSERT(!"TODO");
 			(void)code;
+			return wawo::OK;
 		}
 
-		void close_read(int const& code =0) {
+		int close_read(int const& code =0) {
 			WAWO_ASSERT(!"TODO");
 			(void)code;
+			return wawo::OK;
 		}
-		void close_write(int const& code = 0) {
+		int close_write(int const& code = 0) {
 			WAWO_ASSERT(!"TODO");
 			(void)code;
+			return wawo::OK;
 		}
 	};
 }}

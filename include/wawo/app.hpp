@@ -66,18 +66,12 @@ namespace wawo {
 			if (c != 0) {
 				WAWO_SCHEDULER->set_concurrency(c);
 			}
-			WAWO_SCHEDULER->start();
 
-#ifdef WAWO_ENABLE_WCP
-			wawo::net::wcp::instance()->start();
-#endif
+			WAWO_SCHEDULER->start();
 			wawo::net::observers::instance()->init();
 		}
 
 		void deinit_net() {
-#ifdef WAWO_ENABLE_WCP
-			wawo::net::wcp::instance()->stop();
-#endif
 			wawo::net::observers::instance()->deinit();
 			WAWO_SCHEDULER->stop();
 		}

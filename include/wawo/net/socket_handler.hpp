@@ -47,11 +47,11 @@ namespace wawo { namespace net {
 		virtual public socket_handler_abstract
 	{
 	public:
-		virtual void write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) = 0;
+		virtual int write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) = 0;
 
-		virtual void close(WWRP<socket_handler_context> const& ctx,int const& code);
-		virtual void close_read(WWRP<socket_handler_context> const& ctx,int const& code);
-		virtual void close_write(WWRP<socket_handler_context> const& ctx,int const& code);
+		virtual int close(WWRP<socket_handler_context> const& ctx,int const& code);
+		virtual int close_read(WWRP<socket_handler_context> const& ctx,int const& code);
+		virtual int close_write(WWRP<socket_handler_context> const& ctx,int const& code);
 	};
 
 	class socket_handler_context :
@@ -106,17 +106,17 @@ namespace wawo { namespace net {
 		void fire_read(WWSP<packet> const& income);
 		void invoke_read(WWSP<packet> const& income);
 
-		void write(WWSP<packet> const& outlet);
-		void invoke_write(WWSP<packet> const& outlet);
+		int write(WWSP<packet> const& outlet);
+		int invoke_write(WWSP<packet> const& outlet);
 
-		void close(int const& code =0);
-		void invoke_close(int const& code);
+		int close(int const& code =0);
+		int invoke_close(int const& code);
 
-		void close_read(int const& code=0 );
-		void invoke_close_read(int const& code );
+		int close_read(int const& code=0 );
+		int invoke_close_read(int const& code );
 
-		void close_write(int const& code=0 );
-		void invoke_close_write(int const& code );
+		int close_write(int const& code=0 );
+		int invoke_close_write(int const& code );
 	};
 
 	class socket_handler_head :
@@ -128,11 +128,11 @@ namespace wawo { namespace net {
 	public:
 		void accepted(WWRP<socket_handler_context> const& ctx, WWRP<socket> const& newsocket) ;
 		void read(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& income) ;
-		void write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) ;
+		int write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) ;
 
-		void close(WWRP<socket_handler_context> const& ctx, int const& code);
-		void close_read(WWRP<socket_handler_context> const& ctx, int const& code);
-		void close_write(WWRP<socket_handler_context> const& ctx, int const& code);
+		int close(WWRP<socket_handler_context> const& ctx, int const& code);
+		int close_read(WWRP<socket_handler_context> const& ctx, int const& code);
+		int close_write(WWRP<socket_handler_context> const& ctx, int const& code);
 	};
 
 	class socket_handler_tail :
@@ -143,7 +143,7 @@ namespace wawo { namespace net {
 	{
 		void accepted(WWRP<socket_handler_context> const& ctx, WWRP<socket> const& newsocket) ;
 		void read(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& income) ;
-		void write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) ;
+		int write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) ;
 	};
 }}
 #endif
