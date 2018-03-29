@@ -155,8 +155,8 @@ namespace wawo { namespace net {
 			_plan_task(t);
 		}
 
-		void watch(u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err, bool const& is_wcp = false );
-		void unwatch(u8_t const& flag, int const& fd, bool const& is_wcp = false );
+		void watch(u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err );
+		void unwatch(u8_t const& flag, int const& fd );
 	};
 
 	typedef std::vector<WWRP<observer>> observer_vectors;

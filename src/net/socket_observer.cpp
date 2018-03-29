@@ -117,12 +117,12 @@ namespace wawo { namespace net {
 		}
 	}
 
-	void observer::watch( u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err, bool const& is_wcp )
+	void observer::watch( u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err )
 	{
 		m_observer->watch(flag, fd, cookie, fn, err);
 	}
 
-	void observer::unwatch(u8_t const& flag, int const& fd, bool const& is_wcp)
+	void observer::unwatch(u8_t const& flag, int const& fd)
 	{
 		m_observer->unwatch(flag, fd);
 	}

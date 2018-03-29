@@ -734,6 +734,10 @@ namespace wawo { namespace net {
 		{
 			lock_guard<spin_mutex> lw(m_mutexes[L_WRITE]);
 			if (m_outs->size() > 0) {
+				if (m_outs->size() > 10) {
+					return wawo::E_SOCKET_SEND_BLOCK;
+				}
+
 				WAWO_TRACE_SOCKET("[socket]push one outp for queue not empty");
 				//we have to make our own copy
 				WWSP<packet> _outp = wawo::make_shared<packet>(*outp);

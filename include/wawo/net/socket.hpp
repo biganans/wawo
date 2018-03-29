@@ -268,7 +268,7 @@ namespace wawo { namespace net {
 			if ((m_rflag&WATCH_READ) && is_nonblocking()) {
 				m_rflag &= ~(WATCH_READ | WATCH_OPTION_INFINITE);
 				TRACE_IOE("[socket][%s][end_async_read]unwatch IOE_READ", info().to_lencstr()().cstr);
-				m_observer->unwatch(IOE_READ, fd(), is_wcp() );
+				m_observer->unwatch(IOE_READ, fd() );
 			}
 #ifdef _DEBUG
 			else {
@@ -281,7 +281,7 @@ namespace wawo { namespace net {
 			if ((m_wflag&WATCH_WRITE) && is_nonblocking()) {
 				m_wflag &= ~(WATCH_WRITE | WATCH_OPTION_INFINITE);
 				TRACE_IOE("[socket][%s][end_async_write]unwatch IOE_WRITE", info().to_lencstr().cstr );
-				m_observer->unwatch(IOE_WRITE, fd(), is_wcp());
+				m_observer->unwatch(IOE_WRITE, fd());
 			}
 #ifdef _DEBUG
 			else {
@@ -307,7 +307,7 @@ namespace wawo { namespace net {
 			_cookie->success = fn;
 			_cookie->error = err;
 
-			m_observer->watch( IOE_WRITE, fd(), _cookie, wawo::net::async_connected, wawo::net::async_connect_error, is_wcp() );
+			m_observer->watch( IOE_WRITE, fd(), _cookie, wawo::net::async_connected, wawo::net::async_connect_error );
 		}
 
 		inline void end_async_connect() {
@@ -347,7 +347,7 @@ namespace wawo { namespace net {
 			if (async_flag&WATCH_OPTION_INFINITE) {
 				flag |= IOE_INFINITE_WATCH_READ;
 			}
-			m_observer->watch( flag, fd(), _cookie, fn, err, is_wcp() );
+			m_observer->watch( flag, fd(), _cookie, fn, err );
 		}
 
 		inline void begin_async_read(u8_t const& async_flag = 0, WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn = wawo::net::async_read, fn_io_event_error const& err = wawo::net::async_error) {
@@ -390,7 +390,7 @@ namespace wawo { namespace net {
 			if (async_flag&WATCH_OPTION_INFINITE) {
 				flag |= IOE_INFINITE_WATCH_WRITE;
 			}
-			m_observer->watch( flag, fd(), _cookie, fn, err, is_wcp());
+			m_observer->watch( flag, fd(), _cookie, fn, err);
 		}
 
 		inline void begin_async_write(u8_t const& async_flag = 0, WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn = wawo::net::async_write, fn_io_event_error const& err = wawo::net::async_error) {
