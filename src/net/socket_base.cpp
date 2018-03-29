@@ -1166,7 +1166,7 @@ namespace wawo { namespace net {
 
 		u32_t socket_base::sendto(wawo::byte_t const* const buffer, wawo::u32_t const& len, const wawo::net::address& addr, int& ec_o, int const& flag) {
 
-			WAWO_ASSERT(!"TOCHECK FOR WCP");
+			//WAWO_ASSERT(!"TOCHECK FOR WCP");
 
 			WAWO_ASSERT(buffer != NULL);
 			WAWO_ASSERT(len > 0);
@@ -1190,7 +1190,7 @@ namespace wawo { namespace net {
 
 		u32_t socket_base::recvfrom(byte_t* const buffer_o, wawo::u32_t const& size, address& addr_o, int& ec_o) {
 			ec_o = wawo::OK;
-			WAWO_ASSERT(!"TOCHECK FOR WCP");
+			//WAWO_ASSERT(!"TOCHECK FOR WCP");
 			/*
 			if (m_rflag&SHUTDOWN_RD) {
 				ec_o = wawo::E_SOCKET_RD_SHUTDOWN_ALREADY;

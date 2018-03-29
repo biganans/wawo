@@ -5,7 +5,6 @@
 
 #include <wawo/core.hpp>
 #include <wawo/smart_ptr.hpp>
-#include <wawo/thread/ticker.hpp>
 
 #include <wawo/net/observer_abstract.hpp>
 
@@ -172,51 +171,10 @@ namespace wawo { namespace net {
 		observers()
 			:m_curr_sys(0), m_curr_wpoll(0)
 		{}
-
-		void init( int min_wpoller_count = 1) {
-
-			int i = std::thread::hardware_concurrency();
-			int sys_i = i - min_wpoller_count;
-			if (sys_i <= 0) {
-				sys_i = 1;
-			}
-
-			while (sys_i-- > 0) {
-				WWRP<observer> o = wawo::make_ref<observer>();
-				int rt = o->start();
-				WAWO_ASSERT(rt == wawo::OK);
-				m_observers.push_back(o);
-			}
-
-			min_wpoller_count = WAWO_MIN(min_wpoller_count, 4);
-			min_wpoller_count = WAWO_MAX(min_wpoller_count,1);
-
-			while (min_wpoller_count-- > 0) {
-				WWRP<observer> o = wawo::make_ref<observer>();
-				int rt = o->start();
-				WAWO_ASSERT(rt == wawo::OK);
-				m_wpolls.push_back(o);
-			}
-		}
-
-		WWRP<observer> next( bool const& return_wpoller = false ) {
-			if (return_wpoller) { 
-				int i = m_curr_wpoll.load() % m_observers.size();
-				wawo::atomic_increment(&m_curr_wpoll);
-				return m_wpolls[i% m_observers.size()];
-			} else {
-				int i = m_curr_sys.load() % m_observers.size();
-				wawo::atomic_increment(&m_curr_sys);
-				return m_observers[i% m_observers.size()];
-			}
-		}
-
-		void deinit() {
-			std::for_each(m_observers.begin(), m_observers.end(), [](WWRP<observer> const& o) {
-				o->stop();
-			});
-			m_observers.clear();
-		}
+		~observers() {}
+		void init(int min_wpoller_count = 1);
+		WWRP<observer> next(bool const& return_wpoller = false);
+		void deinit();
 	};
 }} //ns of wawo::net
 #endif //

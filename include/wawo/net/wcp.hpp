@@ -612,6 +612,7 @@ namespace wawo { namespace net {
 	typedef std::pair<int, WWSP<wpoll>> WpollPair;
 
 	class wcp :
+		public wawo::thread::thread_run_object_abstract,
 		public wawo::singleton<wcp>
 	{
 		enum State {
@@ -657,24 +658,20 @@ namespace wawo { namespace net {
 		spin_mutex m_ops_mutex;
 		OpQueue m_ops;
 
-		WWSP<wawo::thread::fn_ticker> m_self_ticker;
-
 		static std::atomic<int> s_wpoll_auto_increament_id;
 	public:
 		wcp();
 		~wcp();
-
-		int start() { on_start(); return wawo::OK; }
-
-		void on_start();
 
 		void stop() {
 			{
 				lock_guard<shared_mutex> lg(m_mutex);
 				if (m_state == S_EXIT) { return; }
 			}
-			on_stop();
+			thread_run_object_abstract::stop();
 		}
+
+		void on_start();
 		void on_stop();
 
 		void run() {

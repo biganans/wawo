@@ -1207,25 +1207,14 @@ _begin_send:
 	wcp::~wcp() { WAWO_ASSERT(m_state == S_IDLE || m_state == S_EXIT); }
 
 	void wcp::on_start() {
-		//@TODO
 		lock_guard<shared_mutex> lg(m_mutex);
 		m_state = S_RUN;
-
-		m_self_ticker = wawo::make_shared<wawo::thread::fn_ticker>(std::bind(&wcp::run, this) );
-		//observer_ticker::instance()->schedule(m_self_ticker);
 	}
 
 	void wcp::on_stop() {
-		//@TODO
-
-		if (m_self_ticker != NULL) {
-			//observer_ticker::instance()->deschedule(m_self_ticker);
-		}
 
 		lock_guard<shared_mutex> lg(m_mutex);
 		m_state = S_EXIT;
-
-		m_self_ticker = NULL;
 
 		{
 			lock_guard<shared_mutex> _(m_wcb_map_mutex);
@@ -1405,8 +1394,8 @@ _begin_send:
 		int nonblocking = wcb->so->turnon_nonblocking();
 		WAWO_RETURN_V_IF_NOT_MATCH(nonblocking, nonblocking == wawo::OK);
 
-		int udplistening = wcb->so->listen(backlog);
-		WAWO_RETURN_V_IF_NOT_MATCH(nonblocking, udplistening == wawo::OK);
+		//int udplistening = wcb->so->listen(backlog);
+		//WAWO_RETURN_V_IF_NOT_MATCH(nonblocking, udplistening == wawo::OK);
 
 		int listenrt = wcb->listen(backlog);
 		WAWO_RETURN_V_IF_NOT_MATCH( listenrt, listenrt==wawo::OK );

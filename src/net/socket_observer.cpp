@@ -28,15 +28,12 @@ namespace wawo { namespace net {
 		}
 		break;
 #endif
-
-#ifdef WAWO_ENABLE_WCP
 		case T_WPOLL:
 		{
 			m_impl = wawo::make_shared<observer_impl::wpoll>();
 			WAWO_ALLOC_CHECK(m_impl, sizeof(observer_impl::wpoll));
 		}
 		break;
-#endif
 		default:
 			{
 				WAWO_THROW("invalid poll type");
@@ -161,5 +158,63 @@ namespace wawo { namespace net {
 				task::run();
 			}
 		}
+	}
+
+	void observers::init(int min_wpoller_count) {
+		int i = std::thread::hardware_concurrency();
+		int sys_i = i - min_wpoller_count;
+		if (sys_i <= 0) {
+			sys_i = 1;
+		}
+
+		while (sys_i-- > 0) {
+			WWRP<observer> o = wawo::make_ref<observer>();
+			int rt = o->start();
+			WAWO_ASSERT(rt == wawo::OK);
+			m_observers.push_back(o);
+		}
+
+		min_wpoller_count = WAWO_MIN(min_wpoller_count, 4);
+		min_wpoller_count = WAWO_MAX(min_wpoller_count, 1);
+
+		if (min_wpoller_count > 0) {
+			wcp::instance()->start();
+		}
+
+		while (min_wpoller_count-- > 0) {
+			WWRP<observer> o = wawo::make_ref<observer>(T_WPOLL);
+			int rt = o->start();
+			WAWO_ASSERT(rt == wawo::OK);
+			m_wpolls.push_back(o);
+		}
+	}
+
+	WWRP<observer> observers::next(bool const& return_wpoller ) {
+		if (return_wpoller) {
+			int i = m_curr_wpoll.load() % m_wpolls.size();
+			wawo::atomic_increment(&m_curr_wpoll);
+			return m_wpolls[i% m_wpolls.size()];
+		}
+		else {
+			int i = m_curr_sys.load() % m_observers.size();
+			wawo::atomic_increment(&m_curr_sys);
+			return m_observers[i% m_observers.size()];
+		}
+	}
+
+	void observers::deinit() {
+
+		if (m_wpolls.size()) {
+			std::for_each(m_wpolls.begin(), m_wpolls.end(), [](WWRP<observer> const& o) {
+				o->stop();
+			});
+			wcp::instance()->stop();
+			m_wpolls.clear();
+		}
+
+		std::for_each(m_observers.begin(), m_observers.end(), [](WWRP<observer> const& o) {
+			o->stop();
+		});
+		m_observers.clear();
 	}
 }}

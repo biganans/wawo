@@ -434,9 +434,9 @@ namespace wawo { namespace net {
 		lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
 
 		WAWO_ASSERT(m_state == S_BINDED);
+		WAWO_ASSERT(fd() > 0);
 
 		int listenrt = socket_base::listen(backlog);
-
 		WAWO_RETURN_V_IF_NOT_MATCH(listenrt, listenrt == wawo::OK);
 		m_state = S_LISTEN;
 
@@ -750,7 +750,6 @@ namespace wawo { namespace net {
 			outp->skip(sbytes);
 
 			if (outp->len() > 0) {
-				outp->skip(sbytes);
 				WWSP<packet> _outp = wawo::make_shared<packet>(*outp);
 				m_outs->push(_outp);
 				WAWO_TRACE_SOCKET("[socket][%s]push one outp to queue for socket::send() blocked, left: %u, sent: %u", info().to_lencstr().cstr, _outp->len(), sbytes);
