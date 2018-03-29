@@ -502,7 +502,7 @@ namespace wawo { namespace net {
 		rt = connect(addr);
 		if (rt == wawo::OK) {
 			WWRP<socket> so(this);
-			wawo::task::fn_lambda _lambda = [&so]() {
+			wawo::task::fn_lambda _lambda = [so]() {
 				so->pipeline()->fire_connected();
 			};
 
@@ -671,7 +671,7 @@ namespace wawo { namespace net {
 				m_async_wt = 0;
 
 				WWRP<socket> so(this);
-				wawo::task::fn_lambda lambda = [&so]() -> void {
+				wawo::task::fn_lambda lambda = [so]() -> void {
 					so->pipeline()->fire_write_unblock();
 				};
 				WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda);
@@ -711,12 +711,15 @@ namespace wawo { namespace net {
 			u32_t sbytes = socket_base::send(outp->begin(), outp->len(), ec_o) ;
 
 			if (sbytes > 0) {
+				WAWO_TRACE_SOCKET("[socket]sent: %u, left: %u", sbytes, outp->len() );
+
 				outp->skip(sbytes);
 				flushed += sbytes;
-			}
 
-			if (outp->len() == 0) {
-				m_outs->pop();
+				if (outp->len() == 0) {
+					WAWO_TRACE_SOCKET("[socket]pop one outp from queue");
+					m_outs->pop();
+				}
 			}
 			left = m_outs->size() > 0;
 		}
@@ -724,28 +727,36 @@ namespace wawo { namespace net {
 		return flushed;
 	}
 
-	int socket::send_packet(WWSP<wawo::packet> const& packet, int const& flag ) {
-		WAWO_ASSERT( packet != NULL);
-		
+	int socket::send_packet(WWSP<wawo::packet> const& outp, int const& flag ) {
+		WAWO_ASSERT(outp != NULL);
+		WAWO_ASSERT(outp->len() > 0);
+
 		bool is_block = false;
 		int send_ec;
 		{
 			lock_guard<spin_mutex> lw(m_mutexes[L_WRITE]);
 			if (m_outs->size() > 0) {
-				m_outs->push(packet);
+				WAWO_TRACE_SOCKET("[socket]push one outp for queue not empty");
+				//we have to make our own copy
+				WWSP<packet> _outp = wawo::make_shared<packet>(*outp);
+				m_outs->push(_outp);
 				return wawo::OK;
 			}
 
-			u32_t sbytes = socket_base::send(packet->begin(), packet->len(), send_ec, flag);
+			u32_t sbytes = socket_base::send(outp->begin(), outp->len(), send_ec, flag);
 			WAWO_ASSERT(sbytes >= 0);
+			outp->skip(sbytes);
 
-			if (sbytes < packet->len() && send_ec == wawo::E_SOCKET_SEND_BLOCK) {
-				packet->skip(sbytes);
-				m_outs->push(packet);
-				WAWO_TRACE_SOCKET("[socket][%s]socket::send() blocked, left: %u, sent: %u", info().to_lencstr().cstr, packet->len(), sbytes);
+			if (outp->len() > 0) {
+				outp->skip(sbytes);
+				WWSP<packet> _outp = wawo::make_shared<packet>(*outp);
+				m_outs->push(_outp);
+				WAWO_TRACE_SOCKET("[socket][%s]push one outp to queue for socket::send() blocked, left: %u, sent: %u", info().to_lencstr().cstr, _outp->len(), sbytes);
+			}
+
+			if ( send_ec == wawo::E_SOCKET_SEND_BLOCK) {
 				m_async_wt = wawo::time::curr_milliseconds();
 				is_block = true;
-
 				send_ec = wawo::OK;
 			}
 		}

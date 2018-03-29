@@ -66,21 +66,21 @@ namespace wawo { namespace net { namespace standard_socket {
 		WAWO_ASSERT(buffer != NULL);
 		WAWO_ASSERT(len > 0);
 
-		u32_t sent_total = 0;
+		u32_t R = 0;
 
 		//TRY SEND
 		do {
-			int sent = ::send(fd, reinterpret_cast<const char*>(buffer) + sent_total, len - sent_total, flag);
-			if ( WAWO_LIKELY(sent>0) ) {
+			int r = ::send(fd, reinterpret_cast<const char*>(buffer) + R, len - R, flag);
+			if ( WAWO_LIKELY(r>0) ) {
 				ec_o = wawo::OK;
-				sent_total += sent;
-				if (sent_total == len) {
+				R += r;
+				if (R == len) {
 					break;
 				}
 			}
 			else {
 
-				WAWO_ASSERT(sent == -1);
+				WAWO_ASSERT(r == -1);
 				int ec = socket_get_last_errno();
 				if (IS_ERRNO_EQUAL_WOULDBLOCK(ec)) {
 					ec_o = wawo::E_SOCKET_SEND_BLOCK;
@@ -98,7 +98,7 @@ namespace wawo { namespace net { namespace standard_socket {
 		} while (true);
 
 		WAWO_TRACE_SOCKET_INOUT("[wawo::net::send][#%d]send, to send: %d, sent: %d, ec: %d", fd, len, sent_total, ec_o );
-		return sent_total;
+		return R;
 	}
 
 	inline u32_t recv(int const&fd, byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag ) {
