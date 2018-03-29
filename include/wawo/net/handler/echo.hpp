@@ -15,7 +15,7 @@ namespace wawo {namespace net {namespace handler {
 public:
 	void read(WWRP<wawo::net::socket_handler_context> const& ctx, WWSP<wawo::packet> const& income)
 	{
-		WAWO_INFO("<<< %s", wawo::len_cstr( (char*)income->begin(), income->len() ).cstr );
+		//WAWO_INFO("<<< %s", wawo::len_cstr( (char*)income->begin(), income->len() ).cstr );
 		ctx->write(income);
 	}
 };

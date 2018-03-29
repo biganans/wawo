@@ -26,7 +26,8 @@ namespace wawo { namespace net { namespace handler {
 			S_FRAME_READ_MASKING_KEY,
 			S_FRAME_READ_PAYLOAD,
 			S_FRAME_END,
-			S_MESSAGE_END
+			S_MESSAGE_END,
+			S_FRAME_CLOSE_RECEIVED
 		};
 
 		enum frame_opcode {
@@ -104,11 +105,12 @@ namespace wawo { namespace net { namespace handler {
 		WWSP<packet> m_tmp_message; //for fragmented message
 		u8_t m_fragmented_opcode;
 		u8_t m_fragmented_begin;
-		
+		u8_t m_close_sent;
 	public:
 			websocket() :
 				m_state(S_WAIT_CLIENT_HANDSHAKE_REQ),
-				m_http_parser(NULL)
+				m_http_parser(NULL),
+				m_close_sent(false)
 			{}
 
 			virtual ~websocket() {}
@@ -116,7 +118,7 @@ namespace wawo { namespace net { namespace handler {
 
 			void read(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& income) ;
 			void write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet);
-
+			void close(WWRP<socket_handler_context> const& ctx, int const& code = 0);
 		protected:
 			int http_on_message_begin();
 			int http_on_url(const char* data, u32_t const& len);

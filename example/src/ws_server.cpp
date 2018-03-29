@@ -8,11 +8,17 @@ class ws_server_handler :
 {
 public:
 	void accepted(WWRP<wawo::net::socket_handler_context> const& ctx, WWRP<wawo::net::socket> const& newsocket) {
+
+		newsocket->turnon_nodelay();
+
 		WWRP<wawo::net::socket_handler_abstract> ws = wawo::make_ref<wawo::net::handler::websocket>();
 		newsocket->pipeline()->add_last( ws );
 
 		WWRP<wawo::net::socket_handler_abstract> dump = wawo::make_ref<wawo::net::handler::dump_in_len>();
 		newsocket->pipeline()->add_last(dump);
+
+		WWRP<wawo::net::socket_handler_abstract> echo = wawo::make_ref<wawo::net::handler::echo>();
+		newsocket->pipeline()->add_last(echo);
 
 		(void)ctx;
 	}

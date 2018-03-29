@@ -82,6 +82,7 @@ namespace wawo { namespace net { namespace handler {
 		m_tmp_frame->extdata = wawo::make_shared<packet>();
 
 		m_tmp_message = wawo::make_shared<packet>();
+		ctx->so->turnon_nodelay();
 		ctx->fire_connected();
 	}
 
@@ -304,28 +305,13 @@ _CHECK:
 				WAWO_ASSERT(m_tmp_frame->H.rsv2 == 0);
 				WAWO_ASSERT(m_tmp_frame->H.rsv3 == 0);
 
-
 				switch (m_tmp_frame->H.opcode) {
 				case OP_CLOSE:
 					{
 						//reply a CLOSE, then do ctx->close();
 						WAWO_DEBUG("<<< op_close");
-						WWSP<ws_frame> _CLOSE = wawo::make_shared<ws_frame>();
-						_CLOSE->H.fin = 0x1;
-						_CLOSE->H.rsv1 = 0x0;
-						_CLOSE->H.rsv2 = 0x0;
-						_CLOSE->H.rsv3 = 0x0;
-						_CLOSE->H.opcode = OP_CLOSE;
-
-						_CLOSE->H.mask = 0x0;
-						_CLOSE->H.len = 0x0 ;
-
-						WWSP<packet> outp_close = wawo::make_shared<packet>();
-						encode_frame_H(_CLOSE->H, outp_close);
-						//outp_close->write<u32_t>(12013);
-
-						ctx->write(outp_close);
-						ctx->close();
+						close(ctx);
+						m_state = S_FRAME_CLOSE_RECEIVED;
 					}
 					break;
 				case OP_PING:
@@ -341,6 +327,16 @@ _CHECK:
 						_PONG->H.mask = 0x0;
 						_PONG->H.len = m_tmp_frame->appdata->len();
 						_PONG->appdata = m_tmp_frame->appdata;
+
+						WWSP<packet> outp_PONG = wawo::make_shared<packet>();
+						encode_frame_H(_PONG->H, outp_PONG);
+						outp_PONG->write(m_tmp_frame->appdata->begin(), m_tmp_frame->appdata->len());
+						m_tmp_frame->appdata->reset();
+
+						ctx->write(outp_PONG);
+
+						m_state = S_FRAME_BEGIN;
+						goto _CHECK;
 					}
 					break;
 				case OP_PONG:
@@ -383,13 +379,67 @@ _CHECK:
 				goto _CHECK;
 			}
 			break;
+		case S_FRAME_CLOSE_RECEIVED:
+			{/*exit point*/}
+			break;
 		}
 	}
 
+
 	void websocket::write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) {
 
+		WWSP<ws_frame> _frame = wawo::make_shared<ws_frame>();
+		_frame->H.fin = 0x1;
+		_frame->H.rsv1 = 0x0;
+		_frame->H.rsv2 = 0x0;
+		_frame->H.rsv3 = 0x0;
+		_frame->H.opcode = OP_TEXT;
+		_frame->H.mask = 0x0;
 
+		if (outlet->len() > 0xFFFF) {
+			_frame->H.len = 0x7F;
+			WWSP<packet> _h = wawo::make_shared<packet>();
+			encode_frame_H(_frame->H, _h);
+			_h->write<u64_t>(outlet->len());
+			outlet->write_left( _h->begin(), _h->len() );
+		}
+		else if (outlet->len() > 0x7D) {
+			WAWO_ASSERT(outlet->len() <= 0xFFFF);
+			_frame->H.len = 0x7E;
+			WWSP<packet> _h = wawo::make_shared<packet>();
+			encode_frame_H(_frame->H, _h);
+			_h->write<u16_t>(outlet->len());
+			outlet->write_left(_h->begin(), _h->len());
+		}
+		else {
+			_frame->H.len = outlet->len();
+			WWSP<packet> _h = wawo::make_shared<packet>();
+			encode_frame_H(_frame->H, _h);
+			outlet->write_left(_h->begin(), _h->len());
+		}
 
+		ctx->write(outlet);
+	}
+
+	void websocket::close(WWRP<socket_handler_context> const& ctx, int const& code ) {
+
+		if (m_close_sent == true) { return; }
+
+		WWSP<ws_frame> _CLOSE = wawo::make_shared<ws_frame>();
+		_CLOSE->H.fin = 0x1;
+		_CLOSE->H.rsv1 = 0x0;
+		_CLOSE->H.rsv2 = 0x0;
+		_CLOSE->H.rsv3 = 0x0;
+		_CLOSE->H.opcode = OP_CLOSE;
+
+		_CLOSE->H.mask = 0x0;
+		_CLOSE->H.len = 0x0;
+
+		WWSP<packet> outp_CLOSE = wawo::make_shared<packet>();
+		encode_frame_H(_CLOSE->H, outp_CLOSE);
+		ctx->write(outp_CLOSE);
+		m_close_sent = true;
+		ctx->close(code);
 	}
 
 
