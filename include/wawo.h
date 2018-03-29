@@ -32,6 +32,9 @@
 #include <wawo/net/socket.hpp>
 #include <wawo/net/socket_observer.hpp>
 
+#include <wawo/net/protocol/http.hpp>
+#include <wawo/net/protocol/icmp.hpp>
+
 #include <wawo/net/handler/hlen.hpp>
 #include <wawo/net/handler/symmetric_encrypt.hpp>
 #include <wawo/net/handler/dh_symmetric_encrypt.hpp>
