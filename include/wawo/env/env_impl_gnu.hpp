@@ -18,7 +18,7 @@ namespace wawo { namespace env {
 		env_impl() {}
 		~env_impl() {}
 
-		int GetLocalIpList( std::vector<wawo::net::socket_addr>& addrs ) {
+		int GetLocalIpList( std::vector<wawo::net::socketaddr>& addrs ) {
 
             struct ifaddrs *ifaddr;
             struct ifaddrs *ifa;
@@ -38,7 +38,7 @@ namespace wawo { namespace env {
 
                 family = ifa->ifa_addr->sa_family;
 
-                wawo::net::family wfamily = wawo::net::F_UNKNOWN ;
+                wawo::net::s_family wfamily = wawo::net::F_UNKNOWN ;
 
 
                 if(  family == AF_INET ) {
@@ -54,7 +54,7 @@ namespace wawo { namespace env {
                 }
 
                 if( s == 0) {
-                	wawo::net::socket_addr info;
+                	wawo::net::socketaddr info;
                 	info.so_family = wfamily;
 
 					//memset( (void*)&info.address[0], 0, sizeof(info.address) );

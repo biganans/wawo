@@ -95,39 +95,39 @@ namespace wawo { namespace net {
 			return identity() > addr.identity();
 		}
 
-		const len_cstr get_ip() const ;
-		inline ipv4::Port get_port() const {
-			return get_hostsequence_port();
+		const len_cstr ip() const ;
+		inline ipv4::Port port() const {
+			return hport();
 		}
 
-		inline ipv4::Ip get_hostsequence_ulongip() const {
-			return ntohl(get_netsequence_ulongip());
+		inline ipv4::Ip hip() const {
+			return ::ntohl(nip());
 		}
-		inline ipv4::Port get_hostsequence_port() const {
-			return ntohs(get_netsequence_port());
+		inline ipv4::Port hport() const {
+			return ::ntohs(nport());
 		}
-		inline ipv4::Port get_netsequence_port() const {
+		inline ipv4::Port nport() const {
 			return ((m_identity&0xFFFF));
 		}
-		inline ipv4::Ip get_netsequence_ulongip() const {
+		inline ipv4::Ip nip() const {
 			return (((m_identity>>16)&0xFFFFFFFF));
 		}
 
-		inline void set_netsequence_ulongip( ipv4::Ip const& ulongIp ) {
+		inline void setnip( ipv4::Ip const& ulongIp ) {
 			ipv4::Port port = (m_identity&0xFFFF);
 			m_identity = 0;
 			m_identity = (m_identity|ulongIp)<<16 ;
 			m_identity = (m_identity|port);
 		}
 
-		inline void set_netsequence_port( ipv4::Port const& port ) {
+		inline void setnport( ipv4::Port const& port ) {
 			ipv4::Ip current_ip = (m_identity>>16)&0xFFFFFFFF;
 			m_identity = 0;
 			m_identity = (m_identity|current_ip)<<16;
 			m_identity = (m_identity|(port&0xFFFF));
 		}
 
-		len_cstr address_info() const;
+		len_cstr info() const;
 	};
 
 	struct socketaddr {
@@ -150,8 +150,8 @@ namespace wawo { namespace net {
 	extern int get_addrinfo_by_host(char const* const hostname, char const* const servicename, std::vector<socketaddr>& ips, int const& filter);
 	extern int get_one_ipaddr_by_host(const char* hostname, len_cstr& ip, int const& filter);
 
-	extern int convert_to_netsequence_ulongip_fromhost(const char* hostname, ipv4::Ip& ip);
-	extern int convert_to_netsequence_ulongip_fromip(const char* ipaddr, ipv4::Ip& ip);
+	extern int hostton(const char* hostname, ipv4::Ip& ip);
+	extern int ipton(const char* ipaddr, ipv4::Ip& ip);
 
 	extern bool is_ipv4_in_dotted_decimal_notation(const char* string);
 

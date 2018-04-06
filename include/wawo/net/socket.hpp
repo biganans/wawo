@@ -11,11 +11,9 @@
 #include <wawo/net/address.hpp>
 
 #include <wawo/net/socket_base.hpp>
-#include <wawo/net/socket_pipeline.hpp>
-
 #include <wawo/net/socket_observer.hpp>
 
-#include <future>
+#include <wawo/net/channel.hpp>
 
 #define WAWO_MAX_ASYNC_WRITE_PERIOD	(90000L) //90 seconds
 
@@ -27,7 +25,7 @@ namespace wawo { namespace net {
 	struct async_cookie :
 		public ref_base
 	{
-		WWRP<socket_base> so;
+		WWRP<socket> so;
 		WWRP<ref_base> cookie;
 		fn_io_event success;
 		fn_io_event_error error;
@@ -70,7 +68,8 @@ namespace wawo { namespace net {
 	};
 
 	class socket:
-		public socket_base
+		public socket_base,
+		public channel
 	{
 		spin_mutex m_mutexes[L_MAX];
 		u8_t	m_state;
@@ -93,7 +92,6 @@ namespace wawo { namespace net {
 		WWSP<std::queue<WWSP<wawo::packet>>> m_outs;
 
 		WWRP<observer> m_observer;
-		WWRP<socket_pipeline> m_pipeline;
 
 		int m_ec;
 		void _init();
@@ -112,7 +110,6 @@ namespace wawo { namespace net {
 			m_rps_q(NULL),
 			m_rps_q_standby(NULL),
 			m_observer(NULL),
-			m_pipeline(NULL),
 			m_ec(0)
 		{
 			_init();
@@ -130,7 +127,6 @@ namespace wawo { namespace net {
 			m_rps_q(NULL),
 			m_rps_q_standby(NULL),
 			m_observer(NULL),
-			m_pipeline(NULL),
 			m_ec(0)
 		{
 			_init();
@@ -148,13 +144,12 @@ namespace wawo { namespace net {
 			m_rps_q(NULL),
 			m_rps_q_standby(NULL),
 			m_observer(NULL),
-			m_pipeline(NULL),
 			m_ec(0)
 		{
 			_init();
 		}
 
-		~socket() 
+		~socket()
 		{
 			_deinit();
 		}
@@ -187,14 +182,6 @@ namespace wawo { namespace net {
 			return ((m_outs->size()>0) && (m_async_wt != 0) && (now>(m_async_wt + m_delay_wp)));
 		}
 
-		inline WWRP<observer> observer() const {
-			return m_observer;
-		}
-
-		inline WWRP<socket_pipeline> pipeline() const {
-			return m_pipeline;
-		}
-
 		int open();
 		int connect(address const& addr);
 
@@ -219,7 +206,9 @@ namespace wawo { namespace net {
 				WAWO_ASSERT(m_state == S_CONNECTING);
 				m_state = S_CONNECTED;
 			}
-			m_pipeline->fire_connected();
+
+			//pipeline()->fire_connected();
+			ch_connected();
 			begin_async_read(WATCH_OPTION_INFINITE);
 		}
 
@@ -228,8 +217,8 @@ namespace wawo { namespace net {
 				lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
 				WAWO_ASSERT(is_nonblocking());
 				WAWO_ASSERT(m_state == S_CONNECTING);
-				WAWO_ASSERT(m_pipeline != NULL);
 			}
+
 			close(code);
 		}
 
@@ -238,9 +227,6 @@ namespace wawo { namespace net {
 		void handle_async_write( int& ec_o);
 
 	private:
-		
-		void init_pipeline();
-		void deinit_pipeline();
 
 		u32_t _receive_packets(WWSP<wawo::packet> arrives[], u32_t const& size, int& ec_o );
 		u32_t _flush(bool& left, int& ec_o);
@@ -302,7 +288,7 @@ namespace wawo { namespace net {
 			TRACE_IOE("[socket][%s][begin_async_connect]watch IOE_WRITE", info().to_lencstr().cstr );
 
 			WWRP<async_cookie> _cookie = wawo::make_ref<async_cookie>();
-			_cookie->so = WWRP<socket_base>(this);
+			_cookie->so = WWRP<socket>(this);
 			_cookie->cookie = cookie;
 			_cookie->success = fn;
 			_cookie->error = err;
@@ -320,7 +306,7 @@ namespace wawo { namespace net {
 
 			WWRP<async_cookie> _cookie = wawo::make_ref<async_cookie>();
 			_cookie->cookie = cookie;
-			_cookie->so = WWRP<socket_base>(this);
+			_cookie->so = WWRP<socket>(this);
 
 			if (m_rflag&SHUTDOWN_RD) {
 				TRACE_IOE("[socket][%s][begin_async_read]cancel for rd shutdowned already", info().to_lencstr().cstr );
@@ -366,7 +352,7 @@ namespace wawo { namespace net {
 
 			WWRP<async_cookie> _cookie = wawo::make_ref<async_cookie>();
 			_cookie->cookie = cookie;
-			_cookie->so = WWRP<socket_base>(this);
+			_cookie->so = WWRP<socket>(this);
 
 			if (m_wflag&SHUTDOWN_WR) {
 				TRACE_IOE("[socket][%s][begin_async_write]cancel for wr shutdowned already", info().to_lencstr().cstr );
@@ -402,6 +388,14 @@ namespace wawo { namespace net {
 			lock_guard<spin_mutex> lg_r(m_mutexes[L_WRITE]);
 			_end_async_write();
 		}
+
+		//ch
+		inline int ch_id() const { return fd(); }
+		inline int ch_close(int const& ec) { return close(ec); }
+		inline int ch_close_read(int const& ec) { return shutdown(SHUTDOWN_RD, ec); }
+		inline int ch_close_write(int const& ec) { return shutdown(SHUTDOWN_WR, ec); }
+
+		inline int ch_write(WWSP<packet> const& outlet) { return send_packet(outlet); }
 	};
 }}
 #endif

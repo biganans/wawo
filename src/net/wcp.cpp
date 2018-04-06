@@ -73,10 +73,10 @@ namespace wawo { namespace net {
 	}
 
 	inline wawo::u32_t four_tuple_hash(wawo::net::address const& addr1, wawo::net::address const& addr2) {
-		return ((wawo::u32_t)(addr1.get_hostsequence_ulongip()) * 59) ^
-			((wawo::u32_t)(addr2.get_hostsequence_ulongip())) ^
-			((wawo::u32_t)(addr1.get_port()) << 16) ^
-			((wawo::u32_t)(addr2.get_port()))
+		return ((wawo::u32_t)(addr1.hip()) * 59) ^
+			((wawo::u32_t)(addr2.hip())) ^
+			((wawo::u32_t)(addr1.port()) << 16) ^
+			((wawo::u32_t)(addr2.port()))
 			;
 	}
 
@@ -94,7 +94,7 @@ namespace wawo { namespace net {
 #endif
 		WAWO_RETURN_V_IF_MATCH(ec, ((ec == wawo::OK) && (nbytes == len)) );
 		WAWO_WARN("[wcp]WCB::send_pack_to_address failed: %d, sent: %u, sendto: %s, seq: %u, flag: %u, ack: %u, wnd: %u",
-			ec, nbytes, to.address_info().cstr, opack->header.seq, opack->header.flag, opack->header.ack, opack->header.wnd);
+			ec, nbytes, to.info().cstr, opack->header.seq, opack->header.flag, opack->header.ack, opack->header.wnd);
 		return ec;
 	}
 
@@ -729,11 +729,11 @@ namespace wawo { namespace net {
 	void WCB::check_send(u64_t const& now) {
 
 		if (s_flag&WRITE_SEND_ERROR) {
-			WAWO_WARN("[wcp][%u]WCB::check_send, send error already: %s", fd, remote_addr.address_info().cstr);
+			WAWO_WARN("[wcp][%u]WCB::check_send, send error already: %s", fd, remote_addr.info().cstr);
 			return;
 		}
 
-		
+
 		{
 			//update rwnd manually
 			if ( (r_flag&READ_RWND_MORE_THAN_MTU) && (now - r_timer_last_rwnd_update)>WCP_RWND_CHECK_GRANULARITY) {
@@ -762,7 +762,7 @@ namespace wawo { namespace net {
 				s_sending_ignore_seq_space.pop();
 			}
 		}
-		
+
 _begin_send:
 		while ( snd_sending.size() ) {
 			WWSP<WCB_pack>& pack = snd_sending.front();
@@ -773,7 +773,7 @@ _begin_send:
 				WCP_TRACE("[wcp]congest seq: %u,flag: %u,size: %u,una: %u,cwnd: %u,rwnd: %u,flight: %u,ssthresh: %u,rto: %u,srtt: %u,rttvar: %u",
 					pack->header.seq, pack->header.flag, ntotal_bytes,snd_info.una, snd_info.cwnd, snd_info.rwnd, snd_nflight_bytes, snd_info.ssthresh, rto,srtt,rttvar
 				);
-				
+
 				return ;
 			}
 
@@ -843,7 +843,7 @@ _begin_send:
 			snd_sending.pop();
 		}
 
-		
+
 		while (s_sending_standby.size()) {
 			snd_sending.push(s_sending_standby.front());
 			s_sending_standby.pop();
@@ -867,7 +867,7 @@ _begin_send:
 				snd_sending.push(opack);
 
 				nmax_try_bytes -= nread;
-			}			
+			}
 		}
 
 		if (snd_sending.size()) {
@@ -905,17 +905,17 @@ _begin_send:
 			//according to RFC 793, if state in LISTEN, just ignore RST
 			if (WCPPACK_TEST_FLAG( *pack, WCP_FLAG_RST)) {
 				WAWO_ASSERT(state == WCB_LISTEN);
-				WAWO_WARN("[wcp]WCB::accept, flag none WCP_FLAG_SYN, flag: %u, ignore, remote addr: %s, reply rst", pack->header.flag, from.address_info().cstr);
+				WAWO_WARN("[wcp]WCB::accept, flag none WCP_FLAG_SYN, flag: %u, ignore, remote addr: %s, reply rst", pack->header.flag, from.info().cstr);
 				continue;
 			}
 
 			if (!WCPPACK_TEST_FLAG( *pack, WCP_FLAG_SYN)) {
-				WAWO_WARN("[wcp]WCB::accept, flag none WCP_FLAG_SYN, flag: %u, remote addr: %s, reply rst", pack->header.flag, from.address_info().cstr);
+				WAWO_WARN("[wcp]WCB::accept, flag none WCP_FLAG_SYN, flag: %u, remote addr: %s, reply rst", pack->header.flag, from.info().cstr);
 				reply_rst_to_address(so, pack->header.ack, from);
 				continue;
 			}
 
-			WAWO_DEBUG("[wcp]WCB::accept, receive new syn from: %s", from.address_info().cstr);
+			WAWO_DEBUG("[wcp]WCB::accept, receive new syn from: %s", from.info().cstr);
 			WWRP<socket> accepted_so = wawo::make_ref<socket>(so->buffer_cfg(), F_PF_INET, T_DGRAM, P_UDP, OPTION_NONE);
 
 			int openrt = accepted_so->open();
@@ -947,10 +947,10 @@ _begin_send:
 
 			sockaddr_in addr_local;
 			addr_local.sin_family = AF_INET;
-			addr_local.sin_addr.s_addr = local_addr.get_netsequence_ulongip();
+			addr_local.sin_addr.s_addr = local_addr.nip();
 
 #if WAWO_ISGNU
-			addr_local.sin_port = local_addr.get_netsequence_port();
+			addr_local.sin_port = local_addr.nport();
 #else
 			addr_local.sin_port = 0;
 #endif
@@ -999,7 +999,7 @@ _begin_send:
 			wcb->SYN_RCVD(pack);
 
 			if ( wcp::instance()->add_to_four_tuple_hash_map(wcb)<0 ) {
-				WAWO_WARN("[wcp]WCB::accept, add_to_four_tuple_hash_map failed, remote addr: %s, reply rst", from.address_info().cstr);
+				WAWO_WARN("[wcp]WCB::accept, add_to_four_tuple_hash_map failed, remote addr: %s, reply rst", from.info().cstr);
 				accepted_so->close();
 				reply_rst_to_address(so, pack->header.ack, wcb->remote_addr );
 				continue;
@@ -1063,7 +1063,7 @@ _begin_send:
 		inpack->from = from;
 		pack = inpack;
 
-		WAWO_DEBUG("[wcp]WCB::recv_pack, from: %s, remote: %s", from.address_info().cstr, remote_addr.address_info().cstr);
+		WAWO_DEBUG("[wcp]WCB::recv_pack, from: %s, remote: %s", from.info().cstr, remote_addr.info().cstr);
 		return wawo::OK;
 	}
 
@@ -1141,8 +1141,8 @@ _begin_send:
 
 		if (state == WCB_LISTEN) {
 			state = WCB_CLOSED;
-		} 
-		
+		}
+
 		if (state == WCB_SYN_SENT || state == WCB_SYNING || WCB_SYN_RECEIVED ) {
 			state = WCB_CLOSED;
 			if (wcb_errno == wawo::OK) {
@@ -1445,8 +1445,8 @@ _begin_send:
 
 		sockaddr_in* addr_in = (sockaddr_in*) addr;
 		addr_in->sin_family = SOCK_DGRAM;
-		addr_in->sin_port = _wcb->remote_addr.get_netsequence_port();
-		addr_in->sin_addr.s_addr = _wcb->remote_addr.get_netsequence_ulongip();
+		addr_in->sin_port = _wcb->remote_addr.nport();
+		addr_in->sin_addr.s_addr = _wcb->remote_addr.nip();
 
 		(void)addrlen;
 
@@ -1631,8 +1631,8 @@ _begin_send:
 
 		sockaddr_in* addr_in = (sockaddr_in*)addr;
 		addr_in->sin_family = SOCK_DGRAM;
-		addr_in->sin_port = wcb->local_addr.get_netsequence_port();
-		addr_in->sin_addr.s_addr = wcb->local_addr.get_netsequence_ulongip();
+		addr_in->sin_port = wcb->local_addr.nport();
+		addr_in->sin_addr.s_addr = wcb->local_addr.nip();
 
 		return wawo::OK;
 	}

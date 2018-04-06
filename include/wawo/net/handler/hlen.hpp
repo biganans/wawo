@@ -2,13 +2,13 @@
 #define _WAWO_NET_HANDLER_HLEN_HPP
 
 #include <wawo/core.hpp>
-#include <wawo/net/socket_handler.hpp>
+#include <wawo/net/channel_handler.hpp>
 
 namespace wawo { namespace net { namespace handler {
 
 	class hlen :
-		public socket_inbound_handler_abstract,
-		public socket_outbound_handler_abstract
+		public channel_inbound_handler_abstract,
+		public channel_outbound_handler_abstract
 	{
 		enum parse_state {
 			S_READ_LEN,
@@ -25,7 +25,7 @@ namespace wawo { namespace net { namespace handler {
 		hlen() :m_state(S_READ_LEN) {}
 		virtual ~hlen() {}
 
-		void read( WWRP<socket_handler_context> const& ctx, WWSP<packet> const& income ) {
+		void read( WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income ) {
 			WAWO_ASSERT(income != NULL);
 
 			bool bExit = false;
@@ -64,7 +64,7 @@ namespace wawo { namespace net { namespace handler {
 			} while (!bExit);
 		}
 
-		int write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) {
+		int write(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& outlet) {
 			outlet->write_left<u32_t>(outlet->len());
 			return ctx->write(outlet);
 		}

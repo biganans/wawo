@@ -131,20 +131,19 @@ namespace wawo { namespace net {
 		}
 
 		WAWO_ASSERT( infos.size() != 0 );
-		ip_o = infos[0].so_address.get_ip() ;
+		ip_o = infos[0].so_address.ip() ;
 		return wawo::OK;
 	}
 
-	int convert_to_netsequence_ulongip_fromhost( const char* hostname, ipv4::Ip& ip ) {
+	int hostton( const char* hostname, ipv4::Ip& ip ) {
 		WAWO_ASSERT( strlen(hostname) > 0 );
 		len_cstr ipaddr;
 		int cret = get_one_ipaddr_by_host( hostname, ipaddr, 0 );
 		WAWO_RETURN_V_IF_NOT_MATCH( cret, cret==wawo::OK );
-
-		return convert_to_netsequence_ulongip_fromip(ipaddr.cstr, ip);
+		return ipton(ipaddr.cstr, ip);
 	}
 
-	int convert_to_netsequence_ulongip_fromip( const char* ipaddr, ipv4::Ip& ip ) {
+	int ipton( const char* ipaddr, ipv4::Ip& ip ) {
 		WAWO_ASSERT( strlen(ipaddr) > 0 );
 
 		struct in_addr inaddr;
@@ -201,7 +200,7 @@ namespace wawo { namespace net {
 		//WAWO_ASSERT( port != 0 );
 
 		ipv4::Ip ulip = 0;
-		int cret = convert_to_netsequence_ulongip_fromip(ip, ulip);
+		int cret = ipton(ip, ulip);
 		WAWO_ASSERT( cret == wawo::OK );
 
 		if( cret == wawo::OK ) {
@@ -218,7 +217,7 @@ namespace wawo { namespace net {
 		m_identity	= (m_identity | (( socketAddr.sin_port ) & 0xFFFF )) ;
 	}
 
-	const len_cstr address::get_ip() const {
+	const len_cstr address::ip() const {
 		in_addr ia ;
 		ia.s_addr = ((m_identity>>16)&0xFFFFFFFF);
 		char addr[16] = {0};
@@ -229,9 +228,9 @@ namespace wawo { namespace net {
 		return len_cstr();
 	}
 
-	len_cstr address::address_info() const {
+	len_cstr address::info() const {
 		char info[32] = { 0 };
-		int rtval = snprintf(const_cast<char*>(info), sizeof(info) / sizeof(info[0]), "%s:%d", get_ip().cstr, get_hostsequence_port());
+		int rtval = snprintf(const_cast<char*>(info), sizeof(info) / sizeof(info[0]), "%s:%d", ip().cstr, hport());
 		WAWO_ASSERT(rtval > 0);
 		(void)rtval;
 		return len_cstr(info, wawo::strlen(info));

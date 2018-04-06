@@ -3,8 +3,8 @@
 #include "services/ServiceShare.h"
 
 class hello_handler :
-	public wawo::net::socket_inbound_handler_abstract,
-	public wawo::net::socket_activity_handler_abstract
+	public wawo::net::channel_inbound_handler_abstract,
+	public wawo::net::channel_activity_handler_abstract
 {
 
 private:
@@ -20,7 +20,7 @@ public:
 	{
 	}
 
-	void read(WWRP<wawo::net::socket_handler_context> const& ctx, WWSP<wawo::packet> const& income ) {
+	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<wawo::packet> const& income ) {
 		WAWO_INFO(">>> %u", income->len() ) ;
 
 		WWSP<wawo::packet> outp = wawo::make_shared<wawo::packet>();
@@ -28,7 +28,7 @@ public:
 		ctx->write(outp);
 	}
 
-	void closed( WWRP<wawo::net::socket_handler_context> const& ctx ) {
+	void closed( WWRP<wawo::net::channel_handler_context> const& ctx ) {
 		WAWO_INFO("socket closed");
 	}
 
@@ -38,13 +38,13 @@ public:
 		int rt = so->open();
 		WAWO_ASSERT(rt == wawo::OK);
 
-		so->pipeline()->add_last( WWRP<wawo::net::socket_handler_abstract>(this) );
+		so->pipeline()->add_last( WWRP<wawo::net::channel_handler_abstract>(this) );
 		rt = so->async_connect(m_addrinfo.so_address );
 
 		WAWO_ASSERT(rt == wawo::OK || rt == wawo::E_SOCKET_CONNECTING );
 	}
 
-	void connected( WWRP<wawo::net::socket_handler_context> const& ctx ) {
+	void connected( WWRP<wawo::net::channel_handler_context> const& ctx ) {
 		services::HelloProcessor::SendHello(ctx);
 
 		++m_curr_peer_count;
@@ -53,7 +53,7 @@ public:
 		}
 	}
 
-	void error(WWRP<wawo::net::socket_handler_context> const& ctx) {
+	void error(WWRP<wawo::net::channel_handler_context> const& ctx) {
 		async_spawn();
 		ctx->fire_error();
 	}
@@ -83,7 +83,7 @@ int main( int argc, char** argv ) {
 		int rt = so->open();
 		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 
-		WWRP<wawo::net::socket_handler_abstract> hello = wawo::make_ref<hello_handler>( raddr,20 );
+		WWRP<wawo::net::channel_handler_abstract> hello = wawo::make_ref<hello_handler>( raddr,20 );
 		so->pipeline()->add_last(hello);
 
 		rt = so->async_connect(raddr.so_address);

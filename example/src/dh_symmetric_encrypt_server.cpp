@@ -3,19 +3,22 @@
 #include <wawo.h>
 
 class listen_handler :
-	public wawo::net::socket_accept_handler_abstract
+	public wawo::net::channel_accept_handler_abstract
 {
 public:
 
-	void accepted(WWRP<wawo::net::socket_handler_context> const& ctx, WWRP<wawo::net::socket> const& newso) {
-		WWRP<wawo::net::socket_handler_abstract> hlen_handler = wawo::make_ref<wawo::net::handler::hlen>();
-		newso->pipeline()->add_last(hlen_handler);
+	void accepted(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::net::channel> const& ch) {
+		WWRP<wawo::net::channel_handler_abstract> hlen_handler = wawo::make_ref<wawo::net::handler::hlen>();
+		ch->pipeline()->add_last(hlen_handler);
 
-		WWRP<wawo::net::socket_handler_abstract> dh = wawo::make_ref<wawo::net::handler::dh_symmetric_encrypt>();
-		newso->pipeline()->add_last(dh);
+		WWRP<wawo::net::channel_handler_abstract> dh = wawo::make_ref<wawo::net::handler::dh_symmetric_encrypt>();
+		ch->pipeline()->add_last(dh);
 
-		WWRP<wawo::net::socket_handler_abstract> echo = wawo::make_ref<wawo::net::handler::echo>();
-		newso->pipeline()->add_last(echo);
+		WWRP<wawo::net::channel_handler_abstract> dumpjn = wawo::make_ref<wawo::net::handler::dump_in_len>();
+		ch->pipeline()->add_last(dumpjn);
+
+		WWRP<wawo::net::channel_handler_abstract> echo = wawo::make_ref<wawo::net::handler::echo>();
+		ch->pipeline()->add_last(echo);
 	}
 
 };
@@ -41,7 +44,7 @@ int main(int argc, char** argv) {
 		return rt;
 	}
 
-	WWRP<wawo::net::socket_handler_abstract> h = wawo::make_ref<listen_handler>();
+	WWRP<wawo::net::channel_handler_abstract> h = wawo::make_ref<listen_handler>();
 	so->pipeline()->add_last(h);
 
 	rt = so->listen();

@@ -1,19 +1,18 @@
-#ifndef _WAWO_NET_SOCKET_INVOKER_HPP
-#define _WAWO_NET_SOCKET_INVOKER_HPP
+#ifndef _WAWO_NET_CHANNEL_INVOKER_HPP
+#define _WAWO_NET_CHANNEL_INVOKER_HPP
 
 #include <wawo/core.hpp>
 #include <wawo/packet.hpp>
 
 namespace wawo { namespace net {
 
-	class socket;
-	
-	class socket_accept_invoker_abstract
+	class channel;
+	class channel_accept_invoker_abstract
 	{
-		virtual void fire_accepted( WWRP<socket> const& so) = 0;
+		virtual void fire_accepted( WWRP<channel> const& so) = 0;
 	};
 
-	class socket_activity_invoker_abstract {
+	class channel_activity_invoker_abstract {
 	public:
 		virtual void fire_connected() = 0;
 		virtual void fire_closed() = 0 ;
@@ -24,13 +23,13 @@ namespace wawo { namespace net {
 		virtual void fire_write_unblock() = 0;
 	};
 
-	class socket_inbound_invoker_abstract
+	class channel_inbound_invoker_abstract
 	{
 	public:
 		virtual void fire_read(WWSP<packet> const& income) = 0;
 	};
 
-	class socket_outbound_invoker_abstract
+	class channel_outbound_invoker_abstract
 	{
 	public:
 		virtual int write(WWSP<packet> const& out) = 0;

@@ -2,10 +2,10 @@
 #include <wawo.h>
 
 class send_hello :
-	public wawo::net::socket_activity_handler_abstract
+	public wawo::net::channel_activity_handler_abstract
 {
 public:
-	void connected(WWRP<wawo::net::socket_handler_context> const& ctx) {
+	void connected(WWRP<wawo::net::channel_handler_context> const& ctx) {
 		WAWO_INFO("client connected");
 		WWSP<wawo::packet> hello = wawo::make_shared<wawo::packet>();
 		const char* hello_str = "hello there";
@@ -27,16 +27,16 @@ int main(int argc, char** argv) {
 			return rt;
 		}
 
-		WWRP<wawo::net::socket_handler_abstract> hlenh = wawo::make_ref<wawo::net::handler::hlen>();
+		WWRP<wawo::net::channel_handler_abstract> hlenh = wawo::make_ref<wawo::net::handler::hlen>();
 		so->pipeline()->add_last(hlenh);
 
-		WWRP<wawo::net::socket_handler_abstract> dhh = wawo::make_ref<wawo::net::handler::dh_symmetric_encrypt>();
+		WWRP<wawo::net::channel_handler_abstract> dhh = wawo::make_ref<wawo::net::handler::dh_symmetric_encrypt>();
 		so->pipeline()->add_last(dhh);
 
-		WWRP<wawo::net::socket_handler_abstract> echoh = wawo::make_ref<wawo::net::handler::echo>();
+		WWRP<wawo::net::channel_handler_abstract> echoh = wawo::make_ref<wawo::net::handler::echo>();
 		so->pipeline()->add_last(echoh);
 
-		WWRP<wawo::net::socket_handler_abstract> sendh = wawo::make_ref<send_hello>();
+		WWRP<wawo::net::channel_handler_abstract> sendh = wawo::make_ref<send_hello>();
 		so->pipeline()->add_last(sendh);
 
 		wawo::net::address addr("127.0.0.1", 22311);

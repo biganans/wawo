@@ -152,9 +152,9 @@
     <ClCompile Include="..\..\src\net\protocol\http_utils.cpp" />
     <ClCompile Include="..\..\src\net\socket.cpp" />
     <ClCompile Include="..\..\src\net\socket_base.cpp" />
-    <ClCompile Include="..\..\src\net\socket_handler.cpp" />
+    <ClCompile Include="..\..\src\net\channel_handler.cpp" />
     <ClCompile Include="..\..\src\net\socket_observer.cpp" />
-    <ClCompile Include="..\..\src\net\socket_pipeline.cpp" />
+    <ClCompile Include="..\..\src\net\channel_pipeline.cpp" />
     <ClCompile Include="..\..\src\net\wcp.cpp" />
     <ClCompile Include="..\..\src\signal\signal_manager.cpp" />
     <ClCompile Include="..\..\src\task\scheduler.cpp" />
@@ -180,10 +180,12 @@
     <ClInclude Include="..\..\include\wawo\constants.h" />
     <ClInclude Include="..\..\include\wawo\context\fcontext.hpp" />
     <ClInclude Include="..\..\include\wawo\core.hpp" />
+    <ClInclude Include="..\..\include\wawo\dispatcher_abstract.hpp" />
     <ClInclude Include="..\..\include\wawo\env\env.hpp" />
     <ClInclude Include="..\..\include\wawo\env\env_impl_gnu.hpp" />
     <ClInclude Include="..\..\include\wawo\env\env_impl_win32.hpp" />
     <ClInclude Include="..\..\include\wawo\exception.hpp" />
+    <ClInclude Include="..\..\include\wawo\listener_abstract.hpp" />
     <ClInclude Include="..\..\include\wawo\log\console_logger.h" />
     <ClInclude Include="..\..\include\wawo\log\file_logger.h" />
     <ClInclude Include="..\..\include\wawo\log\format_interface.h" />
@@ -195,6 +197,7 @@
     <ClInclude Include="..\..\include\wawo\math\formula.hpp" />
     <ClInclude Include="..\..\include\wawo\memory.hpp" />
     <ClInclude Include="..\..\include\wawo\net\address.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\channel.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\dh_symmetric_encrypt.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\dump_in_len.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\dump_in_text.hpp" />
@@ -204,6 +207,7 @@
     <ClInclude Include="..\..\include\wawo\net\handler\hlen.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\symmetric_encrypt.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\websocket.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\mux_pipeline.hpp" />
     <ClInclude Include="..\..\include\wawo\net\observer_abstract.hpp" />
     <ClInclude Include="..\..\include\wawo\net\observer_impl\epoll.hpp" />
     <ClInclude Include="..\..\include\wawo\net\observer_impl\select.hpp" />
@@ -212,10 +216,10 @@
     <ClInclude Include="..\..\include\wawo\net\protocol\icmp.hpp" />
     <ClInclude Include="..\..\include\wawo\net\socket.hpp" />
     <ClInclude Include="..\..\include\wawo\net\socket_base.hpp" />
-    <ClInclude Include="..\..\include\wawo\net\socket_handler.hpp" />
-    <ClInclude Include="..\..\include\wawo\net\socket_invoker.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\channel_handler.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\channel_invoker.hpp" />
     <ClInclude Include="..\..\include\wawo\net\socket_observer.hpp" />
-    <ClInclude Include="..\..\include\wawo\net\socket_pipeline.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\channel_pipeline.hpp" />
     <ClInclude Include="..\..\include\wawo\net\wcp.hpp" />
     <ClInclude Include="..\..\include\wawo\packet.hpp" />
     <ClInclude Include="..\..\include\wawo\ringbuffer.hpp" />

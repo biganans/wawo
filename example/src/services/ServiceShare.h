@@ -53,7 +53,7 @@ namespace services {
 		{
 		}
 
-		void HandleResp(WWRP<wawo::net::socket_handler_context> const& ctx, WWSP<wawo::packet> const& resp_pack ) {
+		void HandleResp(WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<wawo::packet> const& resp_pack ) {
 			WWSP<wawo::packet> const& packet = resp_pack;
 			wawo::u32_t command = packet->read<wawo::u32_t>();
 
@@ -141,7 +141,7 @@ namespace services {
 			}
 		}
 
-		static void SendHello(WWRP<wawo::net::socket_handler_context> const& ctx) {
+		static void SendHello(WWRP<wawo::net::channel_handler_context> const& ctx) {
 
 			WWSP<wawo::packet> packet(new wawo::packet(256));
 			wawo::len_cstr hello_string = "hello server";

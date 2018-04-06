@@ -86,7 +86,7 @@ namespace wawo { namespace net {
 
 	typedef std::queue<WWRP<wawo::task::task_abstract>> TASK_Q;
 
-	class observer :
+	class observer:
 		public wawo::ref_base,
 		public wawo::net::thread_run_object_abstract
 	{

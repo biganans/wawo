@@ -11,9 +11,9 @@
 namespace wawo { namespace net { namespace handler {
 
 	class websocket :
-		public wawo::net::socket_activity_handler_abstract,
-		public wawo::net::socket_inbound_handler_abstract,
-		public wawo::net::socket_outbound_handler_abstract
+		public wawo::net::channel_activity_handler_abstract,
+		public wawo::net::channel_inbound_handler_abstract,
+		public wawo::net::channel_outbound_handler_abstract
 	{
 		enum state {
 			S_WAIT_CLIENT_HANDSHAKE_REQ,
@@ -93,11 +93,11 @@ namespace wawo { namespace net { namespace handler {
 			{}
 
 			virtual ~websocket() {}
-			void connected(WWRP<socket_handler_context> const& ctx);
+			void connected(WWRP<channel_handler_context> const& ctx);
 
-			void read(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& income) ;
-			int write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet);
-			int close(WWRP<socket_handler_context> const& ctx, int const& code = 0);
+			void read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income) ;
+			int write(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& outlet);
+			int close(WWRP<channel_handler_context> const& ctx, int const& code = 0);
 		protected:
 			int http_on_message_begin();
 			int http_on_url(const char* data, u32_t const& len);

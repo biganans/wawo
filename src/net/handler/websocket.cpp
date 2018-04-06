@@ -75,7 +75,7 @@ namespace wawo { namespace net { namespace handler {
 		SHA1_Final(out, &ctx);
 	}
 
-	void websocket::connected(WWRP<socket_handler_context> const& ctx) {
+	void websocket::connected(WWRP<channel_handler_context> const& ctx) {
 		m_income_prev = wawo::make_shared<packet>();
 		m_tmp_frame = wawo::make_shared<ws_frame>();
 		m_tmp_frame->appdata = wawo::make_shared<packet>();
@@ -86,7 +86,7 @@ namespace wawo { namespace net { namespace handler {
 		ctx->fire_connected();
 	}
 
-	void websocket::read(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& income)
+	void websocket::read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income)
 	{
 		if (income->len() == 0) {
 			WAWO_ASSERT(!"WHAT");
@@ -388,7 +388,7 @@ _CHECK:
 	}
 
 
-	int websocket::write(WWRP<socket_handler_context> const& ctx, WWSP<packet> const& outlet) {
+	int websocket::write(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& outlet) {
 
 		WWSP<ws_frame> _frame = wawo::make_shared<ws_frame>();
 		_frame->H.B1.Bit.fin = 0x1;
@@ -420,7 +420,7 @@ _CHECK:
 		return ctx->write(outlet);
 	}
 
-	int websocket::close(WWRP<socket_handler_context> const& ctx, int const& code ) {
+	int websocket::close(WWRP<channel_handler_context> const& ctx, int const& code ) {
 
 		if (m_close_sent == true) { return wawo::E_HANDLER_WEBSOCKET_CLOSED_ALREADY; }
 

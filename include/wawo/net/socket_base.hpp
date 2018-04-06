@@ -187,13 +187,12 @@ namespace wawo { namespace net {
 
 		len_cstr to_lencstr() const {
 			char _buf[1024] = { 0 };
-			int nbytes = snprintf(_buf, 1024, "#%d:L:%s-R:%s:%s", fd, laddr.address_info().cstr, raddr.address_info().cstr, protocol_str[p] );
+			int nbytes = snprintf(_buf, 1024, "#%d:L:%s-R:%s:%s", fd, laddr.info().cstr, raddr.info().cstr, protocol_str[p] );
 			return wawo::len_cstr(_buf, nbytes);
 		}
 	};
 
-	class socket_base :
-		public wawo::ref_base
+	class socket_base
 	{
 
 	private:

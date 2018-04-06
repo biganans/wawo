@@ -149,11 +149,11 @@ namespace wawo { namespace net { namespace standard_socket {
 		sockaddr_in addr_in;
 		ec_o = wawo::OK;
 
-		WAWO_ASSERT(addr.get_netsequence_ulongip() != 0);
+		WAWO_ASSERT(addr.nip() != 0);
 
 		addr_in.sin_family = AF_INET;
-		addr_in.sin_addr.s_addr = addr.get_netsequence_ulongip();
-		addr_in.sin_port = addr.get_netsequence_port();
+		addr_in.sin_addr.s_addr = addr.nip();
+		addr_in.sin_port = addr.nport();
 
 		u32_t sent_total = 0;
 
@@ -198,8 +198,8 @@ namespace wawo { namespace net { namespace standard_socket {
 
 			if ( WAWO_LIKELY(nbytes>0)) {
 				r_total = nbytes;
-				addr_o.set_netsequence_port((addr_in.sin_port));
-				addr_o.set_netsequence_ulongip(addr_in.sin_addr.s_addr);
+				addr_o.setnport((addr_in.sin_port));
+				addr_o.setnip(addr_in.sin_addr.s_addr);
 				ec_o = wawo::OK;
 				break;
 			}
@@ -652,8 +652,8 @@ namespace wawo { namespace net {
 
 			sockaddr_in addr_in;
 			addr_in.sin_family = soFamily;
-			addr_in.sin_port = addr.get_netsequence_port();
-			addr_in.sin_addr.s_addr = addr.get_netsequence_ulongip();
+			addr_in.sin_port = addr.nport();
+			addr_in.sin_addr.s_addr = addr.nip();
 
 			m_bind_addr = addr;
 			return m_fn_bind(m_fd , reinterpret_cast<sockaddr*>(&addr_in), sizeof(addr_in));
@@ -682,8 +682,8 @@ namespace wawo { namespace net {
 			int fd = m_fn_accept(m_fd, reinterpret_cast<sockaddr*>(&addrin), &addrlen);
 			WAWO_RETURN_V_IF_NOT_MATCH(fd, fd < 0);
 
-			addr.set_netsequence_ulongip(addrin.sin_addr.s_addr);
-			addr.set_netsequence_port(addrin.sin_port);
+			addr.setnip(addrin.sin_addr.s_addr);
+			addr.setnport(addrin.sin_port);
 			return fd;
 		}
 	
@@ -708,8 +708,8 @@ namespace wawo { namespace net {
 			m_sm = SM_ACTIVE;
 			sockaddr_in addr_in;
 			addr_in.sin_family = soFamily;
-			addr_in.sin_port = addr.get_netsequence_port();
-			addr_in.sin_addr.s_addr = addr.get_netsequence_ulongip();
+			addr_in.sin_port = addr.nport();
+			addr_in.sin_addr.s_addr = addr.nip();
 			int socklength = sizeof(addr_in);
 			m_addr = addr;
 

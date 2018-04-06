@@ -3,22 +3,22 @@
 
 
 class ws_server_handler :
-	public wawo::net::socket_activity_handler_abstract,
-	public wawo::net::socket_accept_handler_abstract
+	public wawo::net::channel_activity_handler_abstract,
+	public wawo::net::channel_accept_handler_abstract
 {
 public:
-	void accepted(WWRP<wawo::net::socket_handler_context> const& ctx, WWRP<wawo::net::socket> const& newsocket) {
+	void accepted(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::net::channel> const& newch ) {
 
-		newsocket->turnon_nodelay();
+		//newch->turnon_nodelay();
 
-		WWRP<wawo::net::socket_handler_abstract> ws = wawo::make_ref<wawo::net::handler::websocket>();
-		newsocket->pipeline()->add_last( ws );
+		//WWRP<wawo::net::channel_handler_abstract> ws = wawo::make_ref<wawo::net::handler::websocket>();
+		//newch->pipeline()->add_last( ws );
 
-		WWRP<wawo::net::socket_handler_abstract> dump = wawo::make_ref<wawo::net::handler::dump_in_len>();
-		newsocket->pipeline()->add_last(dump);
+		WWRP<wawo::net::channel_handler_abstract> dump = wawo::make_ref<wawo::net::handler::dump_in_len>();
+		newch->pipeline()->add_last(dump);
 
-		WWRP<wawo::net::socket_handler_abstract> echo = wawo::make_ref<wawo::net::handler::echo>();
-		newsocket->pipeline()->add_last(echo);
+		WWRP<wawo::net::channel_handler_abstract> echo = wawo::make_ref<wawo::net::handler::echo>();
+		newch->pipeline()->add_last(echo);
 
 		(void)ctx;
 	}
@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
 		return rt;
 	}
 
-	WWRP<wawo::net::socket_handler_abstract> lhandler = wawo::make_ref<ws_server_handler>();
+	WWRP<wawo::net::channel_handler_abstract> lhandler = wawo::make_ref<ws_server_handler>();
 	so->pipeline()->add_last( lhandler );
 
 	rt = so->listen();

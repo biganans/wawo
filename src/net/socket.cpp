@@ -147,7 +147,10 @@ namespace wawo { namespace net {
 
 		m_outs = wawo::make_shared< std::queue<WWSP<wawo::packet>> >();
 
-		init_pipeline();
+		WAWO_ASSERT(m_observer == NULL);
+		m_observer = wawo::net::observers::instance()->next(is_wcp());
+
+		channel::init();
 	}
 
 	void socket::_deinit() {
@@ -165,25 +168,6 @@ namespace wawo { namespace net {
 		WAWO_DELETE(m_rps_q_standby);
 
 		m_outs = NULL;
-	}
-
-	void socket::init_pipeline()
-	{
-		WAWO_ASSERT(m_observer == NULL);
-		m_observer = wawo::net::observers::instance()->next( is_wcp() );
-
-		m_pipeline = wawo::make_ref<socket_pipeline>(WWRP<socket>(this));
-		m_pipeline->init();
-		WAWO_ALLOC_CHECK(m_pipeline, sizeof(socket_pipeline));
-	}
-
-	void socket::deinit_pipeline()
-	{
-		m_observer = NULL;
-		if (m_pipeline != NULL) {
-			m_pipeline->deinit();
-			m_pipeline = NULL;
-		}
 	}
 
 	int socket::open() {
@@ -274,12 +258,12 @@ namespace wawo { namespace net {
 		if (!is_nonblocking()) return closert;
 
 		if (is_listener()) {
-			WWRP<socket_pipeline> pipeline(m_pipeline);
-			WWRP<socket> so(this);
+			//WWRP<channel_pipeline> pipeline(pipeline());
+			WWRP<channel> ch(this);
 
-			wawo::task::fn_lambda lambda_FNR = [pipeline,so]() -> void {
-				pipeline->fire_closed();
-				so->deinit_pipeline();
+			wawo::task::fn_lambda lambda_FNR = [ch]() -> void {
+				ch->ch_closed();
+				ch->deinit();
 			};
 
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
@@ -290,13 +274,12 @@ namespace wawo { namespace net {
 		if (old_state != S_CONNECTED) {
 			WAWO_ASSERT(ec !=0 );
 			
-			WWRP<socket_pipeline> pipeline(m_pipeline);
-			WWRP<socket> so(this);
+			WWRP<channel> ch(this);
 
-			wawo::task::fn_lambda lambda_FNR = [pipeline,so,ec]() -> void {
-				pipeline->fire_error();
-				pipeline->fire_closed();
-				so->deinit_pipeline();
+			wawo::task::fn_lambda lambda_FNR = [ch,ec]() -> void {
+				ch->ch_error();
+				ch->ch_closed();
+				ch->deinit();
 			};
 
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
@@ -314,19 +297,18 @@ namespace wawo { namespace net {
 			m_wflag |= SHUTDOWN_WR;
 		}
 
-		WWRP<socket_pipeline> pipeline(m_pipeline);
-		WWRP<socket> so(this);
-		wawo::task::fn_lambda lambda_FNR = [pipeline, so, sflag]() -> void {
+		WWRP<channel> ch(this);
+		wawo::task::fn_lambda lambda_FNR = [ch, sflag]() -> void {
 			if (sflag&SHUTDOWN_RD) {
-				pipeline->fire_read_shutdowned();
+				ch->ch_read_shutdowned();
 			}
 
 			if (sflag&SHUTDOWN_WR) {
-				pipeline->fire_write_shutdowned();
+				ch->ch_write_shutdowned();
 			}
 
-			pipeline->fire_closed();
-			so->deinit_pipeline ();
+			ch->ch_closed();
+			ch->deinit ();
 		};
 
 		WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
@@ -393,17 +375,16 @@ namespace wawo { namespace net {
 		if (!is_nonblocking()) return shutrt;
 		WAWO_ASSERT(sflag != 0);
 
-		WWRP<socket_pipeline> pipeline(m_pipeline);
 		WWRP<socket> so(this);
-		wawo::task::fn_lambda lambda_FNR = [pipeline, so, sflag,ec]() -> void {
+		wawo::task::fn_lambda lambda_FNR = [so, sflag,ec]() -> void {
 			if (sflag&SHUTDOWN_RD) {
 				so->end_async_read();
-				pipeline->fire_read_shutdowned();
+				so->ch_read_shutdowned();
 			}
 
 			if (sflag&SHUTDOWN_WR) {
 				so->end_async_write();
-				pipeline->fire_write_shutdowned();
+				so->ch_write_shutdowned();
 			}
 			so->__rdwr_check(ec);
 		};
@@ -490,8 +471,6 @@ namespace wawo { namespace net {
 
 	int socket::async_connect(address const& addr) {
 		
-		WAWO_ASSERT(m_pipeline != NULL);
-
 		int rt = turnon_nonblocking();
 		if (rt != wawo::OK) {
 			return rt;
@@ -499,9 +478,9 @@ namespace wawo { namespace net {
 
 		rt = connect(addr);
 		if (rt == wawo::OK) {
-			WWRP<socket> so(this);
-			wawo::task::fn_lambda _lambda = [so]() {
-				so->pipeline()->fire_connected();
+			WWRP<channel> ch(this);
+			wawo::task::fn_lambda _lambda = [ch]() {
+				ch->ch_connected();
 			};
 
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(_lambda);
@@ -541,10 +520,8 @@ namespace wawo { namespace net {
 					continue;
 				}
 
-				WAWO_ASSERT(m_pipeline != NULL);
-
-				m_pipeline->fire_accepted( accepted_sockets[i]);
-				accepted_sockets[i]->pipeline()->fire_connected();
+				ch_accepted( accepted_sockets[i]);
+				//accepted_sockets[i]->ch_connected();
 				accepted_sockets[i]->begin_async_read(WATCH_OPTION_INFINITE);
 			}
 		} while (ec_o == wawo::E_TRY_AGAIN);
@@ -602,7 +579,7 @@ namespace wawo { namespace net {
 
 			while (m_rps_q->size()) {
 				WWSP<packet>& p = m_rps_q->front();
-				m_pipeline->fire_read(p);
+				ch_read(p);
 				m_rps_q->pop();
 			}
 		}
@@ -668,9 +645,9 @@ namespace wawo { namespace net {
 				_end_async_write();
 				m_async_wt = 0;
 
-				WWRP<socket> so(this);
-				wawo::task::fn_lambda lambda = [so]() -> void {
-					so->pipeline()->fire_write_unblock();
+				WWRP<channel> ch(this);
+				wawo::task::fn_lambda lambda = [ch]() -> void {
+					ch->ch_write_unblock();
 				};
 				WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda);
 				m_observer->plan(_t);
@@ -763,7 +740,7 @@ namespace wawo { namespace net {
 		}
 
 		if (is_block) {
-			m_pipeline->fire_write_block();
+			ch_write_block();
 			begin_async_write(); //only write once
 		}
 
@@ -788,6 +765,7 @@ namespace wawo { namespace net {
 
 		return n;
 	}
+
 }} //end of ns
 
 #ifdef WAWO_PLATFORM_WIN
