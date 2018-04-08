@@ -180,6 +180,9 @@
     <ClCompile Include="..\..\src\net\channel_pipeline.cpp">
       <Filter>Source Files\src\net</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\net\channel_handler_context.cpp">
+      <Filter>Source Files\src\net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\3rd\http_parser\http_parser.h">
@@ -416,12 +419,6 @@
     <ClInclude Include="..\..\include\wawo\net\handler\dump_out_len.hpp">
       <Filter>Header Files\wawo\net\handler</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\wawo\dispatcher_abstract.hpp">
-      <Filter>Header Files\wawo</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\listener_abstract.hpp">
-      <Filter>Header Files\wawo</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\mux_pipeline.hpp">
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
@@ -435,6 +432,12 @@
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\channel_pipeline.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\io_event.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\channel_handler_context.hpp">
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
   </ItemGroup>

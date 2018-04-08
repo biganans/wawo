@@ -5,7 +5,7 @@
 #include <wawo/core.hpp>
 #include <wawo/packet.hpp>
 #include <wawo/net/channel_invoker.hpp>
-#include <wawo/net/channel_handler.hpp>
+#include <wawo/net/channel_handler_context.hpp>
 
 namespace wawo { namespace net {
 
@@ -18,8 +18,9 @@ namespace wawo { namespace net {
 		public channel_outbound_invoker_abstract
 	{
 		friend class channel;
-		WWRP<channel> m_ch;
 
+	protected:
+		WWRP<channel> m_ch;
 		WWRP<channel_handler_context> m_head;
 		WWRP<channel_handler_context> m_tail;
 
@@ -30,7 +31,7 @@ namespace wawo { namespace net {
 		void init();
 		void deinit();
 
-		WWRP<channel_pipeline> add_last(WWRP<channel_handler_abstract> const& h) {
+		virtual WWRP<channel_pipeline> add_last(WWRP<channel_handler_abstract> const& h) {
 			WWRP<channel_handler_context> ctx = wawo::make_ref<channel_handler_context>( m_ch, h );
 			WWRP<channel_handler_context> tail_P = m_tail->P;
 
@@ -43,8 +44,8 @@ namespace wawo { namespace net {
 		}
 
 	protected:
-		void fire_accepted( WWRP<channel> const& so) {
-			m_head->invoke_accepted( so);
+		void fire_accepted( WWRP<channel> const& ch) {
+			m_head->invoke_accepted( ch );
 		}
 		void fire_connected() {
 			m_head->invoke_connected();

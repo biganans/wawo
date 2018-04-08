@@ -3,6 +3,8 @@
 #include <wawo/time/time.hpp>
 #include <wawo/net/socket.hpp>
 
+#include <wawo/net/channel.hpp>
+
 namespace wawo { namespace net {
 
 	void async_connected(WWRP<ref_base> const& cookie_) {
@@ -17,7 +19,7 @@ namespace wawo { namespace net {
 		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie->so);
 
 		TRACE_IOE("[socket_base][%s][async_connected], unwatch(IOE_WRITE)", so->info().to_lencstr().cstr );
-		so->end_async_write();
+		so->end_write();
 		WAWO_TRACE_SOCKET("[socket][%s]socket async connected", so->info().to_lencstr().cstr );
 		so->handle_async_connected();
 	}
@@ -28,7 +30,7 @@ namespace wawo { namespace net {
 		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie->so);
 
 		TRACE_IOE("[socket_base][%s][async_connect_error]error code: %d, unwatch(IOE_WRITE)", so->info().to_lencstr().cstr, code);
-		so->end_async_write();
+		so->end_write();
 
 		WAWO_ASSERT(cookie->success != NULL);
 		WAWO_ASSERT(cookie->error != NULL);
@@ -236,7 +238,7 @@ namespace wawo { namespace net {
 				sflag |= SHUTDOWN_RD;
 			}
 			if (is_nonblocking()) {
-				_end_async_read();
+				_end_read();
 			}
 		}
 
@@ -247,7 +249,7 @@ namespace wawo { namespace net {
 				sflag |= SHUTDOWN_WR;
 			}
 			if (is_nonblocking()) {
-				_end_async_write();
+				_end_write();
 			}
 		}
 
@@ -378,12 +380,12 @@ namespace wawo { namespace net {
 		WWRP<socket> so(this);
 		wawo::task::fn_lambda lambda_FNR = [so, sflag,ec]() -> void {
 			if (sflag&SHUTDOWN_RD) {
-				so->end_async_read();
+				so->end_read();
 				so->ch_read_shutdowned();
 			}
 
 			if (sflag&SHUTDOWN_WR) {
-				so->end_async_write();
+				so->end_write();
 				so->ch_write_shutdowned();
 			}
 			so->__rdwr_check(ec);
@@ -429,7 +431,7 @@ namespace wawo { namespace net {
 			}
 		}
 
-		begin_async_read(WATCH_OPTION_INFINITE, NULL, wawo::net::async_accept, wawo::net::async_error);
+		begin_read(WATCH_OPTION_INFINITE, NULL, wawo::net::async_accept, wawo::net::async_error);
 		WAWO_TRACE_SOCKET("[socket][%s]socket listen success", info().to_lencstr().cstr);
 		return wawo::OK;
 	}
@@ -488,7 +490,7 @@ namespace wawo { namespace net {
 			return wawo::OK;
 		} else if (rt == wawo::E_SOCKET_CONNECTING) {
 			TRACE_IOE("[socket_base][%s][async_connect]watch(IOE_WRITE)", info().to_lencstr().cstr );
-			begin_async_connect(NULL);
+			begin_connect(NULL);
 			return wawo::OK;
 		}
 
@@ -522,7 +524,7 @@ namespace wawo { namespace net {
 
 				ch_accepted( accepted_sockets[i]);
 				//accepted_sockets[i]->ch_connected();
-				accepted_sockets[i]->begin_async_read(WATCH_OPTION_INFINITE);
+				accepted_sockets[i]->begin_read(WATCH_OPTION_INFINITE);
 			}
 		} while (ec_o == wawo::E_TRY_AGAIN);
 
@@ -542,7 +544,7 @@ namespace wawo { namespace net {
 			lock_guard<spin_mutex> lg(m_mutexes[L_READ]);
 			bool is_one_time_async_read = !(m_rflag&WATCH_OPTION_INFINITE);
 			if (is_one_time_async_read) {
-				_end_async_read();
+				_end_read();
 			}
 
 			do {
@@ -558,7 +560,7 @@ namespace wawo { namespace net {
 			} while (ec_o == wawo::OK);
 
 			if (is_one_time_async_read && !has_new_arrives) {
-				_begin_async_read();
+				_begin_read();
 			}
 		}
 
@@ -629,7 +631,7 @@ namespace wawo { namespace net {
 
 		lock_guard<spin_mutex> lg( m_mutexes[L_WRITE] );
 		if ( !(m_wflag&WATCH_OPTION_INFINITE)) {
-			_end_async_write();
+			_end_write();
 		}
 
 		do {
@@ -642,7 +644,7 @@ namespace wawo { namespace net {
 		if( !left ) {
 			WAWO_ASSERT( ec_o == wawo::OK );
 			if (flushed_total != 0) {
-				_end_async_write();
+				_end_write();
 				m_async_wt = 0;
 
 				WWRP<channel> ch(this);
@@ -663,7 +665,7 @@ namespace wawo { namespace net {
 					if( (flushed_total>0) ) {
 						m_async_wt = now; //update timer
 					}
-					_begin_async_write(); //only write once
+					_begin_write(); //only write once
 				}
 			}
 		}
@@ -741,7 +743,7 @@ namespace wawo { namespace net {
 
 		if (is_block) {
 			ch_write_block();
-			begin_async_write(); //only write once
+			begin_write(); //only write once
 		}
 
 		return send_ec;

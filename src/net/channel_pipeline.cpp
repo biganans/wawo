@@ -16,7 +16,7 @@ namespace wawo { namespace net {
 		WWRP<channel_handler_head> h = wawo::make_ref<channel_handler_head>();
 		m_head = wawo::make_ref<channel_handler_context>(m_ch, h);
 
-		WWRP<socket_handler_tail> t = wawo::make_ref<socket_handler_tail>();
+		WWRP<channel_handler_tail> t = wawo::make_ref<channel_handler_tail>();
 		m_tail = wawo::make_ref<channel_handler_context>(m_ch, t);
 
 		m_head->P = NULL;

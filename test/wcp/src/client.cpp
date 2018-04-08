@@ -3,8 +3,8 @@
 #include "shared.hpp"
 
 class client_req_handler:
-	public wawo::net::socket_inbound_handler_abstract,
-	public wawo::net::socket_activity_handler_abstract
+	public wawo::net::channel_inbound_handler_abstract,
+	public wawo::net::channel_activity_handler_abstract
 {
 	int transfer_state;
 	wawo::byte_t* file_content;
@@ -21,7 +21,7 @@ public:
 		::free(file_content);
 	}
 
-	void connected(WWRP<wawo::net::socket_handler_context> const& ctx) {
+	void connected(WWRP<wawo::net::channel_handler_context> const& ctx) {
 
 		#if TEST_FILE<8
 			FILE* fp = fopen("../FILE_7", "rb");
@@ -56,7 +56,7 @@ public:
 		transfer_state = wcp_test::C_RECEIVE_HEADER;
 	}
 
-	void read(WWRP<wawo::net::socket_handler_context> const& ctx, WWSP<wawo::packet> const& income) {
+	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<wawo::packet> const& income) {
 
 		if (tmp->len()) {
 			income->write_left(tmp->begin(), tmp->len() );
@@ -138,14 +138,14 @@ int main(int argc, char** argv) {
 		raddr.so_protocol = wawo::net::P_WCP;
 	}
 
-	raddr.so_address = wawo::net::address("100.64.15.224", 32310);
+	raddr.so_address = wawo::net::address("127.0.0.1", 32310);
 
 	WWRP<wawo::net::socket> so = wawo::make_ref<wawo::net::socket>(sbc, raddr.so_family, raddr.so_type, raddr.so_protocol);
 
 	int openrt = so->open();
 	WAWO_RETURN_V_IF_NOT_MATCH(openrt, openrt == wawo::OK);
 
-	WWRP<wawo::net::socket_handler_abstract> h = wawo::make_ref<client_req_handler>();
+	WWRP < wawo::net::channel_handler_abstract > h = wawo::make_ref<client_req_handler>();
 	so->pipeline()->add_last(h);
 
 	int rt = so->async_connect(raddr.so_address);

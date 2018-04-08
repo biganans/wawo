@@ -9,7 +9,7 @@ namespace wawo { namespace net {
 	class channel;
 	class channel_accept_invoker_abstract
 	{
-		virtual void fire_accepted( WWRP<channel> const& so) = 0;
+		virtual void fire_accepted( WWRP<channel> const& ch) = 0;
 	};
 
 	class channel_activity_invoker_abstract {

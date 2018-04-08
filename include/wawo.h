@@ -26,11 +26,11 @@
 #include <wawo/security/dh.hpp>
 #include <wawo/security/xxtea.hpp>
 
-#include <wawo/net/wcp.hpp>
-
 #include <wawo/net/address.hpp>
 #include <wawo/net/socket.hpp>
 #include <wawo/net/socket_observer.hpp>
+
+#include <wawo/net/wcp.hpp>
 
 #include <wawo/net/protocol/http.hpp>
 #include <wawo/net/protocol/icmp.hpp>

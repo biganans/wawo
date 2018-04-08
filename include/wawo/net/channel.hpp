@@ -3,13 +3,15 @@
 
 #include <wawo/packet.hpp>
 #include <wawo/net/channel_pipeline.hpp>
+#include <wawo/net/io_event.hpp>
 
 namespace wawo { namespace net {
 
-	class channel :
+	class channel:
 		virtual public wawo::ref_base
 	{
 		WWRP<channel_pipeline> m_pipeline;
+		WWRP<ref_base>	m_ctx;
 
 	public:
 		channel() {}
@@ -28,17 +30,6 @@ namespace wawo { namespace net {
 				m_pipeline = NULL;
 			}
 		}
-		inline WWRP<channel_pipeline> pipeline() const {
-			return m_pipeline;
-		}
-
-		virtual int ch_id() const = 0;
-
-		virtual int ch_close(int const& ec) = 0;
-		virtual int ch_close_read(int const& ec) = 0;
-		virtual int ch_close_write(int const& ec) = 0;
-		virtual int ch_write(WWSP<packet> const& outlet) = 0;
-
 
 #define CH_ACTION_IMPL_PACKET_1(_NAME,_P) \
 		inline void ch_##_NAME(WWSP<packet> const& _P) { \
@@ -70,6 +61,34 @@ namespace wawo { namespace net {
 
 		CH_ACTION_IMPL_0(write_block)
 		CH_ACTION_IMPL_0(write_unblock)
+
+		inline WWRP<channel_pipeline> pipeline() const {
+			return m_pipeline;
+		}
+
+		template <class ctx_t>
+		inline WWRP<ctx_t> get_ctx() const {
+			return wawo::static_pointer_cast<ctx_t>(m_ctx);
+		}
+
+		inline void set_ctx(WWRP<ref_base> const& ctx) {
+			m_ctx = ctx;
+		}
+
+		virtual int ch_id() const = 0;
+		virtual int ch_close(int const& ec) = 0;
+		virtual int ch_close_read(int const& ec) = 0;
+		virtual int ch_close_write(int const& ec) = 0;
+		virtual int ch_write(WWSP<packet> const& outlet) = 0;
+
+		virtual void begin_connect(WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err) = 0;
+		virtual void end_connect() = 0;
+
+		virtual void begin_read(u8_t const& async_flag, WWRP<ref_base> const& cookie, fn_io_event const& fn , fn_io_event_error const& err ) = 0;
+		virtual void end_read() = 0;
+
+		virtual void begin_write(u8_t const& async_flag , WWRP<ref_base> const& cookie, fn_io_event const& fn , fn_io_event_error const& err ) = 0;
+		virtual void end_write() = 0;
 	};
 }}
 #endif

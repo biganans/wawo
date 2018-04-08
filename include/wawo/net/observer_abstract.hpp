@@ -4,6 +4,7 @@
 #include <wawo/smart_ptr.hpp>
 #include <wawo/thread/mutex.hpp>
 #include <wawo/task/scheduler.hpp>
+#include <wawo/net/io_event.hpp>
 
 #include <map>
 #include <queue>
@@ -52,9 +53,6 @@ namespace wawo { namespace net {
 		S_WRITE_POSTED = 5,
 		S_WRITING = 6
 	};
-
-	typedef wawo::task::fn_task fn_io_event;
-	typedef void(*fn_io_event_error) (int const& code, WWRP<ref_base> const& cookie);
 
 	struct observer_ctx :
 		public wawo::ref_base
@@ -117,7 +115,6 @@ namespace wawo { namespace net {
 
 	typedef std::map<int, WWRP<observer_ctx>> observer_ctx_map;
 	typedef std::pair<int, WWRP<observer_ctx>> fd_ctx_pair;
-
 
 	class observer_abstract
 	{
