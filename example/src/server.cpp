@@ -3,7 +3,7 @@
 //using namespace wawo;
 //using namespace wawo::net;
 
-class log_handler :
+class example_handler :
 	public wawo::net::channel_inbound_handler_abstract,
 	public wawo::net::channel_outbound_handler_abstract,
 	public wawo::net::channel_activity_handler_abstract
@@ -45,36 +45,25 @@ public:
 		WAWO_INFO("write_block: %d", ctx->ch->ch_id());
 		ctx->fire_write_block();
 	}
+
 	void write_unblock(WWRP<wawo::net::channel_handler_context> const& ctx) {
 		WAWO_INFO("write_unblock: %d", ctx->ch->ch_id());
 		ctx->fire_write_unblock();
 	}
-
 };
 
-
-class echo_handler :
-	public wawo::net::channel_inbound_handler_abstract,
-	public wawo::net::channel_activity_handler_abstract
-{
-public:
-	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<wawo::packet> const& income)
-	{
-		ctx->write(income);
-	}
-};
 
 class listen_server_handler:
 	public wawo::net::channel_activity_handler_abstract,
-	public wawo::net::channel_accept_handler_abstract
+	public wawo::net::channel_acceptor_handler_abstract
 {
 public:
 	void accepted(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::net::channel> const& ch )
 	{
-		WWRP<wawo::net::channel_handler_abstract> log = wawo::make_ref<log_handler>();
-		ch->pipeline()->add_last(log);
+		WWRP<wawo::net::channel_handler_abstract> example = wawo::make_ref<example_handler>();
+		ch->pipeline()->add_last(example);
 
-		WWRP<echo_handler> echo = wawo::make_ref<echo_handler>();
+		WWRP<wawo::net::channel_handler_abstract> echo = wawo::make_ref<wawo::net::handler::echo>();
 		ch->pipeline()->add_last(echo);
 
 		(void) ctx;
@@ -88,14 +77,7 @@ int main(int argc, char** argv) {
 	wawo::net::socketaddr laddr;
 	laddr.so_family = wawo::net::F_AF_INET;
 	laddr.so_type = wawo::net::T_STREAM;
-
-	if (argc == 2) {
-		laddr.so_type = wawo::net::T_DGRAM;
-		laddr.so_protocol = wawo::net::P_WCP;
-	} else {
-		laddr.so_type = wawo::net::T_STREAM;
-		laddr.so_protocol = wawo::net::P_TCP;
-	}
+	laddr.so_protocol = wawo::net::P_TCP;
 
 	laddr.so_address = wawo::net::address("0.0.0.0", 22310);
 	WWRP<wawo::net::socket> lsocket = wawo::make_ref<wawo::net::socket>(laddr.so_family, laddr.so_type, laddr.so_protocol);
@@ -111,13 +93,6 @@ int main(int argc, char** argv) {
 	if (bind != wawo::OK) {
 		lsocket->close(bind);
 		return bind;
-	}
-
-	int turn_on_nonblocking = lsocket->turnon_nonblocking();
-
-	if (turn_on_nonblocking != wawo::OK) {
-		lsocket->close(turn_on_nonblocking);
-		return turn_on_nonblocking;
 	}
 
 	WWRP<wawo::net::channel_handler_abstract> l_handler = wawo::make_ref<listen_server_handler>();

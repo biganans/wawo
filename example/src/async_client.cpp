@@ -67,16 +67,11 @@ int main( int argc, char** argv ) {
 	wawo::net::socketaddr raddr;
 	raddr.so_family = wawo::net::F_AF_INET;
 
-	if (argc == 2) {
-		raddr.so_type = wawo::net::T_DGRAM;
-		raddr.so_protocol = wawo::net::P_WCP;
-	} else {
-		raddr.so_type = wawo::net::T_STREAM;
-		raddr.so_protocol = wawo::net::P_TCP;
-	}
+	raddr.so_type = wawo::net::T_STREAM;
+	raddr.so_protocol = wawo::net::P_TCP;
 	raddr.so_address = remote_addr;
 
-	services::InitSndBytes();
+	//services::InitSndBytes();
 	{
 		WWRP<wawo::net::socket> so = wawo::make_ref<wawo::net::socket>(raddr.so_family, raddr.so_type, raddr.so_protocol);
 
@@ -89,9 +84,9 @@ int main( int argc, char** argv ) {
 		rt = so->async_connect(raddr.so_address);
 		WAWO_ASSERT(rt == wawo::OK);
 	}
-	application.run_for();
-	services::DeinitSndBytes();
 
+	application.run_for();
+	//services::DeinitSndBytes();
 	
 	WAWO_WARN("[main]socket server exit done ...");
 	return wawo::OK;

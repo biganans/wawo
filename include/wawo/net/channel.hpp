@@ -92,6 +92,8 @@ namespace wawo { namespace net {
 
 		virtual int turnon_nodelay() = 0;
 		virtual int turnoff_nodelay() = 0;
+
+		virtual int is_active() const = 0;
 	};
 }}
 #endif

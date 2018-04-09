@@ -3,7 +3,7 @@
 #include <wawo.h>
 
 class listen_handler :
-	public wawo::net::channel_accept_handler_abstract
+	public wawo::net::channel_acceptor_handler_abstract
 {
 public:
 

@@ -149,7 +149,7 @@ namespace wawo { namespace net {
 		{
 			_deinit();
 		}
-
+		
 		inline bool is_connected() const { return m_state == S_CONNECTED; }
 		inline bool is_connecting() const { return (m_state == S_CONNECTING); }
 		inline bool is_closed() const { return (m_state == S_CLOSED); }
@@ -178,8 +178,11 @@ namespace wawo { namespace net {
 			return ((m_outs->size()>0) && (m_async_wt != 0) && (now>(m_async_wt + m_delay_wp)));
 		}
 
+
 		inline int turnon_nodelay() { return socket_base::turnon_nodelay(); }
 		inline int turnoff_nodelay() { return socket_base::turnoff_nodelay(); }
+
+		inline int is_active() const { return socket_base::is_active(); }
 
 		int open();
 		int connect(address const& addr);

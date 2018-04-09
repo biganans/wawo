@@ -447,12 +447,12 @@ namespace wawo {namespace net {namespace handler {
 		}
 
 		void connected(WWRP<channel_handler_context> const& ctx) {
-			//if (ctx->so->is_active()) {
+			if (ctx->ch->is_active()) {
 				WWSP<packet> hello;
 				handshake_make_hello_packet(hello);
 				ctx->write(hello);
 				m_dhstate = DH_HANDSHAKE;
-			//}
+			}
 		}
 
 		void read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income) {
