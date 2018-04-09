@@ -679,6 +679,8 @@ namespace wawo { namespace net {
 			if (m_state != S_RUN) { return; }
 			_execute_ops();
 			_update();
+
+			wawo::this_thread::usleep(16);
 		}
 
 		void watch(WWRP<WCB> const& wcb) {
