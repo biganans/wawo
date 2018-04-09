@@ -4,15 +4,14 @@
 
 class ws_server_handler :
 	public wawo::net::channel_activity_handler_abstract,
-	public wawo::net::channel_accept_handler_abstract
+	public wawo::net::channel_acceptor_handler_abstract
 {
 public:
 	void accepted(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::net::channel> const& newch ) {
+		newch->turnon_nodelay();
 
-		//newch->turnon_nodelay();
-
-		//WWRP<wawo::net::channel_handler_abstract> ws = wawo::make_ref<wawo::net::handler::websocket>();
-		//newch->pipeline()->add_last( ws );
+		WWRP<wawo::net::channel_handler_abstract> ws = wawo::make_ref<wawo::net::handler::websocket>();
+		newch->pipeline()->add_last( ws );
 
 		WWRP<wawo::net::channel_handler_abstract> dump = wawo::make_ref<wawo::net::handler::dump_in_len>();
 		newch->pipeline()->add_last(dump);

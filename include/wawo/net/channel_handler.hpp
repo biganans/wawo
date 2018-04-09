@@ -27,7 +27,7 @@ namespace wawo { namespace net {
 		virtual void write_unblock(WWRP<channel_handler_context> const& ctx);
 	};
 
-	class channel_accept_handler_abstract :
+	class channel_acceptor_handler_abstract :
 		virtual public channel_handler_abstract
 	{
 	public:
@@ -64,7 +64,7 @@ namespace wawo { namespace net {
 
 	class channel_handler_head :
 		public channel_activity_handler_abstract,
-		public channel_accept_handler_abstract,
+		public channel_acceptor_handler_abstract,
 		public channel_inbound_handler_abstract,
 		public channel_outbound_handler_abstract
 	{
@@ -80,7 +80,7 @@ namespace wawo { namespace net {
 
 	class channel_handler_tail :
 		public channel_activity_handler_abstract,
-		public channel_accept_handler_abstract,
+		public channel_acceptor_handler_abstract,
 		public channel_inbound_handler_abstract,
 		public channel_outbound_handler_abstract
 	{

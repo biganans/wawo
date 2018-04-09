@@ -60,17 +60,21 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="vsprops_local\common.props" />
     <Import Project="vsprops_local\debug.props" />
+    <Import Project="enable_websocket.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="vsprops_local\common.props" />
     <Import Project="vsprops_local\release.props" />
+    <Import Project="enable_websocket.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="enable_websocket.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="enable_websocket.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
@@ -208,7 +212,6 @@
     <ClInclude Include="..\..\include\wawo\net\handler\symmetric_encrypt.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\websocket.hpp" />
     <ClInclude Include="..\..\include\wawo\net\io_event.hpp" />
-    <ClInclude Include="..\..\include\wawo\net\mux_pipeline.hpp" />
     <ClInclude Include="..\..\include\wawo\net\observer_abstract.hpp" />
     <ClInclude Include="..\..\include\wawo\net\observer_impl\epoll.hpp" />
     <ClInclude Include="..\..\include\wawo\net\observer_impl\select.hpp" />

@@ -194,7 +194,6 @@ namespace wawo { namespace net {
 
 	class socket_base
 	{
-
 	private:
 		socket_mode m_sm; //
 		s_family	m_family;
@@ -313,8 +312,7 @@ namespace wawo { namespace net {
 		u32_t send(byte_t const* const buffer, u32_t const& size, int& ec_o, int const& flag = 0);
 		u32_t recv(byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag = 0);
 		u32_t sendto(byte_t const* const buff, wawo::u32_t const& size, const address& addr, int& ec_o, int const& flag = 0);
-		u32_t recvfrom(byte_t* const buff_o, wawo::u32_t const& size, address& addr, int& ec_o);
-	
+		u32_t recvfrom(byte_t* const buff_o, wawo::u32_t const& size, address& addr, int& ec_o);	
 	};
 }}
 #endif

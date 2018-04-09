@@ -3,20 +3,12 @@
 #include <wawo/time/time.hpp>
 #include <wawo/net/socket.hpp>
 
-#include <wawo/net/channel.hpp>
-
 namespace wawo { namespace net {
 
 	void async_connected(WWRP<ref_base> const& cookie_) {
 		WAWO_ASSERT(cookie_ != NULL);
-
-		WWRP<async_cookie> cookie = wawo::static_pointer_cast<async_cookie>(cookie_);
-
-		WAWO_ASSERT(cookie->success != NULL);
-		WAWO_ASSERT(cookie->error != NULL);
-		WAWO_ASSERT(cookie->so != NULL);
-		WAWO_ASSERT(cookie->so->is_active());
-		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie->so);
+		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie_);
+		WAWO_ASSERT(so->is_active());
 
 		TRACE_IOE("[socket_base][%s][async_connected], unwatch(IOE_WRITE)", so->info().to_lencstr().cstr );
 		so->end_write();
@@ -26,36 +18,27 @@ namespace wawo { namespace net {
 
 	void async_connect_error(int const& code, WWRP<ref_base> const& cookie_) {
 		WAWO_ASSERT(cookie_ != NULL);
-		WWRP<async_cookie> cookie = wawo::static_pointer_cast<async_cookie>(cookie_);
-		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie->so);
+		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie_);
+		WAWO_ASSERT(so->is_active());
 
 		TRACE_IOE("[socket_base][%s][async_connect_error]error code: %d, unwatch(IOE_WRITE)", so->info().to_lencstr().cstr, code);
 		so->end_write();
-
-		WAWO_ASSERT(cookie->success != NULL);
-		WAWO_ASSERT(cookie->error != NULL);
-		WAWO_ASSERT(cookie->so != NULL);
-		WAWO_ASSERT(so->is_active());
 
 		WAWO_TRACE_SOCKET("[socket][%s]socket async connect error", so->info().to_lencstr().cstr);
 		so->handle_async_connect_error(code);
 	}
 
 	void async_accept(WWRP<ref_base> const& cookie_) {
-	
 		WAWO_ASSERT(cookie_ != NULL);
-		WWRP<async_cookie> cookie = wawo::static_pointer_cast<async_cookie>(cookie_);
-		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie->so);
+		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie_);
 		int ec;
-
 		so->handle_async_accept(ec);
 	}
 
 	void async_read(WWRP<ref_base> const& cookie_) {
 
 		WAWO_ASSERT(cookie_ != NULL);
-		WWRP<async_cookie> cookie = wawo::static_pointer_cast<async_cookie>(cookie_);
-		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie->so);
+		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie_);
 		int ec;
 
 		so->handle_async_read(ec);
@@ -89,8 +72,7 @@ namespace wawo { namespace net {
 	void async_write(WWRP<ref_base> const& cookie_) {
 		
 		WAWO_ASSERT(cookie_ != NULL);
-		WWRP<async_cookie> cookie = wawo::static_pointer_cast<async_cookie>(cookie_);
-		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie->so);
+		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie_);
 		int ec;
 
 		so->handle_async_write(ec);
@@ -117,9 +99,7 @@ namespace wawo { namespace net {
 
 	void async_error(int const& code, WWRP<ref_base> const& cookie_) {
 		WAWO_ASSERT(cookie_ != NULL);
-		WWRP<async_cookie> cookie = wawo::static_pointer_cast<async_cookie>(cookie_);
-		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie->so);
-
+		WWRP<socket> so = wawo::static_pointer_cast<socket>(cookie_);
 		WAWO_ASSERT(so != NULL);
 
 		WAWO_WARN("[socket][%s]socket error: %d, close", so->info().to_lencstr().cstr, code);
@@ -151,6 +131,15 @@ namespace wawo { namespace net {
 
 		WAWO_ASSERT(m_observer == NULL);
 		m_observer = wawo::net::observers::instance()->next(is_wcp());
+
+		m_fn_async_connected = wawo::net::async_connected;
+		m_fn_async_connect_error = wawo::net::async_connect_error;
+
+		m_fn_async_read = wawo::net::async_read;
+		m_fn_async_read_error = wawo::net::async_error;
+
+		m_fn_async_write = wawo::net::async_write;
+		m_fn_async_write_error = wawo::net::async_error;
 
 		channel::init();
 	}

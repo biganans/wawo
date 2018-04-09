@@ -118,7 +118,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 			}
 		}
 
-		int encode(WWSP<packet>& packet_o) {
+		void encode(WWSP<packet>& packet_o) {
 			WWSP<packet> opacket = wawo::make_shared<packet>();
 
 			//WAWO_ASSERT(map.size() > 0);
@@ -135,9 +135,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 			});
 
 			opacket->write((wawo::byte_t*)WAWO_HTTP_CRLF, wawo::strlen(WAWO_HTTP_CRLF));
-
 			packet_o = opacket;
-			return wawo::OK;
 		}
 	};
 

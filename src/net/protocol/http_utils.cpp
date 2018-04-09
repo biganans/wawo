@@ -46,7 +46,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		}
 
 		WWSP<packet> hpacket;
-		int hencrt = m->h.encode(hpacket);
+		m->h.encode(hpacket);
 
 		_out->write(hpacket->begin(), hpacket->len());
 

@@ -41,7 +41,7 @@ namespace wawo {
 #if WAWO_ISGNU
 #define WAWO_ASSERT(x,...) assert(x)
 #else
-#define WAWO_ASSERT(x, ...) ((void) ((x) ? 0 : wawo::assert_failed (#x, __FILE__, __LINE__ , __FUNCTION__, "" __VA_ARGS__)))
+#define WAWO_ASSERT(x, ...) ((void) ((x) ? (void)0 : wawo::assert_failed (#x, __FILE__, __LINE__ , __FUNCTION__, "" __VA_ARGS__)))
 #endif
 #else
 #ifndef WAWO_USE_WAWO_ASSERT_FOR_RELEASE

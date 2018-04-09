@@ -222,10 +222,10 @@ namespace wcp_test {
 WWRP<wcp_test::StreamNode> g_streamnode;
 
 class server_listen_handler :
-	public wawo::net::channel_accept_handler_abstract
+	public wawo::net::channel_acceptor_handler_abstract
 {
 public:
-	void accepted(WWRP < wawo::net::channel_handler_context> const& ctx, WWRP<wawo::net::socket> const& ch) {
+	void accepted(WWRP < wawo::net::channel_handler_context> const& ctx, WWRP<wawo::net::channel> const& ch) {
 		//WWRP<wawo::net::socket_handler_abstract> h = wawo::make_ref<StreamNode>();
 		ch->pipeline()->add_last(g_streamnode);
 

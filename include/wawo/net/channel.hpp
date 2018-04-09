@@ -8,7 +8,7 @@
 namespace wawo { namespace net {
 
 	class channel:
-		virtual public wawo::ref_base
+		public wawo::ref_base
 	{
 		WWRP<channel_pipeline> m_pipeline;
 		WWRP<ref_base>	m_ctx;
@@ -81,14 +81,17 @@ namespace wawo { namespace net {
 		virtual int ch_close_write(int const& ec) = 0;
 		virtual int ch_write(WWSP<packet> const& outlet) = 0;
 
-		virtual void begin_connect(WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err) = 0;
+		virtual void begin_connect(WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL) = 0;
 		virtual void end_connect() = 0;
 
-		virtual void begin_read(u8_t const& async_flag, WWRP<ref_base> const& cookie, fn_io_event const& fn , fn_io_event_error const& err ) = 0;
+		virtual void begin_read(u8_t const& async_flag = 0, WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_read = NULL, fn_io_event_error const& fn_err = NULL) = 0;
 		virtual void end_read() = 0;
 
-		virtual void begin_write(u8_t const& async_flag , WWRP<ref_base> const& cookie, fn_io_event const& fn , fn_io_event_error const& err ) = 0;
+		virtual void begin_write(u8_t const& async_flag =0, WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_write = NULL, fn_io_event_error const& fn_err = NULL) = 0;
 		virtual void end_write() = 0;
+
+		virtual int turnon_nodelay() = 0;
+		virtual int turnoff_nodelay() = 0;
 	};
 }}
 #endif

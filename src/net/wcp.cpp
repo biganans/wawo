@@ -57,16 +57,14 @@ namespace wawo { namespace net {
 
 	void wcb_pump_packs(WWRP<ref_base> const& cookie_) {
 		WAWO_ASSERT(cookie_ != NULL );
-		WWRP<async_cookie> cookie = wawo::static_pointer_cast<async_cookie>(cookie_);
-		WWRP<WCB> wcb = wawo::static_pointer_cast<WCB>(cookie->cookie);
+		WWRP<WCB> wcb = wawo::static_pointer_cast<WCB>(cookie_);
 		WAWO_ASSERT(wcb != NULL);
 		wcb->pump_packs();
 	}
 
 	void wcb_socket_error(int const& code, WWRP<ref_base> const& cookie_) {
 		WAWO_ASSERT(cookie_ != NULL);
-		WWRP<async_cookie> cookie = wawo::static_pointer_cast<async_cookie>(cookie_);
-		WWRP<WCB> wcb = wawo::static_pointer_cast<WCB>(cookie->cookie);
+		WWRP<WCB> wcb = wawo::static_pointer_cast<WCB>(cookie_);
 		WAWO_ASSERT(wcb->so != NULL);
 		wcb->so->close(code);
 		WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", wcb->so->info().to_lencstr().cstr, code );

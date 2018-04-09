@@ -419,9 +419,6 @@
     <ClInclude Include="..\..\include\wawo\net\handler\dump_out_len.hpp">
       <Filter>Header Files\wawo\net\handler</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\mux_pipeline.hpp">
-      <Filter>Header Files\wawo\net</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\channel.hpp">
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>

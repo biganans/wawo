@@ -12,14 +12,14 @@ namespace wawo { namespace net {
 	//class channel;
 	class channel_pipeline :
 		public ref_base,
-		public channel_accept_invoker_abstract,
+		public channel_acceptor_invoker_abstract,
 		public channel_activity_invoker_abstract,
 		public channel_inbound_invoker_abstract,
 		public channel_outbound_invoker_abstract
 	{
 		friend class channel;
 
-	protected:
+	private:
 		WWRP<channel> m_ch;
 		WWRP<channel_handler_context> m_head;
 		WWRP<channel_handler_context> m_tail;

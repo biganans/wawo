@@ -5,8 +5,6 @@
 #include <wawo/packet.hpp>
 #include <wawo/net/channel_handler.hpp>
 
-#include <wawo/log/logger_manager.h>
-
 namespace wawo {namespace net {namespace handler {
 
 	class echo:
@@ -15,7 +13,6 @@ namespace wawo {namespace net {namespace handler {
 public:
 	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<wawo::packet> const& income)
 	{
-		WAWO_INFO("<<< %s", wawo::len_cstr( (char*)income->begin(), income->len() ).cstr );
 		ctx->write(income);
 	}
 };
