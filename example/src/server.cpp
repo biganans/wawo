@@ -60,8 +60,8 @@ class listen_server_handler:
 public:
 	void accepted(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::net::channel> const& ch )
 	{
-		WWRP<wawo::net::channel_handler_abstract> example = wawo::make_ref<example_handler>();
-		ch->pipeline()->add_last(example);
+		//WWRP<wawo::net::channel_handler_abstract> example = wawo::make_ref<example_handler>();
+		//ch->pipeline()->add_last(example);
 
 		WWRP<wawo::net::channel_handler_abstract> echo = wawo::make_ref<wawo::net::handler::echo>();
 		ch->pipeline()->add_last(echo);
