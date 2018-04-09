@@ -31,7 +31,7 @@ namespace wawo { namespace net {
 		void init();
 		void deinit();
 
-		virtual WWRP<channel_pipeline> add_last(WWRP<channel_handler_abstract> const& h) {
+		WWRP<channel_pipeline> add_last(WWRP<channel_handler_abstract> const& h) {
 			WWRP<channel_handler_context> ctx = wawo::make_ref<channel_handler_context>( m_ch, h );
 			WWRP<channel_handler_context> tail_P = m_tail->P;
 

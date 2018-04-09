@@ -10,13 +10,13 @@
 namespace wawo {namespace net {namespace handler {
 
 	class dump_out_len:
-	public wawo::net::channel_inbound_handler_abstract
+	public wawo::net::channel_outbound_handler_abstract
 {
 public:
-	void write(WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<wawo::packet> const& outlet)
+	int write(WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<wawo::packet> const& outlet)
 	{
 		WAWO_INFO(">>> len: %u", outlet->len());
-		ctx->write(outlet);
+		return ctx->write(outlet);
 	}
 };
 

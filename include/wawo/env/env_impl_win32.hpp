@@ -114,21 +114,24 @@ namespace wawo { namespace env {
 
 		//refer to https://msdn.microsoft.com/en-us/library/windows/desktop/ms724295(v=vs.85).aspx
 		int GetLocalComputerName(len_cstr& name) {
-
-			TCHAR infoBuf[128];
-			DWORD bufSize = 128;
+			TCHAR infoBuf[256] = {0};
+			DWORD bufSize = 256;
 
 			BOOL rt = GetComputerName(infoBuf, &bufSize );
 			WAWO_RETURN_V_IF_NOT_MATCH( WAWO_NEGATIVE(rt), rt != wawo::OK );
 
-			char mbBuf[512] = {0};
+#ifdef _UNICODE
+			char mbBuf[512] = { 0 };
 			int size = std::wcstombs(mbBuf, infoBuf, 512 );
 			if (size == -1) {
 				return wawo::get_last_errno();
 			}
-
 			name = len_cstr(mbBuf, size);
 			return wawo::OK;
+#else
+			name = len_cstr((const char*)infoBuf, (u32_t)bufSize);
+			return wawo::OK;
+#endif
 		}
 	};
 }}

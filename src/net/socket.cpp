@@ -512,7 +512,7 @@ namespace wawo { namespace net {
 				}
 
 				ch_accepted( accepted_sockets[i]);
-				//accepted_sockets[i]->ch_connected();
+				accepted_sockets[i]->ch_connected();
 				accepted_sockets[i]->begin_read(WATCH_OPTION_INFINITE);
 			}
 		} while (ec_o == wawo::E_TRY_AGAIN);
