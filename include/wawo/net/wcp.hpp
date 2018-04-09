@@ -680,7 +680,7 @@ namespace wawo { namespace net {
 			_execute_ops();
 			_update();
 
-			wawo::this_thread::usleep(16);
+			wawo::this_thread::usleep(32);
 		}
 
 		void watch(WWRP<WCB> const& wcb) {
