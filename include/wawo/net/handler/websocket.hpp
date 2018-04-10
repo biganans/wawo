@@ -100,7 +100,7 @@ namespace wawo { namespace net { namespace handler {
 			{}
 
 			virtual ~websocket() {}
-
+			void connected(WWRP<channel_handler_context> const& ctx);
 			void read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income) ;
 			int write(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& outlet);
 			int close(WWRP<channel_handler_context> const& ctx, int const& code = 0);

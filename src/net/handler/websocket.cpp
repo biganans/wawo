@@ -75,20 +75,18 @@ namespace wawo { namespace net { namespace handler {
 		SHA1_Final(out, &ctx);
 	}
 
+	void websocket::connected(WWRP<channel_handler_context> const& ctx) {
+		m_income_prev = wawo::make_shared<packet>();
+		m_tmp_frame = wawo::make_shared<ws_frame>();
+		m_tmp_frame->appdata = wawo::make_shared<packet>();
+		m_tmp_frame->extdata = wawo::make_shared<packet>();
+
+		m_tmp_message = wawo::make_shared<packet>();
+		ctx->ch->turnon_nodelay();
+	}
+
 	void websocket::read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income)
 	{
-		if (WAWO_UNLIKELY(!m_inited)) {
-			m_income_prev = wawo::make_shared<packet>();
-			m_tmp_frame = wawo::make_shared<ws_frame>();
-			m_tmp_frame->appdata = wawo::make_shared<packet>();
-			m_tmp_frame->extdata = wawo::make_shared<packet>();
-
-			m_tmp_message = wawo::make_shared<packet>();
-			ctx->ch->turnon_nodelay();
-
-			m_inited = true;
-		}
-
 		if (income->len() == 0) {
 			WAWO_ASSERT(!"WHAT");
 			return;
