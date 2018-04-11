@@ -47,6 +47,8 @@
 #include <wawo/net/handler/dump_in_len.hpp>
 #include <wawo/net/handler/dump_out_len.hpp>
 
+#include <wawo/net/handler/mux.hpp>
+
 #include <wawo/env/env.hpp>
 #include <wawo/app.hpp>
 #include <wawo/signal/signal_manager.h>

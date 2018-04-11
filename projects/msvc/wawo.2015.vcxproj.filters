@@ -437,6 +437,9 @@
     <ClInclude Include="..\..\include\wawo\net\channel_handler_context.hpp">
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\handler\mux.hpp">
+      <Filter>Header Files\wawo\net\handler</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\src\context\jump_i386_ms_pe_masm.asm">

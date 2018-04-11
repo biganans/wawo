@@ -207,6 +207,7 @@
     <ClInclude Include="..\..\include\wawo\net\handler\dump_out_text.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\echo.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\hlen.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\handler\mux.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\symmetric_encrypt.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\websocket.hpp" />
     <ClInclude Include="..\..\include\wawo\net\io_event.hpp" />
