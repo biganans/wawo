@@ -90,13 +90,11 @@ namespace wawo { namespace net { namespace handler {
 		u8_t m_fragmented_opcode;
 		u8_t m_fragmented_begin;
 		bool m_close_sent;
-		bool m_inited;
 	public:
 			websocket() :
 				m_state(S_WAIT_CLIENT_HANDSHAKE_REQ),
 				m_http_parser(NULL),
-				m_close_sent(false),
-				m_inited(false)
+				m_close_sent(false)
 			{}
 
 			virtual ~websocket() {}

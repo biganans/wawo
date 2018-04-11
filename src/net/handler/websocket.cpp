@@ -15,7 +15,7 @@
 #define _H_SEC_WEBSOCKET_VERSION "Sec-WebSocket-Version"
 #define _H_SEC_WEBSOCKET_KEY "Sec-WebSocket-Key"
 #define _H_SEC_WEBSOCKET_ACCEPT "Sec-WebSocket-Accept"
-
+#define _H_WEBSOCKET_SERVER "WebSocket-Server"
 
 #define _WEBSOCKEET_UUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
@@ -83,6 +83,7 @@ namespace wawo { namespace net { namespace handler {
 
 		m_tmp_message = wawo::make_shared<packet>();
 		ctx->ch->turnon_nodelay();
+		ctx->fire_connected();
 	}
 
 	void websocket::read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income)
@@ -145,7 +146,7 @@ _CHECK:
 					return ;
 				}
 
-				if (!m_upgrade_req->h.have(_H_Connection) || wawo::strcmp("Upgrade", m_upgrade_req->h.get(_H_Connection).cstr) != 0) {
+				if (!m_upgrade_req->h.have(_H_Connection) || wawo::strpos(m_upgrade_req->h.get(_H_Connection).cstr, "Upgrade" ) == -1 ) {
 					WAWO_WARN("[websocket]missing %s, or not Upgrade, force close", _H_Connection);
 					WWSP<packet> out = wawo::make_shared<packet>();
 					out->write((byte_t*)WEBSOCKET_UPGRADE_REPLY_400, wawo::strlen(WEBSOCKET_UPGRADE_REPLY_400));
@@ -186,13 +187,16 @@ _CHECK:
 				reply->h.set(_H_Upgrade, "websocket");
 				reply->h.set(_H_Connection, "Upgrade");
 				reply->h.set(_H_SEC_WEBSOCKET_ACCEPT, wawo::len_cstr( (char*) base64key->begin(), base64key->len()) );
-				
+				reply->h.set(_H_SEC_WEBSOCKET_VERSION, "13" );
+				reply->h.set(_H_WEBSOCKET_SERVER, "wawo");
+
 				WWSP<packet> o;
 				protocol::http::encode_message(reply, o);
+				WAWO_INFO("reply h: \n%s", wawo::len_cstr((char*)o->begin(), o->len()).cstr);
 				ctx->write(o);
 
 				m_state = S_MESSAGE_BEGIN;
-				ctx->fire_connected();
+				//ctx->fire_connected();
 
 				goto _CHECK;
 			}
