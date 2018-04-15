@@ -26,13 +26,13 @@ namespace wawo { namespace net {
 	class channel_inbound_invoker_abstract
 	{
 	public:
-		virtual void fire_read(WWSP<packet> const& income) = 0;
+		virtual void fire_read(WWRP<packet> const& income) = 0;
 	};
 
 	class channel_outbound_invoker_abstract
 	{
 	public:
-		virtual int write(WWSP<packet> const& out) = 0;
+		virtual int write(WWRP<packet> const& out) = 0;
 		virtual int close(int const& code ) = 0;
 		virtual int close_read(int const& code ) = 0;
 		virtual int close_write(int const& code ) = 0;

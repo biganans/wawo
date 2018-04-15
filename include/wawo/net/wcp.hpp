@@ -109,14 +109,14 @@ namespace wawo { namespace net {
 
 	struct WCB_pack {
 		WCP_Header header;
-		WWSP<wawo::packet> data;
+		WWRP<wawo::packet> data;
 		u64_t sent_ts;
 		u32_t sent_times;
 	};
 
 	struct WCB_received_pack {
 		WCP_Header header;
-		WWSP<wawo::packet> data;
+		WWRP<wawo::packet> data;
 		address	from;
 	};
 
@@ -263,7 +263,7 @@ namespace wawo { namespace net {
 		u32_t snd_nflight_bytes_max;
 		WCB_PackList snd_flights;
 		u64_t snd_last_rto_timer;
-		WWSP<wawo::packet> snd_sacked_pack_tmp;
+		WWRP<wawo::packet> snd_sacked_pack_tmp;
 
 		spin_mutex s_mutex;
 		WWRP<wawo::bytes_ringbuffer> sb;
@@ -323,7 +323,7 @@ namespace wawo { namespace net {
 			snd_nflight_bytes_max = 0;
 			snd_last_rto_timer = 0;
 
-			snd_sacked_pack_tmp = wawo::make_shared<wawo::packet>(64*1024);
+			snd_sacked_pack_tmp = wawo::make_ref<wawo::packet>(64*1024);
 
 			WAWO_ASSERT(rb == NULL);
 			WAWO_ASSERT(rb_standby == NULL);
@@ -441,12 +441,12 @@ namespace wawo { namespace net {
 			s_sending_standby.push(opack);
 		}
 
-		inline void SACK(WWSP<wawo::packet> const& sacked_packet) {
+		inline void SACK(WWRP<wawo::packet> const& sacked_packet) {
 			static u32_t pack_acked_max_bytes = (WCP_MDU / sizeof(u32_t) )*sizeof(u32_t);
 
 			while ( sacked_packet->len() ) {
 				WWSP<WCB_pack> opack = wawo::make_shared<WCB_pack>();
-				WWSP<packet> data = wawo::make_shared<wawo::packet>(WCP_MDU);
+				WWRP<packet> data = wawo::make_ref<wawo::packet>(WCP_MDU);
 				u32_t wlen = sacked_packet->len()>=pack_acked_max_bytes ? pack_acked_max_bytes : sacked_packet->len() ;
 				data->write( sacked_packet->begin(), wlen );
 				sacked_packet->skip(wlen);

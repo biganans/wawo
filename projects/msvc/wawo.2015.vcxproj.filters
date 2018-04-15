@@ -183,6 +183,9 @@
     <ClCompile Include="..\..\src\net\channel_handler_context.cpp">
       <Filter>Source Files\src\net</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\net\handler\http.cpp">
+      <Filter>Source Files\src\net\handler</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\3rd\http_parser\http_parser.h">
@@ -438,6 +441,12 @@
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\handler\mux.hpp">
+      <Filter>Header Files\wawo\net\handler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\event_trigger.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\handler\http.hpp">
       <Filter>Header Files\wawo\net\handler</Filter>
     </ClInclude>
   </ItemGroup>

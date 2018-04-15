@@ -49,6 +49,7 @@
 
 #include <wawo/net/handler/mux.hpp>
 
+#include <wawo/event_trigger.hpp>
 #include <wawo/env/env.hpp>
 #include <wawo/app.hpp>
 #include <wawo/signal/signal_manager.h>

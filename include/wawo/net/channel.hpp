@@ -32,7 +32,7 @@ namespace wawo { namespace net {
 		}
 
 #define CH_ACTION_IMPL_PACKET_1(_NAME,_P) \
-		inline void ch_##_NAME(WWSP<packet> const& _P) { \
+		inline void ch_##_NAME(WWRP<packet> const& _P) { \
 			WAWO_ASSERT(m_pipeline != NULL); \
 			m_pipeline->fire_##_NAME(_P); \
 		} \
@@ -79,7 +79,7 @@ namespace wawo { namespace net {
 		virtual int ch_close(int const& ec) = 0;
 		virtual int ch_close_read(int const& ec) = 0;
 		virtual int ch_close_write(int const& ec) = 0;
-		virtual int ch_write(WWSP<packet> const& outlet) = 0;
+		virtual int ch_write(WWRP<packet> const& outlet) = 0;
 
 		virtual void begin_connect(WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL) = 0;
 		virtual void end_connect() = 0;

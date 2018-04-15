@@ -13,7 +13,7 @@ namespace wawo {namespace net {namespace handler {
 	public wawo::net::channel_outbound_handler_abstract
 {
 public:
-	int write(WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<wawo::packet> const& outlet)
+	int write(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& outlet)
 	{
 		WAWO_INFO(">>> len: %u", outlet->len());
 		return ctx->write(outlet);

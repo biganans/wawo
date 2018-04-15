@@ -19,13 +19,13 @@ namespace wawo { namespace net { namespace handler {
 
 		parse_state m_state;
 		u32_t m_size;
-		WWSP<packet> m_tmp;
+		WWRP<packet> m_tmp;
 
 	public:
 		hlen() :m_state(S_READ_LEN) {}
 		virtual ~hlen() {}
 
-		void read( WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income ) {
+		void read( WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income ) {
 			WAWO_ASSERT(income != NULL);
 
 			bool bExit = false;
@@ -39,7 +39,7 @@ namespace wawo { namespace net { namespace handler {
 						}
 						m_size = income->read<u32_t>();
 						m_state = S_READ_CONTENT;
-						m_tmp = wawo::make_shared<packet>(m_size);
+						m_tmp = wawo::make_ref<packet>(m_size);
 					}
 					break;
 					case S_READ_CONTENT:
@@ -64,7 +64,7 @@ namespace wawo { namespace net { namespace handler {
 			} while (!bExit);
 		}
 
-		int write(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& outlet) {
+		int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) {
 			outlet->write_left<u32_t>(outlet->len());
 			return ctx->write(outlet);
 		}

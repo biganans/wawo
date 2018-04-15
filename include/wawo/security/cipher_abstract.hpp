@@ -13,8 +13,8 @@ namespace wawo { namespace security {
 		virtual ~cipher_abstract() {}
 
 		virtual void set_key(byte_t const* const k, u32_t const& klen) = 0;
-		virtual int encrypt(WWSP<packet> const& in, WWSP<packet>& out) const = 0;
-		virtual int decrypt(WWSP<packet> const& in, WWSP<packet>& out) const = 0;
+		virtual int encrypt(WWRP<packet> const& in, WWRP<packet>& out) const = 0;
+		virtual int decrypt(WWRP<packet> const& in, WWRP<packet>& out) const = 0;
 	};
 }}
 #endif

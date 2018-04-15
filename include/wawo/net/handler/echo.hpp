@@ -11,7 +11,7 @@ namespace wawo {namespace net {namespace handler {
 	public wawo::net::channel_inbound_handler_abstract
 {
 public:
-	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<wawo::packet> const& income)
+	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income)
 	{	
 		/*
 		WWSP<wawo::net::protocol::http::message> m = wawo::make_shared<wawo::net::protocol::http::message>();
@@ -21,7 +21,7 @@ public:
 		m->h.set("server", "wawo/1.0");
 		m->body = "zzzz";
 
-		WWSP<wawo::packet> outp = wawo::make_shared<wawo::packet>();
+		WWRP<wawo::packet> outp = wawo::make_ref<wawo::packet>();
 		wawo::net::protocol::http::encode_message(m, outp);
 		*/
 

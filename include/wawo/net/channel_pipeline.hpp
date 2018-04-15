@@ -69,11 +69,11 @@ namespace wawo { namespace net {
 			m_head->invoke_write_unblock();
 		}
 
-		void fire_read(WWSP<packet> const& income) {
+		void fire_read(WWRP<packet> const& income) {
 			m_head->fire_read(income);
 		}
 
-		int write(WWSP<packet> const& out) {
+		int write(WWRP<packet> const& out) {
 			WAWO_ASSERT(!"TODO");
 			(void)out;
 			return wawo::OK;

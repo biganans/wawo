@@ -46,7 +46,7 @@ do { \
 	if ((pack).header.dlen != 0) { \
 		WAWO_ASSERT((pack).header.dlen<=WCP_MDU); \
 		WAWO_ASSERT((pack).header.dlen==(len-rlen)); \
-		WWSP<wawo::packet> data = wawo::make_shared<wawo::packet>((pack).header.dlen); \
+		WWRP<wawo::packet> data = wawo::make_ref<wawo::packet>((pack).header.dlen); \
 		data->write(mbuffer+rlen, (pack).header.dlen ); \
 		(pack).data = data; \
 		rlen += (pack).header.dlen; \
@@ -857,7 +857,7 @@ _begin_send:
 				opack->header.seq = snd_info.dsn++;
 				opack->header.flag = WCP_FLAG_DAT | WCP_FLAG_ACK;
 
-				WWSP<wawo::packet> data = wawo::make_shared<wawo::packet>(WCP_MDU);
+				WWRP<wawo::packet> data = wawo::make_ref<wawo::packet>(WCP_MDU);
 				u32_t nread = sb->read(data->begin(), WCP_MDU);
 				data->forward_write_index(nread);
 				opack->data = data;

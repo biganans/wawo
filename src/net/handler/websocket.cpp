@@ -23,7 +23,7 @@ namespace wawo { namespace net { namespace handler {
 
 	static const char* WEBSOCKET_UPGRADE_REPLY_400 = "HTTP/1.1 400 Bad Request\r\n\r\n";
 
-	WWSP<packet> base64Encode(const char* src, u32_t const& len)
+	WWRP<packet> base64Encode(const char* src, u32_t const& len)
 	{
 		BIO *bmem = NULL;
 		BIO *b64 = NULL;
@@ -39,14 +39,14 @@ namespace wawo { namespace net { namespace handler {
 		BIO_get_mem_ptr(b64, &bptr);
 		BIO_set_close(b64, BIO_NOCLOSE);
 
-		WWSP<packet> tmp = wawo::make_shared<packet>(bptr->length);
+		WWRP<packet> tmp = wawo::make_ref<packet>(bptr->length);
 		tmp->write((byte_t*)bptr->data, bptr->length);
 
 		BIO_free_all(b64);
 		return tmp;
 	}
 
-	WWSP<packet> base64Decode(wawo::len_cstr const& to_dec )
+	WWRP<packet> base64Decode(wawo::len_cstr const& to_dec )
 	{
 		BIO *b64 = NULL;
 		BIO *bmem = NULL;
@@ -61,7 +61,7 @@ namespace wawo { namespace net { namespace handler {
 		int rlen = BIO_read(bmem, buffer, to_dec.len);
 		BIO_free_all(bmem);
 
-		WWSP<packet> tmp = wawo::make_shared<packet>(to_dec.len);
+		WWRP<packet> tmp = wawo::make_ref<packet>(to_dec.len);
 		tmp->write( (byte_t*) buffer, rlen );
 
 		::free(buffer);
@@ -76,17 +76,17 @@ namespace wawo { namespace net { namespace handler {
 	}
 
 	void websocket::connected(WWRP<channel_handler_context> const& ctx) {
-		m_income_prev = wawo::make_shared<packet>();
+		m_income_prev = wawo::make_ref<packet>();
 		m_tmp_frame = wawo::make_shared<ws_frame>();
-		m_tmp_frame->appdata = wawo::make_shared<packet>();
-		m_tmp_frame->extdata = wawo::make_shared<packet>();
+		m_tmp_frame->appdata = wawo::make_ref<packet>();
+		m_tmp_frame->extdata = wawo::make_ref<packet>();
 
-		m_tmp_message = wawo::make_shared<packet>();
+		m_tmp_message = wawo::make_ref<packet>();
 		ctx->ch->turnon_nodelay();
 		ctx->fire_connected();
 	}
 
-	void websocket::read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income)
+	void websocket::read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income)
 	{
 		if (income->len() == 0) {
 			WAWO_ASSERT(!"WHAT");
@@ -139,7 +139,7 @@ _CHECK:
 				WAWO_ASSERT(m_upgrade_req != NULL);
 				if (!m_upgrade_req->h.have(_H_Upgrade) || wawo::strcmp("websocket", m_upgrade_req->h.get(_H_Upgrade).cstr ) != 0 ) {
 					WAWO_WARN("[websocket]missing %s, or not websocket, force close", _H_Upgrade);
-					WWSP<packet> out = wawo::make_shared<packet>();
+					WWRP<packet> out = wawo::make_ref<packet>();
 					out->write((byte_t*)WEBSOCKET_UPGRADE_REPLY_400, wawo::strlen(WEBSOCKET_UPGRADE_REPLY_400));
 					ctx->write(out);
 					ctx->close();
@@ -148,7 +148,7 @@ _CHECK:
 
 				if (!m_upgrade_req->h.have(_H_Connection) || wawo::strpos(m_upgrade_req->h.get(_H_Connection).cstr, "Upgrade" ) == -1 ) {
 					WAWO_WARN("[websocket]missing %s, or not Upgrade, force close", _H_Connection);
-					WWSP<packet> out = wawo::make_shared<packet>();
+					WWRP<packet> out = wawo::make_ref<packet>();
 					out->write((byte_t*)WEBSOCKET_UPGRADE_REPLY_400, wawo::strlen(WEBSOCKET_UPGRADE_REPLY_400));
 					ctx->write(out);
 					ctx->close();
@@ -157,7 +157,7 @@ _CHECK:
 
 				if (!m_upgrade_req->h.have(_H_SEC_WEBSOCKET_VERSION)) {
 					WAWO_WARN("[websocket]missing Sec-WebSocket-Key, force close");
-					WWSP<packet> out = wawo::make_shared<packet>();
+					WWRP<packet> out = wawo::make_ref<packet>();
 					out->write((byte_t*) WEBSOCKET_UPGRADE_REPLY_400, wawo::strlen(WEBSOCKET_UPGRADE_REPLY_400) );
 					ctx->write(out);
 					ctx->close();
@@ -166,7 +166,7 @@ _CHECK:
 
 				if (!m_upgrade_req->h.have(_H_SEC_WEBSOCKET_KEY)) {
 					WAWO_WARN("[websocket]missing Sec-WebSocket-Version, force close");
-					WWSP<packet> out = wawo::make_shared<packet>();
+					WWRP<packet> out = wawo::make_ref<packet>();
 					out->write((byte_t*)WEBSOCKET_UPGRADE_REPLY_400, wawo::strlen(WEBSOCKET_UPGRADE_REPLY_400));
 					ctx->write(out);
 					ctx->close();
@@ -176,7 +176,7 @@ _CHECK:
 				wawo::len_cstr skey = m_upgrade_req->h.get(_H_SEC_WEBSOCKET_KEY) + _WEBSOCKEET_UUID;
 				unsigned char sha1key[20];
 				SHA1(skey.cstr, skey.len, sha1key);
-				WWSP<packet> base64key = base64Encode((const char*)sha1key,20);
+				WWRP<packet> base64key = base64Encode((const char*)sha1key,20);
 
 				WWSP<protocol::http::message> reply = wawo::make_shared<protocol::http::message>();
 				reply->type = protocol::http::T_RESP;
@@ -190,7 +190,7 @@ _CHECK:
 				reply->h.set(_H_SEC_WEBSOCKET_VERSION, "13" );
 				reply->h.set(_H_WEBSOCKET_SERVER, "wawo");
 
-				WWSP<packet> o;
+				WWRP<packet> o;
 				protocol::http::encode_message(reply, o);
 				WAWO_INFO("reply h: \n%s", wawo::len_cstr((char*)o->begin(), o->len()).cstr);
 				ctx->write(o);
@@ -332,7 +332,7 @@ _CHECK:
 						_PONG->H.B2.Bit.len = m_tmp_frame->appdata->len();
 						_PONG->appdata = m_tmp_frame->appdata;
 
-						WWSP<packet> outp_PONG = wawo::make_shared<packet>();
+						WWRP<packet> outp_PONG = wawo::make_ref<packet>();
 						outp_PONG->write<u8_t>( _PONG->H.B1.B );
 						outp_PONG->write<u8_t>( _PONG->H.B2.B);
 
@@ -391,7 +391,7 @@ _CHECK:
 	}
 
 
-	int websocket::write(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& outlet) {
+	int websocket::write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) {
 
 		WWSP<ws_frame> _frame = wawo::make_shared<ws_frame>();
 		_frame->H.B1.Bit.fin = 0x1;
@@ -437,7 +437,7 @@ _CHECK:
 		_CLOSE->H.B2.Bit.mask = 0x0;
 		_CLOSE->H.B2.Bit.len = 0x0;
 
-		WWSP<packet> outp_CLOSE = wawo::make_shared<packet>();
+		WWRP<packet> outp_CLOSE = wawo::make_ref<packet>();
 		outp_CLOSE->write<u8_t>( _CLOSE->H.B1.B );
 		outp_CLOSE->write<u8_t>( _CLOSE->H.B2.B );
 
@@ -486,7 +486,7 @@ _CHECK:
 		return wawo::OK;
 	}
 	int websocket::http_on_message_complete() {
-		WWSP<packet> m;
+		WWRP<packet> m;
 		protocol::http::encode_message(m_upgrade_req, m);
 		WAWO_DEBUG("[%s], req: %s", __FUNCTION__, wawo::len_cstr( (char*) m->begin(), m->len() ) );
 

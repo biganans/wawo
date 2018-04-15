@@ -74,10 +74,10 @@ namespace wawo { namespace net {
 		spin_mutex m_rps_q_mutex;
 		spin_mutex m_rps_q_standby_mutex;
 
-		std::queue<WWSP<wawo::packet>> *m_rps_q;
-		std::queue<WWSP<wawo::packet>> *m_rps_q_standby;
+		std::queue<WWRP<wawo::packet>> *m_rps_q;
+		std::queue<WWRP<wawo::packet>> *m_rps_q_standby;
 
-		WWSP<std::queue<WWSP<wawo::packet>>> m_outs;
+		WWSP<std::queue<WWRP<wawo::packet>>> m_outs;
 		WWRP<observer> m_observer;
 
 		fn_io_event m_fn_async_connected;
@@ -196,8 +196,8 @@ namespace wawo { namespace net {
 
 		int async_connect(address const& addr);
 
-		int send_packet(WWSP<wawo::packet> const& packet, int const& flags = 0);
-		u32_t receive_packets(WWSP<wawo::packet> arrives[], u32_t const& size, int& ec_o);
+		int send_packet(WWRP<wawo::packet> const& packet, int const& flags = 0);
+		u32_t receive_packets(WWRP<wawo::packet> arrives[], u32_t const& size, int& ec_o);
 
 		void flush(bool& left, int& ec_o, int const& block_time = __FLUSH_DEFAULT_BLOCK_TIME__ /* in microseconds , -1 == INFINITE */ ) ;
 
@@ -229,7 +229,7 @@ namespace wawo { namespace net {
 
 	private:
 
-		u32_t _receive_packets(WWSP<wawo::packet> arrives[], u32_t const& size, int& ec_o );
+		u32_t _receive_packets(WWRP<wawo::packet> arrives[], u32_t const& size, int& ec_o );
 		u32_t _flush(bool& left, int& ec_o);
 
 		inline void __rdwr_check(int const& ec = 0) {
@@ -422,7 +422,7 @@ namespace wawo { namespace net {
 		inline int ch_close_read(int const& ec) { return shutdown(SHUTDOWN_RD, ec); }
 		inline int ch_close_write(int const& ec) { return shutdown(SHUTDOWN_WR, ec); }
 
-		inline int ch_write(WWSP<packet> const& outlet) { return send_packet(outlet); }
+		inline int ch_write(WWRP<packet> const& outlet) { return send_packet(outlet); }
 	};
 }}
 #endif

@@ -1,0 +1,95 @@
+
+#include <wawo/net/handler/http.hpp>
+#include <wawo/log/logger_manager.h>
+#include <wawo/net/channel_handler_context.hpp>
+
+namespace wawo { namespace net { namespace handler {
+
+	void http::connected(WWRP<wawo::net::channel_handler_context> const& ctx) {
+		WAWO_ASSERT(m_http_parser == NULL);
+		m_http_parser = wawo::make_ref<wawo::net::protocol::http::parser>();
+		m_http_parser->init(wawo::net::protocol::http::PARSER_REQ);
+
+		m_http_parser->on_message_begin = std::bind(&http::http_on_message_begin, WWRP<http>(this));
+		m_http_parser->on_url = std::bind(&http::http_on_url, WWRP<http>(this), std::placeholders::_1, std::placeholders::_2);
+		m_http_parser->on_status = std::bind(&http::http_on_status, WWRP<http>(this), std::placeholders::_1, std::placeholders::_2);
+		m_http_parser->on_header_field = std::bind(&http::http_on_header_field, WWRP<http>(this), std::placeholders::_1, std::placeholders::_2);
+		m_http_parser->on_header_value = std::bind(&http::http_on_header_value, WWRP<http>(this), std::placeholders::_1, std::placeholders::_2);
+		m_http_parser->on_headers_complete = std::bind(&http::http_on_headers_complete, WWRP<http>(this));
+
+		m_http_parser->on_body = std::bind(&http::http_on_body, WWRP<http>(this), std::placeholders::_1, std::placeholders::_2);
+		m_http_parser->on_message_complete = std::bind(&http::http_on_message_complete, WWRP<http>(this));
+
+		m_http_parser->on_chunk_header = std::bind(&http::http_on_message_begin, WWRP<http>(this));
+		m_http_parser->on_chunk_complete = std::bind(&http::http_on_message_begin, WWRP<http>(this));
+
+		ctx->fire_connected();
+	}
+
+	void http::read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income) {
+		WAWO_ASSERT(m_http_parser != NULL );
+		int ec;
+		m_cur_ctx = ctx;
+		u32_t nparsed = m_http_parser->parse( (char*) income->begin(), income->len(), ec );
+		WAWO_ASSERT(nparsed == income->len());
+		income->skip(nparsed);
+		m_cur_ctx = NULL;
+	}
+
+	int http::http_on_message_begin() {
+		WAWO_ASSERT(m_tmp_m == NULL );
+		m_tmp_m = wawo::make_shared<protocol::http::message>();
+
+		event_trigger::invoke<fn_message_begin_t>(E_MESSAGE_BEGIN, m_cur_ctx);
+		return wawo::OK;
+	}
+
+	int http::http_on_url(const char* data, u32_t const& len) {
+		m_tmp_m->url = wawo::len_cstr( data,len );
+		return wawo::OK;
+	}
+
+	int http::http_on_status(const char* data, u32_t const& len) {
+		WAWO_ERR("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
+		WAWO_ASSERT(!"WHAT");
+		return wawo::OK;
+	}
+
+	int http::http_on_header_field(const char* data, u32_t const& len) {
+		WAWO_DEBUG("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
+		m_tmp_for_field = wawo::len_cstr(data, len);
+		return wawo::OK;
+	}
+
+	int http::http_on_header_value(const char* data, u32_t const& len) {
+		WAWO_DEBUG("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
+		m_tmp_m->h.set(m_tmp_for_field, wawo::len_cstr(data, len));
+		return wawo::OK;
+	}
+
+	int http::http_on_headers_complete() {
+		WAWO_DEBUG(__FUNCTION__);
+		return wawo::OK;
+
+		event_trigger::invoke<fn_message_header_end_t>(E_HEADER_COMPLETE, m_cur_ctx, m_tmp_m);
+		m_tmp_m = NULL;
+		return wawo::OK;
+	}
+
+	int http::http_on_body(const char* data, u32_t const& len) {
+		WWRP<wawo::packet> income = wawo::make_ref<wawo::packet>((wawo::byte_t*)data, len);
+		event_trigger::invoke<fn_message_body_t>(E_BODY, m_cur_ctx, income);
+	}
+
+	int http::http_on_message_complete() {
+		event_trigger::invoke<fn_message_end_t>(E_BODY, m_cur_ctx);
+	}
+
+	int http::http_on_chunk_header() {
+		WAWO_ASSERT(!"TODO");
+	}
+
+	int http::http_on_chunk_complete() {
+		WAWO_ASSERT(!"TODO");
+	}
+}}}

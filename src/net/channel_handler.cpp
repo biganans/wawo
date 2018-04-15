@@ -22,12 +22,12 @@ namespace wawo { namespace net {
 		ctx->fire_accepted( newch );
 	}
 
-	void channel_handler_head::read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income) 
+	void channel_handler_head::read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) 
 	{
 		ctx->fire_read(income);
 	}
 
-	int channel_handler_head::write(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& outlet)
+	int channel_handler_head::write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet)
 	{
 		return ctx->ch->ch_write(outlet);
 	}
@@ -50,12 +50,12 @@ namespace wawo { namespace net {
 		ctx->fire_accepted(newch);
 	}
 
-	void channel_handler_tail::read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income)
+	void channel_handler_tail::read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income)
 	{
 		ctx->fire_read(income);
 	}
 
-	int channel_handler_tail::write(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& outlet)
+	int channel_handler_tail::write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet)
 	{
 		WAWO_ASSERT(!"socket_handler_head::write,,, send a flush ?");
 		return wawo::OK;

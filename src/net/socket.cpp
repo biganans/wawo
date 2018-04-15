@@ -121,13 +121,13 @@ namespace wawo { namespace net {
 		WAWO_ASSERT(m_rps_q == NULL);
 		WAWO_ASSERT(m_rps_q_standby == NULL);
 
-		m_rps_q = new std::queue<WWSP<wawo::packet>>;
-		WAWO_ALLOC_CHECK(m_rps_q, sizeof(std::queue<WWSP<wawo::packet>>) );
+		m_rps_q = new std::queue<WWRP<wawo::packet>>;
+		WAWO_ALLOC_CHECK(m_rps_q, sizeof(std::queue<WWRP<wawo::packet>>) );
 
-		m_rps_q_standby = new std::queue<WWSP<wawo::packet>>;
-		WAWO_ALLOC_CHECK(m_rps_q_standby, sizeof(std::queue<WWSP<wawo::packet>>));
+		m_rps_q_standby = new std::queue<WWRP<wawo::packet>>;
+		WAWO_ALLOC_CHECK(m_rps_q_standby, sizeof(std::queue<WWRP<wawo::packet>>));
 
-		m_outs = wawo::make_shared< std::queue<WWSP<wawo::packet>> >();
+		m_outs = wawo::make_shared< std::queue<WWRP<wawo::packet>> >();
 
 		WAWO_ASSERT(m_observer == NULL);
 		m_observer = wawo::net::observers::instance()->next(is_wcp());
@@ -537,7 +537,7 @@ namespace wawo { namespace net {
 			}
 
 			do {
-				WWSP<wawo::packet> arrives[5];
+				WWRP<wawo::packet> arrives[5];
 				u32_t count = _receive_packets(arrives, 5, ec_o);
 				if (count > 0) {
 					lock_guard<spin_mutex> lg_rq_standby(m_rps_q_standby_mutex);
@@ -569,7 +569,7 @@ namespace wawo { namespace net {
 			}
 
 			while (m_rps_q->size()) {
-				WWSP<packet>& p = m_rps_q->front();
+				WWRP<packet>& p = m_rps_q->front();
 				ch_read(p);
 				m_rps_q->pop();
 			}
@@ -671,7 +671,7 @@ namespace wawo { namespace net {
 
 		left = m_outs->size()>0;
 		while( (left) && (ec_o == wawo::OK) ) {
-			WWSP<wawo::packet>& outp = m_outs->front();
+			WWRP<wawo::packet>& outp = m_outs->front();
 			WAWO_ASSERT(outp->len() > 0);
 
 			u32_t sbytes = socket_base::send(outp->begin(), outp->len(), ec_o) ;
@@ -693,7 +693,7 @@ namespace wawo { namespace net {
 		return flushed;
 	}
 
-	int socket::send_packet(WWSP<wawo::packet> const& outp, int const& flag ) {
+	int socket::send_packet(WWRP<wawo::packet> const& outp, int const& flag ) {
 		WAWO_ASSERT(outp != NULL);
 		WAWO_ASSERT(outp->len() > 0);
 
@@ -708,7 +708,7 @@ namespace wawo { namespace net {
 
 				WAWO_TRACE_SOCKET("[socket]push one outp for queue not empty");
 				//we have to make our own copy
-				WWSP<packet> _outp = wawo::make_shared<packet>(*outp);
+				WWRP<packet> _outp = wawo::make_ref<packet>(outp->begin(), outp->len() );
 				m_outs->push(_outp);
 				return wawo::OK;
 			}
@@ -718,7 +718,7 @@ namespace wawo { namespace net {
 			outp->skip(sbytes);
 
 			if (outp->len() > 0) {
-				WWSP<packet> _outp = wawo::make_shared<packet>(*outp);
+				WWRP<packet> _outp = wawo::make_ref<packet>( outp->begin(), outp->len());
 				m_outs->push(_outp);
 				WAWO_TRACE_SOCKET("[socket][%s]push one outp to queue for socket::send() blocked, left: %u, sent: %u", info().to_lencstr().cstr, _outp->len(), sbytes);
 			}
@@ -738,17 +738,17 @@ namespace wawo { namespace net {
 		return send_ec;
 	}
 
-	u32_t socket::receive_packets(WWSP<wawo::packet> arrives[], u32_t const& size, int& ec_o ) {
+	u32_t socket::receive_packets(WWRP<wawo::packet> arrives[], u32_t const& size, int& ec_o ) {
 		lock_guard<spin_mutex> lg(m_mutexes[L_READ]);
 		return _receive_packets(arrives,size,ec_o);
 	}
 
-	u32_t socket::_receive_packets(WWSP<wawo::packet> arrives[], u32_t const& size, int& ec_o ) {
+	u32_t socket::_receive_packets(WWRP<wawo::packet> arrives[], u32_t const& size, int& ec_o ) {
 		u32_t n = 0;
 		do {
 			u32_t nbytes = socket_base::recv(m_trb, buffer_cfg().rcv_size, ec_o);
 			if (nbytes > 0) {
-				WWSP<packet> p = wawo::make_shared<packet>(nbytes);
+				WWRP<packet> p = wawo::make_ref<packet>(nbytes);
 				p->write(m_trb, nbytes);
 				arrives[n++] = p;
 			}

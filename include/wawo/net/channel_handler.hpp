@@ -38,14 +38,14 @@ namespace wawo { namespace net {
 		virtual public channel_handler_abstract
 	{
 	public:
-		virtual void read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income) = 0;
+		virtual void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) = 0;
 	};
 
 	class channel_outbound_handler_abstract :
 		virtual public channel_handler_abstract
 	{
 	public:
-		virtual int write(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& outlet) = 0;
+		virtual int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) = 0;
 
 		virtual int close(WWRP<channel_handler_context> const& ctx,int const& code);
 		virtual int close_read(WWRP<channel_handler_context> const& ctx,int const& code);
@@ -70,8 +70,8 @@ namespace wawo { namespace net {
 	{
 	public:
 		void accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch) ;
-		void read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income) ;
-		int write(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& outlet) ;
+		void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) ;
+		int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) ;
 
 		int close(WWRP<channel_handler_context> const& ctx, int const& code);
 		int close_read(WWRP<channel_handler_context> const& ctx, int const& code);
@@ -85,8 +85,8 @@ namespace wawo { namespace net {
 		public channel_outbound_handler_abstract
 	{
 		void accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch) ;
-		void read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income) ;
-		int write(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& outlet) ;
+		void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) ;
+		int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) ;
 	};
 }}
 #endif

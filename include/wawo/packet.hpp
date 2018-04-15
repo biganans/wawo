@@ -29,9 +29,7 @@ namespace wawo {
 	 * 2, read forward only
 	 */
 
-	class packet {
-
-	private:
+	class packet : public ref_base {
 		byte_t* m_buffer;
 
 		u32_t	m_left_capacity;
@@ -76,7 +74,6 @@ namespace wawo {
 		}
 
 		void _init_buffer(u32_t const& left, u32_t const& right) {
-
 			m_left_capacity = WAWO_MAX2(left, PACK_MIN_LEFT_CAPACITY);
 			m_right_capacity = WAWO_MAX2(right, PACK_MIN_RIGHT_CAPACITY);
 
@@ -102,13 +99,26 @@ namespace wawo {
 			m_right_capacity(right_capacity),
 			m_write_idx(0)
 		{
-			_init_buffer( left_capacity, right_capacity );
+			_init_buffer(m_left_capacity, m_right_capacity);
+		}
+
+		explicit packet(byte_t const* buffer, u32_t const& len):
+			m_buffer(NULL),
+			m_left_capacity(PACK_INIT_LEFT_CAPACITY),
+			m_read_idx(0),
+			m_right_capacity(len),
+			m_write_idx(0)
+		{
+			_init_buffer(m_left_capacity, m_right_capacity);
+
+			write_left(buffer, len);
 		}
 
 		~packet() {
 			::free( m_buffer );
 		}
 
+		/*
 		packet( packet const& copy ):
 			m_buffer( NULL ),
 			m_left_capacity(0),
@@ -151,6 +161,7 @@ namespace wawo {
 			std::swap( m_right_capacity, other.m_right_capacity );
 			std::swap( m_write_idx, other.m_write_idx );
 		}
+		*/
 
 		inline u32_t left_left_capacity() { return (m_buffer == NULL) ? 0 : m_read_idx; }
 		inline u32_t left_right_capacity() { return (m_buffer == NULL) ? 0 : _capacity() - m_write_idx; }
@@ -183,14 +194,13 @@ namespace wawo {
 			m_read_idx = m_write_idx = m_left_capacity ;
 		}
 
-		packet* write_left( byte_t const* buffer, u32_t const& length ) {
-
-			while ( length > (left_left_capacity()) ) {
+		packet* write_left( byte_t const* buffer, u32_t const& len ) {
+			while (len > (left_left_capacity()) ) {
 				_extend_leftbuffer_capacity__();
 			}
 
-			m_read_idx -= length ;
-			::memcpy( m_buffer + m_read_idx, buffer, length ) ;
+			m_read_idx -= len;
+			::memcpy( m_buffer + m_read_idx, buffer, len) ;
 			return this ;
 		}
 

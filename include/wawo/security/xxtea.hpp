@@ -221,7 +221,7 @@ namespace wawo { namespace security {
 			::memset(m_key + klen, 'z', sizeof(m_key) - klen);
 		}
 
-		int encrypt(WWSP<packet> const& in, WWSP<packet>& out ) const {
+		int encrypt(WWRP<packet> const& in, WWRP<packet>& out ) const {
 #ifdef WAWO_DEBUG_DH_XXTEA_KEY
 			char key_cstr[64] = { 0 };
 			snprintf(key_cstr, 64, "%d%d%d%d-%d%d%d%d-%d%d%d%d-%d%d%d%d"
@@ -239,7 +239,7 @@ namespace wawo { namespace security {
 				return wawo::E_XXTEA_ENCRYPT_FAILED;
 			}
 
-			WWSP<packet> encrypted = wawo::make_shared<packet>(tea->encrypted_data_length);
+			WWRP<packet> encrypted = wawo::make_ref<packet>(tea->encrypted_data_length);
 			encrypted->write(tea->encrypted_data, tea->encrypted_data_length);
 			xxtea_free(tea);
 			out.swap(encrypted);
@@ -247,7 +247,7 @@ namespace wawo { namespace security {
 			return ec;
 		}
 
-		int decrypt(WWSP<packet> const& in, WWSP<packet>& out ) const {
+		int decrypt(WWRP<packet> const& in, WWRP<packet>& out ) const {
 #ifdef WAWO_DEBUG_DH_XXTEA_KEY
 			char key_cstr[64] = { 0 };
 			snprintf(key_cstr, 64, "%d%d%d%d-%d%d%d%d-%d%d%d%d-%d%d%d%d"
@@ -265,7 +265,7 @@ namespace wawo { namespace security {
 				return wawo::E_XXTEA_DECRYPT_FAILED;
 			}
 
-			WWSP<packet> decrypted = wawo::make_shared<packet>(tea->decrypted_data_length);
+			WWRP<packet> decrypted = wawo::make_ref<packet>(tea->decrypted_data_length);
 			decrypted->write(tea->decrypted_data, tea->decrypted_data_length);
 			xxtea_free(tea);
 			out.swap(decrypted);

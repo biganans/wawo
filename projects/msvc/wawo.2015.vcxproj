@@ -151,6 +151,7 @@
     <ClCompile Include="..\..\src\log\sys_logger.cpp" />
     <ClCompile Include="..\..\src\net\address.cpp" />
     <ClCompile Include="..\..\src\net\channel_handler_context.cpp" />
+    <ClCompile Include="..\..\src\net\handler\http.cpp" />
     <ClCompile Include="..\..\src\net\handler\websocket.cpp" />
     <ClCompile Include="..\..\src\net\protocol\http_utils.cpp" />
     <ClCompile Include="..\..\src\net\socket.cpp" />
@@ -186,6 +187,7 @@
     <ClInclude Include="..\..\include\wawo\env\env.hpp" />
     <ClInclude Include="..\..\include\wawo\env\env_impl_gnu.hpp" />
     <ClInclude Include="..\..\include\wawo\env\env_impl_win32.hpp" />
+    <ClInclude Include="..\..\include\wawo\event_trigger.hpp" />
     <ClInclude Include="..\..\include\wawo\exception.hpp" />
     <ClInclude Include="..\..\include\wawo\log\console_logger.h" />
     <ClInclude Include="..\..\include\wawo\log\file_logger.h" />
@@ -207,6 +209,7 @@
     <ClInclude Include="..\..\include\wawo\net\handler\dump_out_text.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\echo.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\hlen.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\handler\http.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\mux.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\symmetric_encrypt.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\websocket.hpp" />

@@ -118,8 +118,8 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 			}
 		}
 
-		void encode(WWSP<packet>& packet_o) {
-			WWSP<packet> opacket = wawo::make_shared<packet>();
+		void encode(WWRP<packet>& packet_o) {
+			WWRP<packet> opacket = wawo::make_ref<packet>();
 
 			//WAWO_ASSERT(map.size() > 0);
 
@@ -165,13 +165,10 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		bool is_header_contain_connection_close;
 	};
 
-	void encode_message(WWSP<message> const& m, WWSP<packet>& out);
+	void encode_message(WWSP<message> const& m, WWRP<packet>& out);
 	int parse_url(wawo::len_cstr const& url, url_fields& urlfields, bool is_connect);
 
 	struct parser;
-
-	//typedef int(*parser_cb_data)(WWRP<parser> const&, const char* data, u32_t const& len);
-	//typedef int(*parser_cb)(WWRP<parser> const&);
 
 	typedef std::function<int(const char* data, u32_t const& len)> parser_cb_data;
 	typedef std::function<int()> parser_cb;

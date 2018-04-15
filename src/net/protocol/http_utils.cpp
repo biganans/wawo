@@ -5,8 +5,8 @@
 namespace wawo { namespace net { namespace protocol { namespace http {
 
 
-	void encode_message(WWSP<message> const& m, WWSP<packet>& out) {
-		WWSP<packet> _out = wawo::make_shared<packet>();
+	void encode_message(WWSP<message> const& m, WWRP<packet>& out) {
+		WWRP<packet> _out = wawo::make_ref<packet>();
 		if (m->type == T_REQ) {
 
 			if (m->url == "") {
@@ -45,7 +45,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 			m->h.set("content-length", blength_char);
 		}
 
-		WWSP<packet> hpacket;
+		WWRP<packet> hpacket;
 		m->h.encode(hpacket);
 
 		_out->write(hpacket->begin(), hpacket->len());

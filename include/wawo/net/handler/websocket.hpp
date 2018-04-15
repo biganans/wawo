@@ -73,8 +73,8 @@ namespace wawo { namespace net { namespace handler {
 			u64_t payload_len;
 			u8_t masking_key_arr[4];
 
-			WWSP<packet> extdata;
-			WWSP<packet> appdata;
+			WWRP<packet> extdata;
+			WWRP<packet> appdata;
 		};
 
 
@@ -82,11 +82,11 @@ namespace wawo { namespace net { namespace handler {
 		WWSP<protocol::http::message> m_upgrade_req;
 		state m_state;
 		WWRP<wawo::net::protocol::http::parser> m_http_parser;
-		WWSP<wawo::packet> m_income_prev;
+		WWRP<wawo::packet> m_income_prev;
 		WWSP<ws_frame> m_tmp_frame;
 
 
-		WWSP<packet> m_tmp_message; //for fragmented message
+		WWRP<packet> m_tmp_message; //for fragmented message
 		u8_t m_fragmented_opcode;
 		u8_t m_fragmented_begin;
 		bool m_close_sent;
@@ -99,8 +99,8 @@ namespace wawo { namespace net { namespace handler {
 
 			virtual ~websocket() {}
 			void connected(WWRP<channel_handler_context> const& ctx);
-			void read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income) ;
-			int write(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& outlet);
+			void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) ;
+			int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet);
 			int close(WWRP<channel_handler_context> const& ctx, int const& code = 0);
 		protected:
 			int http_on_message_begin();

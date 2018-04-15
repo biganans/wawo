@@ -154,7 +154,7 @@ namespace wawo {namespace net {namespace handler {
 
 	struct DH_Frame {
 		u8_t frame;
-		WWSP<packet> fpacket;
+		WWRP<packet> fpacket;
 		DH_Frame(u8_t const& f) :
 			frame(f) {}
 
@@ -239,7 +239,7 @@ namespace wawo {namespace net {namespace handler {
 			m_cookie_size = size;
 		}
 
-		void handshake_make_hello_packet(WWSP<packet>& hello) {
+		void handshake_make_hello_packet(WWRP<packet>& hello) {
 
 			WAWO_ASSERT(hello == NULL);
 
@@ -271,7 +271,7 @@ namespace wawo {namespace net {namespace handler {
 				fhello.compress[i] = m_context.compress[i];
 			}
 
-			WWSP<packet> hello_packet = wawo::make_shared<packet>();
+			WWRP<packet> hello_packet = wawo::make_ref<packet>();
 
 #ifdef WAWO_DH_SYMMETRIC_ENCRYPT_ENABLE_HANDSHAKE_OBFUSCATE
 			hello_packet->write<u32_t>(security::u8_obfuscate(fhello.frame, wawo::random_u32()));
@@ -293,7 +293,7 @@ namespace wawo {namespace net {namespace handler {
 			hello = hello_packet;
 		}
 
-		void handshake_packet_arrive( WWRP<channel_handler_context> const& ctx, WWSP<packet> const& in ) {
+		void handshake_packet_arrive( WWRP<channel_handler_context> const& ctx, WWRP<packet> const& in ) {
 			WAWO_ASSERT(m_dhstate != DH_DATA_TRANSFER);
 
 #ifdef WAWO_DH_SYMMETRIC_ENCRYPT_ENABLE_HANDSHAKE_OBFUSCATE
@@ -348,8 +348,8 @@ namespace wawo {namespace net {namespace handler {
 
 				m_cipher = cipher;
 
-				WWSP<packet> OOO;
-				WWSP<packet> hello_reply = wawo::make_shared<packet>();
+				WWRP<packet> OOO;
+				WWRP<packet> hello_reply = wawo::make_ref<packet>();
 
 #ifdef WAWO_DH_SYMMETRIC_ENCRYPT_ENABLE_HANDSHAKE_OBFUSCATE
 				hello_reply->write<u32_t>(security::u8_obfuscate(dh_frameHello_reply.frame, wawo::random_u32()));
@@ -361,10 +361,10 @@ namespace wawo {namespace net {namespace handler {
 				hello_reply->write<u8_t>(dh_frameHello_reply.compress & 0xff);
 				ctx->write(hello_reply);
 
-				WWSP<packet> message = wawo::make_shared<packet>();
+				WWRP<packet> message = wawo::make_ref<packet>();
 				message->write((byte_t*)HOK_MESSAGE, wawo::strlen(HOK_MESSAGE));
-				WWSP<packet> encrypted_message;
-				WWSP<packet> hlength_encrypted_message;
+				WWRP<packet> encrypted_message;
+				WWRP<packet> hlength_encrypted_message;
 
 				int encrt = cipher->encrypt(message, encrypted_message);
 				WAWO_ASSERT(encrt == wawo::OK);
@@ -403,10 +403,10 @@ namespace wawo {namespace net {namespace handler {
 
 				m_cipher = cipher;
 
-				WWSP<packet> message = wawo::make_shared<packet>();
+				WWRP<packet> message = wawo::make_ref<packet>();
 				message->write((byte_t*)HOK_MESSAGE, wawo::strlen(HOK_MESSAGE));
-				WWSP<packet> encrypted_message;
-				WWSP<packet> hlength_encrypted_message;
+				WWRP<packet> encrypted_message;
+				WWRP<packet> hlength_encrypted_message;
 
 				int encrt = cipher->encrypt(message, encrypted_message);
 
@@ -425,7 +425,7 @@ namespace wawo {namespace net {namespace handler {
 				//check decrypted(message) == "MESSAGE"
 
 				WAWO_ASSERT( m_cipher != NULL);
-				WWSP<packet> message;
+				WWRP<packet> message;
 				int decryptrt = m_cipher->decrypt(in, message);
 				WAWO_ASSERT(decryptrt == wawo::OK);
 
@@ -448,20 +448,20 @@ namespace wawo {namespace net {namespace handler {
 
 		void connected(WWRP<channel_handler_context> const& ctx) {
 			if (ctx->ch->is_active()) {
-				WWSP<packet> hello;
+				WWRP<packet> hello;
 				handshake_make_hello_packet(hello);
 				ctx->write(hello);
 				m_dhstate = DH_HANDSHAKE;
 			}
 		}
 
-		void read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income) {
+		void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) {
 			WAWO_ASSERT(income != NULL);
 
 			switch (m_dhstate) {
 			case DH_DATA_TRANSFER:
 				{
-					WWSP<packet> decrypted;
+					WWRP<packet> decrypted;
 					WAWO_ASSERT(m_cipher != NULL);
 					int decrypt = m_cipher->decrypt(income, decrypted);
 					WAWO_ASSERT(decrypt == wawo::OK);
@@ -485,10 +485,10 @@ namespace wawo {namespace net {namespace handler {
 			}
 		}
 
-		int write(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& outlet) {
+		int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) {
 			WAWO_ASSERT(m_dhstate == DH_DATA_TRANSFER);
 			WAWO_ASSERT(m_cipher != NULL);
-			WWSP<packet> encrypted;
+			WWRP<packet> encrypted;
 			int encrt = m_cipher->encrypt(outlet, encrypted);
 			WAWO_ASSERT(encrt == wawo::OK);
 			return ctx->write(encrypted);

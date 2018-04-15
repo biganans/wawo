@@ -42,8 +42,7 @@ namespace wawo {
 		return wawo::make_ref<event_handler<_Callable>>(std::forward<_Callable>(_func));
 	}
 
-	class event_trigger :
-		public wawo::ref_base
+	class event_trigger
 	{
 		typedef std::vector< WWRP<wawo::event_handler_base> > handler_vector_t;
 		typedef std::map<int, handler_vector_t > event_map_t;

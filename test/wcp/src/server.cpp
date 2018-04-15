@@ -71,7 +71,7 @@ namespace wcp_test {
 		}
 
 		void _begin_send_header(WWRP<wawo::net::channel_handler_context> const& ctx) {
-			WWSP<wawo::packet> outp_BEGIN = wawo::make_shared<wawo::packet>();
+			WWRP<wawo::packet> outp_BEGIN = wawo::make_ref<wawo::packet>();
 			outp_BEGIN->write<wawo::u8_t>(wcp_test::C_TRANSFER_FILE_HEADER);
 			outp_BEGIN->write<wawo::u32_t>(file_len);
 			int sndrt_BEGIN = ctx->write(outp_BEGIN);
@@ -91,7 +91,7 @@ namespace wcp_test {
 					to_sent = one_time_bytes;
 				}
 
-				WWSP<wawo::packet> outp_CONTENT = wawo::make_shared<wawo::packet>();
+				WWRP<wawo::packet> outp_CONTENT = wawo::make_ref<wawo::packet>();
 				outp_CONTENT->write(file_content + s_total, to_sent);
 
 				int sndrt_CONTENT = ctx->write(outp_CONTENT);
@@ -154,7 +154,7 @@ namespace wcp_test {
 
 		struct income_queue {
 			WWRP<wawo::net::channel_handler_context> ctx;
-			WWSP<wawo::packet> income;
+			WWRP<wawo::packet> income;
 		};
 		std::queue< income_queue > msg_queue;
 
@@ -167,7 +167,7 @@ namespace wcp_test {
 					msg_queue.pop();
 
 					WWRP < wawo::net::channel_handler_context > ctx = in.ctx;
-					WWSP < wawo::packet > inpack = in.income;
+					WWRP < wawo::packet > inpack = in.income;
 
 					WAWO_ASSERT(inpack->len());
 
@@ -197,7 +197,7 @@ namespace wcp_test {
 			wawo::this_thread::usleep(100);
 		}
 
-		void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<wawo::packet> const& income) {
+		void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income) {
 			wawo::thread::lock_guard < wawo::thread::spin_mutex > _lg(msg_queue_mutex);
 			msg_queue.push({ ctx,income });
 		}

@@ -57,11 +57,11 @@ namespace wawo { namespace net {
 		void fire_write_unblock();
 		void invoke_write_unblock();
 
-		void fire_read(WWSP<packet> const& income);
-		void invoke_read(WWSP<packet> const& income);
+		void fire_read(WWRP<packet> const& income);
+		void invoke_read(WWRP<packet> const& income);
 
-		int write(WWSP<packet> const& outlet);
-		int invoke_write(WWSP<packet> const& outlet);
+		int write(WWRP<packet> const& outlet);
+		int invoke_write(WWRP<packet> const& outlet);
 
 		int close(int const& code = 0);
 		int invoke_close(int const& code);
@@ -120,14 +120,14 @@ namespace wawo { namespace net {
 	}
 
 #define HANDLER_CONTEXT_IMPL_H_TO_T_PACKET_1(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
-	void CTX_CLASS_NAME::fire_##NAME##( WWSP<packet> const& p ) \
+	void CTX_CLASS_NAME::fire_##NAME##( WWRP<packet> const& p ) \
 	{ \
 		if (N != NULL) { \
 			N->invoke_##NAME##(p); \
 		} \
 	} \
 	 \
-	void CTX_CLASS_NAME::invoke_##NAME##(WWSP<packet> const& p) \
+	void CTX_CLASS_NAME::invoke_##NAME##(WWRP<packet> const& p) \
 	{ \
 		WAWO_ASSERT(m_h != NULL); \
 		if (m_flag&HANDLER_FLAG) { \
@@ -140,7 +140,7 @@ namespace wawo { namespace net {
 	}
 
 #define INT_HANDLER_CONTEXT_IMPL_T_TO_H_PACKET_1(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
-	int CTX_CLASS_NAME::invoke_##NAME##(WWSP<packet> const& p) { \
+	int CTX_CLASS_NAME::invoke_##NAME##(WWRP<packet> const& p) { \
 		if (m_flag&HANDLER_FLAG) { \
 			WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
 			return _h->##NAME##(WWRP<CTX_CLASS_NAME>(this), p); \
@@ -149,7 +149,7 @@ namespace wawo { namespace net {
 		} \
 	} \
 	 \
-	int CTX_CLASS_NAME::##NAME##(WWSP<packet> const& p) { \
+	int CTX_CLASS_NAME::##NAME##(WWRP<packet> const& p) { \
 		WAWO_ASSERT(P != NULL); \
 		return P->invoke_##NAME##(p); \
 	}

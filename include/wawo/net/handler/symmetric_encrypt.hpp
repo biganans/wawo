@@ -28,19 +28,19 @@ namespace wawo { namespace net { namespace handler {
 			return m_cipher;
 		}
 
-		void read(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& income ) {
+		void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income ) {
 			WAWO_ASSERT(m_cipher != NULL);
-			WWSP<packet> decrypted;
+			WWRP<packet> decrypted;
 			int decryptrt = m_cipher->decrypt(income, decrypted);
 			WAWO_ASSERT(decryptrt == wawo::OK);
 			ctx->fire_read(decrypted);
 		}
 
-		int write(WWRP<channel_handler_context> const& ctx, WWSP<packet> const& outlet) {
+		int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) {
 			WAWO_ASSERT(outlet != NULL);
 			WAWO_ASSERT(m_cipher != NULL);
 
-			WWSP<packet> encrypted;
+			WWRP<packet> encrypted;
 			int rt = m_cipher->encrypt(outlet, encrypted);
 			WAWO_ASSERT(rt == wawo::OK);
 

@@ -99,7 +99,7 @@ namespace wawo { namespace net { namespace protocol { namespace ipv4 {
 			echo.ts = wawo::time::curr_milliseconds();
 			echo.checksum = 0;
 
-			WWSP<wawo::packet> icmp_pack = wawo::make_shared<wawo::packet>();
+			WWRP<wawo::packet> icmp_pack = wawo::make_ref<wawo::packet>();
 			icmp_pack->write<u8_t>(echo.type);
 			icmp_pack->write<u8_t>(echo.code);
 			icmp_pack->write<u16_t>(0);
