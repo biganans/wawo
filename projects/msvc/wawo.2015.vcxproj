@@ -152,6 +152,7 @@
     <ClCompile Include="..\..\src\net\address.cpp" />
     <ClCompile Include="..\..\src\net\channel_handler_context.cpp" />
     <ClCompile Include="..\..\src\net\handler\http.cpp" />
+    <ClCompile Include="..\..\src\net\handler\mux.cpp" />
     <ClCompile Include="..\..\src\net\handler\websocket.cpp" />
     <ClCompile Include="..\..\src\net\protocol\http_utils.cpp" />
     <ClCompile Include="..\..\src\net\socket.cpp" />

@@ -58,7 +58,8 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 	}
 
 	void message::encode(WWRP<packet>& outp) {
-		encode_message( WWSP<message>(this), outp );
+		WWSP<wawo::net::protocol::http::message> m = wawo::make_shared<wawo::net::protocol::http::message>(*this);
+		encode_message( m, outp );
 	}
 
 	int parse_url(wawo::len_cstr const& url, url_fields& urlfields, bool is_connect ) {

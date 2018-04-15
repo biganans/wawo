@@ -59,20 +59,19 @@ namespace wawo { namespace net { namespace handler {
 	}
 
 	int http::http_on_header_field(const char* data, u32_t const& len) {
-		WAWO_DEBUG("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
+		//WAWO_DEBUG("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
 		m_tmp_for_field = wawo::len_cstr(data, len);
 		return wawo::OK;
 	}
 
 	int http::http_on_header_value(const char* data, u32_t const& len) {
-		WAWO_DEBUG("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
+		//WAWO_DEBUG("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
 		m_tmp_m->h.set(m_tmp_for_field, wawo::len_cstr(data, len));
 		return wawo::OK;
 	}
 
 	int http::http_on_headers_complete() {
-		WAWO_DEBUG(__FUNCTION__);
-		return wawo::OK;
+		//WAWO_DEBUG(__FUNCTION__);
 
 		event_trigger::invoke<fn_http_message_header_end_t>(E_HEADER_COMPLETE, m_cur_ctx, m_tmp_m);
 		m_tmp_m = NULL;
@@ -82,17 +81,21 @@ namespace wawo { namespace net { namespace handler {
 	int http::http_on_body(const char* data, u32_t const& len) {
 		WWRP<wawo::packet> income = wawo::make_ref<wawo::packet>((wawo::byte_t*)data, len);
 		event_trigger::invoke<fn_http_message_body_t>(E_BODY, m_cur_ctx, income);
+		return wawo::OK;
 	}
 
 	int http::http_on_message_complete() {
 		event_trigger::invoke<fn_http_message_end_t>(E_BODY, m_cur_ctx);
+		return wawo::OK;
 	}
 
 	int http::http_on_chunk_header() {
 		WAWO_ASSERT(!"TODO");
+		return wawo::OK;
 	}
 
 	int http::http_on_chunk_complete() {
 		WAWO_ASSERT(!"TODO");
+		return wawo::OK;
 	}
 }}}

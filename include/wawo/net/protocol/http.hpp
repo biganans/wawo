@@ -124,9 +124,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 			//WAWO_ASSERT(map.size() > 0);
 
 			std::for_each( keys_order.begin(), keys_order.end(), [&]( len_cstr const& key ) {
-
 				len_cstr value = map[key];
-
 				opacket->write((wawo::byte_t*)key.cstr, key.len);
 				opacket->write((wawo::byte_t*)WAWO_HTTP_COLON, 1);
 				opacket->write((wawo::byte_t*)WAWO_HTTP_SP, 1);
@@ -167,7 +165,6 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		void encode( WWRP<wawo::packet>& out );
 	};
 
-	void encode_message(WWSP<message> const& m, WWRP<packet>& out);
 	int parse_url(wawo::len_cstr const& url, url_fields& urlfields, bool is_connect);
 
 	struct parser;
