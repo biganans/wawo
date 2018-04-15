@@ -662,7 +662,7 @@ namespace wawo { namespace net {
 				int sndrt = send_pack(*it);
 
 				if (sndrt != wawo::OK) {
-					if (sndrt != wawo::E_SOCKET_SEND_BLOCK) {
+					if (sndrt != wawo::E_CHANNEL_WRITE_BLOCK) {
 						lock_guard<spin_mutex> lg_s_mutex(s_mutex);
 						wcb_errno = sndrt;
 						s_flag |= WRITE_SEND_ERROR;
@@ -750,7 +750,7 @@ namespace wawo { namespace net {
 				WWSP<WCB_pack>& pack = s_sending_ignore_seq_space.front();
 				int sndrt = send_pack(pack);
 				if (sndrt != wawo::OK) {
-					if (sndrt != wawo::E_SOCKET_SEND_BLOCK) {
+					if (sndrt != wawo::E_CHANNEL_WRITE_BLOCK) {
 						lock_guard<spin_mutex> lg_s_mutex(s_mutex);
 						wcb_errno = sndrt;
 						s_flag |= WRITE_SEND_ERROR;
@@ -780,7 +780,7 @@ _begin_send:
 
 			int sndrt = send_pack(pack);
 			if (sndrt != wawo::OK) {
-				if (sndrt != wawo::E_SOCKET_SEND_BLOCK) {
+				if (sndrt != wawo::E_CHANNEL_WRITE_BLOCK) {
 					lock_guard<spin_mutex> lg_s_mutex(s_mutex);
 					wcb_errno = sndrt;
 					s_flag |= WRITE_SEND_ERROR;
@@ -1026,7 +1026,7 @@ _begin_send:
 			wawo::u32_t nbytes = so->recvfrom(_buffer, WCP_MTU, from, recvfrom_ec);
 
 			if (recvfrom_ec != wawo::OK) {
-				if (recvfrom_ec != wawo::E_SOCKET_RECV_BLOCK) {
+				if (recvfrom_ec != wawo::E_CHANNEL_READ_BLOCK) {
 					wcb_errno = recvfrom_ec;
 					lock_guard<spin_mutex> lg_r_mutex(r_mutex);
 					r_flag |= READ_RECV_ERROR;

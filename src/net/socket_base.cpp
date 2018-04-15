@@ -83,7 +83,7 @@ namespace wawo { namespace net { namespace standard_socket {
 				WAWO_ASSERT(r == -1);
 				int ec = socket_get_last_errno();
 				if (IS_ERRNO_EQUAL_WOULDBLOCK(ec)) {
-					ec_o = wawo::E_SOCKET_SEND_BLOCK;
+					ec_o = wawo::E_CHANNEL_WRITE_BLOCK;
 					//WAWO_TRACE_SOCKET("[wawo::net::send][#%d]send blocked, error code: <%d>", fd, ec);
 				}
 				else if (ec == EINTR) {
@@ -123,7 +123,7 @@ namespace wawo { namespace net { namespace standard_socket {
 				int ec = socket_get_last_errno();
 				if (IS_ERRNO_EQUAL_WOULDBLOCK(ec)) {
 					//WAWO_TRACE_SOCKET("[wawo::net::recv][#%d]recv blocked, block code: <%d>", fd, ec);
-					ec_o = wawo::E_SOCKET_RECV_BLOCK;
+					ec_o = wawo::E_CHANNEL_READ_BLOCK;
 				}
 				else if (ec == EINTR) {
 					continue;
@@ -170,7 +170,7 @@ namespace wawo { namespace net { namespace standard_socket {
 			WAWO_ASSERT(sent == -1);
 			int send_ec = socket_get_last_errno();
 			if (IS_ERRNO_EQUAL_WOULDBLOCK(send_ec)) {
-				ec_o = wawo::E_SOCKET_SEND_BLOCK;
+				ec_o = wawo::E_CHANNEL_WRITE_BLOCK;
 				//WAWO_TRACE_SOCKET("[wawo::net::sendto][#%d]send blocked, error code: <%d>, no retry", fd, send_ec);
 			}
 			else if (send_ec == EINTR) {
@@ -207,7 +207,7 @@ namespace wawo { namespace net { namespace standard_socket {
 			WAWO_ASSERT(nbytes==-1);
 			int _ern = socket_get_last_errno();
 			if (IS_ERRNO_EQUAL_WOULDBLOCK(_ern)) {
-				ec_o = E_SOCKET_RECV_BLOCK;
+				ec_o = E_CHANNEL_READ_BLOCK;
 				//WAWO_TRACE_SOCKET("[wawo::net::recvfrom][#%d]recvfrom EWOULDBLOCK", fd);
 			} else if(_ern == EINTR) {
 				continue;
@@ -286,7 +286,7 @@ namespace wawo { namespace net { namespace wcp_socket {
 			else {
 				WAWO_ASSERT(r < 0 );
 				if (IS_ERRNO_EQUAL_WOULDBLOCK(WAWO_ABS(r))) {
-					ec_o = wawo::E_SOCKET_SEND_BLOCK;
+					ec_o = wawo::E_CHANNEL_WRITE_BLOCK;
 				}
 				else {
 					ec_o = r;
@@ -319,7 +319,7 @@ namespace wawo { namespace net { namespace wcp_socket {
 			}
 			else {
 				if (IS_ERRNO_EQUAL_WOULDBLOCK(WAWO_ABS(r))) {
-					ec_o = wawo::E_SOCKET_RECV_BLOCK;
+					ec_o = wawo::E_CHANNEL_READ_BLOCK;
 				}
 				else if (WAWO_ABS(r) == EINTR) {
 					continue;

@@ -17,12 +17,12 @@ namespace wawo { namespace net { namespace handler {
 		E_MESSAGE_COMPLETE
 	};
 
-	typedef std::function<void(WWRP<wawo::net::channel_handler_context> const& ctx)> fn_message_begin_t;
-	typedef std::function<void(WWRP<wawo::net::channel_handler_context> const& ctx)> fn_message_body_end_t;
-	typedef std::function<void(WWRP<wawo::net::channel_handler_context> const& ctx)> fn_message_end_t;
+	typedef std::function<void(WWRP<wawo::net::channel_handler_context> const& ctx)> fn_http_message_begin_t;
+	typedef std::function<void(WWRP<wawo::net::channel_handler_context> const& ctx)> fn_http_message_body_end_t;
+	typedef std::function<void(WWRP<wawo::net::channel_handler_context> const& ctx)> fn_http_message_end_t;
 
-	typedef std::function<void(WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<protocol::http::message> const& m)> fn_message_header_end_t;
-	typedef std::function<void(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& body)> fn_message_body_t;
+	typedef std::function<void(WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<protocol::http::message> const& m)> fn_http_message_header_end_t;
+	typedef std::function<void(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& body)> fn_http_message_body_t;
 
 	class http:
 		public wawo::event_trigger,

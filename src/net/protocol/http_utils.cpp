@@ -57,6 +57,10 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		out = _out;
 	}
 
+	void message::encode(WWRP<packet>& outp) {
+		encode_message( WWSP<message>(this), outp );
+	}
+
 	int parse_url(wawo::len_cstr const& url, url_fields& urlfields, bool is_connect ) {
 
 		http_parser_url u;

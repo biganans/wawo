@@ -163,6 +163,8 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 
 		url_fields urlfields;
 		bool is_header_contain_connection_close;
+
+		void encode( WWRP<wawo::packet>& out );
 	};
 
 	void encode_message(WWSP<message> const& m, WWRP<packet>& out);

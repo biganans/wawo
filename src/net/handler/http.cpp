@@ -32,15 +32,18 @@ namespace wawo { namespace net { namespace handler {
 		m_cur_ctx = ctx;
 		u32_t nparsed = m_http_parser->parse( (char*) income->begin(), income->len(), ec );
 		WAWO_ASSERT(nparsed == income->len());
+
 		income->skip(nparsed);
 		m_cur_ctx = NULL;
+
+		//ctx->fire_read(income);
 	}
 
 	int http::http_on_message_begin() {
 		WAWO_ASSERT(m_tmp_m == NULL );
 		m_tmp_m = wawo::make_shared<protocol::http::message>();
 
-		event_trigger::invoke<fn_message_begin_t>(E_MESSAGE_BEGIN, m_cur_ctx);
+		event_trigger::invoke<fn_http_message_begin_t>(E_MESSAGE_BEGIN, m_cur_ctx);
 		return wawo::OK;
 	}
 
@@ -71,18 +74,18 @@ namespace wawo { namespace net { namespace handler {
 		WAWO_DEBUG(__FUNCTION__);
 		return wawo::OK;
 
-		event_trigger::invoke<fn_message_header_end_t>(E_HEADER_COMPLETE, m_cur_ctx, m_tmp_m);
+		event_trigger::invoke<fn_http_message_header_end_t>(E_HEADER_COMPLETE, m_cur_ctx, m_tmp_m);
 		m_tmp_m = NULL;
 		return wawo::OK;
 	}
 
 	int http::http_on_body(const char* data, u32_t const& len) {
 		WWRP<wawo::packet> income = wawo::make_ref<wawo::packet>((wawo::byte_t*)data, len);
-		event_trigger::invoke<fn_message_body_t>(E_BODY, m_cur_ctx, income);
+		event_trigger::invoke<fn_http_message_body_t>(E_BODY, m_cur_ctx, income);
 	}
 
 	int http::http_on_message_complete() {
-		event_trigger::invoke<fn_message_end_t>(E_BODY, m_cur_ctx);
+		event_trigger::invoke<fn_http_message_end_t>(E_BODY, m_cur_ctx);
 	}
 
 	int http::http_on_chunk_header() {

@@ -44,7 +44,7 @@ namespace wawo { namespace net {
 		so->handle_async_read(ec);
 		switch (ec) {
 			case wawo::OK:
-			case wawo::E_SOCKET_RECV_BLOCK:
+			case wawo::E_CHANNEL_READ_BLOCK:
 			{}
 			break;
 			case wawo::E_SOCKET_GRACE_CLOSE:
@@ -52,13 +52,8 @@ namespace wawo { namespace net {
 				so->shutdown(SHUTDOWN_RD);
 			}
 			break;
-			case wawo::E_SOCKET_RD_SHUTDOWN_ALREADY:
+			case wawo::E_CHANNEL_RD_SHUTDOWN_ALREADY:
 			{
-			}
-			break;
-			case wawo::E_SOCKET_RECV_BUFFER_FULL:
-			{
-				WAWO_THROW("socket logic issue, recv buffer full should not be prompted to outside")
 			}
 			break;
 			default:
@@ -78,12 +73,12 @@ namespace wawo { namespace net {
 		so->handle_async_write(ec);
 
 		switch (ec) {
-			case wawo::E_SOCKET_SEND_BLOCK:
+			case wawo::E_CHANNEL_WRITE_BLOCK:
 			case wawo::OK:
 			{
 			}
 			break;
-			case wawo::E_SOCKET_WR_SHUTDOWN_ALREADY:
+			case wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY:
 			{
 				WAWO_WARN("[socket][%s]async send error: %d", so->info().to_lencstr().cstr, ec);
 			}
@@ -590,7 +585,7 @@ namespace wawo { namespace net {
 		lock_guard<spin_mutex> lg( m_mutexes[L_WRITE] );
 		do {
 			flushed_total += _flush( left, ec_o );
-			if( (!left) || block_time == 0 || (ec_o != wawo::E_SOCKET_SEND_BLOCK) ) {
+			if( (!left) || block_time == 0 || (ec_o != wawo::E_CHANNEL_WRITE_BLOCK) ) {
 				break;
 			}
 
@@ -645,7 +640,7 @@ namespace wawo { namespace net {
 			}
 		} else {
 			WAWO_ASSERT(m_async_wt != 0);
-			if( ec_o == wawo::E_SOCKET_SEND_BLOCK) {
+			if( ec_o == wawo::E_CHANNEL_WRITE_BLOCK) {
 				u64_t now = wawo::time::curr_milliseconds() ;
 
 				if( (flushed_total == 0) && ( now > (m_async_wt+m_delay_wp)) ) {
@@ -703,7 +698,7 @@ namespace wawo { namespace net {
 			lock_guard<spin_mutex> lw(m_mutexes[L_WRITE]);
 			if (m_outs->size() > 0) {
 				if (m_outs->size() > 10) {
-					return wawo::E_SOCKET_SEND_BLOCK;
+					return wawo::E_CHANNEL_WRITE_BLOCK;
 				}
 
 				WAWO_TRACE_SOCKET("[socket]push one outp for queue not empty");
@@ -723,7 +718,7 @@ namespace wawo { namespace net {
 				WAWO_TRACE_SOCKET("[socket][%s]push one outp to queue for socket::send() blocked, left: %u, sent: %u", info().to_lencstr().cstr, _outp->len(), sbytes);
 			}
 
-			if ( send_ec == wawo::E_SOCKET_SEND_BLOCK) {
+			if ( send_ec == wawo::E_CHANNEL_WRITE_BLOCK) {
 				m_async_wt = wawo::time::curr_milliseconds();
 				is_block = true;
 				send_ec = wawo::OK;

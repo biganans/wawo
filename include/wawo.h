@@ -38,12 +38,12 @@
 #include <wawo/net/handler/hlen.hpp>
 #include <wawo/net/handler/symmetric_encrypt.hpp>
 #include <wawo/net/handler/dh_symmetric_encrypt.hpp>
+#include <wawo/net/handler/http.hpp>
 #include <wawo/net/handler/websocket.hpp>
-#include <wawo/net/handler/echo.hpp>
 
+#include <wawo/net/handler/echo.hpp>
 #include <wawo/net/handler/dump_in_text.hpp>
 #include <wawo/net/handler/dump_out_text.hpp>
-
 #include <wawo/net/handler/dump_in_len.hpp>
 #include <wawo/net/handler/dump_out_len.hpp>
 
