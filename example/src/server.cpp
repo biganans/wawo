@@ -1,4 +1,5 @@
 #include <wawo.h>
+//#include <vld.h>
 
 //using namespace wawo;
 //using namespace wawo::net;
@@ -51,7 +52,6 @@ public:
 		ctx->fire_write_unblock();
 	}
 };
-
 
 class http_server_handler:
 	public wawo::ref_base
@@ -121,6 +121,7 @@ public:
 
 
 int main(int argc, char** argv) {
+
 	wawo::app app;
 
 	wawo::net::socketaddr laddr;

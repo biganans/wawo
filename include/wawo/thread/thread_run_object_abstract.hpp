@@ -125,6 +125,9 @@ namespace wawo { namespace thread {
 				throw;
 			}
 
+			//clear skiped interrupt execetion if it has [edge event]
+			try {this_thread::__interrupt_check_point();} catch (wawo::thread::impl::interrupt_exception&) {}
+
 			try {
 				WAWO_TRACE_THREAD("[thread_run_object_abstract::__RUN()__]__on_stop__() begin");
 				__on_stop__();
@@ -203,10 +206,10 @@ namespace wawo { namespace thread {
 				int k = 0;
 				while( is_starting()) wawo::this_thread::yield(++k);
 			} else if (m_state == TR_RUNNING) {
+				interrupt_thread();
 				m_state = TR_STOP;
 			}
 
-			interrupt_thread() ;
 			join_thread();
 			m_state = TR_IDLE;
 		}

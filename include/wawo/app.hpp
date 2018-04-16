@@ -68,7 +68,7 @@ namespace wawo {
 			}
 
 			WAWO_SCHEDULER->start();
-			wawo::net::observers::instance()->init();
+			wawo::net::observers::instance()->init(WAWO_DEFAULT_WCP_OBSERVER_COUNT);
 		}
 
 		void deinit_net() {

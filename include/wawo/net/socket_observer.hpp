@@ -172,7 +172,7 @@ namespace wawo { namespace net {
 			:m_curr_sys(0), m_curr_wpoll(0)
 		{}
 		~observers() {}
-		void init(int min_wpoller_count = 1);
+		void init(int wpoller_count = 1);
 		WWRP<observer> next(bool const& return_wpoller = false);
 		void deinit();
 	};

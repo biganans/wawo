@@ -243,7 +243,7 @@ _VARIADIC_EXPAND_0X(_THREAD_CONS, , , , )
 #include <wawo/thread/tls.hpp>
 namespace wawo { namespace this_thread {
 
-	inline void check_point() {
+	inline void __interrupt_check_point() {
 		wawo::thread::impl::thread_data* const tdp = wawo::thread::tls_get<wawo::thread::impl::thread_data>();
 		if ( WAWO_LIKELY(tdp)) tdp->check_interrupt();
 	}
@@ -278,7 +278,7 @@ namespace wawo { namespace this_thread {
 		std::this_thread::sleep_for(std::chrono::nanoseconds(nano));
 	}
 	inline void yield() {
-		wawo::this_thread::check_point();
+		wawo::this_thread::__interrupt_check_point();
 		std::this_thread::yield();
 	}
 	inline void no_interrupt_yield() {

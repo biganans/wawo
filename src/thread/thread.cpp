@@ -40,7 +40,7 @@ namespace wawo { namespace thread {
 		try {
 			m_run_base_type->_W_run();
 		} catch (impl::interrupt_exception&) {
-			WAWO_WARN("[#%llu][thread]__RUN_PROXY__ thread interrupt catch", wawo::this_thread::get_id() );
+			WAWO_INFO("[#%llu][thread]__RUN_PROXY__ thread interrupt catch", wawo::this_thread::get_id() );
 		} catch (wawo::exception& e) {
 			WAWO_ERR("[[#%llu]][thread]__RUN_PROXY__, wawo::exception: [%d]%s\n%s(%d) %s\n%s", wawo::this_thread::get_id(), 
 				e.code, e.message, e.file, e.line, e.func, e.callstack);

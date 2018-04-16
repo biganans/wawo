@@ -187,7 +187,7 @@ namespace wawo { namespace thread {
 				impl::unique_lock<impl::cv_mutex>::type self_implulk(m_mtx, _defer_lock_v);
 				m_impl.wait(self_implulk);
 			}
-			wawo::this_thread::check_point();
+			wawo::this_thread::__interrupt_check_point();
 		}
 
 		template <class _Rep, class _Period>
@@ -202,7 +202,7 @@ namespace wawo { namespace thread {
 				impl::unique_lock<impl::cv_mutex>::type self_implulk(m_mtx, _defer_lock_v);
 				cvs = m_impl.wait_for(self_implulk, duration);
 			}
-			wawo::this_thread::check_point();
+			wawo::this_thread::__interrupt_check_point();
 			return cvs == std::cv_status::no_timeout ? cv_status::no_timeout : cv_status::timeout;
 		}
 
@@ -218,7 +218,7 @@ namespace wawo { namespace thread {
 				impl::unique_lock<impl::cv_mutex>::type self_implulk(m_mtx, _defer_lock_v);
 				cvs = m_impl.wait_until(self_implulk, atime);
 			}
-			wawo::this_thread::check_point();
+			wawo::this_thread::__interrupt_check_point();
 			return cvs == std::cv_status::no_timeout ? cv_status::no_timeout : cv_status::timeout;
 		}
 	};
@@ -273,7 +273,7 @@ namespace wawo { namespace thread {
 
 				m_impl.wait(m_mtx);
 			}
-			wawo::this_thread::check_point();
+			wawo::this_thread::__interrupt_check_point();
 		}
 
 		template <class _MutexT, class _Rep, class _Period>
@@ -305,7 +305,7 @@ namespace wawo { namespace thread {
 
 				cvs = m_impl.wait_until(m_mtx, atime);
 			}
-			wawo::this_thread::check_point();
+			wawo::this_thread::__interrupt_check_point();
 			return cvs == std::cv_status::no_timeout ? cv_status::no_timeout : cv_status::timeout;
 		}
 	};
