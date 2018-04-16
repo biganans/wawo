@@ -228,7 +228,6 @@ namespace wawo { namespace net {
 		void handle_async_write( int& ec_o);
 
 	private:
-
 		u32_t _receive_packets(WWRP<wawo::packet> arrives[], u32_t const& size, int& ec_o );
 		u32_t _flush(bool& left, int& ec_o);
 

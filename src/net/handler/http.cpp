@@ -26,6 +26,13 @@ namespace wawo { namespace net { namespace handler {
 		ctx->fire_connected();
 	}
 
+	void http::closed(WWRP<wawo::net::channel_handler_context> const& ctx) {
+		WAWO_ASSERT(m_http_parser != NULL);
+		m_http_parser = NULL;
+		ctx->fire_closed();
+	}
+
+
 	void http::read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income) {
 		WAWO_ASSERT(m_http_parser != NULL );
 		int ec;

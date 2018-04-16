@@ -13,20 +13,7 @@ namespace wawo {namespace net {namespace handler {
 public:
 	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income)
 	{	
-		/*
-		WWSP<wawo::net::protocol::http::message> m = wawo::make_shared<wawo::net::protocol::http::message>();
-		m->ver = { 1,1 };
-		m->status_code = 200;
-		m->status = "ok";
-		m->h.set("server", "wawo/1.0");
-		m->body = "zzzz";
-
-		WWRP<wawo::packet> outp = wawo::make_ref<wawo::packet>();
-		wawo::net::protocol::http::encode_message(m, outp);
-		*/
-
 		ctx->write(income);
-		ctx->close();
 	}
 };
 

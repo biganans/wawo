@@ -1,5 +1,5 @@
 #include <wawo.h>
-//#include <vld.h>
+#include <vld.h>
 
 //using namespace wawo;
 //using namespace wawo::net;
@@ -90,29 +90,55 @@ public:
 	}
 };
 
+class my_http_handler :
+	public wawo::net::handler::http
+{
+public:
+	~my_http_handler() {}
+	void read_shutdowned(WWRP<wawo::net::channel_handler_context> const& ctx) {
+		ctx->close();
+	}
+};
+
+class my_echo :
+	public wawo::net::handler::echo,
+	public wawo::net::channel_activity_handler_abstract
+{
+public:
+	~my_echo() {}
+	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income) {
+		ctx->write(income);
+		ctx->close();
+	}
+
+	void read_shutdowned(WWRP<wawo::net::channel_handler_context> const& ctx) {
+		ctx->close();
+	}
+};
+
 class listen_server_handler :
 	public wawo::net::channel_activity_handler_abstract,
 	public wawo::net::channel_acceptor_handler_abstract
 {
 	WWRP<http_server_handler> m_http_server;
-
 public:
 	listen_server_handler()
 	{
 		m_http_server = wawo::make_ref<http_server_handler>();
 	}
 
+	~listen_server_handler() {}
+
 	void accepted(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::net::channel> const& ch )
 	{
 		//WWRP<wawo::net::channel_handler_abstract> example = wawo::make_ref<example_handler>();
 		//ch->pipeline()->add_last(example);
 
-		//WWRP<wawo::net::channel_handler_abstract> echo = wawo::make_ref<wawo::net::handler::echo>();
+		//WWRP<wawo::net::channel_handler_abstract> echo = wawo::make_ref<my_echo>();
 		//ch->pipeline()->add_last(echo);
 
-		WWRP<wawo::net::handler::http> h = wawo::make_ref<wawo::net::handler::http>();
+		WWRP<wawo::net::handler::http> h = wawo::make_ref<my_http_handler>();
 		h->bind<wawo::net::handler::fn_http_message_header_end_t > (wawo::net::handler::http_event::E_HEADER_COMPLETE, &http_server_handler::on_header_end, m_http_server, std::placeholders::_1, std::placeholders::_2);
-
 		ch->pipeline()->add_last(h);
 
 		(void) ctx;
@@ -155,5 +181,6 @@ int main(int argc, char** argv) {
 	}
 
 	app.run_for();
+	lsocket->close();
 	return wawo::OK;
 }

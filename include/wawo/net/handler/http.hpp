@@ -35,8 +35,10 @@ namespace wawo { namespace net { namespace handler {
 		WWSP<protocol::http::message> m_tmp_m;
 		WWRP<wawo::net::channel_handler_context> m_cur_ctx;
 	public:
-		void connected(WWRP<wawo::net::channel_handler_context> const& ctx);
-		void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income);
+		virtual void connected(WWRP<wawo::net::channel_handler_context> const& ctx);
+		virtual void closed(WWRP<wawo::net::channel_handler_context> const& ctx);
+
+		virtual void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income);
 
 		int http_on_message_begin();
 		int http_on_url(const char* data, u32_t const& len);
