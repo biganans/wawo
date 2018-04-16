@@ -17,15 +17,15 @@ namespace wawo { namespace net {
 	INT_HANDLER_DEFAULT_IMPL_INT_1(close_read, channel_outbound_handler_abstract)
 	INT_HANDLER_DEFAULT_IMPL_INT_1(close_write, channel_outbound_handler_abstract)
 
-	void channel_handler_head::accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch)
-	{
-		ctx->fire_accepted( newch );
-	}
+	//void channel_handler_head::accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch)
+	//{
+	//	ctx->fire_accepted( newch );
+	//}
 
-	void channel_handler_head::read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) 
-	{
-		ctx->fire_read(income);
-	}
+	//void channel_handler_head::read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) 
+	//{
+	//	ctx->fire_read(income);
+	//}
 
 	int channel_handler_head::write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet)
 	{
@@ -45,23 +45,23 @@ namespace wawo { namespace net {
 	}
 
 	//--
-	void channel_handler_tail::accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch )
-	{
-		ctx->fire_accepted(newch);
-	}
+	//void channel_handler_tail::accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch )
+	//{
+	//	ctx->fire_accepted(newch);
+	//}
 
-	void channel_handler_tail::read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income)
-	{
-		ctx->fire_read(income);
-	}
+	//void channel_handler_tail::read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income)
+	//{
+	//	ctx->fire_read(income);
+	//}
 
-	int channel_handler_tail::write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet)
-	{
-		WAWO_ASSERT(!"socket_handler_head::write,,, send a flush ?");
-		return wawo::OK;
+	//int channel_handler_tail::write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet)
+	//{
+	//	WAWO_ASSERT(!"socket_handler_head::write,,, send a flush ?");
+	//	return wawo::OK;
 
-		(void)ctx;
-		(void)outlet;
-	}
+	//	(void)ctx;
+	//	(void)outlet;
+	//}
 
 }}

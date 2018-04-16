@@ -63,14 +63,14 @@ namespace wawo { namespace net {
 	}
 
 	class channel_handler_head :
-		public channel_activity_handler_abstract,
-		public channel_acceptor_handler_abstract,
-		public channel_inbound_handler_abstract,
+//		public channel_activity_handler_abstract,
+//		public channel_acceptor_handler_abstract,
+//		public channel_inbound_handler_abstract,
 		public channel_outbound_handler_abstract
 	{
 	public:
-		void accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch) ;
-		void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) ;
+		//void accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch) ;
+		//void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) ;
 		int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) ;
 
 		int close(WWRP<channel_handler_context> const& ctx, int const& code);
@@ -78,15 +78,15 @@ namespace wawo { namespace net {
 		int close_write(WWRP<channel_handler_context> const& ctx, int const& code);
 	};
 
-	class channel_handler_tail :
-		public channel_activity_handler_abstract,
-		public channel_acceptor_handler_abstract,
-		public channel_inbound_handler_abstract,
-		public channel_outbound_handler_abstract
-	{
-		void accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch) ;
-		void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) ;
-		int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) ;
-	};
+//	class channel_handler_tail :
+//		public channel_activity_handler_abstract,
+//		public channel_acceptor_handler_abstract,
+//		public channel_inbound_handler_abstract
+//		public channel_outbound_handler_abstract
+//	{
+		//void accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch) ;
+//		void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) ;
+		//int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) ;
+//	};
 }}
 #endif

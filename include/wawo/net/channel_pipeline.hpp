@@ -33,64 +33,72 @@ namespace wawo { namespace net {
 
 		WWRP<channel_pipeline> add_last(WWRP<channel_handler_abstract> const& h) {
 			WWRP<channel_handler_context> ctx = wawo::make_ref<channel_handler_context>( m_ch, h );
-			WWRP<channel_handler_context> tail_P = m_tail->P;
+			
+			m_tail->N = ctx;
 
+			ctx->N = NULL;
+			ctx->P = m_tail;
+
+			m_tail = ctx;
+
+			/*
+			WWRP<channel_handler_context> tail_P = m_tail->P;
 			ctx->N = m_tail;
 			ctx->P = tail_P;
 			tail_P->N = ctx;
 			m_tail->P = ctx;
-
+			*/
 			return WWRP<channel_pipeline>(this);
 		}
 
 	protected:
-		void fire_accepted( WWRP<channel> const& ch) {
+		inline void fire_accepted( WWRP<channel> const& ch) {
 			m_head->invoke_accepted( ch );
 		}
-		void fire_connected() {
+		inline void fire_connected() {
 			m_head->invoke_connected();
 		}
-		void fire_closed() {
+		inline void fire_closed() {
 			m_head->fire_closed();
 		}
-		void fire_error() {
+		inline void fire_error() {
 			m_head->fire_error();
 		}
-		void fire_read_shutdowned() {
+		inline void fire_read_shutdowned() {
 			m_head->invoke_read_shutdowned();
 		}
-		void fire_write_shutdowned() {
+		inline void fire_write_shutdowned() {
 			m_head->invoke_write_shutdowned();
 		}
-		void fire_write_block() {
+		inline void fire_write_block() {
 			m_head->invoke_write_block();
 		}
-		void fire_write_unblock() {
+		inline void fire_write_unblock() {
 			m_head->invoke_write_unblock();
 		}
 
-		void fire_read(WWRP<packet> const& income) {
+		inline void fire_read(WWRP<packet> const& income) {
 			m_head->fire_read(income);
 		}
 
-		int write(WWRP<packet> const& out) {
+		inline int write(WWRP<packet> const& out) {
 			WAWO_ASSERT(!"TODO");
 			(void)out;
 			return wawo::OK;
 		}
 
-		int close(int const& code = 0) {
+		inline int close(int const& code = 0) {
 			WAWO_ASSERT(!"TODO");
 			(void)code;
 			return wawo::OK;
 		}
 
-		int close_read(int const& code =0) {
+		inline int close_read(int const& code =0) {
 			WAWO_ASSERT(!"TODO");
 			(void)code;
 			return wawo::OK;
 		}
-		int close_write(int const& code = 0) {
+		inline int close_write(int const& code = 0) {
 			WAWO_ASSERT(!"TODO");
 			(void)code;
 			return wawo::OK;
