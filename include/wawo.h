@@ -10,6 +10,8 @@
 #include <wawo/ringbuffer.hpp>
 #include <wawo/packet.hpp>
 #include <wawo/bytes_ringbuffer.hpp>
+#include <wawo/heap.hpp>
+
 
 #include <wawo/thread/mutex.hpp>
 #include <wawo/thread/condition.hpp>

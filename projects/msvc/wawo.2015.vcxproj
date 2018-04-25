@@ -190,6 +190,7 @@
     <ClInclude Include="..\..\include\wawo\env\env_impl_win32.hpp" />
     <ClInclude Include="..\..\include\wawo\event_trigger.hpp" />
     <ClInclude Include="..\..\include\wawo\exception.hpp" />
+    <ClInclude Include="..\..\include\wawo\heap.hpp" />
     <ClInclude Include="..\..\include\wawo\log\console_logger.h" />
     <ClInclude Include="..\..\include\wawo\log\file_logger.h" />
     <ClInclude Include="..\..\include\wawo\log\format_interface.h" />

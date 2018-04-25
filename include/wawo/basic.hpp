@@ -116,6 +116,22 @@ namespace wawo {
 
 	template <>
 	inline bool is_true<false>() { return false; }
+
+	template <typename T>
+	struct less {
+		inline bool operator()(T const& a, T const& b)
+		{
+			return a<b;
+		}
+	};
+
+	template <typename T>
+	struct greater {
+		inline bool operator()(T const& a, T const& b)
+		{
+			return a>b;
+		}
+	};
 }
 
 namespace wawo {
