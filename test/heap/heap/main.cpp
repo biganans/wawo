@@ -38,17 +38,17 @@ inline static bool operator > (MyNode const&l, MyNode const& r) {
 }
 
 template <class HeapT, class NodeT>
-void test_heap(wawo::u32_t const& max_v = 100000, bool increr_mode = true ) {
+void test_heap(wawo::u32_t const& max_v , bool increr_mode ) {
 
 	std::srand(0);
 	wawo::u64_t begin = wawo::time::curr_nanoseconds();
 
 	unsigned long _b = 1;
 	if (!increr_mode) {
-		_b = max_v - 1;
+		_b = max_v ;
 	}
 
-	for (unsigned long cur_v = _b; cur_v < max_v; ++cur_v) {
+	for (unsigned long cur_v = _b; cur_v <= max_v; ++cur_v) {
 		unsigned long _cur_v = cur_v;
 		HeapT* h = new HeapT();
 
@@ -65,13 +65,12 @@ void test_heap(wawo::u32_t const& max_v = 100000, bool increr_mode = true ) {
 			h->pop();
 			delete n;
 		}
-		//printf("\n");
 
 		delete h;
 	}
 
 	wawo::u64_t now = wawo::time::curr_nanoseconds();
-	printf("total cost: %f s\n", (now - begin)/1000000.0 );
+	printf("total cost: %f ms\n", (now - begin)/1000000.0 );
 }
 
 typedef wawo::binary_heap<MyNode> BinH;
@@ -83,47 +82,80 @@ void test_heap<BinH, MyNode>(wawo::u32_t const& max_v , bool increr_mode ) {
 
 	unsigned long _b = 1;
 	if (!increr_mode) {
-		_b = max_v - 1;
+		_b = max_v ;
 	}
 
-	for (unsigned long cur_v = _b; cur_v < max_v; ++cur_v) {
+	for (unsigned long cur_v = _b; cur_v <= max_v; ++cur_v) {
 		unsigned long _cur_v = cur_v;
-		BinH* h = new BinH(cur_v);
+		BinH h = BinH(cur_v);
 
 		while (_cur_v--) {
 			MyNode bn;
-			int r = std::rand();
-			bn.v = r;
-			h->push(bn);
+			bn.v = std::rand();
+			h.push(bn);
 		}
-
-		while (!h->empty()) {
-			h->front();
-			//printf("%d ", n->data.v);
-			h->pop();
-			//delete n;
+		
+		while (!h.empty()) {
+			MyNode& n = h.front();
+			//printf("%d ", n.v);
+			h.pop();
 		}
-		//printf("\n");
-
-		delete h;
 	}
 
 	wawo::u64_t now = wawo::time::curr_nanoseconds();
-	printf("total cost: %f s\n", (now - begin) / 1000000.0);
+	printf("total cost: %f ms\n", (now - begin) / 1000000.0);
 }
 
+template <>
+void test_heap<std::vector<MyNode>,MyNode>(wawo::u32_t const& max_v, bool increr_mode) {
+
+	std::srand(0);
+	wawo::u64_t begin = wawo::time::curr_nanoseconds();
+
+	unsigned long _b = 1;
+	if (!increr_mode) {
+		_b = max_v;
+	}
+
+	for (unsigned long cur_v = _b; cur_v <= max_v; ++cur_v) {
+		unsigned long _cur_v = cur_v;
+		std::vector<MyNode> hvec;
+		std::make_heap(hvec.begin(), hvec.end(), std::greater<>());
+
+		while (_cur_v--) {
+			MyNode bn;
+			bn.v = std::rand();
+			hvec.push_back(bn);
+			std::push_heap(hvec.begin(), hvec.end(), std::greater<>());
+		}
+		
+		while (!hvec.empty()) {
+			std::pop_heap(hvec.begin(), hvec.end(), std::greater<>());
+			MyNode& n = hvec.back();
+			//printf("%d ", n.v);
+			hvec.pop_back();
+		}
+	}
+
+	wawo::u64_t now = wawo::time::curr_nanoseconds();
+	printf("total cost: %f ms\n", (now - begin) / 1000000.0);
+}
 
 int main(int argc, char** argv) {
 
-	test_heap<BinH, MyNode>(50000000, false);
+	const unsigned int size = 50000000;
 
+	test_heap<std::vector<MyNode>, MyNode>(size, false);
+	test_heap<BinH, MyNode>(size, false);
+
+	/*
 	typedef wawo::binomial_heap<MyNode> BinoH;
 	typedef wawo::binomial_node<MyNode> BinoNode;
-	test_heap<BinoH, BinoNode>(50000000,false);
+	test_heap<BinoH, BinoNode>(size,false);
 
 	typedef wawo::fibonacci_heap<MyNode> FibH;
 	typedef wawo::fibonacci_node<MyNode> FibNode;
-	test_heap<FibH, FibNode>(50000000, false);
-
+	test_heap<FibH, FibNode>(size, false);
+	*/
 	return 0;
 }
