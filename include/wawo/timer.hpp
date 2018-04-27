@@ -212,6 +212,7 @@ namespace wawo {
 						{
 						case timer_state::S_STARTED:
 						{
+							t->s = timer_state::S_EXPIRED;
 							t->callee(t->cookie,t);
 							if (t->t == timer_type::T_REPEAT) {
 								m_tq.push({ OP_ADD, t });
