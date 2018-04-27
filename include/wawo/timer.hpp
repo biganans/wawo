@@ -45,6 +45,7 @@ namespace wawo {
 			cookie(cookie_),
 			callee(std::forward<_timer_fx_t>(std::bind(std::forward<_Fx>(func), std::placeholders::_1, std::placeholders::_2, std::forward<_Args>(args)...))),
 			delay(delay_),
+			expire(std::chrono::steady_clock::now()+delay),
 			s(S_IDLE),
 			t(T_REPEAT)
 		{
@@ -55,6 +56,7 @@ namespace wawo {
 			cookie(cookie_),
 			callee(std::forward<_timer_fx_t>(std::bind(std::forward<_Fx>(func), std::placeholders::_1, std::placeholders::_2, std::forward<_Args>(args)...))),
 			delay(delay_),
+			expire(std::chrono::steady_clock::now() + delay),
 			s(S_IDLE),
 			t(T_ONESHOT)
 		{
@@ -65,7 +67,8 @@ namespace wawo {
 			timer(std::chrono::nanoseconds const& delay_, WWRP<wawo::ref_base> const& cookie_, bool repeat, _Fx&& func) :
 			cookie(cookie_),
 			callee(std::forward<_timer_fx_t>(func)),
-			delay(std::chrono::nanoseconds(delay_)),
+			delay(delay_),
+			expire(std::chrono::steady_clock::now() + delay),
 			s(S_IDLE),
 			t(T_REPEAT)
 		{}
@@ -76,6 +79,7 @@ namespace wawo {
 			cookie(cookie_),
 			callee(std::forward<_timer_fx_t>(func)),
 			delay(delay_),
+			expire(std::chrono::steady_clock::now() + delay),
 			s(S_IDLE),
 			t(T_ONESHOT)
 		{}
@@ -158,6 +162,7 @@ namespace wawo {
 			{
 				lock_guard<spin_mutex> lg(m_mutex_tq);
 				WAWO_ASSERT(t != NULL);
+				WAWO_ASSERT(t->delay.count() >= 0);
 				m_tq.push({ OP_ADD,t });
 			}
 
@@ -194,23 +199,20 @@ namespace wawo {
 						timer_& t = m_tq.front();
 						WAWO_ASSERT(t._timer->delay.count() >= 0);
 						if (t._op == OP_CANCEL) {
-							WAWO_ASSERT(t._timer->s == timer_state::S_STARTED);
+							WAWO_ASSERT(t._timer->s == timer_state::S_STARTED || t._timer->s == timer_state::S_EXPIRED );
 							t._timer->s = timer_state::S_CANCELED;
-						}
-						else {
-							t._timer->expire = now + t._timer->delay;
+						} else {
 							t._timer->s = timer_state::S_STARTED;
 							m_heap->push(t._timer);
 						}
-
 						m_tq.pop();
 					}
 				}
-
+				WAWO_ASSERT(!m_heap->empty());
+				m_in_callee_loop = true;
 				while (!m_heap->empty()) {
-					m_in_callee_loop = true;
 					WWRP<timer>& t = m_heap->front();
-					std::chrono::nanoseconds tdiff = (std::chrono::steady_clock::now() - t->expire);
+					const std::chrono::nanoseconds tdiff = (std::chrono::steady_clock::now() - t->expire);
 					if (tdiff.count()>0) {
 						switch (t->s)
 						{
@@ -218,7 +220,8 @@ namespace wawo {
 						{
 							t->s = timer_state::S_EXPIRED;
 							t->callee(t->cookie,t);
-							if (t->t == timer_type::T_REPEAT) {
+							if (t->t == timer_type::T_REPEAT ) {
+								t->expire = std::chrono::steady_clock::now() + t->delay;
 								lock_guard<spin_mutex> __lg(m_mutex_tq);
 								m_tq.push({ OP_ADD, t });
 							}
@@ -241,6 +244,7 @@ namespace wawo {
 						m_next_wait_delta = 0;
 					}
 				}
+				m_in_callee_loop = true;
 			}
 		}
 
