@@ -12,11 +12,12 @@
 #include <wawo/bytes_ringbuffer.hpp>
 #include <wawo/heap.hpp>
 
-
 #include <wawo/thread/mutex.hpp>
 #include <wawo/thread/condition.hpp>
 #include <wawo/thread/thread.hpp>
 #include <wawo/thread/ticker.hpp>
+
+#include <wawo/timer.hpp>
 
 #include <wawo/log/logger_manager.h>
 #include <wawo/log/console_logger.h>

@@ -455,6 +455,9 @@
     <ClInclude Include="..\..\include\wawo\heap.hpp">
       <Filter>Header Files\wawo</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\wawo\timer.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\src\context\jump_i386_ms_pe_masm.asm">

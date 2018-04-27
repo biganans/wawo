@@ -12,7 +12,9 @@
 namespace wawo {
 
 	template <class T, class Fx_compare = less<T> >
-	class binary_heap {
+	class binary_heap:
+		public wawo::ref_base
+	{
 		Fx_compare __fn_cmp__;
 		T* m_arr;
 		u32_t m_capacity;
@@ -108,7 +110,9 @@ namespace wawo {
 	};
 
 	template <class T, class Fx_compare = less<T> >
-	class binomial_heap {
+	class binomial_heap:
+		public wawo::ref_base
+	{
 		typedef binomial_heap<T, Fx_compare> binomial_heap_t;
 		typedef binomial_node<T> binomial_node_t;
 		Fx_compare __fn_cmp__;
@@ -286,7 +290,9 @@ namespace wawo {
 	};
 
 	template <class T>
-	struct fibonacci_node {
+	struct fibonacci_node:
+		public wawo::ref_base
+	{
 		fibonacci_node* parent;
 		fibonacci_node* child;
 		fibonacci_node* left;

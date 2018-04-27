@@ -254,6 +254,7 @@
     <ClInclude Include="..\..\include\wawo\thread\thread_run_object_abstract.hpp" />
     <ClInclude Include="..\..\include\wawo\thread\ticker.hpp" />
     <ClInclude Include="..\..\include\wawo\thread\tls.hpp" />
+    <ClInclude Include="..\..\include\wawo\timer.hpp" />
     <ClInclude Include="..\..\include\wawo\time\time.hpp" />
     <ClInclude Include="..\..\include\wawo\__init__.hpp" />
   </ItemGroup>

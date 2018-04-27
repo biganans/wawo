@@ -573,8 +573,8 @@ namespace wawo {
 
 		typedef T* POINTER_TYPE;
 		typedef ref_ptr<T> THIS_TYPE;
-	private:
-		typename std::remove_const<T>::type* _p;
+
+		typename std::remove_cv<T>::type* _p;
 	public:
 		typedef T ELEMENT_TYPE;
 
@@ -641,13 +641,13 @@ namespace wawo {
 			r._p = 0;
 		}
 
-		ref_ptr& operator= (THIS_TYPE const& r) _WW_NOEXCEPT
+		inline ref_ptr& operator= (THIS_TYPE const& r) _WW_NOEXCEPT
 		{
 			THIS_TYPE(r).swap(*this);
 			return (*this);
 		}
 
-		ref_ptr& operator= (THIS_TYPE&& r) _WW_NOEXCEPT
+		inline ref_ptr& operator= (THIS_TYPE&& r) _WW_NOEXCEPT
 		{
 			if (_p != 0) _p->_ref_drop();
 			_p = r._p;
@@ -656,14 +656,14 @@ namespace wawo {
 		}
 
 		template <typename _Tp_rel>
-			ref_ptr& operator= (ref_ptr<_Tp_rel> const& r) _WW_NOEXCEPT
+		inline ref_ptr& operator= (ref_ptr<_Tp_rel> const& r) _WW_NOEXCEPT
 		{
 			THIS_TYPE(r).swap(*this);
 			return (*this);
 		}
 
 		template <typename _Tp_rel>
-		ref_ptr& operator= (ref_ptr<_Tp_rel>&& r) _WW_NOEXCEPT
+		inline ref_ptr& operator= (ref_ptr<_Tp_rel>&& r) _WW_NOEXCEPT
 		{
 			if (_p != 0) _p->_ref_drop();
 			_p = r._p;
@@ -672,18 +672,18 @@ namespace wawo {
 		}
 
 		template <typename _Tp_rel>
-		ref_ptr& operator = (_Tp_rel* const& p) _WW_NOEXCEPT
+		inline ref_ptr& operator = (_Tp_rel* const& p) _WW_NOEXCEPT
 		{
 			THIS_TYPE(p).swap(*this);
 			return (*this);
 		}
 
-		void swap(THIS_TYPE& other) _WW_NOEXCEPT
+		inline void swap(THIS_TYPE& other) _WW_NOEXCEPT
 		{
 			std::swap( _p, other._p );
 		}
 
-		long ref_count() const _WW_NOEXCEPT { return (_p==0)?0:_p->_ref_count(); }
+		inline long ref_count() const _WW_NOEXCEPT { return (_p==0)?0:_p->_ref_count(); }
 
 		inline T* const & operator -> () const
 		{
