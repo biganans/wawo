@@ -37,7 +37,7 @@ namespace wawo {
 	class timer
 		: public wawo::ref_base
 	{
-		typedef std::function<void(WWRP<wawo::ref_base> const& cookie, timer_event)> _timer_fx_t;
+		typedef std::function<void(WWRP<wawo::ref_base> const&, WWRP<timer> const&)> _timer_fx_t;
 	public:
 		WWRP<wawo::ref_base> cookie;
 		_timer_fx_t callee;
@@ -137,6 +137,9 @@ namespace wawo {
 		WWRP<wawo::thread::thread> m_th;
 		WWRP<_timer_heaper_t> m_heap;
 		_timer_queue m_tq;
+
+		wawo::thread::spin_mutex m_mutex_standby;
+		_timer_queue m_tq_standby;
 		bool m_th_break;
 	public:
 		timer_manager()
@@ -155,17 +158,17 @@ namespace wawo {
 		}
 
 		void start(WWRP<timer> const& t) {
-			lock_guard<mutex> lg(m_mutex);
+			lock_guard<spin_mutex> lg(m_mutex_standby);
 			WAWO_ASSERT(t != NULL);
 
-			m_tq.push({ OP_ADD,t });
+			m_tq_standby.push({ OP_ADD,t });
 			_check_start();
 		}
 
-		void cancel(WWRP<timer> const& t) {
-			lock_guard<mutex> lg(m_mutex);
+		void stop(WWRP<timer> const& t) {
+			lock_guard<spin_mutex> lg(m_mutex_standby);
 			WAWO_ASSERT(t != NULL);
-			m_tq.push({ OP_CANCEL,t });
+			m_tq_standby.push({ OP_CANCEL,t });
 			WAWO_ASSERT(m_th != NULL);
 		}
 
@@ -173,7 +176,16 @@ namespace wawo {
 			WAWO_ASSERT(m_th != NULL);
 
 			while (!m_th_break) {
+
 				unique_lock<mutex> ulg(m_mutex);
+				{
+					lock_guard<spin_mutex> lg(m_mutex_standby);
+					while (!m_tq_standby.empty()) {
+						m_tq.push(m_tq_standby.front());
+						m_tq_standby.pop();
+					}
+				}
+
 				m_th_break = m_tq.empty() && m_heap->empty();
 
 				std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> now = std::chrono::steady_clock::now();
@@ -195,14 +207,12 @@ namespace wawo {
 				while (!m_heap->empty()) {
 					WWRP<timer>& t = m_heap->front();
 					std::chrono::nanoseconds tdiff = (std::chrono::steady_clock::now() - t->expire);
-					int64_t idiff = tdiff.count();
-
-					if (idiff >= 0) {
+					if (tdiff.count()>0) {
 						switch (t->s)
 						{
 						case timer_state::S_STARTED:
 						{
-							t->callee(t->cookie,timer_event::E_EXPIRED);
+							t->callee(t->cookie,t);
 							if (t->t == timer_type::T_REPEAT) {
 								m_tq.push({ OP_ADD, t });
 							}
@@ -210,7 +220,7 @@ namespace wawo {
 						break;
 						case timer_state::S_CANCELED:
 						{
-							t->callee(t->cookie, timer_event::E_CANCEL);
+							t->callee(t->cookie, t);
 						}
 						break;
 						default:

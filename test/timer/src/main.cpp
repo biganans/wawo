@@ -4,13 +4,20 @@
 
 struct cookie : wawo::ref_base
 {
+	WWRP<wawo::timer> _timer;
 	int i;
-	cookie(int i_) :i(i_) {}
+	int j;
+	cookie(int i_) :i(i_),j(0) {}
 };
 
-void tick(WWRP<wawo::ref_base> const& cookie_, wawo::timer_event s ) {
+void tick(WWRP<wawo::ref_base> const& cookie_, WWRP<wawo::timer> const& t ) {
 	WWRP<cookie> c = wawo::static_pointer_cast<cookie>(cookie_);
 	WAWO_INFO("i: %d", c->i );
+
+	++c->j;
+	if (c->j > 1000) {
+		wawo::timer_manager::instance()->stop(t);
+	}
 }
 
 int main(int argc, char** argv) {
