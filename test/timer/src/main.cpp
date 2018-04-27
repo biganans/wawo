@@ -12,10 +12,9 @@ struct cookie : wawo::ref_base
 
 void tick(WWRP<wawo::ref_base> const& cookie_, WWRP<wawo::timer> const& t ) {
 	WWRP<cookie> c = wawo::static_pointer_cast<cookie>(cookie_);
-	WAWO_INFO("i: %d", c->i );
+	WAWO_INFO("i: %d, j: %d", c->i , c->j );
 
-	++c->j;
-	if (c->j > 1000) {
+	if ( ++c->j > 1000) {
 		wawo::timer_manager::instance()->stop(t);
 	}
 }
