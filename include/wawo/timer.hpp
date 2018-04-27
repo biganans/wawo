@@ -17,11 +17,6 @@ namespace wawo {
 	
 	using namespace wawo::thread;
 
-	enum timer_event {
-		E_EXPIRED,
-		E_CANCEL
-	};
-
 	enum timer_state {
 		S_IDLE,
 		S_STARTED,
@@ -34,8 +29,7 @@ namespace wawo {
 		T_REPEAT
 	};
 
-	class timer
-		: public wawo::ref_base
+	class timer : public wawo::ref_base
 	{
 		typedef std::function<void(WWRP<wawo::ref_base> const&, WWRP<timer> const&)> _timer_fx_t;
 	public:
@@ -115,8 +109,7 @@ namespace wawo {
 		}
 	};
 
-	class timer_manager :
-		public wawo::singleton<timer_manager>
+	class timer_manager
 	{
 		enum timer_op {
 			OP_ADD,
@@ -136,13 +129,17 @@ namespace wawo {
 		wawo::thread::condition_variable m_cond;
 		WWRP<wawo::thread::thread> m_th;
 		WWRP<_timer_heaper_t> m_heap;
+
+		wawo::thread::spin_mutex m_mutex_tq;
 		_timer_queue m_tq;
 
-		wawo::thread::spin_mutex m_mutex_standby;
-		_timer_queue m_tq_standby;
+		volatile wawo::i64_t m_next_wait_delta;
 		bool m_th_break;
+		bool m_in_callee_loop;
+		bool m_has_own_run_th;
 	public:
-		timer_manager()
+		timer_manager(bool has_own_th = true ):
+			m_has_own_run_th(has_own_th)
 		{
 			m_heap = wawo::make_ref<_timer_heaper_t>(10240);
 		}
@@ -158,53 +155,60 @@ namespace wawo {
 		}
 
 		void start(WWRP<timer> const& t) {
-			lock_guard<spin_mutex> lg(m_mutex_standby);
-			WAWO_ASSERT(t != NULL);
+			{
+				lock_guard<spin_mutex> lg(m_mutex_tq);
+				WAWO_ASSERT(t != NULL);
+				m_tq.push({ OP_ADD,t });
+			}
 
-			m_tq_standby.push({ OP_ADD,t });
-			_check_start();
+			if (m_has_own_run_th){
+				_check_start();
+			}
 		}
 
 		void stop(WWRP<timer> const& t) {
-			lock_guard<spin_mutex> lg(m_mutex_standby);
+			lock_guard<spin_mutex> lg(m_mutex_tq);
 			WAWO_ASSERT(t != NULL);
-			m_tq_standby.push({ OP_CANCEL,t });
+			m_tq.push({ OP_CANCEL,t });
 			WAWO_ASSERT(m_th != NULL);
 		}
 
 		void _run() {
+			_update();
+		}
+
+		void _update() {
 			WAWO_ASSERT(m_th != NULL);
 
-			while (!m_th_break) {
-
+			while (1) {
 				unique_lock<mutex> ulg(m_mutex);
 				{
-					lock_guard<spin_mutex> lg(m_mutex_standby);
-					while (!m_tq_standby.empty()) {
-						m_tq.push(m_tq_standby.front());
-						m_tq_standby.pop();
-					}
-				}
-
-				m_th_break = m_tq.empty() && m_heap->empty();
-
-				std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> now = std::chrono::steady_clock::now();
-				if (!m_tq.empty()) {
-					timer_& t = m_tq.front();
-					WAWO_ASSERT(t._timer->delay.count() >= 0);
-					if (t._op == OP_CANCEL) {
-						WAWO_ASSERT(t._timer->s == timer_state::S_STARTED);
-						t._timer->s = timer_state::S_CANCELED;
-					} else {
-						t._timer->expire = now + t._timer->delay;
-						t._timer->s = timer_state::S_STARTED;
-						m_heap->push(t._timer);
+					lock_guard<spin_mutex> _lgtq(m_mutex_tq);
+					m_th_break = m_tq.empty() && m_heap->empty();
+					if (m_th_break) {
+						break;
 					}
 
-					m_tq.pop();
+					std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> now = std::chrono::steady_clock::now();
+					while (!m_tq.empty()) {
+						timer_& t = m_tq.front();
+						WAWO_ASSERT(t._timer->delay.count() >= 0);
+						if (t._op == OP_CANCEL) {
+							WAWO_ASSERT(t._timer->s == timer_state::S_STARTED);
+							t._timer->s = timer_state::S_CANCELED;
+						}
+						else {
+							t._timer->expire = now + t._timer->delay;
+							t._timer->s = timer_state::S_STARTED;
+							m_heap->push(t._timer);
+						}
+
+						m_tq.pop();
+					}
 				}
 
 				while (!m_heap->empty()) {
+					m_in_callee_loop = true;
 					WWRP<timer>& t = m_heap->front();
 					std::chrono::nanoseconds tdiff = (std::chrono::steady_clock::now() - t->expire);
 					if (tdiff.count()>0) {
@@ -215,6 +219,7 @@ namespace wawo {
 							t->s = timer_state::S_EXPIRED;
 							t->callee(t->cookie,t);
 							if (t->t == timer_type::T_REPEAT) {
+								lock_guard<spin_mutex> __lg(m_mutex_tq);
 								m_tq.push({ OP_ADD, t });
 							}
 						}
@@ -230,16 +235,26 @@ namespace wawo {
 						}
 						m_heap->pop();
 					} else {
+						m_in_callee_loop = false;
+						m_next_wait_delta = WAWO_ABS(tdiff.count());
 						m_cond.wait_until<std::chrono::steady_clock, std::chrono::nanoseconds>(ulg, t->expire);
+						m_next_wait_delta = 0;
 					}
 				}
 			}
 		}
 
 		void _check_start() {
+			if (m_in_callee_loop) { return; }//same thread...skip lock
+			lock_guard<mutex> lg(m_mutex);
 			if (m_th != NULL && m_th_break != true) {
+				//interrupt wait state
+				if (m_next_wait_delta > 0) {
+					m_cond.notify_one();
+				}
 				return;
 			}
+
 			m_th = wawo::make_ref<wawo::thread::thread>();
 			WAWO_ALLOC_CHECK(m_th, sizeof(wawo::thread::thread));
 			int rt = m_th->start(&timer_manager::_run, this );
@@ -247,5 +262,9 @@ namespace wawo {
 			m_th_break = false;
 		}
 	};
+
+	class global_timer_manager:
+		public singleton<timer_manager>
+	{};
 }
 #endif

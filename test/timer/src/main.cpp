@@ -15,7 +15,7 @@ void tick(WWRP<wawo::ref_base> const& cookie_, WWRP<wawo::timer> const& t ) {
 	WAWO_INFO("i: %d, j: %d", c->i , c->j );
 
 	if ( ++c->j > 1000) {
-		wawo::timer_manager::instance()->stop(t);
+		wawo::global_timer_manager::instance()->stop(t);
 	}
 }
 
@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 	for (int i = 0; i < 10240-1; ++i) {
 		WWRP<cookie> c = wawo::make_ref<cookie>(i);
 		WWRP<wawo::timer> t = wawo::make_ref<wawo::timer>(delay, true, c, &tick);
-		wawo::timer_manager::instance()->start(t);
+		wawo::global_timer_manager::instance()->start(t);
 	}
 
 	_app.run_for();
