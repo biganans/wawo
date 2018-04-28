@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
 	std::srand(0);
 	wawo::app _app;
 
-	const int th_count = 8;
+	const int th_count = 4;
 	WWRP<wawo::thread::thread> th[th_count];
 	for (int i = 0; i < th_count; ++i) {
 		th[i] = wawo::make_ref<wawo::thread::thread>();
