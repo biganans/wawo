@@ -43,7 +43,7 @@ namespace wawo {
 		template <class _Fx, class... _Args>
 		timer(std::chrono::nanoseconds const& delay_, bool repeat, WWRP<wawo::ref_base> const& cookie_, _Fx&& func, _Args&&... args) :
 			cookie(cookie_),
-			callee(std::forward<_timer_fx_t>(std::bind(std::forward<_Fx>(func), std::placeholders::_1, std::placeholders::_2, std::forward<_Args>(args)...))),
+			callee(std::forward<_timer_fx_t>(std::bind(std::forward<_Fx>(func), std::forward<_Args>(args)..., std::placeholders::_1, std::placeholders::_2))),
 			delay(delay_),
 			expire(std::chrono::steady_clock::now()+delay),
 			s(S_IDLE),
@@ -55,7 +55,7 @@ namespace wawo {
 		template <class _Fx, class... _Args>
 		timer(std::chrono::nanoseconds const& delay_, WWRP<wawo::ref_base> const& cookie_, _Fx&& func, _Args&&... args):
 			cookie(cookie_),
-			callee(std::forward<_timer_fx_t>(std::bind(std::forward<_Fx>(func), std::placeholders::_1, std::placeholders::_2, std::forward<_Args>(args)...))),
+			callee(std::forward<_timer_fx_t>(std::bind(std::forward<_Fx>(func), std::forward<_Args>(args)..., std::placeholders::_1, std::placeholders::_2))),
 			delay(delay_),
 			expire(std::chrono::steady_clock::now() + delay),
 			s(S_IDLE),

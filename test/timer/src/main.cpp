@@ -92,17 +92,55 @@ struct foo
 	}
 };
 
+class foo_timer:
+	public wawo::ref_base
+{
+	int i;
+public:
+	foo_timer(int i_):i(i_)
+	{}
+
+	void bar(WWRP<wawo::ref_base> const& cookie_, WWRP<wawo::timer> const& t) {
+		WAWO_INFO("%d", i);
+	}
+};
+
+void spawn_object_timer(int i ) {
+	WWRP<cookie> c = wawo::make_ref<cookie>(i);
+	WWRP<foo_timer> f = wawo::make_ref<foo_timer>(i);
+	WWRP<wawo::timer> t = wawo::make_ref<wawo::timer>(delay, c, &foo_timer::bar, f);
+	wawo::global_timer_manager::instance()->start(t);
+}
+
+void spawn_lambda_timer(int i) {
+	WWRP<cookie> c = wawo::make_ref<cookie>(i);
+	auto f = [c](WWRP<wawo::ref_base> const& cookie_, WWRP<wawo::timer> const& t) -> void {
+		WWRP<cookie> c_ = wawo::static_pointer_cast<cookie>(cookie_);
+		WAWO_ASSERT(c->i == c_->i);
+		WAWO_INFO("%d", c->i);
+	};
+
+	WWRP<wawo::timer> t = wawo::make_ref<wawo::timer>(delay, c,f);
+	wawo::global_timer_manager::instance()->start(t);
+}
+
 void th_spawn_timer() {
 	while (1) {
 		int i = std::rand();
-		if (i %3 == 0 ) {
+		if (i % 6 == 0) {
 			spawn_timer(i);
 		}
-		else if (i % 2 == 0) {
+		else if (i % 5 == 0) {
 			spawn_user_circle_timer(i);
 		}
-		else {
+		else if(i%4 == 0){
 			spawn_repeat_timer(i);
+		}
+		else if (i % 3 == 0) {
+			spawn_lambda_timer(i);
+		}
+		else {
+			spawn_object_timer(i);
 		}
 
 		wawo::this_thread::usleep(1);
@@ -114,11 +152,6 @@ int main(int argc, char** argv) {
 	std::srand(0);
 	wawo::app _app;
 
-	/*
-	for (int i = 0; i < 1024; ++i) {
-		spawn_new_timer(i);
-	}
-	*/
 	const int th_count = 8;
 	WWRP<wawo::thread::thread> th[th_count];
 	for (int i = 0; i < th_count; ++i) {
