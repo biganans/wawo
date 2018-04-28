@@ -7,7 +7,6 @@
 namespace wawo {
 
 	namespace limit {
-		//
 		const i16_t INT8_MIN_V = (-127L - 1) ;
 		const i16_t INT16_MIN_V = (-32767L - 1) ;
 		const i32_t INT32_MIN_V = (-2147483647L - 1) ;

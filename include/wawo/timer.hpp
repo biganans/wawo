@@ -145,13 +145,14 @@ namespace wawo {
 		timer_manager(bool has_own_th = true ):
 			m_has_own_run_th(has_own_th)
 		{
-			m_heap = wawo::make_ref<_timer_heaper_t>(10240);
+			m_heap = wawo::make_ref<_timer_heaper_t>();
 		}
 
 		~timer_manager()
 		{
 			if (m_th != NULL) {
 				m_th->interrupt();
+				m_th->join();
 			}
 			while (!m_heap->empty()) {
 				m_heap->pop();
@@ -199,7 +200,7 @@ namespace wawo {
 						} else {
 							if ( t._timer->s != timer_state::S_CANCELED) {
 								t._timer->s = timer_state::S_STARTED;
-								m_heap->push(t._timer);
+								m_heap->push( std::move(t._timer));
 							}
 						}
 						m_tq.pop();
@@ -247,6 +248,8 @@ namespace wawo {
 				}
 				m_in_callee_loop = true;
 			}
+			wawo::this_thread::__interrupt_check_point();
+			m_heap->reserve(1024);
 		}
 
 		void _check_start() {
