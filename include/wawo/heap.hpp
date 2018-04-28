@@ -9,6 +9,8 @@
 #define BHEAP_L(i) ((i<<1)+1)
 #define BHEAP_R(i) ((i<<1)+2)
 
+#define DEFAULT_BHEAP_CAPACITY 4096
+
 namespace wawo {
 
 	template <class T, class Fx_compare = less<T> >
@@ -19,13 +21,27 @@ namespace wawo {
 		T* m_arr;
 		u32_t m_capacity;
 		u32_t m_size;
+
+	private:
+		inline void __realloc__( u32_t count ) {
+			WAWO_ASSERT(count > m_size);
+			T* arr = new T[count];
+			WAWO_ALLOC_CHECK(arr, count * sizeof(T));
+			for (u32_t _i = 0; _i < m_size; ++_i) {
+				arr[_i] = std::move(m_arr[_i]);
+			}
+			std::swap(arr, m_arr);
+			m_capacity = count;
+			delete[] arr;
+		}
 	public:
-		binary_heap(int const& s) :
-			m_capacity(s),
+		binary_heap() :
+			m_capacity(DEFAULT_BHEAP_CAPACITY),
 			m_arr(NULL),
 			m_size(0)
 		{
-			m_arr = new T[s];
+			m_arr = new T[m_capacity];
+			WAWO_ALLOC_CHECK(m_arr, m_capacity * sizeof(T));
 		}
 
 		~binary_heap() {
@@ -35,18 +51,31 @@ namespace wawo {
 		inline u32_t size() const { return m_size; }
 		inline bool empty() const { return m_size == 0; }
 
-		void push(T const& t) {
-			assert(m_size < m_capacity);
-		
+		inline void reserve( u32_t count ) {
+			if ( (count == m_capacity) || count < ((m_size>>1) + m_size) ) {
+				return;
+			}
+			if (count < DEFAULT_BHEAP_CAPACITY) {
+				count = DEFAULT_BHEAP_CAPACITY;
+			}
+			__realloc__(count);
+		}
+
+		void push(T&& t) {
+			if ( WAWO_UNLIKELY(m_capacity==m_size)) {
+				__realloc__((m_size + (m_size >> 1)));
+			}
+
 			u32_t i = m_size++;
 			u32_t p = BHEAP_P(i);
 
-			while ((i != 0) && (__fn_cmp__(t, m_arr[p]))) {
+			while ((i != 0) && (__fn_cmp__(std::forward<T>(t), m_arr[p]))) {
 				m_arr[i] = std::move(m_arr[p]);
 				i = p;
 				p = BHEAP_P(i);
 			}
-			m_arr[i] = t;
+
+			m_arr[i] = std::forward<T>(t);
 		}
 
 		inline T& front() {
