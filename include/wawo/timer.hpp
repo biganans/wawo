@@ -47,9 +47,8 @@ namespace wawo {
 			delay(delay_),
 			expire(std::chrono::steady_clock::now()+delay),
 			s(S_IDLE),
-			t(T_ONESHOT)
+			t( repeat?T_REPEAT:T_ONESHOT)
 		{
-			if (repeat) { t = T_REPEAT;}
 		}
 
 		template <class _Fx, class... _Args>
@@ -71,9 +70,8 @@ namespace wawo {
 			delay(delay_),
 			expire(std::chrono::steady_clock::now() + delay),
 			s(S_IDLE),
-			t(T_ONESHOT)
+			t(repeat? T_REPEAT : T_ONESHOT)
 		{
-			if (repeat) { t = T_REPEAT; }
 		}
 
 		template <class _Fx
@@ -131,7 +129,6 @@ namespace wawo {
 		typedef std::queue<timer_> _timer_queue;
 		typedef wawo::binary_heap< WWRP<timer>, wawo::timer_less > _timer_heaper_t;
 
-	private:
 		wawo::thread::mutex m_mutex;
 		wawo::thread::condition_variable m_cond;
 		WWRP<wawo::thread::thread> m_th;

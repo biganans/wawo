@@ -114,7 +114,6 @@ namespace wawo {
 			}
 			m_arr[i_] = std::move(m_arr[m_size]);
 		}
-
 	};
 
 	template <class T>
