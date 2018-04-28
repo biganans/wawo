@@ -191,7 +191,7 @@ _CHECK:
 				reply->h.set(_H_WEBSOCKET_SERVER, "wawo");
 
 				WWRP<packet> o;
-				protocol::http::encode_message(reply, o);
+				reply->encode(o);
 				WAWO_INFO("reply h: \n%s", wawo::len_cstr((char*)o->begin(), o->len()).cstr);
 				ctx->write(o);
 
@@ -487,7 +487,7 @@ _CHECK:
 	}
 	int websocket::http_on_message_complete() {
 		WWRP<packet> m;
-		protocol::http::encode_message(m_upgrade_req, m);
+		m_upgrade_req->encode(m);
 		WAWO_DEBUG("[%s], req: %s", __FUNCTION__, wawo::len_cstr( (char*) m->begin(), m->len() ) );
 
 		m_state = S_UPGRADE_REQ_MESSAGE_DONE;
