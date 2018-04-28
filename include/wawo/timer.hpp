@@ -189,11 +189,6 @@ namespace wawo {
 				unique_lock<mutex> ulg(m_mutex);
 				{
 					lock_guard<spin_mutex> _lgtq(m_mutex_tq);
-					m_th_break = m_tq.empty() && m_heap->empty();
-					if (m_th_break) {
-						break;
-					}
-
 					std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> now = std::chrono::steady_clock::now();
 					while (!m_tq.empty()) {
 						timer_& t = m_tq.front();
@@ -202,10 +197,16 @@ namespace wawo {
 							WAWO_ASSERT(t._timer->s == timer_state::S_STARTED || t._timer->s == timer_state::S_EXPIRED );
 							t._timer->s = timer_state::S_CANCELED;
 						} else {
-							t._timer->s = timer_state::S_STARTED;
-							m_heap->push(t._timer);
+							if ( t._timer->s != timer_state::S_CANCELED) {
+								t._timer->s = timer_state::S_STARTED;
+								m_heap->push(t._timer);
+							}
 						}
 						m_tq.pop();
+					}
+					m_th_break = m_heap->empty();
+					if (m_th_break) {
+						break;
 					}
 				}
 				WAWO_ASSERT(!m_heap->empty());
