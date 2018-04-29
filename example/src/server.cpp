@@ -148,6 +148,8 @@ public:
 
 int main(int argc, char** argv) {
 
+	int* p = new int(3);
+
 	wawo::app app;
 
 	wawo::net::socketaddr laddr;

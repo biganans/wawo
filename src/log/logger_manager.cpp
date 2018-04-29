@@ -62,19 +62,14 @@ namespace wawo { namespace log {
 	}
 
 	void logger_manager::deinit() {
-		//lock_guard<shared_mutex> _lg( m_mutexLoggers );
 		m_loggers.clear();
 	}
 
 	void logger_manager::add_logger( WWRP<logger_abstract> const& logger) {
-		//lock_guard<shared_mutex> _lg( m_mutexLoggers ) ;
 		m_loggers.push_back(logger);
 	}
 
-
 	void logger_manager::remove_logger( WWRP<logger_abstract> const& logger ) {
-		//lock_guard<shared_mutex> _lg( m_mutexLoggers ) ;
-
 		std::vector< WWRP<logger_abstract> >::iterator it = m_loggers.begin();
 
 		while( it != m_loggers.end() ) {

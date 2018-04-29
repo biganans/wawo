@@ -13,8 +13,6 @@ namespace wawo { namespace signal {
 
 	/*
 	struct Signals {
-
-
 		enum Signal {
 			WAWO_SIGABRT,
 			WAWO_SIGFPE,
@@ -78,8 +76,7 @@ namespace wawo { namespace signal {
 
 		DECLARE_SINGLETON_FRIEND(signal_manager);
 	};
-
-} }
+}}
 
 #define SIGNAL_MANAGER_INSTANCE (wawo::signal_manager::instance())
 #endif
