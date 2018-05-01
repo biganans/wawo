@@ -7,6 +7,9 @@
 #include <wawo/net/channel.hpp>
 
 #include <wawo/thread/thread.hpp>
+#include <wawo/thread/mutex.hpp>
+
+#include <map>
 
 //#define ENABLE_DEBUG_STREAM 1
 #ifdef ENABLE_DEBUG_STREAM
@@ -18,7 +21,7 @@
 namespace wawo { namespace net { namespace handler {
 	using namespace wawo::thread;
 
-	enum mux_event {
+	enum mux_stream_frame_flag {
 		T_SYN = 1,
 		T_DATA = 1 << 1,
 		T_UWND = 1 << 2, //update receiver's wnd to sender
@@ -31,27 +34,32 @@ namespace wawo { namespace net { namespace handler {
 		T_MUX_STREAM_MESSAGE_TYPE_MAX = (T_WRITE_UNBLOCK + 1)
 	};
 
-	static std::atomic<u32_t> _s_id_{ 1 };
-	inline static u32_t make_stream_id() {return wawo::atomic_increment(&_s_id_);}
+	typedef u32_t mux_stream_id_t;
+	typedef u16_t mux_stream_frame_flag_t;
 
-	enum stream_flag {
+	static std::atomic<u32_t> _s_id_{1};
+	inline static u32_t mux_make_stream_id() {return wawo::atomic_increment(&_s_id_);}
+
+	enum mux_stream_flag {
 		STREAM_READ_SHUTDOWN_CALLED = 1,
 		STREAM_READ_SHUTDOWN = 1 << 1,
 		STREAM_WRITE_SHUTDOWN_CALLED = 1 << 2,
 		STREAM_WRITE_SHUTDOWN = 1 << 3,
+
+		STREAM_READ_CHOKED = 1<<4,
 
 		STREAM_PLAN_FIN = 1 << 4,
 		STREAM_PLAN_SYN = 1 << 5,
 		STREAM_BUFFER_DETERMINED = 1 << 6,
 	};
 
-	enum stream_state {
+	enum mux_stream_state {
 		SS_CLOSED,
-		SS_ESTABLISHED,//read/write ok
-		SS_RECYCLE		//could be removed from stream list
+		SS_ESTABLISHED,	//read/write ok
+		SS_RECYCLE	//could be removed from stream list
 	};
 
-	enum stream_write_flag {
+	enum mux_stream_write_flag {
 		STREAM_WRITE_BLOCKED = 0x01,
 		STREAM_WRITE_UNBLOCKED = 0x02
 	};
@@ -74,8 +82,10 @@ namespace wawo { namespace net { namespace handler {
 			WAWO_ASSERT(!(m_flag&STREAM_PLAN_SYN));
 			m_flag |= STREAM_PLAN_SYN;
 		}
+		void _flush(int& ec_o, int& wflag);
 
-		inline void _force_close() {
+	public:
+		inline void force_close() {
 			lock_guard<spin_mutex> lg(m_mutex);
 			{
 				lock_guard<spin_mutex> lg_read(m_rb_mutex);
@@ -91,10 +101,8 @@ namespace wawo { namespace net { namespace handler {
 			DEBUG_STREAM("[mux_cargo][s%u]stream force close", id);
 		}
 
-		void _flush(int& ec_o, int& wflag);
-
 		spin_mutex m_mutex;
-		stream_state m_state;
+		mux_stream_state m_state;
 		u8_t m_flag;
 
 		u32_t m_id;
@@ -108,8 +116,6 @@ namespace wawo { namespace net { namespace handler {
 		WWRP<wawo::bytes_ringbuffer> m_wb;
 		u32_t m_wb_wnd;
 		u8_t m_write_flag;
-
-	public:
 
 		stream(WWRP<wawo::net::channel_handler_context> const& ctx):
 			m_ch_ctx(ctx),
@@ -133,6 +139,8 @@ namespace wawo { namespace net { namespace handler {
 			m_wb_wnd = MUX_STREAM_WND_SIZE;
 
 			m_write_flag = 0;
+
+			m_flag |= STREAM_READ_CHOKED;
 		}
 
 		int open(u32_t const& _id, WWRP<ref_base> const& _ctx) {
@@ -270,8 +278,7 @@ namespace wawo { namespace net { namespace handler {
 					break;
 				}
 
-//				so->close(ec_o);
-				_force_close();
+				force_close();
 				WAWO_ERR("[mux_cargo]peer socket send error: %d, close peer, force close stream", ec_o);
 			}
 			break;
@@ -292,11 +299,25 @@ namespace wawo { namespace net { namespace handler {
 		}
 	};
 
-	class mux :
-		public wawo::net::channel_inbound_handler_abstract
+
+	class mux:
+		public wawo::net::channel_inbound_handler_abstract,
+		public wawo::net::channel_activity_handler_abstract
 	{
+		typedef std::map<mux_stream_id_t, WWRP<stream> > stream_map_t;
+		typedef std::pair<mux_stream_id_t, WWRP<stream> > stream_pair_t;
+
+		wawo::thread::spin_mutex m_mutex;
+		stream_map_t m_stream_map;
+
+		WWRP<wawo::net::channel_acceptor_handler_abstract> m_ch_acceptor;
+
 	public:
+		mux( WWRP<wawo::net::channel_acceptor_handler_abstract> const& ch_acceptor );
+		virtual ~mux();
+
 		void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income);
+		void closed(WWRP<wawo::net::channel_handler_context> const& ctx);
 	};
 }}}
 
