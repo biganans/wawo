@@ -4,6 +4,7 @@
 #include <wawo/packet.hpp>
 #include <wawo/net/channel_pipeline.hpp>
 #include <wawo/net/io_event.hpp>
+#include <wawo/net/io_executor.hpp>
 
 namespace wawo { namespace net {
 
@@ -12,15 +13,19 @@ namespace wawo { namespace net {
 	{
 		WWRP<channel_pipeline> m_pipeline;
 		WWRP<ref_base>	m_ctx;
+		WWRP<io_executor> m_exector;
 
 	public:
 		channel() {}
 		virtual ~channel() {}
 
-		void init() {
+		void init( WWRP<io_executor> const& exe ) {
 			m_pipeline = wawo::make_ref<channel_pipeline>(WWRP<channel>(this));
 			m_pipeline->init();
 			WAWO_ALLOC_CHECK(m_pipeline, sizeof(channel_pipeline));
+
+			WAWO_ASSERT(exe != NULL);
+			m_exector = exe;
 		}
 
 		void deinit()
@@ -29,6 +34,7 @@ namespace wawo { namespace net {
 				m_pipeline->deinit();
 				m_pipeline = NULL;
 			}
+			m_exector = NULL;
 		}
 
 #define CH_ACTION_IMPL_PACKET_1(_NAME,_P) \
@@ -62,8 +68,11 @@ namespace wawo { namespace net {
 		CH_ACTION_IMPL_0(write_block)
 		CH_ACTION_IMPL_0(write_unblock)
 
-		inline WWRP<channel_pipeline> pipeline() const {
+		inline WWRP<channel_pipeline>& pipeline() {
 			return m_pipeline;
+		}
+		inline WWRP<io_executor>& exector() {
+			return m_exector;
 		}
 
 		template <class ctx_t>
@@ -107,7 +116,7 @@ namespace wawo { namespace net {
 		virtual int turnon_nodelay() { return wawo::OK; }
 		virtual int turnoff_nodelay() { return wawo::OK; }
 
-		virtual int is_active() const = 0;
+		virtual bool is_active() const = 0;
 	};
 }}
 #endif

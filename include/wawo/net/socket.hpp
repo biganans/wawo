@@ -182,7 +182,7 @@ namespace wawo { namespace net {
 		inline int turnon_nodelay() { return socket_base::turnon_nodelay(); }
 		inline int turnoff_nodelay() { return socket_base::turnoff_nodelay(); }
 
-		inline int is_active() const { return socket_base::is_active(); }
+		inline bool is_active() const { return socket_base::is_active(); }
 
 		int open();
 		int connect(address const& addr);

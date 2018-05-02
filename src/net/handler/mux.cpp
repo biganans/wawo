@@ -2,23 +2,8 @@
 
 namespace wawo { namespace net { namespace handler {
 
-	void stream_reply_rst(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<stream> const& s) {
-		WAWO_ASSERT(!"TODO");
-	}
-
 	void stream_snd_rst(WWRP<wawo::net::channel_handler_context> const& ctx, mux_stream_id_t id) {
 		WAWO_ASSERT(!"TODO");
-	}
-
-	int stream_uwnd(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<stream> const& s,  u32_t const& size) {
-		WAWO_ASSERT(size > 0);
-
-		WWRP<packet> o = wawo::make_ref<packet>();
-		o->write<u32_t>(size);
-		o->write_left<mux_stream_frame_flag_t>(mux_stream_frame_flag::T_UWND);
-		o->write_left<mux_stream_id_t>(s->ch_id());
-
-		return ctx->write(o);
 	}
 
 	mux::mux(WWRP<wawo::net::channel_acceptor_handler_abstract> const& ch_acceptor):
@@ -47,18 +32,21 @@ namespace wawo { namespace net { namespace handler {
 			WAWO_ASSERT(income->len() == 0);
 			{
 				lock_guard<spin_mutex> lg(m_mutex);
+				_stream_close_check_();
+
 				typename stream_map_t::iterator it = m_stream_map.find(id);
-				if (it != m_stream_map.end()) {
+				if (it != m_stream_map.end() ) {
 					WAWO_WARN("[mux][s%u][syn]stream exists, reply rst", id);
-					stream_reply_rst(it->second);
+					stream_snd_rst( ctx, id );
 					return;
 				}
 
-				s = wawo::make_ref<stream>();
+				s = wawo::make_ref<stream>( ctx );
 				s->m_state = SS_ESTABLISHED;
-				s->ch_id = id;
+				s->m_id = id;
 				s->init();
 				m_stream_map.insert({id, s});
+
 				DEBUG_STREAM("[mux_cargo][s%u]stream insert (by syn)", stream_id);
 			}
 
@@ -78,7 +66,7 @@ namespace wawo { namespace net { namespace handler {
 				}
 
 				DEBUG_STREAM("[mux_cargo][s%u][%u]stream not found, reply rst, len: %u", id, t, income->len() );
-				stream_snd_rst(id);
+				stream_snd_rst(ctx,id);
 				return;
 			}
 
@@ -93,61 +81,8 @@ namespace wawo { namespace net { namespace handler {
 		* for T_RST, always do close action;
 		*/
 		WAWO_ASSERT(s != NULL);
-
-		switch (t) {
-		case mux_stream_frame_flag::T_DATA:
-			{
-				DEBUG_STREAM("[mux_cargo][s%u][data]nbytes: %u", stream_id, inpack->len());
-				lock_guard<spin_mutex> lg_stream(s->m_rb_mutex);
-				if (s->m_flag&STREAM_READ_SHUTDOWN) {
-					stream_snd_rst(s->ch_id);
-					DEBUG_STREAM("[mux_cargo][s%u][data]nbytes, but stream read closed, reply rst, incoming bytes: %u", s->ch_id, income->len());
-					return;
-				}
-				if (s->m_flag&STREAM_READ_CHOKED) {
-					WAWO_ASSERT(income->len() <= s->m_rb->left_capacity());
-					s->m_rb->write(income->begin(), income->len());
-					DEBUG_STREAM("[mux_cargo][s%u]incoming: %u, wirte to rb", stream_id, inpack->len());
-					return;
-				}
-
-				if (s->m_rb->count()) {
-					WWRP<packet> tmp = wawo::make_ref<packet>(s->m_rb->count() + income->len() );
-					s->m_rb->read(tmp->begin(), tmp->left_left_capacity());
-					s->m_rb->skip(tmp->len());
-					s->ch_read(tmp);
-				} else {
-					s->ch_read(income);
-				}
-
-
-			}
-			break;
-		case mux_stream_frame_flag::T_FIN:
-			{
-				DEBUG_STREAM("[mux_cargo][s%u][fin]recv", s->ch_id );
-				s->ch_close_read(0);
-				s->ch_read_shutdowned();
-			}
-			break;
-		case mux_stream_frame_flag::T_RST:
-			{
-				DEBUG_STREAM("[mux_cargo][s%u][rst]recv, force close", s->ch_id );
-				s->force_close();
-			}
-			break;
-		case mux_stream_frame_flag::T_UWND:
-			{
-				WAWO_ASSERT(income->len() == sizeof(wawo::u32_t));
-				wawo::u32_t wnd_incre = income->read<wawo::u32_t>();
-				lock_guard<spin_mutex> wb_mutex(s->m_wb_mutex);
-				s->m_wb_wnd += wnd_incre;
-				s->m_wb_wnd = WAWO_MIN(MUX_STREAM_WND_SIZE, s->m_wb_wnd);
-
-				DEBUG_STREAM("[mux_cargo][s%u]new wb_wnd: %u, incre: %u", s->ch_id, s->wb_wnd, wnd_incre);
-			}
-			break;
-		}
+		mux_stream_frame f = {t, income};
+		s->arrive_frame(f);
 	}
 
 	void mux::closed(WWRP<wawo::net::channel_handler_context> const& ctx) {	
@@ -167,12 +102,13 @@ namespace wawo { namespace net { namespace handler {
 				break;
 			}
 			else {
-				_do_tick();
+				//_do_tick();
 				wawo::this_thread::yield(++k);
 			}
 		}
 	}
 
+	/*
 	inline void _do_tick() {
 
 		{
@@ -241,6 +177,7 @@ namespace wawo { namespace net { namespace handler {
 				}
 			}
 		}
+		
 	}
-
+*/
 }}}

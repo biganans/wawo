@@ -56,18 +56,19 @@ namespace wawo {
 			event_map_t::iterator it = m_handlers.find(id);
 			if (it != m_handlers.end()) {
 				it->second.push_back(h);
+				return;
 			}
 			handler_vector_t v;
 			v.push_back(h);
 			m_handlers.insert({id, v});
 		}
 
-		void unbind(int const& id) {
+		void unbind(int const& handler_id) {
 			event_map_t::iterator it = m_handlers.begin();
 			while ( it != m_handlers.end()) {
 				handler_vector_t::iterator it_handlers = it->second.begin();
 				while (it_handlers != it->second.end()) {
-					if (id == (*it_handlers)->id) {
+					if (handler_id == (*it_handlers)->id) {
 						it->second.erase(it_handlers);
 						return;
 					}
@@ -106,10 +107,9 @@ namespace wawo {
 			if (it != m_handlers.end()) {
 				handler_vector_t::iterator it_handler = it->second.begin() ;
 				while (it_handler != it->second.end()) {
-					WWRP<event_handler<_Callable>> callee = wawo::dynamic_pointer_cast<event_handler<_Callable>>( *it_handler );
+					WWRP<event_handler<_Callable>> callee = wawo::dynamic_pointer_cast<event_handler<_Callable>>( *(it_handler++) );
 					WAWO_ASSERT(callee != NULL);
 					callee->call(std::forward<_Args>(_args)...);
-					++it_handler;
 				}
 			}
 		}

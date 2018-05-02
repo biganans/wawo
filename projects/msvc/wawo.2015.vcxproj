@@ -216,6 +216,7 @@
     <ClInclude Include="..\..\include\wawo\net\handler\symmetric_encrypt.hpp" />
     <ClInclude Include="..\..\include\wawo\net\handler\websocket.hpp" />
     <ClInclude Include="..\..\include\wawo\net\io_event.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\io_executor.hpp" />
     <ClInclude Include="..\..\include\wawo\net\observer_abstract.hpp" />
     <ClInclude Include="..\..\include\wawo\net\observer_impl\epoll.hpp" />
     <ClInclude Include="..\..\include\wawo\net\observer_impl\select.hpp" />

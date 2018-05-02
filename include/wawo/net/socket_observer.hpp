@@ -7,6 +7,7 @@
 #include <wawo/smart_ptr.hpp>
 
 #include <wawo/net/observer_abstract.hpp>
+#include <wawo/net/io_executor.hpp>
 
 namespace wawo { namespace net {
 
@@ -84,16 +85,13 @@ namespace wawo { namespace net {
 		u8_t m_polltype;
 	};
 
-	typedef std::queue<WWRP<wawo::task::task_abstract>> TASK_Q;
-
 	class observer:
-		public wawo::ref_base,
-		public wawo::net::thread_run_object_abstract
+		public io_executor
 	{
-		spin_mutex m_tq_mtx;
 		WWRP<socket_observer> m_observer;
-		WWSP<TASK_Q> m_tq_standby;
-		WWSP<TASK_Q> m_tq;
+		//spin_mutex m_tq_mtx;
+		//WWSP<TASK_Q> m_tq_standby;
+		//WWSP<TASK_Q> m_tq;
 
 		u8_t m_observer_type;
 	public:
@@ -105,8 +103,11 @@ namespace wawo { namespace net {
 		u8_t get_type() const { return m_observer_type; }
 
 		void on_start() {
-			m_tq_standby = wawo::make_shared<TASK_Q>();
-			m_tq = wawo::make_shared<TASK_Q>();
+			//m_tq_standby = wawo::make_shared<TASK_Q>();
+			//m_tq = wawo::make_shared<TASK_Q>();
+			
+			io_executor::on_start();
+
 			WAWO_ASSERT(m_observer == NULL);
 			m_observer = wawo::make_ref<socket_observer>(m_observer_type);
 			WAWO_ALLOC_CHECK(m_observer, sizeof(socket_observer) );
@@ -114,19 +115,20 @@ namespace wawo { namespace net {
 		}
 
 		void on_stop() {
-			WAWO_ASSERT(m_observer != NULL);
+			io_executor::on_stop();
 
+			WAWO_ASSERT(m_observer != NULL);
 			m_observer->deinit();
 			m_observer = NULL;
 		}
 
 		void run() {
-			_exec_tasks();
+			io_executor::run();
 			m_observer->update();
-			_exec_tasks();
+			io_executor::run();
 			wawo::this_thread::nsleep(observer_checker_interval);
 		}
-
+		/*
 		void _plan_task(WWRP<wawo::task::task_abstract> const& t) {
 			WAWO_ASSERT(t != NULL);
 			m_tq_standby->push(t);
@@ -153,6 +155,7 @@ namespace wawo { namespace net {
 			lock_guard<spin_mutex> lg(m_tq_mtx);
 			_plan_task(t);
 		}
+		*/
 
 		void watch(u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err );
 		void unwatch(u8_t const& flag, int const& fd );

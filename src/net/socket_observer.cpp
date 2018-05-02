@@ -114,13 +114,11 @@ namespace wawo { namespace net {
 		}
 	}
 
-	void observer::watch( u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err )
-	{
+	void observer::watch( u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err ) {
 		m_observer->watch(flag, fd, cookie, fn, err);
 	}
 
-	void observer::unwatch(u8_t const& flag, int const& fd)
-	{
+	void observer::unwatch(u8_t const& flag, int const& fd) {
 		m_observer->unwatch(flag, fd);
 	}
 
@@ -194,8 +192,7 @@ namespace wawo { namespace net {
 			int i = m_curr_wpoll.load() % m_wpolls.size();
 			wawo::atomic_increment(&m_curr_wpoll);
 			return m_wpolls[i% m_wpolls.size()];
-		}
-		else {
+		} else {
 			int i = m_curr_sys.load() % m_observers.size();
 			wawo::atomic_increment(&m_curr_sys);
 			return m_observers[i% m_observers.size()];

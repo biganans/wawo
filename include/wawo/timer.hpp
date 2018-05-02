@@ -41,7 +41,7 @@ namespace wawo {
 		timer_type t;
 
 		template <class _Fx, class... _Args>
-		timer(std::chrono::nanoseconds const& delay_, bool repeat, WWRP<wawo::ref_base> const& cookie_, _Fx&& func, _Args&&... args) :
+		timer(std::chrono::nanoseconds const& delay_, bool repeat, WWRP<wawo::ref_base> const& cookie_, _Fx&& func, _Args&&... args ):
 			cookie(cookie_),
 			callee(std::forward<_timer_fx_t>(std::bind(std::forward<_Fx>(func), std::forward<_Args>(args)..., std::placeholders::_1, std::placeholders::_2))),
 			delay(delay_),
@@ -141,6 +141,26 @@ namespace wawo {
 		bool m_th_break;
 		bool m_in_callee_loop;
 		bool m_in_wait;
+
+		void _check_start() {
+			WAWO_ASSERT(m_has_own_run_th);
+			if (m_in_callee_loop) { return; }//same thread...skip lock
+			lock_guard<mutex> lg(m_mutex);
+			if (m_th != NULL && m_th_break != true) {
+				//interrupt wait state
+				if (m_in_wait) {
+					m_cond.notify_one();
+				}
+				return;
+			}
+
+			m_th = wawo::make_ref<wawo::thread::thread>();
+			WAWO_ALLOC_CHECK(m_th, sizeof(wawo::thread::thread));
+			int rt = m_th->start(&timer_manager::_run, this);
+			WAWO_CONDITION_CHECK(rt == wawo::OK);
+			m_th_break = false;
+		}
+
 	public:
 		timer_manager(bool has_own_th = true ):
 			m_has_own_run_th(has_own_th),
@@ -265,25 +285,6 @@ namespace wawo {
 					return;
 				}
 			}
-		}
-
-		void _check_start() {
-			WAWO_ASSERT(m_has_own_run_th);
-			if (m_in_callee_loop) { return; }//same thread...skip lock
-			lock_guard<mutex> lg(m_mutex);
-			if (m_th != NULL && m_th_break != true) {
-				//interrupt wait state
-				if (m_in_wait) {
-					m_cond.notify_one();
-				}
-				return;
-			}
-
-			m_th = wawo::make_ref<wawo::thread::thread>();
-			WAWO_ALLOC_CHECK(m_th, sizeof(wawo::thread::thread));
-			int rt = m_th->start(&timer_manager::_run, this );
-			WAWO_CONDITION_CHECK(rt == wawo::OK);
-			m_th_break = false;
 		}
 	};
 

@@ -136,7 +136,7 @@ namespace wawo { namespace net {
 		m_fn_async_write = wawo::net::async_write;
 		m_fn_async_write_error = wawo::net::async_error;
 
-		channel::init();
+		channel::init(m_observer);
 	}
 
 	void socket::_deinit() {
@@ -202,7 +202,7 @@ namespace wawo { namespace net {
 
 		lock_guard<spin_mutex> lg_s(m_mutexes[L_SOCKET]);
 		if (m_state == S_CLOSED) {
-			return wawo::E_INVALID_STATE;
+			return wawo::E_CHANNEL_INVALID_STATE;
 		}
 
 		if( is_nonblocking() &&
@@ -294,7 +294,7 @@ namespace wawo { namespace net {
 			}
 
 			ch->ch_closed();
-			ch->deinit ();
+			ch->deinit();
 		};
 
 		WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
