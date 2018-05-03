@@ -66,7 +66,7 @@ namespace wawo { namespace net {
 		WAWO_ASSERT(cookie_ != NULL);
 		WWRP<WCB> wcb = wawo::static_pointer_cast<WCB>(cookie_);
 		WAWO_ASSERT(wcb->so != NULL);
-		wcb->so->close(code);
+		wcb->so->close();
 		WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", wcb->so->info().to_lencstr().cstr, code );
 	}
 
@@ -919,7 +919,7 @@ _begin_send:
 			int openrt = accepted_so->open();
 			if (openrt != wawo::OK) {
 				WAWO_ERR("[wcp]WCB::accept, call socket() failed: %d", openrt);
-				accepted_so->close(openrt);
+				accepted_so->close();
 
 				reply_rst_to_address(so, pack->header.ack, from);
 				continue;
@@ -929,7 +929,7 @@ _begin_send:
 			if(reusert != wawo::OK) {
 				WAWO_ERR("[wcp]WCB::accept, call reuse_addr() failed: %d", reusert);
 
-				accepted_so->close(reusert);
+				accepted_so->close();
 				reply_rst_to_address(so, pack->header.ack, from);
 				continue;
 			}
@@ -937,7 +937,7 @@ _begin_send:
 			reusert = accepted_so->reuse_port();
 			if(reusert != wawo::OK) {
 				WAWO_ERR("[wcp]WCB::accept, call reuse_port() failed: %d", reusert);
-				accepted_so->close(reusert);
+				accepted_so->close();
 
 				reply_rst_to_address(so, pack->header.ack, from);
 				continue;
@@ -957,7 +957,7 @@ _begin_send:
 			int bindrt = accepted_so->bind(bind_addr);
 			if (bindrt != wawo::OK ) {
 				WAWO_ERR("[wcp]WCB::accept, call bind failed: %d", bindrt);
-				accepted_so->close(bindrt);
+				accepted_so->close();
 
 				reply_rst_to_address(so, pack->header.ack, from);
 				continue;
@@ -966,7 +966,7 @@ _begin_send:
 			int connrt = accepted_so->connect(from);
 			if (connrt != wawo::OK ) {
 				WAWO_ERR("[wcp]WCB::accept, call connect failed: %d", connrt);
-				accepted_so->close(connrt);
+				accepted_so->close();
 
 				reply_rst_to_address(so, pack->header.ack, from);
 				continue;
@@ -975,7 +975,7 @@ _begin_send:
 			int nonblocking = accepted_so->turnon_nonblocking();
 			if (nonblocking != wawo::OK) {
 				WAWO_ERR("[wcp]WCB::accept, turn on nonblocking failed: %d", nonblocking);
-				accepted_so->close(nonblocking);
+				accepted_so->close();
 
 				reply_rst_to_address(so, pack->header.ack, from);
 				continue;
@@ -1219,7 +1219,7 @@ _begin_send:
 			WCBMap::iterator it = m_wcb_map.begin();
 			while (it != m_wcb_map.end()) {
 				it->second->close();
-				it->second->so->close(wawo::E_SOCKET_FORCE_CLOSE);
+				it->second->so->close();
 				++it;
 			}
 
@@ -1279,7 +1279,7 @@ _begin_send:
 					WWRP<wawo::net::socket> const& so = it->second->so;
 					WAWO_ASSERT( so != NULL );
 
-					so->close( it->second->wcb_errno );
+					so->close();
 					wcb_to_delete.push_back(it->second);
 				}
 				++it;

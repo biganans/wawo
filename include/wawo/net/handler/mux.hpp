@@ -59,8 +59,6 @@ namespace wawo { namespace net { namespace handler {
 	enum mux_stream_state {
 		SS_CLOSED,
 		SS_ESTABLISHED,	//read/write ok
-//		SS_CLOSING,
-//		SS_RECYCLE	//could be removed from stream list
 	};
 
 	enum mux_stream_write_flag {
@@ -78,7 +76,8 @@ namespace wawo { namespace net { namespace handler {
 	class stream:
 		public wawo::net::channel
 	{
-	public:
+		friend class mux;
+		
 		spin_mutex m_mutex;
 		spin_mutex m_rmutex;
 		spin_mutex m_wmutex;
@@ -92,12 +91,18 @@ namespace wawo { namespace net { namespace handler {
 		WWRP<wawo::net::channel_handler_context> m_ch_ctx;
 
 		WWRP<wawo::bytes_ringbuffer> m_rb;
-//		u32_t m_rb_incre;
-
 		std::queue<mux_stream_frame> m_wframeq;
 		u32_t m_wnd;
 		u8_t m_write_flag;
 
+		void _init() {
+			channel::init(m_ch_ctx->ch->exector());
+			m_rb = wawo::make_ref<bytes_ringbuffer>(MUX_STREAM_WND_SIZE);
+			m_rflag |= STREAM_READ_CHOKED;
+			m_wnd = MUX_STREAM_WND_SIZE;
+		}
+
+	public:
 		stream(WWRP<wawo::net::channel_handler_context> const& ctx):
 			m_ch_ctx(ctx),
 			m_state(SS_CLOSED),
@@ -105,23 +110,48 @@ namespace wawo { namespace net { namespace handler {
 			m_rflag(0),
 			m_wflag(0),
 			m_id(0)
-		{}
+		{
+			_init();
+		}
+
+		stream(u32_t const& id, WWRP<wawo::net::channel_handler_context> const& ctx) :
+			m_ch_ctx(ctx),
+			m_state(SS_ESTABLISHED),
+			m_flag(0),
+			m_rflag(0),
+			m_wflag(0),
+			m_id(id)
+		{
+			_init();
+		}
 
 		~stream()
 		{
 		}
 
-		void init() {
-			channel::init(m_ch_ctx->ch->exector());
+		int connect( u32_t const& id ) {
+			lock_guard<spin_mutex> lg(m_mutex);
+			m_state = SS_ESTABLISHED;
+			m_id = id;
+			mux_stream_frame f = make_frame_syn();
+			int wrt = write_frame(f);
 
-			m_rb = wawo::make_ref<bytes_ringbuffer>(MUX_STREAM_WND_SIZE);
+			WAWO_RETURN_V_IF_NOT_MATCH(wrt, wrt == wawo::OK);
+			m_state = SS_ESTABLISHED;
+			m_flag |= STREAM_IS_ACTIVE;
 
-//			m_rb_incre = 0;
-			m_rflag |= STREAM_READ_CHOKED;
+			WWRP<stream> s(this);
+			auto l = [s]() ->void {
+				s->ch_connected();
+			};
+			WWRP<wawo::task::lambda_task> t = wawo::make_ref<wawo::task::lambda_task>(l);
+			exector()->schedule(t);
 
-			m_wnd = MUX_STREAM_WND_SIZE;
+			return wrt;
+		}
 
-//			m_write_flag = 0;
+		int close() {
+			return ch_close();
 		}
 
 		void flush() {
@@ -223,7 +253,7 @@ end_write_frame:
 			return { mux_stream_frame_flag::T_UWND, data };
 		}
 
-		inline void arrive_frame(mux_stream_frame& const frame) {
+		inline void arrive_frame(mux_stream_frame const& frame) {
 			switch (frame.flag) {
 			case mux_stream_frame_flag::T_DATA:
 			{
@@ -264,14 +294,14 @@ end_write_frame:
 			case mux_stream_frame_flag::T_FIN:
 			{
 				DEBUG_STREAM("[mux_cargo][s%u][fin]recv", s->ch_id);
-				ch_close_read(0);
+				ch_close_read();
 				ch_read_shutdowned();
 			}
 			break;
 			case mux_stream_frame_flag::T_RST:
 			{
 				DEBUG_STREAM("[mux_cargo][s%u][rst]recv, force close", s->ch_id);
-				ch_close(0);
+				ch_close();
 			}
 			break;
 			case mux_stream_frame_flag::T_UWND:
@@ -288,21 +318,9 @@ end_write_frame:
 			}
 		}
 
-		int open(u32_t const& _id, WWRP<ref_base> const& _ctx) {
-			WAWO_ASSERT(m_id == 0);
-			lock_guard<spin_mutex> lg(m_mutex);
-			WAWO_ASSERT(m_state == SS_CLOSED);
-			m_id = _id;
-			m_state = SS_ESTABLISHED;
-			channel::set_ctx(_ctx);
-
-			mux_stream_frame f = make_frame_syn();
-			return write_frame(f);
-		}
-
 		int ch_id() const { return m_id; }
 
-		int ch_close( int const& ec) {
+		int ch_close() {
 			lock_guard<spin_mutex> lg(m_mutex);
 			if (m_state == SS_CLOSED ) {
 				return wawo::E_CHANNEL_INVALID_STATE;
@@ -310,8 +328,8 @@ end_write_frame:
 
 			WAWO_ASSERT(m_state == SS_ESTABLISHED);
 
-			ch_close_read(ec);
-			ch_close_write(ec);
+			ch_close_read();
+			ch_close_write();
 
 			m_state = SS_CLOSED;
 			
@@ -321,12 +339,12 @@ end_write_frame:
 				ch->deinit();
 			};
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-			exector()->plan(_t);
+			exector()->schedule(_t);
 
 			return wawo::OK;
 		}
 
-		int ch_close_read( int const& ec ) {
+		int ch_close_read() {
 			lock_guard<spin_mutex> lg(m_mutex);
 			if (m_rflag&STREAM_READ_SHUTDOWN_CALLED) {
 				return E_CHANNEL_RD_SHUTDOWN_ALREADY;
@@ -350,12 +368,12 @@ end_write_frame:
 				s->__rdwr_shutdown_check();
 			};
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-			exector()->plan(_t);
+			exector()->schedule(_t);
 
 			return wawo::OK;
 		}
 
-		int ch_close_write(int const& ec) {
+		int ch_close_write() {
 			lock_guard<spin_mutex> lg(m_mutex);
 			if (m_wflag&STREAM_WRITE_SHUTDOWN_CALLED) {
 				return E_CHANNEL_WR_SHUTDOWN_ALREADY;
@@ -378,7 +396,7 @@ end_write_frame:
 				s->__rdwr_shutdown_check();
 			};
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-			exector()->plan(_t);
+			exector()->schedule(_t);
 
 			return wawo::OK;
 		}
@@ -398,7 +416,7 @@ end_write_frame:
 				}
 			}
 			if (nflag == (STREAM_READ_SHUTDOWN | STREAM_WRITE_SHUTDOWN)) {
-				ch_close(0);
+				ch_close();
 			}
 		}
 
@@ -412,8 +430,13 @@ end_write_frame:
 
 		void begin_read(u8_t const& async_flag = 0, WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_read = NULL, fn_io_event_error const& fn_err = NULL) {
 			lock_guard<spin_mutex> lg_r(m_rmutex);
-			WAWO_ASSERT(m_rflag&STREAM_READ_CHOKED == 0);
+			WAWO_ASSERT( (m_rflag&STREAM_READ_CHOKED) == 0);
 			m_rflag |= STREAM_READ_CHOKED;
+
+			(void)async_flag;
+			(void)cookie;
+			(void)fn_read;
+			(void)fn_err;
 		}
 
 		void end_read() {
@@ -422,27 +445,6 @@ end_write_frame:
 			m_rflag &= ~STREAM_READ_CHOKED;
 		}
 
-		/*
-		u32_t read(WWRP<packet>& pack, u32_t const& max = 0) {
-
-			lock_guard<spin_mutex> lg_s(m_rb_mutex);
-			if (m_rb->count() == 0) return 0;
-
-			u32_t try_max = ((max != 0) && (m_rb->count() > max)) ? max : m_rb->count();
-
-			WWRP<packet> _pack = wawo::make_ref<wawo::packet>(try_max);
-			u32_t rcount = m_rb->read(_pack->begin(), try_max);
-			_pack->forward_write_index(rcount);
-
-#ifdef ENABLE_STREAM_WND
-			rb_incre += rcount;
-#endif
-			DEBUG_STREAM("[mux_cargo][s%u]rb_incre: %u, incred: %u", id, rb_incre, rcount);
-			pack = _pack;
-			return rcount;
-		}
-		*/
-
 		inline bool is_readwrite_closed() {
 			return ((m_rflag|m_wflag)&(STREAM_READ_SHUTDOWN|STREAM_WRITE_SHUTDOWN)) == (STREAM_READ_SHUTDOWN | STREAM_WRITE_SHUTDOWN);
 		}
@@ -450,44 +452,6 @@ end_write_frame:
 		inline bool is_active() const {
 			return (m_flag&STREAM_IS_ACTIVE) != 0;
 		}
-
-		/*
-		int update(int& ec_o, int& wflag) {
-			switch (m_state) {
-			case SS_ESTABLISHED:
-			{
-				_flush(ec_o, wflag);
-
-				if (ec_o == wawo::OK) {
-					break;
-				}
-
-				if (ec_o == wawo::E_CHANNEL_WRITE_BLOCK) {
-					wflag |= STREAM_WRITE_BLOCKED;
-					wawo::this_thread::yield();
-					break;
-				}
-
-				//force_close();
-				WAWO_ERR("[mux_cargo]peer socket send error: %d, close peer, force close stream", ec_o);
-			}
-			break;
-			case SS_CLOSED:
-			{
-				if ((m_flag&(STREAM_READ_SHUTDOWN | STREAM_WRITE_SHUTDOWN)) == (STREAM_READ_SHUTDOWN | STREAM_WRITE_SHUTDOWN)) {
-					m_state = SS_RECYCLE;
-				}
-			}
-			break;
-			case SS_RECYCLE:
-			{
-			}
-			break;
-			}
-
-			return m_state;
-		}
-		*/
 	};
 
 
@@ -501,10 +465,9 @@ end_write_frame:
 		wawo::thread::spin_mutex m_mutex;
 		stream_map_t m_stream_map;
 
-		WWRP<wawo::net::channel_acceptor_handler_abstract> m_ch_acceptor;
-
+		WWRP<wawo::net::channel_handler_abstract> m_ch_handler;
 	public:
-		mux( WWRP<wawo::net::channel_acceptor_handler_abstract> const& ch_acceptor );
+		mux( WWRP<wawo::net::channel_handler_abstract> const& ch_handler );
 		virtual ~mux();
 
 		void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income);
@@ -514,7 +477,7 @@ end_write_frame:
 			lock_guard<spin_mutex> lg(m_mutex);
 			stream_map_t::iterator it = m_stream_map.begin();
 			while (it != m_stream_map.end()) {
-				lock_guard<spin_mutex> lg( it->second->m_mutex );
+				lock_guard<spin_mutex> lgw( it->second->m_mutex );
 				typename stream_map_t::iterator const _it = it;
 				++it;
 				if (_it->second->m_state == SS_CLOSED) {

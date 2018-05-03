@@ -32,16 +32,16 @@ namespace wawo { namespace net {
 		return ctx->ch->ch_write(outlet);
 	}
 
-	int channel_handler_head::close(WWRP<channel_handler_context> const& ctx, int const& code) {
-		return ctx->ch->ch_close(code);
+	int channel_handler_head::close(WWRP<channel_handler_context> const& ctx) {
+		return ctx->ch->ch_close();
 	}
 
-	int channel_handler_head::close_read(WWRP<channel_handler_context> const& ctx, int const& code) {
-		return ctx->ch->ch_close_read(code);
+	int channel_handler_head::close_read(WWRP<channel_handler_context> const& ctx) {
+		return ctx->ch->ch_close_read();
 	}
 
-	int channel_handler_head::close_write(WWRP<channel_handler_context> const& ctx, int const& code) {
-		return ctx->ch->ch_close_write(code);
+	int channel_handler_head::close_write(WWRP<channel_handler_context> const& ctx) {
+		return ctx->ch->ch_close_write();
 	}
 
 	//--

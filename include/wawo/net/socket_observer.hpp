@@ -89,10 +89,6 @@ namespace wawo { namespace net {
 		public io_executor
 	{
 		WWRP<socket_observer> m_observer;
-		//spin_mutex m_tq_mtx;
-		//WWSP<TASK_Q> m_tq_standby;
-		//WWSP<TASK_Q> m_tq;
-
 		u8_t m_observer_type;
 	public:
 		observer( u8_t t = get_os_default_poll_type()):
@@ -103,9 +99,6 @@ namespace wawo { namespace net {
 		u8_t get_type() const { return m_observer_type; }
 
 		void on_start() {
-			//m_tq_standby = wawo::make_shared<TASK_Q>();
-			//m_tq = wawo::make_shared<TASK_Q>();
-			
 			io_executor::on_start();
 
 			WAWO_ASSERT(m_observer == NULL);
@@ -128,43 +121,15 @@ namespace wawo { namespace net {
 			io_executor::run();
 			wawo::this_thread::nsleep(observer_checker_interval);
 		}
-		/*
-		void _plan_task(WWRP<wawo::task::task_abstract> const& t) {
-			WAWO_ASSERT(t != NULL);
-			m_tq_standby->push(t);
-		}
-
-		void _exec_tasks() {
-			WAWO_ASSERT(m_tq->size() == 0);
-			{
-				lock_guard<spin_mutex> lg(m_tq_mtx);
-				if (m_tq_standby->size() > 0) {
-					std::swap(m_tq, m_tq_standby);
-				}
-			}
-
-			while (m_tq->size()) {
-				WWRP<wawo::task::task_abstract>& t = m_tq->front();
-				WAWO_ASSERT(t != NULL);
-				t->run();
-				m_tq->pop();
-			}
-		}
-
-		void plan(WWRP<wawo::task::task_abstract> const& t) {
-			lock_guard<spin_mutex> lg(m_tq_mtx);
-			_plan_task(t);
-		}
-		*/
 
 		void watch(u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err );
 		void unwatch(u8_t const& flag, int const& fd );
 	};
 
 	typedef std::vector<WWRP<observer>> observer_vectors;
-	class observers : public wawo::singleton<observers>
+	class observers :
+		public wawo::singleton<observers>
 	{
-
 	private:
 		std::atomic<int> m_curr_sys;
 		std::atomic<int> m_curr_wpoll;

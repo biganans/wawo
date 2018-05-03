@@ -13,7 +13,7 @@
 #include <queue>
 
 namespace wawo { namespace net {
-
+	//@todo impl block until no new task feature
 	using namespace wawo::thread;
 
 	typedef std::queue<WWRP<wawo::task::task_abstract>> TASK_Q;
@@ -50,13 +50,13 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_tq_standby->empty());
 		}
 
-		inline void plan(WWRP<wawo::task::task_abstract> const& t) {
+		inline void schedule(WWRP<wawo::task::task_abstract> const& t) {
 			WAWO_ASSERT(t != NULL);
 			lock_guard<spin_mutex> lg(m_tq_mtx);
 			m_tq_standby->push(t);
 		}
 
-		inline void plan_timer(WWRP<wawo::timer> const& t) {
+		inline void start_timer(WWRP<wawo::timer> const& t) {
 			m_tm->start(t);
 		}
 		inline void stop_timer(WWRP<wawo::timer> const& t) {

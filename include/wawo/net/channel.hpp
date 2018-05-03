@@ -17,7 +17,9 @@ namespace wawo { namespace net {
 
 	public:
 		channel() {}
-		virtual ~channel() {}
+		virtual ~channel() {
+			deinit();
+		}
 
 		void init( WWRP<io_executor> const& exe ) {
 			m_pipeline = wawo::make_ref<channel_pipeline>(WWRP<channel>(this));
@@ -85,18 +87,19 @@ namespace wawo { namespace net {
 		}
 
 		virtual int ch_id() const = 0;
-		virtual int ch_close(int const& ec) = 0;
-		virtual int ch_close_read(int const& ec) = 0;
-		virtual int ch_close_write(int const& ec) = 0;
+		virtual int ch_close() = 0;
+		virtual int ch_close_read() = 0;
+		virtual int ch_close_write() = 0;
 		virtual int ch_write(WWRP<packet> const& outlet) = 0;
 
+		/*
 		virtual void begin_connect(WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL) {
 			(void)cookie;
 			(void)fn_connected;
 			(void)fn_err;
 		}
 		virtual void end_connect() {}
-
+		*/
 		virtual void begin_read(u8_t const& async_flag = 0, WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_read = NULL, fn_io_event_error const& fn_err = NULL) {
 			(void)async_flag;
 			(void)cookie;

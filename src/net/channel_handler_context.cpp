@@ -45,6 +45,7 @@ namespace wawo { namespace net {
 	INT_HANDLER_CONTEXT_IMPL_T_TO_H_INT_1(channel_handler_context, close_read, CH_OUTBOUND, channel_outbound_handler_abstract)
 	INT_HANDLER_CONTEXT_IMPL_T_TO_H_INT_1(channel_handler_context, close_write, CH_OUTBOUND, channel_outbound_handler_abstract)
 
+		/*
 	void channel_handler_context::begin_connect(WWRP<ref_base> const& cookie, fn_io_event const& fn_connected , fn_io_event_error const& fn_err ) {
 		WAWO_ASSERT(ch != NULL);
 		ch->begin_connect(cookie, fn_connected, fn_err);
@@ -54,7 +55,7 @@ namespace wawo { namespace net {
 		WAWO_ASSERT(ch != NULL);
 		ch->end_connect();
 	}
-
+	*/
 	void channel_handler_context::begin_read(u8_t const& async_flag , WWRP<ref_base> const& cookie, fn_io_event const& fn_read , fn_io_event_error const& fn_err ) {
 		WAWO_ASSERT(ch != NULL);
 		ch->begin_read(async_flag, cookie, fn_read, fn_err);

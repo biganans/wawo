@@ -89,7 +89,7 @@ namespace wawo { namespace net {
 		fn_io_event m_fn_async_write;
 		fn_io_event_error m_fn_async_write_error;
 
-		int m_ec;
+//		int m_ec;
 		void _init();
 		void _deinit();
 
@@ -105,8 +105,7 @@ namespace wawo { namespace net {
 			m_async_wt(0),
 			m_rps_q(NULL),
 			m_rps_q_standby(NULL),
-			m_observer(NULL),
-			m_ec(0)
+			m_observer(NULL)
 		{
 			_init();
 		}
@@ -122,8 +121,7 @@ namespace wawo { namespace net {
 			m_async_wt(0),
 			m_rps_q(NULL),
 			m_rps_q_standby(NULL),
-			m_observer(NULL),
-			m_ec(0)
+			m_observer(NULL)
 		{
 			_init();
 		}
@@ -139,8 +137,7 @@ namespace wawo { namespace net {
 			m_async_wt(0),
 			m_rps_q(NULL),
 			m_rps_q_standby(NULL),
-			m_observer(NULL),
-			m_ec(0)
+			m_observer(NULL)
 		{
 			_init();
 		}
@@ -169,7 +166,7 @@ namespace wawo { namespace net {
 			m_ctx = ctx;
 		}
 
-		int get_ec() const { return m_ec; }
+//		int get_ec() const { return m_ec; }
 
 		//@TODO: timer to add
 		inline bool is_flush_timer_expired(u64_t const& now /*in milliseconds*/) {
@@ -187,8 +184,8 @@ namespace wawo { namespace net {
 		int open();
 		int connect(address const& addr);
 
-		int close(int const& ec=0);
-		int shutdown(u8_t const& flag, int const& ec=0);
+		int close();
+		int shutdown(u8_t const& flag);
 
 		int bind(wawo::net::address const& address);
 		int listen(int const& backlog = 128);
@@ -213,14 +210,14 @@ namespace wawo { namespace net {
 			begin_read(WATCH_OPTION_INFINITE);
 		}
 
-		inline void handle_async_connect_error(int const& code) {
+		inline void handle_async_connect_error() {
 			{
 				lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
 				WAWO_ASSERT(is_nonblocking());
 				WAWO_ASSERT(m_state == S_CONNECTING);
 			}
 
-			close(code);
+			close();
 		}
 
 		void handle_async_accept(int& ec_o);
@@ -231,7 +228,7 @@ namespace wawo { namespace net {
 		u32_t _receive_packets(WWRP<wawo::packet> arrives[], u32_t const& size, int& ec_o );
 		u32_t _flush(bool& left, int& ec_o);
 
-		inline void __rdwr_check(int const& ec = 0) {
+		inline void __rdwr_check() {
 			u8_t nflag = 0;
 			{
 				lock_guard<spin_mutex> lg_r(m_mutexes[L_READ]);
@@ -246,7 +243,7 @@ namespace wawo { namespace net {
 				}
 			}
 			if (nflag == SHUTDOWN_RDWR) {
-				close(ec);
+				close();
 			}
 		}
 
@@ -327,7 +324,7 @@ namespace wawo { namespace net {
 				};
 
 				WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda);
-				m_observer->plan(_t);
+				m_observer->schedule(_t);
 				return;
 			}
 
@@ -382,7 +379,7 @@ namespace wawo { namespace net {
 					err(wawo::E_INVALID_STATE, _cookie);
 				};
 				WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda);
-				m_observer->plan(_t);
+				m_observer->schedule(_t);
 				return;
 			}
 
@@ -417,9 +414,9 @@ namespace wawo { namespace net {
 
 		//ch
 		inline int ch_id() const { return fd(); }
-		inline int ch_close(int const& ec) { return close(ec); }
-		inline int ch_close_read(int const& ec) { return shutdown(SHUTDOWN_RD, ec); }
-		inline int ch_close_write(int const& ec) { return shutdown(SHUTDOWN_WR, ec); }
+		inline int ch_close() { return close(); }
+		inline int ch_close_read() { return shutdown(SHUTDOWN_RD); }
+		inline int ch_close_write() { return shutdown(SHUTDOWN_WR); }
 
 		inline int ch_write(WWRP<packet> const& outlet) { return send_packet(outlet); }
 	};

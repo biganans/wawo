@@ -25,7 +25,7 @@ namespace wawo { namespace net {
 		so->end_write();
 
 		WAWO_TRACE_SOCKET("[socket][%s]socket async connect error", so->info().to_lencstr().cstr);
-		so->handle_async_connect_error(code);
+		so->handle_async_connect_error();
 	}
 
 	void async_accept(WWRP<ref_base> const& cookie_) {
@@ -58,8 +58,8 @@ namespace wawo { namespace net {
 			break;
 			default:
 			{
-				WAWO_TRACE_SOCKET("[socket][%s]async read, pump error: %d, close", so->info().to_lencstr().cstr, ec);
-				so->close(ec);
+				WAWO_TRACE_SOCKET("[socket][%s]async read, pump error: %d, close", so->info().to_lencstr().cstr, ec );
+				so->close();
 			}
 		}
 	}
@@ -86,7 +86,7 @@ namespace wawo { namespace net {
 			case wawo::E_SOCKET_SEND_IO_BLOCK_EXPIRED:
 			default:
 			{
-				so->close(ec);
+				so->close();
 			}
 			break;
 		}
@@ -98,7 +98,7 @@ namespace wawo { namespace net {
 		WAWO_ASSERT(so != NULL);
 
 		WAWO_WARN("[socket][%s]socket error: %d, close", so->info().to_lencstr().cstr, code);
-		so->close(code);
+		so->close();
 	}
 }}
 
@@ -198,7 +198,7 @@ namespace wawo { namespace net {
 		return rt;
 	}
 
-	int socket::close( int const& ec ) {
+	int socket::close() {
 
 		lock_guard<spin_mutex> lg_s(m_mutexes[L_SOCKET]);
 		if (m_state == S_CLOSED) {
@@ -211,7 +211,7 @@ namespace wawo { namespace net {
 		{
 			bool left;
 			int _ec;
-			flush(left,_ec, ec==wawo::OK?__FLUSH_BLOCK_TIME_INFINITE__: __FLUSH_DEFAULT_BLOCK_TIME__);
+			flush(left,_ec);
 		}
 		
 		u8_t sflag = 0;
@@ -239,7 +239,6 @@ namespace wawo { namespace net {
 
 		int old_state = m_state;
 		int closert = socket_base::close();
-		m_ec = ec;
 		m_state = S_CLOSED;
 		if (!is_nonblocking()) return closert;
 
@@ -253,23 +252,21 @@ namespace wawo { namespace net {
 			};
 
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-			m_observer->plan(_t);
+			m_observer->schedule(_t);
 			return closert;
 		}
 
 		if (old_state != S_CONNECTED) {
-			WAWO_ASSERT(ec !=0 );
-			
 			WWRP<channel> ch(this);
 
-			wawo::task::fn_lambda lambda_FNR = [ch,ec]() -> void {
+			wawo::task::fn_lambda lambda_FNR = [ch]() -> void {
 				ch->ch_error();
 				ch->ch_closed();
 				ch->deinit();
 			};
 
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-			m_observer->plan(_t);
+			m_observer->schedule(_t);
 			return closert;
 		}
 		
@@ -298,12 +295,12 @@ namespace wawo { namespace net {
 		};
 
 		WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-		m_observer->plan(_t);
+		m_observer->schedule(_t);
 
 		return closert;
 	}
 
-	int socket::shutdown(u8_t const& flag, int const& ec ) {
+	int socket::shutdown(u8_t const& flag ) {
 		lock_guard<spin_mutex> lg_s(m_mutexes[L_SOCKET]);
 
 		WAWO_ASSERT(flag == SHUTDOWN_RD ||
@@ -354,7 +351,6 @@ namespace wawo { namespace net {
 			_flag = SHUT_RDWR;
 		}
 
-		m_ec = ec;
 		int shutrt = socket_base::shutdown(_flag);
 		WAWO_TRACE_SOCKET("[socket][%s]shutdown(%u) for(%u), sflag:%u, shutrt: %d", info().to_lencstr().cstr, flag, ec, sflag, shutrt);
 
@@ -362,7 +358,7 @@ namespace wawo { namespace net {
 		WAWO_ASSERT(sflag != 0);
 
 		WWRP<socket> so(this);
-		wawo::task::fn_lambda lambda_FNR = [so, sflag,ec]() -> void {
+		wawo::task::fn_lambda lambda_FNR = [so, sflag]() -> void {
 			if (sflag&SHUTDOWN_RD) {
 				so->end_read();
 				so->ch_read_shutdowned();
@@ -372,11 +368,11 @@ namespace wawo { namespace net {
 				so->end_write();
 				so->ch_write_shutdowned();
 			}
-			so->__rdwr_check(ec);
+			so->__rdwr_check();
 		};
 
 		WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-		m_observer->plan(_t);
+		m_observer->schedule(_t);
 
 		return shutrt;
 	}
@@ -470,7 +466,7 @@ namespace wawo { namespace net {
 			};
 
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(_lambda);
-			m_observer->plan(_t);
+			m_observer->schedule(_t);
 			return wawo::OK;
 		} else if (rt == wawo::E_SOCKET_CONNECTING) {
 			TRACE_IOE("[socket_base][%s][async_connect]watch(IOE_WRITE)", info().to_lencstr().cstr );
@@ -495,14 +491,14 @@ namespace wawo { namespace net {
 				int nonblocking = so->turnon_nonblocking();
 				if (nonblocking != wawo::OK) {
 					WAWO_ERR("[node_abstract][%s]turn on nonblocking failed: %d", so->info().to_lencstr().cstr, nonblocking);
-					accepted_sockets[i]->close(nonblocking);
+					accepted_sockets[i]->close();
 					continue;
 				}
 
 				int setdefaultkal = so->set_keep_alive_vals(default_keep_alive_vals);
 				if (setdefaultkal != wawo::OK) {
 					WAWO_ERR("[node_abstract][%s]set_keep_alive_vals failed: %d", so->info().to_lencstr().cstr, setdefaultkal);
-					accepted_sockets[i]->close(nonblocking);
+					accepted_sockets[i]->close();
 					continue;
 				}
 
@@ -513,7 +509,7 @@ namespace wawo { namespace net {
 		} while (ec_o == wawo::E_TRY_AGAIN);
 
 		if (ec_o != wawo::OK) {
-			close(ec_o);
+			close();
 		}
 	}
 
@@ -636,7 +632,7 @@ namespace wawo { namespace net {
 					ch->ch_write_unblock();
 				};
 				WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda);
-				m_observer->plan(_t);
+				m_observer->schedule(_t);
 			}
 		} else {
 			WAWO_ASSERT(m_async_wt != 0);

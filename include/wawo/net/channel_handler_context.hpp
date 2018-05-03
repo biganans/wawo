@@ -72,8 +72,8 @@ namespace wawo { namespace net {
 		int close_write(int const& code = 0);
 		int invoke_close_write(int const& code);
 
-		void begin_connect(WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL) ;
-		void end_connect() ;
+		//void begin_connect(WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL) ;
+		//void end_connect() ;
 
 		void begin_read(u8_t const& async_flag = 0, WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_read = NULL, fn_io_event_error const& fn_err = NULL) ;
 		void end_read() ;
