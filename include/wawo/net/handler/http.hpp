@@ -40,17 +40,17 @@ namespace wawo { namespace net { namespace handler {
 
 		virtual void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income);
 
-		int http_on_message_begin();
-		int http_on_url(const char* data, u32_t const& len);
-		int http_on_status(const char* data, u32_t const& len);
-		int http_on_header_field(const char* data, u32_t const& len);
-		int http_on_header_value(const char* data, u32_t const& len);
-		int http_on_headers_complete();
-		int http_on_body(const char* data, u32_t const& len);
-		int http_on_message_complete();
+		int http_on_message_begin(WWRP<protocol::http::parser> const& p);
+		int http_on_url(WWRP<protocol::http::parser> const& p,const char* data, u32_t const& len);
+		int http_on_status(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len);
+		int http_on_header_field(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len);
+		int http_on_header_value(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len);
+		int http_on_headers_complete(WWRP<protocol::http::parser> const& p);
+		int http_on_body(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len);
+		int http_on_message_complete(WWRP<protocol::http::parser> const& p);
 
-		int http_on_chunk_header();
-		int http_on_chunk_complete();
+		int http_on_chunk_header(WWRP<protocol::http::parser> const& p);
+		int http_on_chunk_complete(WWRP<protocol::http::parser> const& p);
 	};
 }}}
 #endif

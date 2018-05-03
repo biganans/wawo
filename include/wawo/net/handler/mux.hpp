@@ -102,6 +102,27 @@ namespace wawo { namespace net { namespace handler {
 			m_wnd = MUX_STREAM_WND_SIZE;
 		}
 
+		int connect(u32_t const& id) {
+			lock_guard<spin_mutex> lg(m_mutex);
+			m_state = SS_ESTABLISHED;
+			m_id = id;
+			mux_stream_frame f = make_frame_syn();
+			int wrt = write_frame(f);
+
+			WAWO_RETURN_V_IF_NOT_MATCH(wrt, wrt == wawo::OK);
+			m_state = SS_ESTABLISHED;
+			m_flag |= STREAM_IS_ACTIVE;
+
+			WWRP<mux_stream> s(this);
+			auto l = [s]() ->void {
+				s->ch_connected();
+			};
+			WWRP<wawo::task::lambda_task> t = wawo::make_ref<wawo::task::lambda_task>(l);
+			exector()->schedule(t);
+
+			return wrt;
+		}
+
 	public:
 		mux_stream(WWRP<wawo::net::channel_handler_context> const& ctx):
 			m_ch_ctx(ctx),
@@ -127,27 +148,6 @@ namespace wawo { namespace net { namespace handler {
 
 		~mux_stream()
 		{
-		}
-
-		int connect( u32_t const& id ) {
-			lock_guard<spin_mutex> lg(m_mutex);
-			m_state = SS_ESTABLISHED;
-			m_id = id;
-			mux_stream_frame f = make_frame_syn();
-			int wrt = write_frame(f);
-
-			WAWO_RETURN_V_IF_NOT_MATCH(wrt, wrt == wawo::OK);
-			m_state = SS_ESTABLISHED;
-			m_flag |= STREAM_IS_ACTIVE;
-
-			WWRP<mux_stream> s(this);
-			auto l = [s]() ->void {
-				s->ch_connected();
-			};
-			WWRP<wawo::task::lambda_task> t = wawo::make_ref<wawo::task::lambda_task>(l);
-			exector()->schedule(t);
-
-			return wrt;
 		}
 
 		int close() {
@@ -500,6 +500,23 @@ end_write_frame:
 					DEBUG_STREAM("[mux_cargo][s%u]stream remove from map", _it->second->ch_id() );
 				}
 			}
+		}
+
+		WWRP<mux_stream> make_mux_stream() {
+			return wawo::make_ref<mux_stream>(m_ch_ctx);
+		}
+
+		int dial_mux_stream(u32_t id, WWRP<mux_stream> const& s) {
+			lock_guard<spin_mutex> lg(m_mutex);
+			stream_map_t::iterator it = m_stream_map.find(id);
+			if (it != m_stream_map.end()) {
+				return wawo::E_CHANNEL_EXISTS;
+			}
+			
+			int drt = s->connect(id);
+			WAWO_RETURN_V_IF_NOT_MATCH(drt, drt == wawo::OK);
+			m_stream_map.insert({id, s});
+			return drt;
 		}
 	};
 
