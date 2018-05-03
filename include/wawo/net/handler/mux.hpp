@@ -73,7 +73,7 @@ namespace wawo { namespace net { namespace handler {
 		WWRP<wawo::packet> data;
 	};
 
-	class stream:
+	class mux_stream:
 		public wawo::net::channel
 	{
 		friend class mux;
@@ -103,7 +103,7 @@ namespace wawo { namespace net { namespace handler {
 		}
 
 	public:
-		stream(WWRP<wawo::net::channel_handler_context> const& ctx):
+		mux_stream(WWRP<wawo::net::channel_handler_context> const& ctx):
 			m_ch_ctx(ctx),
 			m_state(SS_CLOSED),
 			m_flag(0),
@@ -114,7 +114,7 @@ namespace wawo { namespace net { namespace handler {
 			_init();
 		}
 
-		stream(u32_t const& id, WWRP<wawo::net::channel_handler_context> const& ctx) :
+		mux_stream(u32_t const& id, WWRP<wawo::net::channel_handler_context> const& ctx) :
 			m_ch_ctx(ctx),
 			m_state(SS_ESTABLISHED),
 			m_flag(0),
@@ -125,7 +125,7 @@ namespace wawo { namespace net { namespace handler {
 			_init();
 		}
 
-		~stream()
+		~mux_stream()
 		{
 		}
 
@@ -140,7 +140,7 @@ namespace wawo { namespace net { namespace handler {
 			m_state = SS_ESTABLISHED;
 			m_flag |= STREAM_IS_ACTIVE;
 
-			WWRP<stream> s(this);
+			WWRP<mux_stream> s(this);
 			auto l = [s]() ->void {
 				s->ch_connected();
 			};
@@ -362,7 +362,7 @@ end_write_frame:
 				} while (wrt != wawo::OK);
 			}
 
-			WWRP<stream> s(this);
+			WWRP<mux_stream> s(this);
 			wawo::task::fn_lambda lambda_FNR = [s]() -> void {
 				s->ch_read_shutdowned();
 				s->__rdwr_shutdown_check();
@@ -390,7 +390,7 @@ end_write_frame:
 				}
 			} while ((!(m_wflag |= STREAM_WRITE_SHUTDOWN_CALLED)));
 
-			WWRP<stream> s(this);
+			WWRP<mux_stream> s(this);
 			wawo::task::fn_lambda lambda_FNR = [s]() -> void {
 				s->ch_read_shutdowned();
 				s->__rdwr_shutdown_check();
@@ -454,24 +454,39 @@ end_write_frame:
 		}
 	};
 
+	enum mux_ch_event {
+		E_MUX_CH_ERROR,
+		E_MUX_CH_CONNECTED,
+		E_MUX_CH_CLOSED,
+		E_MUX_CH_STREAM_ACCEPTED
+	};
+
+	class mux;
+	typedef std::function<void(WWRP<mux> const& mux_)> fn_mux_evt_t;
+	typedef std::function<void(WWRP<mux> const& mux_)> fn_mux_evt_t;
+	typedef std::function<void(WWRP<mux> const& mux_)> fn_mux_evt_t;
+	typedef std::function<void( WWRP<mux> const& mux_, WWRP<mux_stream> const& s)> fn_mux_stream_accepted_t;
 
 	class mux:
 		public wawo::net::channel_inbound_handler_abstract,
-		public wawo::net::channel_activity_handler_abstract
+		public wawo::net::channel_activity_handler_abstract,
+		public event_trigger
 	{
-		typedef std::map<mux_stream_id_t, WWRP<stream> > stream_map_t;
-		typedef std::pair<mux_stream_id_t, WWRP<stream> > stream_pair_t;
+		typedef std::map<mux_stream_id_t, WWRP<mux_stream> > stream_map_t;
+		typedef std::pair<mux_stream_id_t, WWRP<mux_stream> > stream_pair_t;
 
 		wawo::thread::spin_mutex m_mutex;
 		stream_map_t m_stream_map;
 
-		WWRP<wawo::net::channel_handler_abstract> m_ch_handler;
+		WWRP<wawo::net::channel_handler_context> m_ch_ctx;
 	public:
-		mux( WWRP<wawo::net::channel_handler_abstract> const& ch_handler );
+		mux();
 		virtual ~mux();
 
 		void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income);
+		void connected(WWRP<wawo::net::channel_handler_context> const& ctx);
 		void closed(WWRP<wawo::net::channel_handler_context> const& ctx);
+		void error(WWRP<channel_handler_context> const& ctx);
 
 		void _stream_close_check_() {
 			lock_guard<spin_mutex> lg(m_mutex);

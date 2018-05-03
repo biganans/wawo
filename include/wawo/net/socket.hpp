@@ -166,8 +166,6 @@ namespace wawo { namespace net {
 			m_ctx = ctx;
 		}
 
-//		int get_ec() const { return m_ec; }
-
 		//@TODO: timer to add
 		inline bool is_flush_timer_expired(u64_t const& now /*in milliseconds*/) {
 			if (m_async_wt == 0) return false;
@@ -210,12 +208,13 @@ namespace wawo { namespace net {
 			begin_read(WATCH_OPTION_INFINITE);
 		}
 
-		inline void handle_async_connect_error() {
+		inline void handle_async_connect_error( int e) {
 			{
 				lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
 				WAWO_ASSERT(is_nonblocking());
 				WAWO_ASSERT(m_state == S_CONNECTING);
 			}
+			ch_errno(e);
 
 			close();
 		}

@@ -6,8 +6,7 @@ namespace wawo { namespace net { namespace handler {
 		WAWO_ASSERT(!"TODO");
 	}
 
-	mux::mux(WWRP<wawo::net::channel_acceptor_handler_abstract> const& ch_acceptor):
-		m_ch_acceptor(ch_acceptor)
+	mux::mux()
 	{
 	}
 
@@ -27,7 +26,7 @@ namespace wawo { namespace net { namespace handler {
 			return;
 		}
 
-		WWRP<stream> s;
+		WWRP<mux_stream> s;
 		if (flag == mux_stream_frame_flag::T_SYN ) {
 			WAWO_ASSERT(income->len() == 0);
 			{
@@ -41,14 +40,13 @@ namespace wawo { namespace net { namespace handler {
 					return;
 				}
 
-				s = wawo::make_ref<stream>( id, ctx );
+				s = wawo::make_ref<mux_stream>( id, ctx );
 				m_stream_map.insert({id, s});
 
 				DEBUG_STREAM("[mux_cargo][s%u]stream insert (by syn)", stream_id);
 			}
 
-			WAWO_ASSERT(m_ch_acceptor != NULL);
-			m_ch_handler->accepted(ctx, s);
+			invoke<fn_mux_stream_accepted_t>(E_MUX_CH_STREAM_ACCEPTED,WWRP<mux>(this),s);
 			s->ch_connected();
 			return;
 		}
@@ -74,6 +72,14 @@ namespace wawo { namespace net { namespace handler {
 		s->arrive_frame({ flag, income });
 	}
 
+	void mux::connected(WWRP<wawo::net::channel_handler_context> const& ctx) {
+		WAWO_ASSERT(m_ch_ctx == NULL);
+		m_ch_ctx = ctx;
+
+		invoke<fn_mux_evt_t>(E_MUX_CH_CONNECTED,WWRP<mux>(this) );
+		ctx->fire_connected();
+	}
+
 	void mux::closed(WWRP<wawo::net::channel_handler_context> const& ctx) {
 		lock_guard<spin_mutex> lg(m_mutex);
 		stream_map_t::iterator it = m_stream_map.begin();
@@ -82,5 +88,16 @@ namespace wawo { namespace net { namespace handler {
 			DEBUG_STREAM("[mux_cargo][s%u][mux_close]force close stream, for E_CLOSE", it->second->id);
 			++it;
 		}
+
+		invoke<fn_mux_evt_t>(E_MUX_CH_CLOSED, WWRP<mux>(this));
+		ctx->fire_closed();
+		m_ch_ctx = NULL;
 	}
+
+	void mux::error(WWRP<channel_handler_context> const& ctx) {
+		m_ch_ctx = ctx;
+		invoke<fn_mux_evt_t>(E_MUX_CH_ERROR, WWRP<mux>(this));
+		ctx->fire_error();
+	}
+
 }}}

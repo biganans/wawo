@@ -25,7 +25,7 @@ namespace wawo { namespace net {
 		so->end_write();
 
 		WAWO_TRACE_SOCKET("[socket][%s]socket async connect error", so->info().to_lencstr().cstr);
-		so->handle_async_connect_error();
+		so->handle_async_connect_error(code);
 	}
 
 	void async_accept(WWRP<ref_base> const& cookie_) {

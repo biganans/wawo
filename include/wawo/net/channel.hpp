@@ -14,6 +14,7 @@ namespace wawo { namespace net {
 		WWRP<channel_pipeline> m_pipeline;
 		WWRP<ref_base>	m_ctx;
 		WWRP<io_executor> m_exector;
+		int m_errno;
 
 	public:
 		channel() {}
@@ -86,6 +87,11 @@ namespace wawo { namespace net {
 			m_ctx = ctx;
 		}
 
+		inline void ch_errno( int e) {
+			m_errno=e;
+		}
+		inline int ch_get_errno() { return m_errno; }
+		
 		virtual int ch_id() const = 0;
 		virtual int ch_close() = 0;
 		virtual int ch_close_read() = 0;
