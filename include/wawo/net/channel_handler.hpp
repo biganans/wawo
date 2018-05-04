@@ -47,9 +47,9 @@ namespace wawo { namespace net {
 	public:
 		virtual int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) = 0;
 
-		virtual int close(WWRP<channel_handler_context> const& ctx,int const& code);
-		virtual int close_read(WWRP<channel_handler_context> const& ctx,int const& code);
-		virtual int close_write(WWRP<channel_handler_context> const& ctx,int const& code);
+		virtual int close(WWRP<channel_handler_context> const& ctx);
+		virtual int close_read(WWRP<channel_handler_context> const& ctx);
+		virtual int close_write(WWRP<channel_handler_context> const& ctx);
 	};
 
 #define HANDLER_DEFAULT_IMPL_0(NAME,HANDLER_NAME) \
@@ -57,9 +57,9 @@ namespace wawo { namespace net {
 		ctx->fire_##NAME##(); \
 	}
 
-#define INT_HANDLER_DEFAULT_IMPL_INT_1(NAME,HANDLER_NAME) \
-	int HANDLER_NAME##::##NAME##(WWRP<channel_handler_context> const& ctx, int const& code) { \
-		return ctx->##NAME##(code); \
+#define INT_HANDLER_DEFAULT_IMPL_0(NAME,HANDLER_NAME) \
+	int HANDLER_NAME##::##NAME##(WWRP<channel_handler_context> const& ctx) { \
+		return ctx->##NAME##(); \
 	}
 
 	class channel_handler_head :

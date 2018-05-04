@@ -149,11 +149,11 @@ namespace wawo { namespace net {
 		
 		inline bool is_connected() const { return m_state == S_CONNECTED; }
 		inline bool is_connecting() const { return (m_state == S_CONNECTING); }
-		inline bool is_closed() const { return (m_state == S_CLOSED); }
 
 		inline bool is_read_shutdowned() const { return (m_rflag&SHUTDOWN_RD) != 0; }
 		inline bool is_write_shutdowned() const { return (m_wflag&SHUTDOWN_WR) != 0; }
 		inline bool is_readwrite_shutdowned() const { return (((m_rflag | m_wflag)&SHUTDOWN_RDWR) == SHUTDOWN_RDWR); }
+		inline bool is_closed() const { return (m_state == S_CLOSED); }
 
 		template <class ctx_t>
 		inline WWRP<ctx_t> get_ctx() const {

@@ -47,6 +47,7 @@ namespace wawo { namespace net { namespace handler {
 	}
 
 	int http::http_on_message_begin(WWRP<protocol::http::parser> const& p) {
+		(void)p;
 		WAWO_ASSERT(m_tmp_m == NULL );
 		m_tmp_m = wawo::make_shared<protocol::http::message>();
 
@@ -55,23 +56,27 @@ namespace wawo { namespace net { namespace handler {
 	}
 
 	int http::http_on_url(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len) {
+		(void)p;
 		m_tmp_m->url = wawo::len_cstr( data,len );
 		return wawo::OK;
 	}
 
 	int http::http_on_status(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len) {
+		(void)p;
 		WAWO_ERR("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
 		WAWO_ASSERT(!"WHAT");
 		return wawo::OK;
 	}
 
 	int http::http_on_header_field(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len) {
+		(void)p;
 		//WAWO_DEBUG("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
 		m_tmp_for_field = wawo::len_cstr(data, len);
 		return wawo::OK;
 	}
 
 	int http::http_on_header_value(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len) {
+		(void)p;
 		//WAWO_DEBUG("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
 		m_tmp_m->h.set(m_tmp_for_field, wawo::len_cstr(data, len));
 		return wawo::OK;
@@ -79,7 +84,7 @@ namespace wawo { namespace net { namespace handler {
 
 	int http::http_on_headers_complete(WWRP<protocol::http::parser> const& p) {
 		//WAWO_DEBUG(__FUNCTION__);
-
+		(void)p;
 		event_trigger::invoke<fn_http_message_header_end_t>(E_HEADER_COMPLETE, m_cur_ctx, m_tmp_m);
 		m_tmp_m = NULL;
 		return wawo::OK;
@@ -88,21 +93,25 @@ namespace wawo { namespace net { namespace handler {
 	int http::http_on_body(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len) {
 		WWRP<wawo::packet> income = wawo::make_ref<wawo::packet>((wawo::byte_t*)data, len);
 		event_trigger::invoke<fn_http_message_body_t>(E_BODY, m_cur_ctx, income);
+		(void)p;
 		return wawo::OK;
 	}
 
 	int http::http_on_message_complete(WWRP<protocol::http::parser> const& p) {
 		event_trigger::invoke<fn_http_message_end_t>(E_BODY, m_cur_ctx);
+		(void)p;
 		return wawo::OK;
 	}
 
 	int http::http_on_chunk_header(WWRP<protocol::http::parser> const& p ) {
 		WAWO_ASSERT(!"TODO");
+		(void)p;
 		return wawo::OK;
 	}
 
 	int http::http_on_chunk_complete(WWRP<protocol::http::parser> const& p) {
 		WAWO_ASSERT(!"TODO");
+		(void)p;
 		return wawo::OK;
 	}
 }}}

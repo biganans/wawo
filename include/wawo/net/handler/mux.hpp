@@ -35,11 +35,11 @@ namespace wawo { namespace net { namespace handler {
 		T_MUX_STREAM_MESSAGE_TYPE_MAX = (T_WRITE_UNBLOCK + 1)
 	};
 
-	typedef u32_t mux_stream_id_t;
+	typedef int mux_stream_id_t;
 	typedef u16_t mux_stream_frame_flag_t;
 
-	static std::atomic<u32_t> _s_id_{1};
-	inline static u32_t mux_make_stream_id() {return wawo::atomic_increment(&_s_id_);}
+	static std::atomic<int> _s_id_{1};
+	inline static int mux_make_stream_id() {return wawo::atomic_increment(&_s_id_)%0x7FFFFFFF;}
 
 	enum mux_stream_flag {
 		STREAM_READ_SHUTDOWN_CALLED = 1,
@@ -67,7 +67,6 @@ namespace wawo { namespace net { namespace handler {
 	};
 	static const u32_t MUX_STREAM_WND_SIZE = 256 * 1024;
 
-
 	struct mux_stream_frame {
 		mux_stream_frame_flag_t flag;
 		WWRP<wawo::packet> data;
@@ -87,7 +86,7 @@ namespace wawo { namespace net { namespace handler {
 		u8_t m_rflag;
 		u8_t m_wflag;
 
-		u32_t m_id;
+		int m_id;
 		WWRP<wawo::net::channel_handler_context> m_ch_ctx;
 
 		WWRP<wawo::bytes_ringbuffer> m_rb;
@@ -102,10 +101,30 @@ namespace wawo { namespace net { namespace handler {
 			m_wnd = MUX_STREAM_WND_SIZE;
 		}
 
-		int connect(u32_t const& id) {
+	public:
+		mux_stream(u32_t const& id, WWRP<wawo::net::channel_handler_context> const& ctx):
+			m_ch_ctx(ctx),
+			m_state(SS_CLOSED),
+			m_flag(0),
+			m_rflag(0),
+			m_wflag(0),
+			m_id(id)
+		{
+			_init();
+		}
+
+		~mux_stream()
+		{
+		}
+
+		inline bool is_read_shutdowned() const { return (m_rflag&STREAM_READ_SHUTDOWN_CALLED) != 0; }
+		inline bool is_write_shutdowned() const { return (m_wflag&STREAM_WRITE_SHUTDOWN_CALLED) != 0; }
+		inline bool is_readwrite_shutdowned() const { return (((m_rflag | m_wflag)&(STREAM_READ_SHUTDOWN_CALLED|STREAM_WRITE_SHUTDOWN_CALLED)) == (STREAM_READ_SHUTDOWN_CALLED | STREAM_WRITE_SHUTDOWN_CALLED)); }
+		inline bool is_closed() const { return (m_state == SS_CLOSED); }
+
+		int dial() {
 			lock_guard<spin_mutex> lg(m_mutex);
-			m_state = SS_ESTABLISHED;
-			m_id = id;
+			WAWO_ASSERT(m_state != SS_ESTABLISHED);
 			mux_stream_frame f = make_frame_syn();
 			int wrt = write_frame(f);
 
@@ -121,33 +140,6 @@ namespace wawo { namespace net { namespace handler {
 			exector()->schedule(t);
 
 			return wrt;
-		}
-
-	public:
-		mux_stream(WWRP<wawo::net::channel_handler_context> const& ctx):
-			m_ch_ctx(ctx),
-			m_state(SS_CLOSED),
-			m_flag(0),
-			m_rflag(0),
-			m_wflag(0),
-			m_id(0)
-		{
-			_init();
-		}
-
-		mux_stream(u32_t const& id, WWRP<wawo::net::channel_handler_context> const& ctx) :
-			m_ch_ctx(ctx),
-			m_state(SS_ESTABLISHED),
-			m_flag(0),
-			m_rflag(0),
-			m_wflag(0),
-			m_id(id)
-		{
-			_init();
-		}
-
-		~mux_stream()
-		{
 		}
 
 		int close() {
@@ -380,7 +372,7 @@ end_write_frame:
 			}
 
 			//wait until flag changed
-			do  {
+			do {
 				lock_guard<spin_mutex> lg_write(m_wmutex);
 				DEBUG_STREAM("[mux_cargo][s%u]stream close write", id);
 				mux_stream_frame f = make_frame_fin();
@@ -502,21 +494,17 @@ end_write_frame:
 			}
 		}
 
-		WWRP<mux_stream> make_mux_stream() {
-			return wawo::make_ref<mux_stream>(m_ch_ctx);
-		}
-
-		int dial_mux_stream(u32_t id, WWRP<mux_stream> const& s) {
+		WWRP<mux_stream> make_mux_stream( u32_t id , int& ec) {
 			lock_guard<spin_mutex> lg(m_mutex);
 			stream_map_t::iterator it = m_stream_map.find(id);
 			if (it != m_stream_map.end()) {
-				return wawo::E_CHANNEL_EXISTS;
+				ec = wawo::E_CHANNEL_EXISTS;
+				return NULL ;
 			}
-			
-			int drt = s->connect(id);
-			WAWO_RETURN_V_IF_NOT_MATCH(drt, drt == wawo::OK);
-			m_stream_map.insert({id, s});
-			return drt;
+			ec = wawo::OK;
+			WWRP<mux_stream> s = wawo::make_ref<mux_stream>(id,m_ch_ctx);
+			m_stream_map.insert({ id, s });
+			return s;
 		}
 	};
 

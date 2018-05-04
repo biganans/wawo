@@ -241,7 +241,7 @@ namespace wawo {
 
 //		E_SOCKET_RECV_BUFFER_FULL							= -30003,
 //		E_CHANNEL_READ_BLOCK									= -30004,
-		E_SOCKET_FORCE_CLOSE								= -30005,
+//		E_SOCKET_FORCE_CLOSE								= -30005,
 
 		E_SOCKET_CONNECTING									= -30006,
 

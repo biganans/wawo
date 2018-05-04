@@ -65,14 +65,14 @@ namespace wawo { namespace net {
 		int write(WWRP<packet> const& outlet);
 		int invoke_write(WWRP<packet> const& outlet);
 
-		int close(int const& code = 0);
-		int invoke_close(int const& code);
+		int close();
+		int invoke_close();
 
-		int close_read(int const& code = 0);
-		int invoke_close_read(int const& code);
+		int close_read();
+		int invoke_close_read();
 
-		int close_write(int const& code = 0);
-		int invoke_close_write(int const& code);
+		int close_write();
+		int invoke_close_write();
 
 		//void begin_connect(WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL) ;
 		//void end_connect() ;
@@ -165,19 +165,19 @@ namespace wawo { namespace net {
 		return P->invoke_##NAME##(p); \
 	}
 
-#define INT_HANDLER_CONTEXT_IMPL_T_TO_H_INT_1(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
-	int CTX_CLASS_NAME::invoke_##NAME##(int const& i) { \
+#define INT_HANDLER_CONTEXT_IMPL_T_TO_H_0(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
+	int CTX_CLASS_NAME::invoke_##NAME##() { \
 		if (m_flag&HANDLER_FLAG) { \
 			WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
-			return _h->##NAME##(WWRP<CTX_CLASS_NAME>(this), i); \
+			return _h->##NAME##(WWRP<CTX_CLASS_NAME>(this)); \
 		} else { \
-			return NAME##(i); \
+			return NAME##(); \
 		} \
 	} \
 	 \
-	int CTX_CLASS_NAME::##NAME##(int const& i) { \
+	int CTX_CLASS_NAME::##NAME##() { \
 		WAWO_ASSERT(P != NULL); \
-		return P->invoke_##NAME##(i); \
+		return P->invoke_##NAME##(); \
 	}
 
 }}

@@ -126,6 +126,10 @@ namespace wawo { namespace net {
 		virtual int turnoff_nodelay() { return wawo::OK; }
 
 		virtual bool is_active() const = 0;
+		virtual bool is_read_shutdowned() const = 0;
+		virtual bool is_write_shutdowned() const = 0;
+		virtual bool is_readwrite_shutdowned() const = 0;
+		virtual bool is_closed() const = 0;
 	};
 }}
 #endif

@@ -87,20 +87,17 @@ namespace wawo { namespace net {
 			return wawo::OK;
 		}
 
-		inline int close(int const& code = 0) {
+		inline int close() {
 			WAWO_ASSERT(!"TODO");
-			(void)code;
 			return wawo::OK;
 		}
 
-		inline int close_read(int const& code =0) {
+		inline int close_read() {
 			WAWO_ASSERT(!"TODO");
-			(void)code;
 			return wawo::OK;
 		}
-		inline int close_write(int const& code = 0) {
+		inline int close_write() {
 			WAWO_ASSERT(!"TODO");
-			(void)code;
 			return wawo::OK;
 		}
 	};

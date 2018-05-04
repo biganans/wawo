@@ -33,9 +33,9 @@ namespace wawo { namespace net {
 	{
 	public:
 		virtual int write(WWRP<packet> const& out) = 0;
-		virtual int close(int const& code ) = 0;
-		virtual int close_read(int const& code ) = 0;
-		virtual int close_write(int const& code ) = 0;
+		virtual int close() = 0;
+		virtual int close_read() = 0;
+		virtual int close_write() = 0;
 	};
 }}
 #endif
