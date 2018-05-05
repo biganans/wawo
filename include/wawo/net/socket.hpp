@@ -64,8 +64,6 @@ namespace wawo { namespace net {
 		u8_t	m_rflag;
 		u8_t	m_wflag;
 
-		WWRP<ref_base>	m_ctx;
-
 		byte_t* m_trb; //tmp read buffer
 
 		u64_t m_delay_wp;
@@ -99,7 +97,6 @@ namespace wawo { namespace net {
 			m_state(S_CONNECTED),
 			m_rflag(0),
 			m_wflag(0),
-			m_ctx(NULL),
 			m_trb(NULL),
 			m_delay_wp(WAWO_MAX_ASYNC_WRITE_PERIOD),
 			m_async_wt(0),
@@ -115,7 +112,6 @@ namespace wawo { namespace net {
 			m_state(S_CLOSED),
 			m_rflag(0),
 			m_wflag(0),
-			m_ctx(NULL),
 			m_trb(NULL),
 			m_delay_wp(WAWO_MAX_ASYNC_WRITE_PERIOD),
 			m_async_wt(0),
@@ -131,7 +127,6 @@ namespace wawo { namespace net {
 			m_state(S_CLOSED),
 			m_rflag(0),
 			m_wflag(0),
-			m_ctx(NULL),
 			m_trb(NULL),
 			m_delay_wp(WAWO_MAX_ASYNC_WRITE_PERIOD),
 			m_async_wt(0),
@@ -154,17 +149,6 @@ namespace wawo { namespace net {
 		inline bool is_write_shutdowned() const { return (m_wflag&SHUTDOWN_WR) != 0; }
 		inline bool is_readwrite_shutdowned() const { return (((m_rflag | m_wflag)&SHUTDOWN_RDWR) == SHUTDOWN_RDWR); }
 		inline bool is_closed() const { return (m_state == S_CLOSED); }
-
-		template <class ctx_t>
-		inline WWRP<ctx_t> get_ctx() const {
-			lock_guard<spin_mutex> _lg(*(const_cast<spin_mutex*>(&m_mutexes[L_SOCKET])));
-			return wawo::static_pointer_cast<ctx_t>(m_ctx);
-		}
-
-		inline void set_ctx(WWRP<ref_base> const& ctx) {
-			lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
-			m_ctx = ctx;
-		}
 
 		//@TODO: timer to add
 		inline bool is_flush_timer_expired(u64_t const& now /*in milliseconds*/) {

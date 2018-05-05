@@ -104,6 +104,7 @@ namespace wawo { namespace net {
 	{ \
 		if (m_flag&CH_ACCEPTOR) { \
 			WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
+			WAWO_ASSERT(_h != NULL); \
 			_h->##NAME##(WWRP<CTX_CLASS_NAME>(this), ch_); \
 		} else { \
 			fire_##NAME##(ch_); \
@@ -123,6 +124,7 @@ namespace wawo { namespace net {
 		WAWO_ASSERT(m_h != NULL); \
 		if (m_flag&HANDLER_FLAG) { \
 			WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
+			WAWO_ASSERT(_h != NULL); \
 			_h->##NAME##(WWRP<CTX_CLASS_NAME>(this)); \
 		} \
 		else { \
@@ -143,6 +145,7 @@ namespace wawo { namespace net {
 		WAWO_ASSERT(m_h != NULL); \
 		if (m_flag&HANDLER_FLAG) { \
 			WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
+			WAWO_ASSERT(_h != NULL); \
 			_h->##NAME##(WWRP<CTX_CLASS_NAME>(this),p); \
 		} \
 		else { \
@@ -154,6 +157,7 @@ namespace wawo { namespace net {
 	int CTX_CLASS_NAME::invoke_##NAME##(WWRP<packet> const& p) { \
 		if (m_flag&HANDLER_FLAG) { \
 			WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
+			WAWO_ASSERT(_h != NULL); \
 			return _h->##NAME##(WWRP<CTX_CLASS_NAME>(this), p); \
 		} else { \
 			return NAME##(p); \
@@ -169,6 +173,7 @@ namespace wawo { namespace net {
 	int CTX_CLASS_NAME::invoke_##NAME##() { \
 		if (m_flag&HANDLER_FLAG) { \
 			WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
+			WAWO_ASSERT(_h != NULL); \
 			return _h->##NAME##(WWRP<CTX_CLASS_NAME>(this)); \
 		} else { \
 			return NAME##(); \

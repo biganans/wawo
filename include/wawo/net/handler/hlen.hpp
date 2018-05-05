@@ -28,39 +28,39 @@ namespace wawo { namespace net { namespace handler {
 		void read( WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income ) {
 			WAWO_ASSERT(income != NULL);
 
+			if (m_tmp != NULL && m_tmp->len()) {
+				income->write_left(m_tmp->begin(), m_tmp->len());
+			}
+
 			bool bExit = false;
 			do {
 				switch (m_state) {
 					case S_READ_LEN:
 					{
 						if (income->len() < sizeof(u32_t)) {
+							m_tmp = income;
 							bExit = true;
 							break;
 						}
 						m_size = income->read<u32_t>();
 						m_state = S_READ_CONTENT;
-						m_tmp = wawo::make_ref<packet>(m_size);
 					}
 					break;
 					case S_READ_CONTENT:
 					{
-						if (m_size == 0) {
-							WAWO_ASSERT(m_tmp != NULL);
-							ctx->fire_read(m_tmp);
+						if (income->len() >= m_size) {
+							WWRP<wawo::packet> _income = wawo::make_ref<wawo::packet>(m_size);
+							_income->write(income->begin(), m_size);
+							ctx->fire_read(_income);
+							income->skip(m_size);
 							m_state = S_READ_LEN;
 						} else {
-							if (income->len() == 0) {
-								bExit = true;
-							}
-							u32_t nbytes = income->read(m_tmp->begin(), m_size );
-							WAWO_ASSERT(nbytes <= m_size);
-							m_tmp->forward_write_index(nbytes);
-							m_size -= nbytes;
+							m_tmp = income;
+							bExit = true;
 						}
 					}
 					break;
 				}
-
 			} while (!bExit);
 		}
 
