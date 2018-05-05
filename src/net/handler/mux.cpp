@@ -41,6 +41,7 @@ namespace wawo { namespace net { namespace handler {
 				}
 
 				s = wawo::make_ref<mux_stream>( id, ctx );
+				s->m_state = SS_ESTABLISHED;
 				m_stream_map.insert({id, s});
 
 				DEBUG_STREAM("[mux_cargo][s%u]stream insert (by syn)", stream_id);
