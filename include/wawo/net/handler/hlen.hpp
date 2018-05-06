@@ -30,6 +30,7 @@ namespace wawo { namespace net { namespace handler {
 
 			if (m_tmp != NULL && m_tmp->len()) {
 				income->write_left(m_tmp->begin(), m_tmp->len());
+				m_tmp->reset();
 			}
 
 			bool bExit = false;
