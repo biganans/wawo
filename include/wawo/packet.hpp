@@ -254,20 +254,19 @@ namespace wawo {
 			return t;
 		}
 
-		u32_t read( byte_t* const target, u32_t const& length ) {
+		u32_t read( byte_t* const target, u32_t const& len_ ) {
 			WAWO_ASSERT( (m_buffer != NULL) );
-			WAWO_ASSERT( length <= len() && length > 0 );
 			WAWO_ASSERT(target != NULL );
-
-			::memcpy(target, m_buffer+m_read_idx, length);
-			m_read_idx += length;
-			return length;
+			const u32_t c = (len() > len_ ? len_ : len());
+			::memcpy(target, m_buffer+m_read_idx, c );
+			m_read_idx += c;
+			return c;
 		}
 
-		inline void skip( u32_t const& length  ) {
+		inline void skip( u32_t const& len_ ) {
 			WAWO_ASSERT( (m_buffer != NULL) );
-			WAWO_ASSERT( length <= len() );
-			m_read_idx += length;
+			WAWO_ASSERT(len_ <= len() );
+			m_read_idx += len_;
 		}
 
 		template <class T>
@@ -279,11 +278,11 @@ namespace wawo {
 			return t;
 		}
 
-		u32_t peek( byte_t* const buffer, u32_t const& size ) const {
+		u32_t peek( byte_t* const buffer, u32_t const& len_ ) const {
 			WAWO_ASSERT( (m_buffer != NULL) );
 			WAWO_ASSERT(buffer != NULL);
 
-			u32_t can_peek_size = size >= len() ? len() : size;
+			u32_t can_peek_size = len_ >= len() ? len() : len_;
 
 			::memcpy(buffer, m_buffer+m_read_idx, can_peek_size);
 			return can_peek_size;

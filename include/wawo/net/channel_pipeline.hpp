@@ -41,13 +41,6 @@ namespace wawo { namespace net {
 
 			m_tail = ctx;
 
-			/*
-			WWRP<channel_handler_context> tail_P = m_tail->P;
-			ctx->N = m_tail;
-			ctx->P = tail_P;
-			tail_P->N = ctx;
-			m_tail->P = ctx;
-			*/
 			return WWRP<channel_pipeline>(this);
 		}
 

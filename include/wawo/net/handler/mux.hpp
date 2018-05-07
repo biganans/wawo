@@ -97,7 +97,6 @@ namespace wawo { namespace net { namespace handler {
 		void _init() {
 			channel::init(m_ch_ctx->ch->exector());
 			m_rb = wawo::make_ref<bytes_ringbuffer>(MUX_STREAM_WND_SIZE);
-			m_rflag |= STREAM_READ_CHOKED;
 			m_wnd = MUX_STREAM_WND_SIZE;
 		}
 
@@ -242,7 +241,7 @@ end_write_frame:
 
 		inline mux_stream_frame make_frame_data( WWRP<wawo::packet> const& data ) {
 			WAWO_ASSERT(!(m_wflag&STREAM_WRITE_SHUTDOWN_CALLED));
-			return { mux_stream_frame_flag::T_UWND, data };
+			return { mux_stream_frame_flag::T_DATA, data };
 		}
 
 		inline void arrive_frame(mux_stream_frame const& frame) {
@@ -337,13 +336,12 @@ end_write_frame:
 		}
 
 		int ch_close_read() {
-			lock_guard<spin_mutex> lg(m_mutex);
+			lock_guard<spin_mutex> lg_read(m_rmutex);
 			if (m_rflag&STREAM_READ_SHUTDOWN_CALLED) {
 				return E_CHANNEL_RD_SHUTDOWN_ALREADY;
 			}
 
 			DEBUG_STREAM("[mux_cargo][s%u]stream close read", id);
-			lock_guard<spin_mutex> lg_read(m_rmutex);
 			m_rflag |= (STREAM_READ_SHUTDOWN_CALLED | STREAM_READ_SHUTDOWN);
 
 			if (m_rb->count()) {
@@ -366,14 +364,13 @@ end_write_frame:
 		}
 
 		int ch_close_write() {
-			lock_guard<spin_mutex> lg(m_mutex);
+			lock_guard<spin_mutex> lg(m_wmutex);
 			if (m_wflag&STREAM_WRITE_SHUTDOWN_CALLED) {
 				return E_CHANNEL_WR_SHUTDOWN_ALREADY;
 			}
 
 			//wait until flag changed
 			do {
-				lock_guard<spin_mutex> lg_write(m_wmutex);
 				DEBUG_STREAM("[mux_cargo][s%u]stream close write", id);
 				mux_stream_frame f = make_frame_fin();
 				int wrt = _write_frame(f);
@@ -422,8 +419,8 @@ end_write_frame:
 
 		void begin_read(u8_t const& async_flag = 0, WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_read = NULL, fn_io_event_error const& fn_err = NULL) {
 			lock_guard<spin_mutex> lg_r(m_rmutex);
-			WAWO_ASSERT( (m_rflag&STREAM_READ_CHOKED) == 0);
-			m_rflag |= STREAM_READ_CHOKED;
+			WAWO_ASSERT( !(m_rflag&STREAM_READ_CHOKED) == 0);
+			m_rflag &= ~STREAM_READ_CHOKED;
 
 			(void)async_flag;
 			(void)cookie;
@@ -433,8 +430,8 @@ end_write_frame:
 
 		void end_read() {
 			lock_guard<spin_mutex> lg_r(m_rmutex);
-			WAWO_ASSERT(m_rflag&STREAM_READ_CHOKED);
-			m_rflag &= ~STREAM_READ_CHOKED;
+			WAWO_ASSERT(m_rflag|STREAM_READ_CHOKED);
+			m_rflag |= STREAM_READ_CHOKED;
 		}
 
 		inline bool is_readwrite_closed() {
@@ -481,7 +478,6 @@ end_write_frame:
 		void error(WWRP<channel_handler_context> const& ctx);
 
 		void _stream_close_check_() {
-			lock_guard<spin_mutex> lg(m_mutex);
 			stream_map_t::iterator it = m_stream_map.begin();
 			while (it != m_stream_map.end()) {
 				lock_guard<spin_mutex> lgw( it->second->m_mutex );

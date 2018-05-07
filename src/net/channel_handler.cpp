@@ -26,12 +26,12 @@ namespace wawo { namespace net {
 	//{
 	//	ctx->fire_read(income);
 	//}
-
+	
 	int channel_handler_head::write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet)
 	{
 		return ctx->ch->ch_write(outlet);
 	}
-
+	
 	int channel_handler_head::close(WWRP<channel_handler_context> const& ctx) {
 		return ctx->ch->ch_close();
 	}
@@ -43,7 +43,7 @@ namespace wawo { namespace net {
 	int channel_handler_head::close_write(WWRP<channel_handler_context> const& ctx) {
 		return ctx->ch->ch_close_write();
 	}
-
+	
 	//--
 	//void channel_handler_tail::accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch )
 	//{

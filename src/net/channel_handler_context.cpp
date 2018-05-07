@@ -7,6 +7,10 @@ namespace wawo { namespace net {
 	channel_handler_context::channel_handler_context(WWRP<channel> const& ch_, WWRP<channel_handler_abstract> const& h)
 		:m_h(h), m_flag(0),P(NULL),N(NULL),ch(ch_)
 	{
+		if (wawo::dynamic_pointer_cast<channel_acceptor_handler_abstract>(h) != NULL) {
+			m_flag |= CH_ACCEPTOR;
+		}
+
 		if (wawo::dynamic_pointer_cast<channel_activity_handler_abstract>(h) != NULL) {
 			m_flag |= CH_ACTIVITY;
 		}
@@ -17,10 +21,6 @@ namespace wawo { namespace net {
 
 		if (wawo::dynamic_pointer_cast<channel_outbound_handler_abstract>(h) != NULL) {
 			m_flag |= CH_OUTBOUND;
-		}
-
-		if (wawo::dynamic_pointer_cast<channel_acceptor_handler_abstract>(h) != NULL) {
-			m_flag |= CH_ACCEPTOR;
 		}
 	}
 

@@ -283,7 +283,11 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 	}
 
 	void parser::deinit() {
-		if (_p != NULL) ::free(_p); _p = NULL;
+		if (_p != NULL) {
+			::free(_p);
+			_p = NULL;
+		}
+		ctx = NULL;
 	}
 
 	//return number of parsed bytes 
