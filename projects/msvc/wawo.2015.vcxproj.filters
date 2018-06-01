@@ -461,6 +461,9 @@
     <ClInclude Include="..\..\include\wawo\net\io_executor.hpp">
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\wawo\future.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\src\context\jump_i386_ms_pe_masm.asm">

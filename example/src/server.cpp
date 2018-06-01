@@ -145,12 +145,15 @@ public:
 	}
 };
 
+#include <future>
 
 int main(int argc, char** argv) {
 
 	int* p = new int(3);
 
 	wawo::app app;
+
+	std::future<int> fint;
 
 	wawo::net::socketaddr laddr;
 	laddr.so_family = wawo::net::F_AF_INET;

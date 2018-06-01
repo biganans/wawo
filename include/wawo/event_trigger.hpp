@@ -38,7 +38,7 @@ namespace wawo {
 	};
 
 	template <class _Callable>
-	inline wawo::ref_ptr<event_handler<_Callable>> make_event_handler(_Callable&& _func) {
+	inline WWRP<event_handler<_Callable>> make_event_handler(_Callable&& _func) {
 		return wawo::make_ref<event_handler<_Callable>>(std::forward<_Callable>(_func));
 	}
 
