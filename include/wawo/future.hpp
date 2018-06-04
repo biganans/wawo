@@ -28,6 +28,8 @@ namespace wawo {
 		public ref_base,
 		event_trigger
 	{
+
+	protected:
 		enum future_event {
 			E_COMPLETE
 		};
@@ -46,14 +48,9 @@ namespace wawo {
 		condition m_cond;
 		T m_v;
 		listener_handler_vector m_handlers;
-		WWSP<wawo::exception> m_failed_exception;
+		WWSP<wawo::exception> m_exception;
 		state m_state;
 
-		inline bool _id_done() {
-			return m_state == S_DONE;
-		}
-
-	protected:
 		inline void _notify_waiter() {
 			return m_cond.notify_all();
 		}
@@ -117,7 +114,6 @@ namespace wawo {
 			}
 		}
 
-		//
 		inline bool is_done() const {
 			lock_guard<mutex> lg(m_mutex);
 			return m_state != S_IDLE;
@@ -133,7 +129,9 @@ namespace wawo {
 			return m_state == S_FAILED;
 		}
 
-		WWSP<wawo::exception>
+		WWSP<wawo::exception> cause() {
+			return m_exception;
+		}
 
 		bool cancel()
 		{
@@ -196,6 +194,20 @@ namespace wawo {
 		public future<T>
 	{
 
+	public:
+		void set_success(T const& v) {
+			lock_guard<mutex> lg(m_mutex);
+			WAWO_ASSERT(future<T>::m_state == S_IDLE);
+			future<T>::m_v = v;
+			future<T>::_notify_listeners();
+		}
+
+		void set_failure(WWSP<wawo::promise_exception> const& e) {
+			lock_guard<mutex> lg(m_mutex);
+			WAWO_ASSERT(future<T>::m_state == S_IDLE);
+			future<T>::m_exception = v;
+			future<T>::_notify_listeners();
+		}
 	};
 }
 
