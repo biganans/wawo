@@ -188,6 +188,7 @@ namespace wawo {
 			WAWO_ASSERT(ok);
 
 			ok = future<T>::m_v.compare_exchange_strong(T(), v, std::memory_order_acq_rel);
+			WAWO_ASSERT(ok);
 			(void)ok;
 
 			future<T>::_notify_waiter();
@@ -200,6 +201,7 @@ namespace wawo {
 			WAWO_ASSERT(ok);
 
 			ok = future<T>::m_v.compare_exchange_strong(WWSP<wawo::promise_exception>(NULL), e, std::memory_order_acq_rel);
+			WAWO_ASSERT(ok);
 			(void)ok;
 
 			future<T>::_notify_waiter();
