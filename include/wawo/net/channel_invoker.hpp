@@ -3,6 +3,7 @@
 
 #include <wawo/core.hpp>
 #include <wawo/packet.hpp>
+#include <wawo/net/channel_future.hpp>
 
 namespace wawo { namespace net {
 
@@ -32,10 +33,19 @@ namespace wawo { namespace net {
 	class channel_outbound_invoker_abstract
 	{
 	public:
-		virtual int write(WWRP<packet> const& out) = 0;
-		virtual int close() = 0;
-		virtual int close_read() = 0;
-		virtual int close_write() = 0;
+		virtual WWRP<channel_future> write(WWRP<packet> const& out) = 0;
+		virtual WWRP<channel_future> write(WWRP<packet> const& out, WWRP<channel_promise>& ch_promise) = 0;
+
+		virtual WWRP<channel_future> close() = 0;
+		virtual WWRP<channel_future> close(WWRP<channel_promise>& ch_promise) = 0;
+
+		virtual WWRP<channel_future> close_read() = 0;
+		virtual WWRP<channel_future> close_read(WWRP<channel_promise>& ch_promise) = 0;
+
+		virtual WWRP<channel_future> close_write() = 0;
+		virtual WWRP<channel_future> close_write(WWRP<channel_promise>& ch_promise) = 0;
+
+		virtual void flush() = 0;
 	};
 }}
 #endif

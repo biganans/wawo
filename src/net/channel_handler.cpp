@@ -5,17 +5,18 @@
 
 namespace wawo { namespace net {
 
-	HANDLER_DEFAULT_IMPL_0(connected, channel_activity_handler_abstract)
-	HANDLER_DEFAULT_IMPL_0(closed, channel_activity_handler_abstract)
-	HANDLER_DEFAULT_IMPL_0(error, channel_activity_handler_abstract)
-	HANDLER_DEFAULT_IMPL_0(read_shutdowned, channel_activity_handler_abstract)
-	HANDLER_DEFAULT_IMPL_0(write_shutdowned, channel_activity_handler_abstract)
-	HANDLER_DEFAULT_IMPL_0(write_block, channel_activity_handler_abstract)
-	HANDLER_DEFAULT_IMPL_0(write_unblock, channel_activity_handler_abstract)
+	VOID_FIRE_HANDLER_DEFAULT_IMPL_0(connected, channel_activity_handler_abstract)
+	VOID_FIRE_HANDLER_DEFAULT_IMPL_0(closed, channel_activity_handler_abstract)
+	VOID_FIRE_HANDLER_DEFAULT_IMPL_0(error, channel_activity_handler_abstract)
+	VOID_FIRE_HANDLER_DEFAULT_IMPL_0(read_shutdowned, channel_activity_handler_abstract)
+	VOID_FIRE_HANDLER_DEFAULT_IMPL_0(write_shutdowned, channel_activity_handler_abstract)
+	VOID_FIRE_HANDLER_DEFAULT_IMPL_0(write_block, channel_activity_handler_abstract)
+	VOID_FIRE_HANDLER_DEFAULT_IMPL_0(write_unblock, channel_activity_handler_abstract)
 
-	INT_HANDLER_DEFAULT_IMPL_0(close, channel_outbound_handler_abstract)
-	INT_HANDLER_DEFAULT_IMPL_0(close_read, channel_outbound_handler_abstract)
-	INT_HANDLER_DEFAULT_IMPL_0(close_write, channel_outbound_handler_abstract)
+	VOID_HANDLER_DEFAULT_IMPL_PROMISE(close, channel_outbound_handler_abstract)
+	VOID_HANDLER_DEFAULT_IMPL_PROMISE(close_read, channel_outbound_handler_abstract)
+	VOID_HANDLER_DEFAULT_IMPL_PROMISE(close_write, channel_outbound_handler_abstract)
+	VOID_HANDLER_DEFAULT_IMPL_0(flush, channel_outbound_handler_abstract)
 
 	//void channel_handler_head::accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch)
 	//{

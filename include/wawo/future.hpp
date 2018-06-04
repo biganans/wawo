@@ -45,7 +45,7 @@ namespace wawo {
 		mutex m_mutex;
 		condition m_cond;
 		listener_handler_vector m_handlers;
-		std::atomic<WWSP<wawo::exception>> m_exception;
+		WWSP<wawo::exception> m_exception;
 		
 		std::atomic<T> m_v;
 		std::atomic<state> m_state;
@@ -119,7 +119,7 @@ namespace wawo {
 		}
 
 		WWSP<wawo::exception> cause() const {
-			return m_exception.load(std::memory_order_acq_rel);
+			return m_exception;
 		}
 
 		bool cancel()
@@ -199,10 +199,9 @@ namespace wawo {
 			lock_guard<mutex> lg(m_mutex);
 			int ok = future<T>::m_state.compare_exchange_strong(future<T>::S_IDLE, future<T>::S_FAILURE, std::memory_order_acq_rel);
 			WAWO_ASSERT(ok);
-
-			ok = future<T>::m_v.compare_exchange_strong(WWSP<wawo::promise_exception>(NULL), e, std::memory_order_acq_rel);
-			WAWO_ASSERT(ok);
 			(void)ok;
+
+			ok = future<T>::m_exception = e;
 
 			future<T>::_notify_waiter();
 			future<T>::_notify_listeners();

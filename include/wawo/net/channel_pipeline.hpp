@@ -74,25 +74,53 @@ namespace wawo { namespace net {
 			m_head->fire_read(income);
 		}
 
-		inline int write(WWRP<packet> const& out) {
+		inline WWRP<channel_future> write(WWRP<packet> const& out) {
 			WAWO_ASSERT(!"TODO");
 			(void)out;
-			return wawo::OK;
+			return NULL;
 		}
 
-		inline int close() {
+		inline WWRP<channel_future> write(WWRP<packet> const& out, WWRP<channel_promise>& ch_promise) {
 			WAWO_ASSERT(!"TODO");
-			return wawo::OK;
+			(void)out;
+			(void)ch_promise;
+			return NULL;
 		}
 
-		inline int close_read() {
+		inline WWRP<channel_future> close() {
 			WAWO_ASSERT(!"TODO");
-			return wawo::OK;
+			return NULL;
 		}
-		inline int close_write() {
+		inline WWRP<channel_future> close(WWRP<channel_promise>& ch_promise) {
 			WAWO_ASSERT(!"TODO");
-			return wawo::OK;
+			(void)ch_promise;
+			return NULL;
 		}
+
+		inline WWRP<channel_future> close_read() {
+			WAWO_ASSERT(!"TODO");
+			return NULL;
+		}
+		inline WWRP<channel_future> close_read(WWRP<channel_promise>& ch_promise) {
+			WAWO_ASSERT(!"TODO");
+			(void)ch_promise;
+			return NULL;
+		}
+
+		inline WWRP<channel_future> close_write() {
+			WAWO_ASSERT(!"TODO");
+			return NULL;
+		}
+		inline WWRP<channel_future> close_write(WWRP<channel_promise>& ch_promise) {
+			WAWO_ASSERT(!"TODO");
+			(void)ch_promise;
+			return NULL;
+		}
+
+		inline void flush() {
+			WAWO_ASSERT(!"TODO");
+		}
+
 	};
 }}
 #endif

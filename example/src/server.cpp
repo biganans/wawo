@@ -150,9 +150,7 @@ public:
 int main(int argc, char** argv) {
 
 	int* p = new int(3);
-
 	wawo::app app;
-
 	std::future<int> fint;
 
 	wawo::net::socketaddr laddr;
@@ -166,13 +164,13 @@ int main(int argc, char** argv) {
 	int open = lsocket->open();
 
 	if (open != wawo::OK) {
-		lsocket->close(open);
+		lsocket->close();
 		return open;
 	}
 
 	int bind = lsocket->bind(laddr.so_address);
 	if (bind != wawo::OK) {
-		lsocket->close(bind);
+		lsocket->close();
 		return bind;
 	}
 
@@ -181,7 +179,7 @@ int main(int argc, char** argv) {
 
 	int listen_rt = lsocket->listen();
 	if (listen_rt != wawo::OK) {
-		lsocket->close(listen_rt);
+		lsocket->close();
 		return listen_rt;
 	}
 

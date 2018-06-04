@@ -62,17 +62,25 @@ namespace wawo { namespace net {
 		void fire_read(WWRP<packet> const& income);
 		void invoke_read(WWRP<packet> const& income);
 
-		int write(WWRP<packet> const& outlet);
-		int invoke_write(WWRP<packet> const& outlet);
+		WWRP<channel_future> write(WWRP<packet> const& outlet);
+		WWRP<channel_future> write(WWRP<packet> const& outlet, WWRP<channel_promise>& ch_promise);
+		void invoke_write(WWRP<packet> const& outlet, WWRP<channel_promise>& ch_promise);
 
-		int close();
-		int invoke_close();
+		WWRP<channel_future> close();
+		WWRP<channel_future> close(WWRP<channel_promise>& ch_promise);
+		void invoke_close(WWRP<channel_promise>& ch_promise);
 
-		int close_read();
-		int invoke_close_read();
+		WWRP<channel_future> close_read();
+		WWRP<channel_future> close_read(WWRP<channel_promise>& ch_promise);
+		void invoke_close_read(WWRP<channel_promise>& ch_promise);
 
-		int close_write();
-		int invoke_close_write();
+		WWRP<channel_future> close_write();
+		WWRP<channel_future> close_write(WWRP<channel_promise>& ch_promise);
+		void invoke_close_write(WWRP<channel_promise>& ch_promise);
+
+		void invoke_flush();
+		void flush();
+
 
 		//void begin_connect(WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL) ;
 		//void end_connect() ;
@@ -153,37 +161,68 @@ namespace wawo { namespace net {
 		} \
 	}
 
-#define INT_HANDLER_CONTEXT_IMPL_T_TO_H_PACKET_1(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
-	int CTX_CLASS_NAME::invoke_##NAME##(WWRP<packet> const& p) { \
+
+//--T_TO_H--BEGIN
+#define CH_FUTURE_HANDLER_CONTEXT_IMPL_T_TO_H_PACKET_1(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
+	WWRP<channel_future> CTX_CLASS_NAME::##NAME##(WWRP<packet> const& p) { \
+		WAWO_ASSERT(P != NULL); \
+		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(); \
+		P->invoke_##NAME##(p,ch_promise); \
+		return ch_promise; \
+	} \
+	WWRP<channel_future> CTX_CLASS_NAME::##NAME##(WWRP<packet> const& p, WWRP<channel_promise>& ch_promise) { \
+		WAWO_ASSERT(P != NULL); \
+		P->invoke_##NAME##(p,ch_promise); \
+		return ch_promise; \
+	} \
+	void CTX_CLASS_NAME::invoke_##NAME##(WWRP<packet> const& p, WWRP<channel_promise>& ch_promise) { \
 		if (m_flag&HANDLER_FLAG) { \
 			WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
 			WAWO_ASSERT(_h != NULL); \
-			return _h->##NAME##(WWRP<CTX_CLASS_NAME>(this), p); \
+			_h->##NAME##(WWRP<CTX_CLASS_NAME>(this), p, ch_promise); \
 		} else { \
-			return NAME##(p); \
+			NAME##(p,ch_promise); \
 		} \
-	} \
-	 \
-	int CTX_CLASS_NAME::##NAME##(WWRP<packet> const& p) { \
-		WAWO_ASSERT(P != NULL); \
-		return P->invoke_##NAME##(p); \
 	}
 
-#define INT_HANDLER_CONTEXT_IMPL_T_TO_H_0(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
-	int CTX_CLASS_NAME::invoke_##NAME##() { \
+
+#define CH_FUTURE_HANDLER_CONTEXT_IMPL_T_TO_H_PROMISE(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
+	WWRP<channel_future> CTX_CLASS_NAME::##NAME##() { \
+		WAWO_ASSERT(P != NULL); \
+		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(); \
+		P->invoke_##NAME##(ch_promise); \
+		return ch_promise; \
+	} \
+	WWRP<channel_future> CTX_CLASS_NAME::##NAME##(WWRP<channel_promise>& ch_promise) { \
+		WAWO_ASSERT(P != NULL); \
+		P->invoke_##NAME##(ch_promise); \
+		return ch_promise; \
+	} \
+	void CTX_CLASS_NAME::invoke_##NAME##(WWRP<channel_promise>& ch_promise) {\
 		if (m_flag&HANDLER_FLAG) { \
 			WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
 			WAWO_ASSERT(_h != NULL); \
-			return _h->##NAME##(WWRP<CTX_CLASS_NAME>(this)); \
+			_h->##NAME##(WWRP<CTX_CLASS_NAME>(this),ch_promise); \
 		} else { \
-			return NAME##(); \
+			NAME##(ch_promise); \
 		} \
-	} \
-	 \
-	int CTX_CLASS_NAME::##NAME##() { \
-		WAWO_ASSERT(P != NULL); \
-		return P->invoke_##NAME##(); \
 	}
+
+#define VOID_HANDLER_CONTEXT_IMPL_T_TO_H_0(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
+	void CTX_CLASS_NAME::##NAME##() { \
+		WAWO_ASSERT(P != NULL); \
+		P->invoke_##NAME##(ch_promise); \
+	} \
+	void CTX_CLASS_NAME::invoke_##NAME##(WWRP<channel_promise>& ch_promise) {\
+		if (m_flag&HANDLER_FLAG) { \
+			WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
+			WAWO_ASSERT(_h != NULL); \
+			_h->##NAME##(WWRP<CTX_CLASS_NAME>(this),ch_promise); \
+		} else { \
+			NAME##(ch_promise); \
+		} \
+	}
+//--T_TO_H--END
 
 }}
 #endif

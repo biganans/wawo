@@ -3,6 +3,7 @@
 
 #include <wawo/core.hpp>
 #include <wawo/packet.hpp>
+#include <wawo/net/channel_future.hpp>
 
 namespace wawo { namespace net {
 
@@ -45,21 +46,27 @@ namespace wawo { namespace net {
 		virtual public channel_handler_abstract
 	{
 	public:
-		virtual int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) = 0;
+		virtual void write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise>& ch_promise ) = 0;
 
-		virtual int close(WWRP<channel_handler_context> const& ctx);
-		virtual int close_read(WWRP<channel_handler_context> const& ctx);
-		virtual int close_write(WWRP<channel_handler_context> const& ctx);
+		virtual void close(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise);
+		virtual void close_read(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise);
+		virtual void close_write(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise);
+		virtual void flush(WWRP<channel_handler_context> const& ctx);
 	};
 
-#define HANDLER_DEFAULT_IMPL_0(NAME,HANDLER_NAME) \
+#define VOID_FIRE_HANDLER_DEFAULT_IMPL_0(NAME,HANDLER_NAME) \
 	void HANDLER_NAME##::##NAME##(WWRP<channel_handler_context> const& ctx) { \
 		ctx->fire_##NAME##(); \
 	}
 
-#define INT_HANDLER_DEFAULT_IMPL_0(NAME,HANDLER_NAME) \
-	int HANDLER_NAME##::##NAME##(WWRP<channel_handler_context> const& ctx) { \
-		return ctx->##NAME##(); \
+#define VOID_HANDLER_DEFAULT_IMPL_PROMISE(NAME,HANDLER_NAME) \
+	void HANDLER_NAME##::##NAME##(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise) { \
+		ctx->##NAME##(ch_promise); \
+	}
+
+#define VOID_HANDLER_DEFAULT_IMPL_0(NAME,HANDLER_NAME) \
+	void HANDLER_NAME##::##NAME##(WWRP<channel_handler_context> const& ctx) { \
+		ctx->##NAME##(); \
 	}
 
 	class channel_handler_head :

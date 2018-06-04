@@ -93,11 +93,12 @@ namespace wawo { namespace net {
 		inline int ch_get_errno() { return m_errno; }
 		
 		virtual int ch_id() const = 0;
-		virtual int ch_close() = 0;
-		virtual int ch_close_read() = 0;
-		virtual int ch_close_write() = 0;
-		virtual int ch_write(WWRP<packet> const& outlet) = 0;
 
+		virtual void ch_close() = 0;
+		virtual void ch_close_read(WWRP<channel_promise>& ch_promise) = 0;
+		virtual void ch_close_write(WWRP<channel_promise>& ch_promise) = 0;
+		virtual void ch_write(WWRP<packet> const& outlet, WWRP<channel_promise>& ch_promise) = 0;
+		virtual void ch_flush() = 0;
 		/*
 		virtual void begin_connect(WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL) {
 			(void)cookie;
@@ -106,6 +107,7 @@ namespace wawo { namespace net {
 		}
 		virtual void end_connect() {}
 		*/
+
 		virtual void begin_read(u8_t const& async_flag = 0, WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_read = NULL, fn_io_event_error const& fn_err = NULL) {
 			(void)async_flag;
 			(void)cookie;

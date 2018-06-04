@@ -397,11 +397,19 @@ namespace wawo { namespace net {
 
 		//ch
 		inline int ch_id() const { return fd(); }
-		inline int ch_close() { return close(); }
-		inline int ch_close_read() { return shutdown(SHUTDOWN_RD); }
-		inline int ch_close_write() { return shutdown(SHUTDOWN_WR); }
 
-		inline int ch_write(WWRP<packet> const& outlet) { return send_packet(outlet); }
+
+		inline void ch_close( WWRP<channel_promise>& ch_prommise ) { 
+			int rt=close();
+			channel_promise
+		}
+
+		inline void ch_close_read(WWRP<channel_promise>& ch_prommise) {
+			return shutdown(SHUTDOWN_RD); }
+		inline void ch_close_write(WWRP<channel_promise>& ch_prommise) { return shutdown(SHUTDOWN_WR); }
+
+		inline void ch_write(WWRP<packet> const& outlet, WWRP<channel_promise>& ch_prommise) { return send_packet(outlet); }
+		inline void ch_flush() {}
 	};
 }}
 #endif

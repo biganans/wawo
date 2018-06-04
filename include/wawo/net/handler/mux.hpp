@@ -152,7 +152,11 @@ namespace wawo { namespace net { namespace handler {
 				if (f.data->len() > m_wnd) {
 					break;
 				}
-				int wrt = m_ch_ctx->write(f.data);
+
+				WWRP<channel_future> ch_future = m_ch_ctx->write(f.data);
+				ch_future->add_listener([]() {
+				
+				});
 				if (wrt != wawo::OK) {
 					break;
 				}

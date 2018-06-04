@@ -39,13 +39,13 @@ namespace wawo { namespace net {
 	HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, write_unblock, CH_ACTIVITY, channel_activity_handler_abstract)
 
 	HANDLER_CONTEXT_IMPL_H_TO_T_PACKET_1(channel_handler_context, read, CH_INBOUND, channel_inbound_handler_abstract)
-	INT_HANDLER_CONTEXT_IMPL_T_TO_H_PACKET_1(channel_handler_context, write, CH_OUTBOUND, channel_outbound_handler_abstract)
+	CH_FUTURE_HANDLER_CONTEXT_IMPL_T_TO_H_PACKET_1(channel_handler_context, write, CH_OUTBOUND, channel_outbound_handler_abstract)
 
-	INT_HANDLER_CONTEXT_IMPL_T_TO_H_0(channel_handler_context, close, CH_OUTBOUND, channel_outbound_handler_abstract)
-	INT_HANDLER_CONTEXT_IMPL_T_TO_H_0(channel_handler_context, close_read, CH_OUTBOUND, channel_outbound_handler_abstract)
-	INT_HANDLER_CONTEXT_IMPL_T_TO_H_0(channel_handler_context, close_write, CH_OUTBOUND, channel_outbound_handler_abstract)
+	CH_FUTURE_HANDLER_CONTEXT_IMPL_T_TO_H_PROMISE(channel_handler_context, close, CH_OUTBOUND, channel_outbound_handler_abstract)
+	CH_FUTURE_HANDLER_CONTEXT_IMPL_T_TO_H_PROMISE(channel_handler_context, close_read, CH_OUTBOUND, channel_outbound_handler_abstract)
+	CH_FUTURE_HANDLER_CONTEXT_IMPL_T_TO_H_PROMISE(channel_handler_context, close_write, CH_OUTBOUND, channel_outbound_handler_abstract)
 
-		/*
+	/*
 	void channel_handler_context::begin_connect(WWRP<ref_base> const& cookie, fn_io_event const& fn_connected , fn_io_event_error const& fn_err ) {
 		WAWO_ASSERT(ch != NULL);
 		ch->begin_connect(cookie, fn_connected, fn_err);
