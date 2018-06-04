@@ -10,9 +10,7 @@
 #include <wawo/thread/mutex.hpp>
 
 namespace wawo {
-
 	using namespace wawo::thread;
-
 
 	class promise_exception:
 		public exception
@@ -41,19 +39,21 @@ namespace wawo {
 			S_IDLE, //wait to operation
 			S_CANCELLED, //operation cancelled
 			S_SUCCESS, //operation done
-			S_FAILED //operation failed
+			S_FAILURE //operation failed
 		};
 
 		mutex m_mutex;
 		condition m_cond;
-		T m_v;
 		listener_handler_vector m_handlers;
-		WWSP<wawo::exception> m_exception;
-		state m_state;
+		std::atomic<WWSP<wawo::exception>> m_exception;
+		
+		std::atomic<T> m_v;
+		std::atomic<state> m_state;
 
 		inline void _notify_waiter() {
 			return m_cond.notify_all();
 		}
+
 		inline void _notify_listeners()
 		{
 			if (m_handlers.size() == 0) {
@@ -68,6 +68,7 @@ namespace wawo {
 		}
 	public:
 		future():
+			m_v(T()),
 			m_state(S_IDLE)
 		{}
 
@@ -76,30 +77,22 @@ namespace wawo {
 
 		T get()
 		{
-			unique_lock<mutex> ulk(m_mutex);
-			while (m_state == S_IDLE)
-			{
-				m_cond.wait(ulk);
-			}
-			return m_v;
+			wait();
+			return m_v.load(std::memory_order_acq_rel);
 		}
 
 		template <class _Rep, class _Period>
 		T get(std::chrono::duration<_Rep, _Period> const& dur)
 		{
-			unique_lock<mutex> ulk(m_mutex);
-			if (m_state == S_IDLE)
-			{
-				m_cond.wait_for<_Rep,_Period>(ulk,dur);
-			}
-			return m_v;
+			wait_for<_Rep,_Period>(dur);
+			return m_v.load(std::memory_order_acq_rel);
 		}
 
 		void wait()
 		{
-			unique_lock<mutex> ulk(m_mutex);
-			while (m_state == S_IDLE)
+			while (m_state.load(std::memory_order_acq_rel) == S_IDLE)
 			{
+				unique_lock<mutex> ulk(m_mutex);
 				m_cond.wait(ulk);
 			}
 		}
@@ -107,40 +100,36 @@ namespace wawo {
 		template <class _Rep, class _Period>
 		void wait_for(std::chrono::duration<_Rep, _Period> const& dur)
 		{
-			unique_lock<mutex> ulk(m_mutex);
-			if (m_state == S_IDLE)
-			{
+			if (m_state.load(std::memory_order_acq_rel) == S_IDLE) {
+				unique_lock<mutex> ulk(m_mutex);
 				m_cond.wait_for<_Rep, _Period>(ulk, dur);
 			}
 		}
 
 		inline bool is_done() const {
-			lock_guard<mutex> lg(m_mutex);
-			return m_state != S_IDLE;
+			return m_state.load(std::memory_order_acq_rel) != S_IDLE;
 		}
 
 		inline bool is_success() const {
-			lock_guard<mutex> lg(m_mutex);
-			return m_state == S_SUCCESS;
+			return m_state.load(std::memory_order_acq_rel) == S_SUCCESS;
 		}
 
-		inline bool is_failed() const {
-			lock_guard<mutex> lg(m_mutex);
-			return m_state == S_FAILED;
+		inline bool is_failure() const {
+			return m_state.load(std::memory_order_acq_rel) == S_FAILURE;
 		}
 
-		WWSP<wawo::exception> cause() {
-			return m_exception;
+		WWSP<wawo::exception> cause() const {
+			return m_exception.load(std::memory_order_acq_rel);
 		}
 
 		bool cancel()
 		{
 			lock_guard<mutex> lg(m_mutex);
-			if (m_state != S_IDLE)
-			{
+			if ( !m_state.compare_exchange_strong(S_IDLE, S_CANCELLED, std::memory_order_acq_rel)) {
 				return false;
 			}
-			m_state = S_CANCELLED;
+			WAWO_ASSERT(m_state.load(std::memory_order_acq_rel) == S_CANCELLED);
+
 			_notify_waiter();
 			_notify_listeners();
 			return true;
@@ -148,8 +137,7 @@ namespace wawo {
 
 		inline bool is_cancelled()
 		{
-			lock_guard<mutex> lg(m_mutex);
-			return m_state == S_CANCELLED;
+			return m_state.load(std::memory_order_acq_rel) == S_CANCELLED;
 		}
 
 		template<class _Lambda
@@ -193,19 +181,28 @@ namespace wawo {
 	class promise:
 		public future<T>
 	{
-
 	public:
 		void set_success(T const& v) {
 			lock_guard<mutex> lg(m_mutex);
-			WAWO_ASSERT(future<T>::m_state == S_IDLE);
-			future<T>::m_v = v;
+			int ok = future<T>::m_state.compare_exchange_strong( future<T>::S_IDLE, future<T>::S_SUCCESS, std::memory_order_acq_rel);
+			WAWO_ASSERT(ok);
+
+			ok = future<T>::m_v.compare_exchange_strong(T(), v, std::memory_order_acq_rel);
+			(void)ok;
+
+			future<T>::_notify_waiter();
 			future<T>::_notify_listeners();
 		}
 
 		void set_failure(WWSP<wawo::promise_exception> const& e) {
 			lock_guard<mutex> lg(m_mutex);
-			WAWO_ASSERT(future<T>::m_state == S_IDLE);
-			future<T>::m_exception = v;
+			int ok = future<T>::m_state.compare_exchange_strong(future<T>::S_IDLE, future<T>::S_FAILURE, std::memory_order_acq_rel);
+			WAWO_ASSERT(ok);
+
+			ok = future<T>::m_v.compare_exchange_strong(WWSP<wawo::promise_exception>(NULL), e, std::memory_order_acq_rel);
+			(void)ok;
+
+			future<T>::_notify_waiter();
 			future<T>::_notify_listeners();
 		}
 	};
