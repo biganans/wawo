@@ -68,11 +68,11 @@ namespace wawo {
 			}
 
 			WAWO_SCHEDULER->start();
-			wawo::net::observers::instance()->init(WAWO_DEFAULT_WCP_OBSERVER_COUNT);
+			wawo::net::io_event_loop_group::instance()->init(WAWO_DEFAULT_WCP_OBSERVER_COUNT);
 		}
 
 		void deinit_net() {
-			wawo::net::observers::instance()->deinit();
+			wawo::net::io_event_loop_group::instance()->deinit();
 			WAWO_SCHEDULER->stop();
 		}
 

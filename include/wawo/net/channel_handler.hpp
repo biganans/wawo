@@ -78,11 +78,11 @@ namespace wawo { namespace net {
 	public:
 		//void accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch) ;
 		//void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) ;
-		int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) ;
+		void write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise>& ch_promise) ;
 
-		int close(WWRP<channel_handler_context> const& ctx);
-		int close_read(WWRP<channel_handler_context> const& ctx);
-		int close_write(WWRP<channel_handler_context> const& ctx);
+		void close(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise);
+		void close_read(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise);
+		void close_write(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise);
 	};
 
 //	class channel_handler_tail :

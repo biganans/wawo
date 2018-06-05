@@ -65,9 +65,9 @@ namespace wawo { namespace net { namespace handler {
 			} while (!bExit);
 		}
 
-		int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) {
+		void write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet,WWRP<channel_promise>& ch_promise) {
 			outlet->write_left<u32_t>(outlet->len());
-			return ctx->write(outlet);
+			ctx->write(outlet, ch_promise);
 		}
 	};
 }}}

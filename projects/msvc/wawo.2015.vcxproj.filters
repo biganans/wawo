@@ -458,13 +458,16 @@
     <ClInclude Include="..\..\include\wawo\timer.hpp">
       <Filter>Header Files\wawo</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\io_executor.hpp">
-      <Filter>Header Files\wawo\net</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\wawo\future.hpp">
       <Filter>Header Files\wawo</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\channel_future.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\io_event_loop.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\io_event_executor.hpp">
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
   </ItemGroup>

@@ -211,15 +211,15 @@ namespace wawo { namespace net {
 #define VOID_HANDLER_CONTEXT_IMPL_T_TO_H_0(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
 	void CTX_CLASS_NAME::##NAME##() { \
 		WAWO_ASSERT(P != NULL); \
-		P->invoke_##NAME##(ch_promise); \
+		P->invoke_##NAME##(); \
 	} \
-	void CTX_CLASS_NAME::invoke_##NAME##(WWRP<channel_promise>& ch_promise) {\
+	void CTX_CLASS_NAME::invoke_##NAME##() {\
 		if (m_flag&HANDLER_FLAG) { \
 			WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
 			WAWO_ASSERT(_h != NULL); \
-			_h->##NAME##(WWRP<CTX_CLASS_NAME>(this),ch_promise); \
+			_h->##NAME##(WWRP<CTX_CLASS_NAME>(this)); \
 		} else { \
-			NAME##(ch_promise); \
+			NAME##(); \
 		} \
 	}
 //--T_TO_H--END

@@ -16,10 +16,10 @@ public:
 		ctx->fire_read(income);
 	}
 
-	int write(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& outlet)
+	void write(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& outlet, WWRP<wawo::net::channel_promise>& ch_promise)
 	{
 		WAWO_INFO(">>>: %u bytes", outlet->len() );
-		return ctx->write(outlet);
+		ctx->write(outlet,ch_promise);
 	}
 	
 	void connected(WWRP<wawo::net::channel_handler_context> const& ctx) {
@@ -34,7 +34,8 @@ public:
 
 	void read_shutdowned(WWRP<wawo::net::channel_handler_context> const& ctx) {
 		WAWO_INFO("read_shutdowned: %d", ctx->ch->ch_id() );
-		ctx->close_write(wawo::net::SHUTDOWN_WR);
+		WWRP<wawo::net::channel_promise> ch_promise = wawo::make_ref<wawo::net::channel_promise>();
+		ctx->close_write();
 		ctx->fire_read_shutdowned();
 	}
 	void write_shutdowned(WWRP<wawo::net::channel_handler_context> const& ctx) {
@@ -145,13 +146,11 @@ public:
 	}
 };
 
-#include <future>
-
 int main(int argc, char** argv) {
 
 	int* p = new int(3);
+
 	wawo::app app;
-	std::future<int> fint;
 
 	wawo::net::socketaddr laddr;
 	laddr.so_family = wawo::net::F_AF_INET;
@@ -185,5 +184,10 @@ int main(int argc, char** argv) {
 
 	app.run_for();
 	lsocket->close();
+	lsocket->ch_close_future()->wait();
+
+	WAWO_ASSERT(lsocket->ch_close_future()->is_done());
+	WAWO_INFO("lsocket closed close: %d", lsocket->ch_close_future()->get());
+
 	return wawo::OK;
 }

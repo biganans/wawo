@@ -7,7 +7,7 @@
 #include <wawo/smart_ptr.hpp>
 
 #include <wawo/net/observer_abstract.hpp>
-#include <wawo/net/io_executor.hpp>
+#include <wawo/net/io_event_executor.hpp>
 
 namespace wawo { namespace net {
 
@@ -83,66 +83,6 @@ namespace wawo { namespace net {
 		spin_mutex m_ops_mutex;
 		event_op_queue m_ops;
 		u8_t m_polltype;
-	};
-
-	class observer:
-		public io_executor
-	{
-		WWRP<socket_observer> m_observer;
-		u8_t m_observer_type;
-	public:
-		observer( u8_t t = get_os_default_poll_type()):
-			m_observer_type(t)
-		{}
-		~observer(){}
-
-		u8_t get_type() const { return m_observer_type; }
-
-		void on_start() {
-			io_executor::on_start();
-
-			WAWO_ASSERT(m_observer == NULL);
-			m_observer = wawo::make_ref<socket_observer>(m_observer_type);
-			WAWO_ALLOC_CHECK(m_observer, sizeof(socket_observer) );
-			m_observer->init();
-		}
-
-		void on_stop() {
-			io_executor::on_stop();
-
-			WAWO_ASSERT(m_observer != NULL);
-			m_observer->deinit();
-			m_observer = NULL;
-		}
-
-		void run() {
-			io_executor::run();
-			m_observer->update();
-			io_executor::run();
-			wawo::this_thread::nsleep(observer_checker_interval);
-		}
-
-		void watch(u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err );
-		void unwatch(u8_t const& flag, int const& fd );
-	};
-
-	typedef std::vector<WWRP<observer>> observer_vectors;
-	class observers :
-		public wawo::singleton<observers>
-	{
-	private:
-		std::atomic<int> m_curr_sys;
-		std::atomic<int> m_curr_wpoll;
-		observer_vectors m_observers;
-		observer_vectors m_wpolls;
-	public:
-		observers()
-			:m_curr_sys(0), m_curr_wpoll(0)
-		{}
-		~observers() {}
-		void init(int wpoller_count = 1);
-		WWRP<observer> next(bool const& return_wpoller = false);
-		void deinit();
 	};
 }} //ns of wawo::net
 #endif //

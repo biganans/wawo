@@ -95,7 +95,7 @@ namespace wawo { namespace net { namespace handler {
 		u8_t m_write_flag;
 
 		void _init() {
-			channel::init(m_ch_ctx->ch->exector());
+			channel::init(m_ch_ctx->ch->event_loop());
 			m_rb = wawo::make_ref<bytes_ringbuffer>(MUX_STREAM_WND_SIZE);
 			m_wnd = MUX_STREAM_WND_SIZE;
 		}
@@ -136,16 +136,18 @@ namespace wawo { namespace net { namespace handler {
 				s->ch_connected();
 			};
 			WWRP<wawo::task::lambda_task> t = wawo::make_ref<wawo::task::lambda_task>(l);
-			exector()->schedule(t);
+			event_loop()->schedule(t);
 
 			return wrt;
 		}
 
-		int close() {
-			return ch_close();
-		}
+		//int close() {
+		//	return ch_close();
+		//}
 
-		void flush() {
+		void ch_flush() {
+			WAWO_ASSERT(!"TODO");
+			/*
 			lock_guard<spin_mutex> lg(m_wmutex);
 			while ( !(m_wflag&STREAM_WRITE_SHUTDOWN_CALLED) &m_wframeq.size() && m_wnd > 0) {
 				mux_stream_frame const& f = m_wframeq.front();
@@ -162,6 +164,7 @@ namespace wawo { namespace net { namespace handler {
 				}
 				m_wframeq.pop();
 			}
+			*/
 		}
 
 		inline int write_frame(mux_stream_frame const& frame) {
@@ -176,6 +179,9 @@ namespace wawo { namespace net { namespace handler {
 
 		//write success would make frame data dirty
 		inline int _write_frame(mux_stream_frame const& frame) {
+
+			WAWO_ASSERT("@TODO");
+
 			WAWO_ASSERT(m_ch_ctx != NULL);
 
 			if (frame.data->len()>m_wnd) {
@@ -191,7 +197,7 @@ namespace wawo { namespace net { namespace handler {
 				goto end_write_frame;
 			}
 
-			wrt = m_ch_ctx->write(frame.data);
+			m_ch_ctx->write(frame.data);
 			if (wrt == wawo::E_CHANNEL_WRITE_BLOCK) {
 				m_wframeq.push(frame);
 				wrt = wawo::OK;
@@ -289,14 +295,16 @@ end_write_frame:
 			case mux_stream_frame_flag::T_FIN:
 			{
 				DEBUG_STREAM("[mux_cargo][s%u][fin]recv", s->ch_id);
-				ch_close_read();
-				ch_read_shutdowned();
+				WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+				ch_close_read(ch_promise);
+				//ch_read_shutdowned();
 			}
 			break;
 			case mux_stream_frame_flag::T_RST:
 			{
 				DEBUG_STREAM("[mux_cargo][s%u][rst]recv, force close", s->ch_id);
-				ch_close();
+				WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+				ch_close(ch_promise);
 			}
 			break;
 			case mux_stream_frame_flag::T_UWND:
@@ -315,34 +323,36 @@ end_write_frame:
 
 		int ch_id() const { return m_id; }
 
-		int ch_close() {
-			lock_guard<spin_mutex> lg(m_mutex);
-			if (m_state == SS_CLOSED ) {
-				return wawo::E_CHANNEL_INVALID_STATE;
+		//void ch_close() {
+		//	WAWO_ASSERT(event_loop()->in_event_loop());
+
+		//	WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+		//	ch_close(ch_promise);
+		//}
+
+		void ch_close(WWRP<channel_promise>& ch_promise) {
+			WAWO_ASSERT(event_loop()->in_event_loop());
+
+			if (m_state == SS_CLOSED) {
+				ch_promise->set_success(wawo::E_CHANNEL_INVALID_STATE);
+				return;
 			}
 
 			WAWO_ASSERT(m_state == SS_ESTABLISHED);
-
-			ch_close_read();
-			ch_close_write();
+			WWRP<channel_promise> ch_promise_r = wawo::make_ref<channel_promise>();
+			WWRP<channel_promise> ch_promise_w = wawo::make_ref<channel_promise>();
+			ch_close_read(ch_promise_r);
+			ch_close_write(ch_promise_w);
 
 			m_state = SS_CLOSED;
-			
-			WWRP<channel> ch(this);
-			wawo::task::fn_lambda lambda_FNR = [ch]() -> void {
-				ch->ch_closed();
-				ch->deinit();
-			};
-			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-			exector()->schedule(_t);
-
-			return wawo::OK;
+			ch_closed();
+			ch_promise->set_success(wawo::OK);
 		}
 
-		int ch_close_read() {
-			lock_guard<spin_mutex> lg_read(m_rmutex);
+		void ch_close_read(WWRP<channel_promise>& ch_promise) {
 			if (m_rflag&STREAM_READ_SHUTDOWN_CALLED) {
-				return E_CHANNEL_RD_SHUTDOWN_ALREADY;
+				ch_promise->set_success(E_CHANNEL_RD_SHUTDOWN_ALREADY);
+				return;
 			}
 
 			DEBUG_STREAM("[mux_cargo][s%u]stream close read", id);
@@ -356,21 +366,17 @@ end_write_frame:
 				} while (wrt != wawo::OK);
 			}
 
-			WWRP<mux_stream> s(this);
-			wawo::task::fn_lambda lambda_FNR = [s]() -> void {
-				s->ch_read_shutdowned();
-				s->__rdwr_shutdown_check();
-			};
-			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-			exector()->schedule(_t);
+			ch_read_shutdowned();
+			__rdwr_shutdown_check();
 
-			return wawo::OK;
+			ch_promise->set_success(wawo::OK);
 		}
 
-		int ch_close_write() {
-			lock_guard<spin_mutex> lg(m_wmutex);
+		void ch_close_write(WWRP<channel_promise>& ch_promise) {
+			WAWO_ASSERT(event_loop()->in_event_loop());
 			if (m_wflag&STREAM_WRITE_SHUTDOWN_CALLED) {
-				return E_CHANNEL_WR_SHUTDOWN_ALREADY;
+				ch_promise->set_success(E_CHANNEL_WR_SHUTDOWN_ALREADY);
+				return ;
 			}
 
 			//wait until flag changed
@@ -383,15 +389,9 @@ end_write_frame:
 				}
 			} while ((!(m_wflag |= STREAM_WRITE_SHUTDOWN_CALLED)));
 
-			WWRP<mux_stream> s(this);
-			wawo::task::fn_lambda lambda_FNR = [s]() -> void {
-				s->ch_read_shutdowned();
-				s->__rdwr_shutdown_check();
-			};
-			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-			exector()->schedule(_t);
-
-			return wawo::OK;
+			ch_read_shutdowned();
+			__rdwr_shutdown_check();
+			ch_promise->set_success(wawo::OK);
 		}
 
 		void __rdwr_shutdown_check() {
@@ -409,16 +409,20 @@ end_write_frame:
 				}
 			}
 			if (nflag == (STREAM_READ_SHUTDOWN | STREAM_WRITE_SHUTDOWN)) {
-				ch_close();
+				WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+				ch_close(ch_promise);
 			}
 		}
 
-		int ch_write(WWRP<packet> const& fdata) {
+		void ch_write(WWRP<packet> const& fdata, WWRP<channel_promise>& ch_promise) {
+			WAWO_ASSERT(!"TODO");
+			/*
 			if (m_wflag&(STREAM_WRITE_SHUTDOWN_CALLED | STREAM_WRITE_SHUTDOWN)) {
 				return E_CHANNEL_WR_SHUTDOWN_ALREADY;
 			}
 
 			return write_frame( make_frame_data(fdata) );
+			*/
 		}
 
 		void begin_read(u8_t const& async_flag = 0, WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_read = NULL, fn_io_event_error const& fn_err = NULL) {
@@ -444,6 +448,22 @@ end_write_frame:
 
 		inline bool is_active() const {
 			return (m_flag&STREAM_IS_ACTIVE) != 0;
+		}
+
+		virtual void ch_close_impl(WWRP<channel_promise>& ch_promise)
+		{
+		}
+		virtual void ch_close_read_impl(WWRP<channel_promise>& ch_promise)
+		{
+		}
+		virtual void ch_close_write_impl(WWRP<channel_promise>& ch_promise)
+		{
+		}
+		virtual void ch_write_imple(WWRP<packet> const& outlet, WWRP<channel_promise>& ch_promise)
+		{
+		}
+		virtual void ch_flush_impl()
+		{
 		}
 	};
 

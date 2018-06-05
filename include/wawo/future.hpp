@@ -24,7 +24,7 @@ namespace wawo {
 	template <typename T>
 	class future:
 		public ref_base,
-		event_trigger
+		private event_trigger
 	{
 
 	protected:
@@ -61,7 +61,7 @@ namespace wawo {
 			}
 			WWRP<future<T>>(this);
 			event_trigger::invoke<fn_operation_complete>(E_COMPLETE, WWRP<future<T>>(this));
-			for( int i=0;i<m_handlers.size();++i) {
+			for( size_t i=0;i<m_handlers.size();++i) {
 				event_trigger::unbind(m_handlers[i]);
 			}
 			m_handlers.clear();
@@ -184,10 +184,12 @@ namespace wawo {
 	public:
 		void set_success(T const& v) {
 			lock_guard<mutex> lg(m_mutex);
-			int ok = future<T>::m_state.compare_exchange_strong( future<T>::S_IDLE, future<T>::S_SUCCESS, std::memory_order_acq_rel);
+			future<T>::state s = future<T>::S_IDLE;
+			int ok = future<T>::m_state.compare_exchange_strong( s, future<T>::S_SUCCESS, std::memory_order_acq_rel);
 			WAWO_ASSERT(ok);
 
-			ok = future<T>::m_v.compare_exchange_strong(T(), v, std::memory_order_acq_rel);
+			T t = T();
+			ok = future<T>::m_v.compare_exchange_strong(t, v, std::memory_order_acq_rel);
 			WAWO_ASSERT(ok);
 			(void)ok;
 

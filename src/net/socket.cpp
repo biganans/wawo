@@ -124,9 +124,6 @@ namespace wawo { namespace net {
 
 		m_outs = wawo::make_shared< std::queue<WWRP<wawo::packet>> >();
 
-		WAWO_ASSERT(m_observer == NULL);
-		m_observer = wawo::net::observers::instance()->next(is_wcp());
-
 		m_fn_async_connected = wawo::net::async_connected;
 		m_fn_async_connect_error = wawo::net::async_connect_error;
 
@@ -136,7 +133,7 @@ namespace wawo { namespace net {
 		m_fn_async_write = wawo::net::async_write;
 		m_fn_async_write_error = wawo::net::async_error;
 
-		channel::init(m_observer);
+		channel::init(wawo::net::io_event_loop_group::instance()->next(is_wcp()));
 	}
 
 	void socket::_deinit() {
@@ -252,7 +249,7 @@ namespace wawo { namespace net {
 			};
 
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-			m_observer->schedule(_t);
+			event_loop()->schedule(_t);
 			return closert;
 		}
 
@@ -266,7 +263,7 @@ namespace wawo { namespace net {
 			};
 
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-			m_observer->schedule(_t);
+			event_loop()->schedule(_t);
 			return closert;
 		}
 		
@@ -295,7 +292,7 @@ namespace wawo { namespace net {
 		};
 
 		WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-		m_observer->schedule(_t);
+		event_loop()->schedule(_t);
 
 		return closert;
 	}
@@ -372,7 +369,7 @@ namespace wawo { namespace net {
 		};
 
 		WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda_FNR);
-		m_observer->schedule(_t);
+		event_loop()->schedule(_t);
 
 		return shutrt;
 	}
@@ -466,7 +463,7 @@ namespace wawo { namespace net {
 			};
 
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(_lambda);
-			m_observer->schedule(_t);
+			event_loop()->schedule(_t);
 			return wawo::OK;
 		} else if (rt == wawo::E_SOCKET_CONNECTING) {
 			TRACE_IOE("[socket_base][%s][async_connect]watch(IOE_WRITE)", info().to_lencstr().cstr );
@@ -632,7 +629,7 @@ namespace wawo { namespace net {
 					ch->ch_write_unblock();
 				};
 				WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>(lambda);
-				m_observer->schedule(_t);
+				event_loop()->schedule(_t);
 			}
 		} else {
 			WAWO_ASSERT(m_async_wt != 0);

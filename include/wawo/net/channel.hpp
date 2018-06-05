@@ -4,7 +4,7 @@
 #include <wawo/packet.hpp>
 #include <wawo/net/channel_pipeline.hpp>
 #include <wawo/net/io_event.hpp>
-#include <wawo/net/io_executor.hpp>
+#include <wawo/net/io_event_loop.hpp>
 
 namespace wawo { namespace net {
 
@@ -13,22 +13,32 @@ namespace wawo { namespace net {
 	{
 		WWRP<channel_pipeline> m_pipeline;
 		WWRP<ref_base>	m_ctx;
-		WWRP<io_executor> m_exector;
+		WWRP<io_event_loop> m_io_event_loop;
 		int m_errno;
+		WWRP<channel_promise> m_ch_close_future;
 
 	public:
-		channel() {}
+		channel():
+			m_pipeline(NULL),
+			m_ctx(NULL),
+			m_io_event_loop(NULL),
+			m_errno(0),
+			m_ch_close_future(NULL)
+		{}
 		virtual ~channel() {
 			deinit();
 		}
 
-		void init( WWRP<io_executor> const& exe ) {
+		void init( WWRP<io_event_loop> const& loop ) {
 			m_pipeline = wawo::make_ref<channel_pipeline>(WWRP<channel>(this));
 			m_pipeline->init();
 			WAWO_ALLOC_CHECK(m_pipeline, sizeof(channel_pipeline));
 
-			WAWO_ASSERT(exe != NULL);
-			m_exector = exe;
+			WAWO_ASSERT(loop != NULL);
+			m_io_event_loop = loop;
+
+			WAWO_ASSERT(m_ch_close_future == NULL);
+			m_ch_close_future = wawo::make_ref<channel_promise>();
 		}
 
 		void deinit()
@@ -37,7 +47,33 @@ namespace wawo { namespace net {
 				m_pipeline->deinit();
 				m_pipeline = NULL;
 			}
-			m_exector = NULL;
+			m_io_event_loop = NULL;
+		}
+
+		inline WWRP<io_event_loop> event_loop() const {
+			return m_io_event_loop;
+		}
+
+		inline WWRP<channel_pipeline>& pipeline() {
+			return m_pipeline;
+		}
+
+		template <class ctx_t>
+		inline WWRP<ctx_t> get_ctx() const {
+			return wawo::static_pointer_cast<ctx_t>(m_ctx);
+		}
+
+		inline void set_ctx(WWRP<ref_base> const& ctx) {
+			m_ctx = ctx;
+		}
+
+		inline void ch_errno(int e) {
+			m_errno = e;
+		}
+		inline int ch_get_errno() { return m_errno; }
+
+		inline WWRP<channel_future> ch_close_future() const {
+			return m_ch_close_future;
 		}
 
 #define CH_ACTION_IMPL_PACKET_1(_NAME,_P) \
@@ -71,34 +107,22 @@ namespace wawo { namespace net {
 		CH_ACTION_IMPL_0(write_block)
 		CH_ACTION_IMPL_0(write_unblock)
 
-		inline WWRP<channel_pipeline>& pipeline() {
-			return m_pipeline;
-		}
-		inline WWRP<io_executor>& exector() {
-			return m_exector;
-		}
-
-		template <class ctx_t>
-		inline WWRP<ctx_t> get_ctx() const {
-			return wawo::static_pointer_cast<ctx_t>(m_ctx);
-		}
-
-		inline void set_ctx(WWRP<ref_base> const& ctx) {
-			m_ctx = ctx;
-		}
-
-		inline void ch_errno( int e) {
-			m_errno=e;
-		}
-		inline int ch_get_errno() { return m_errno; }
-		
+	
+		//could be called directly in any place
 		virtual int ch_id() const = 0;
-
-		virtual void ch_close() = 0;
+		virtual void ch_close(WWRP<channel_promise>& ch_promise) = 0;
 		virtual void ch_close_read(WWRP<channel_promise>& ch_promise) = 0;
 		virtual void ch_close_write(WWRP<channel_promise>& ch_promise) = 0;
 		virtual void ch_write(WWRP<packet> const& outlet, WWRP<channel_promise>& ch_promise) = 0;
 		virtual void ch_flush() = 0;
+
+		//called by context in event_loop
+		virtual void ch_close_impl(WWRP<channel_promise>& ch_promise) = 0;
+		virtual void ch_close_read_impl(WWRP<channel_promise>& ch_promise) = 0;
+		virtual void ch_close_write_impl(WWRP<channel_promise>& ch_promise) = 0;
+		virtual void ch_write_imple(WWRP<packet> const& outlet, WWRP<channel_promise>& ch_promise) = 0;
+		virtual void ch_flush_impl() = 0;
+
 		/*
 		virtual void begin_connect(WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL) {
 			(void)cookie;

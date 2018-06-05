@@ -114,14 +114,6 @@ namespace wawo { namespace net {
 		}
 	}
 
-	void observer::watch( u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err ) {
-		m_observer->watch(flag, fd, cookie, fn, err);
-	}
-
-	void observer::unwatch(u8_t const& flag, int const& fd) {
-		m_observer->unwatch(flag, fd);
-	}
-
 	namespace observer_impl {
 		void io_select_task::run() {
 			WAWO_ASSERT(ctx != NULL);
@@ -156,61 +148,5 @@ namespace wawo { namespace net {
 				task::run();
 			}
 		}
-	}
-
-	void observers::init(int wpoller_count) {
-		int i = std::thread::hardware_concurrency();
-		int sys_i = i - wpoller_count;
-		if (sys_i <= 0) {
-			sys_i = 1;
-		}
-
-		while (sys_i-- > 0) {
-			WWRP<observer> o = wawo::make_ref<observer>();
-			int rt = o->start();
-			WAWO_ASSERT(rt == wawo::OK);
-			m_observers.push_back(o);
-		}
-
-		wpoller_count = WAWO_MIN(wpoller_count, 4);
-		wpoller_count = WAWO_MAX(wpoller_count, 1);
-
-		if (wpoller_count > 0) {
-			wcp::instance()->start();
-		}
-
-		while (wpoller_count-- > 0) {
-			WWRP<observer> o = wawo::make_ref<observer>(T_WPOLL);
-			int rt = o->start();
-			WAWO_ASSERT(rt == wawo::OK);
-			m_wpolls.push_back(o);
-		}
-	}
-
-	WWRP<observer> observers::next(bool const& return_wpoller ) {
-		if (return_wpoller) {
-			int i = m_curr_wpoll.load() % m_wpolls.size();
-			wawo::atomic_increment(&m_curr_wpoll);
-			return m_wpolls[i% m_wpolls.size()];
-		} else {
-			int i = m_curr_sys.load() % m_observers.size();
-			wawo::atomic_increment(&m_curr_sys);
-			return m_observers[i% m_observers.size()];
-		}
-	}
-
-	void observers::deinit() {
-		if (m_wpolls.size()) {
-			wcp::instance()->stop();
-			std::for_each(m_wpolls.begin(), m_wpolls.end(), [](WWRP<observer> const& o) {
-				o->stop();
-			});
-			m_wpolls.clear();
-		}
-
-		std::for_each(m_observers.begin(), m_observers.end(), [](WWRP<observer> const& o) {
-			o->stop();
-		});
-		m_observers.clear();
 	}
 }}

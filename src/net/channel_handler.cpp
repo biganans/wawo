@@ -28,21 +28,21 @@ namespace wawo { namespace net {
 	//	ctx->fire_read(income);
 	//}
 	
-	int channel_handler_head::write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet)
+	void channel_handler_head::write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise>& ch_promise)
 	{
-		return ctx->ch->ch_write(outlet);
+		return ctx->ch->ch_write(outlet,ch_promise);
 	}
 	
-	int channel_handler_head::close(WWRP<channel_handler_context> const& ctx) {
-		return ctx->ch->ch_close();
+	void channel_handler_head::close(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise) {
+		return ctx->ch->ch_close(ch_promise);
 	}
 
-	int channel_handler_head::close_read(WWRP<channel_handler_context> const& ctx) {
-		return ctx->ch->ch_close_read();
+	void channel_handler_head::close_read(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise) {
+		return ctx->ch->ch_close_read(ch_promise);
 	}
 
-	int channel_handler_head::close_write(WWRP<channel_handler_context> const& ctx) {
-		return ctx->ch->ch_close_write();
+	void channel_handler_head::close_write(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise) {
+		return ctx->ch->ch_close_write(ch_promise);
 	}
 	
 	//--
