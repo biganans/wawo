@@ -30,19 +30,7 @@ namespace wawo { namespace net {
 
 		void init();
 		void deinit();
-
-		WWRP<channel_pipeline> add_last(WWRP<channel_handler_abstract> const& h) {
-			WWRP<channel_handler_context> ctx = wawo::make_ref<channel_handler_context>( m_ch, h );
-			
-			m_tail->N = ctx;
-
-			ctx->N = NULL;
-			ctx->P = m_tail;
-
-			m_tail = ctx;
-
-			return WWRP<channel_pipeline>(this);
-		}
+		WWRP<channel_pipeline> add_last(WWRP<channel_handler_abstract> const& h);
 
 	protected:
 		inline void fire_accepted( WWRP<channel> const& ch) {
@@ -80,7 +68,7 @@ namespace wawo { namespace net {
 			return NULL;
 		}
 
-		inline WWRP<channel_future> write(WWRP<packet> const& out, WWRP<channel_promise>& ch_promise) {
+		inline WWRP<channel_future> write(WWRP<packet> const& out, WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(!"TODO");
 			(void)out;
 			(void)ch_promise;
@@ -91,7 +79,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(!"TODO");
 			return NULL;
 		}
-		inline WWRP<channel_future> close(WWRP<channel_promise>& ch_promise) {
+		inline WWRP<channel_future> close(WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(!"TODO");
 			(void)ch_promise;
 			return NULL;
@@ -101,7 +89,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(!"TODO");
 			return NULL;
 		}
-		inline WWRP<channel_future> close_read(WWRP<channel_promise>& ch_promise) {
+		inline WWRP<channel_future> close_read(WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(!"TODO");
 			(void)ch_promise;
 			return NULL;
@@ -111,7 +99,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(!"TODO");
 			return NULL;
 		}
-		inline WWRP<channel_future> close_write(WWRP<channel_promise>& ch_promise) {
+		inline WWRP<channel_future> close_write(WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(!"TODO");
 			(void)ch_promise;
 			return NULL;

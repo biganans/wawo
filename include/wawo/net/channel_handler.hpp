@@ -46,11 +46,11 @@ namespace wawo { namespace net {
 		virtual public channel_handler_abstract
 	{
 	public:
-		virtual void write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise>& ch_promise ) = 0;
+		virtual void write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise ) = 0;
 
-		virtual void close(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise);
-		virtual void close_read(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise);
-		virtual void close_write(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise);
+		virtual void close(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
+		virtual void close_read(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
+		virtual void close_write(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
 		virtual void flush(WWRP<channel_handler_context> const& ctx);
 	};
 
@@ -60,7 +60,7 @@ namespace wawo { namespace net {
 	}
 
 #define VOID_HANDLER_DEFAULT_IMPL_PROMISE(NAME,HANDLER_NAME) \
-	void HANDLER_NAME##::##NAME##(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise) { \
+	void HANDLER_NAME##::##NAME##(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise) { \
 		ctx->##NAME##(ch_promise); \
 	}
 
@@ -78,11 +78,11 @@ namespace wawo { namespace net {
 	public:
 		//void accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch) ;
 		//void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) ;
-		void write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise>& ch_promise) ;
+		void write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) ;
 
-		void close(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise);
-		void close_read(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise);
-		void close_write(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise>& ch_promise);
+		void close(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
+		void close_read(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
+		void close_write(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
 	};
 
 //	class channel_handler_tail :

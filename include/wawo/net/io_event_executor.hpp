@@ -59,19 +59,6 @@ namespace wawo { namespace net {
 			m_tq_standby->push(t);
 		}
 		
-
-		//template <class _Task>
-		//inline void schedule(_Task&& task)
-		//{}
-
-		//template <class _Task,
-		//	class = typename std::enable_if<std::is_base_of<wawo::task::task_abstract,typename _Task::ELEMENT_TYPE>::value>::type>
-		//inline void schedule(_Task&& t) {
-		//	WAWO_ASSERT(t != NULL);
-		//	lock_guard<spin_mutex> lg(m_tq_mtx);
-		//	m_tq_standby->push(t);
-		//}
-
 		inline void schedule(fn_io_event_task&& f) {
 			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>( std::forward<fn_io_event_task>(f));
 			lock_guard<spin_mutex> lg(m_tq_mtx);

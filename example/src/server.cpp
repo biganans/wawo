@@ -16,7 +16,7 @@ public:
 		ctx->fire_read(income);
 	}
 
-	void write(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& outlet, WWRP<wawo::net::channel_promise>& ch_promise)
+	void write(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& outlet, WWRP<wawo::net::channel_promise> const& ch_promise)
 	{
 		WAWO_INFO(">>>: %u bytes", outlet->len() );
 		ctx->write(outlet,ch_promise);
@@ -161,29 +161,34 @@ int main(int argc, char** argv) {
 	WWRP<wawo::net::socket> lsocket = wawo::make_ref<wawo::net::socket>(laddr.so_family, laddr.so_type, laddr.so_protocol);
 
 	int open = lsocket->open();
-
 	if (open != wawo::OK) {
 		lsocket->close();
 		return open;
 	}
 
-	int bind = lsocket->bind(laddr.so_address);
-	if (bind != wawo::OK) {
+	WWRP<wawo::net::channel_promise> ch_bind_promise = wawo::make_ref<wawo::net::channel_promise>();
+	lsocket->ch_bind(laddr.so_address, ch_bind_promise);
+	int bindrt = ch_bind_promise->get();
+	if (bindrt != wawo::OK) {
 		lsocket->close();
-		return bind;
+		return bindrt;
 	}
 
 	WWRP<wawo::net::channel_handler_abstract> l_handler = wawo::make_ref<listen_server_handler>();
 	lsocket->pipeline()->add_last(l_handler);
 
-	int listen_rt = lsocket->listen();
+	WWRP<wawo::net::channel_promise> ch_listen_promise = wawo::make_ref<wawo::net::channel_promise>();
+
+	lsocket->ch_listen(ch_listen_promise);
+	int listen_rt = ch_listen_promise->get();
 	if (listen_rt != wawo::OK) {
 		lsocket->close();
 		return listen_rt;
 	}
 
-	app.run_for();
-	lsocket->close();
+//	app.run_for();
+	WWRP<wawo::net::channel_promise> ch_promise_close = wawo::make_ref<wawo::net::channel_promise>();
+	lsocket->ch_close(ch_promise_close);
 	lsocket->ch_close_future()->wait();
 
 	WAWO_ASSERT(lsocket->ch_close_future()->is_done());

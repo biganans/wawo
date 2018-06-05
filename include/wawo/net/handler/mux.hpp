@@ -330,7 +330,7 @@ end_write_frame:
 		//	ch_close(ch_promise);
 		//}
 
-		void ch_close(WWRP<channel_promise>& ch_promise) {
+		void ch_close(WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(event_loop()->in_event_loop());
 
 			if (m_state == SS_CLOSED) {
@@ -349,7 +349,7 @@ end_write_frame:
 			ch_promise->set_success(wawo::OK);
 		}
 
-		void ch_close_read(WWRP<channel_promise>& ch_promise) {
+		void ch_close_read(WWRP<channel_promise> const& ch_promise) {
 			if (m_rflag&STREAM_READ_SHUTDOWN_CALLED) {
 				ch_promise->set_success(E_CHANNEL_RD_SHUTDOWN_ALREADY);
 				return;
@@ -372,7 +372,7 @@ end_write_frame:
 			ch_promise->set_success(wawo::OK);
 		}
 
-		void ch_close_write(WWRP<channel_promise>& ch_promise) {
+		void ch_close_write(WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(event_loop()->in_event_loop());
 			if (m_wflag&STREAM_WRITE_SHUTDOWN_CALLED) {
 				ch_promise->set_success(E_CHANNEL_WR_SHUTDOWN_ALREADY);
@@ -414,7 +414,7 @@ end_write_frame:
 			}
 		}
 
-		void ch_write(WWRP<packet> const& fdata, WWRP<channel_promise>& ch_promise) {
+		void ch_write(WWRP<packet> const& fdata, WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(!"TODO");
 			/*
 			if (m_wflag&(STREAM_WRITE_SHUTDOWN_CALLED | STREAM_WRITE_SHUTDOWN)) {
@@ -450,16 +450,16 @@ end_write_frame:
 			return (m_flag&STREAM_IS_ACTIVE) != 0;
 		}
 
-		virtual void ch_close_impl(WWRP<channel_promise>& ch_promise)
+		virtual void ch_close_impl(WWRP<channel_promise> const& ch_promise)
 		{
 		}
-		virtual void ch_close_read_impl(WWRP<channel_promise>& ch_promise)
+		virtual void ch_close_read_impl(WWRP<channel_promise> const& ch_promise)
 		{
 		}
-		virtual void ch_close_write_impl(WWRP<channel_promise>& ch_promise)
+		virtual void ch_close_write_impl(WWRP<channel_promise> const& ch_promise)
 		{
 		}
-		virtual void ch_write_imple(WWRP<packet> const& outlet, WWRP<channel_promise>& ch_promise)
+		virtual void ch_write_imple(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise)
 		{
 		}
 		virtual void ch_flush_impl()

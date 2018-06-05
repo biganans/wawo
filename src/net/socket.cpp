@@ -374,43 +374,74 @@ namespace wawo { namespace net {
 		return shutrt;
 	}
 
-	int socket::bind(wawo::net::address const& addr) {
+	/*
+	struct async_bind_task : public wawo::task::task_abstract
+	{
+		wawo::net::address addr;
+		WWRP<channel_promise> ch_promise
+		
+		async_bind_task(wawo::net::address const& addr, WWRP<channel_promise> const& ch_promise)
+	};
+	*/
+	void socket::ch_bind(wawo::net::address const& addr, WWRP<channel_promise>const& ch_promise) {
+
+		WWRP<socket> _this(this);
+		if (!event_loop()->in_event_loop()) {
+			event_loop()->schedule([_this,addr,ch_promise]() ->void {
+				_this->ch_bind(addr, ch_promise);
+			});
+			return;
+		}
+
 		lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
 		WAWO_ASSERT(m_state == S_OPENED);
 
 		int bindrt = socket_base::bind(addr);
-
+		ch_promise->set_success(bindrt);
 		if (bindrt == 0) {
 			m_state = S_BINDED;
 			WAWO_TRACE_SOCKET("[socket][%s]socket bind ok", info().to_lencstr().cstr );
-			return wawo::OK;
+			return;
 		}
 		WAWO_ASSERT(bindrt <0);
 		WAWO_ERR("[socket][%s]socket bind error, errno: %d", info().to_lencstr().cstr, bindrt);
-		return bindrt;
 	}
 
-	int socket::listen(int const& backlog) {
-		lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
+	void socket::ch_listen(WWRP<channel_promise> const& ch_promise, int const& backlog) {
 
+		WWRP<socket> _this(this);
+		if (!event_loop()->in_event_loop()) {
+			event_loop()->schedule([_this, ch_promise, backlog]() ->void {
+				_this->ch_listen(ch_promise, backlog);
+			});
+			return;
+		}
+
+		lock_guard<spin_mutex> _lg(m_mutexes[L_SOCKET]);
 		WAWO_ASSERT(m_state == S_BINDED);
 		WAWO_ASSERT(fd() > 0);
 
-		int listenrt = socket_base::listen(backlog);
-		WAWO_RETURN_V_IF_NOT_MATCH(listenrt, listenrt == wawo::OK);
-		m_state = S_LISTEN;
-
-		if (!is_nonblocking()) {
-			int trt = turnon_nonblocking();
-			if (trt != wawo::OK) {
-				close();
-				return trt;
-			}
+		int rt = socket_base::listen(backlog);
+		if (rt != wawo::OK) {
+			ch_promise->set_success(rt);
+			return;
 		}
 
+		if (!is_nonblocking()) {
+			rt = turnon_nonblocking();
+			if (rt != wawo::OK) {
+				close();
+			}
+		}
+		if (rt != wawo::OK) {
+			ch_promise->set_success(rt);
+			return;
+		}
+
+		m_state = S_LISTEN;
 		begin_read(WATCH_OPTION_INFINITE, NULL, wawo::net::async_accept, wawo::net::async_error);
 		WAWO_TRACE_SOCKET("[socket][%s]socket listen success", info().to_lencstr().cstr);
-		return wawo::OK;
+		ch_promise->set_success(rt);
 	}
 
 	u32_t socket::accept( WWRP<socket> sockets[], u32_t const& size, int& ec_o ) {

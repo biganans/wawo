@@ -78,19 +78,19 @@ namespace wawo {
 		T get()
 		{
 			wait();
-			return m_v.load(std::memory_order_acq_rel);
+			return m_v.load(std::memory_order_acquire);
 		}
 
 		template <class _Rep, class _Period>
 		T get(std::chrono::duration<_Rep, _Period> const& dur)
 		{
 			wait_for<_Rep,_Period>(dur);
-			return m_v.load(std::memory_order_acq_rel);
+			return m_v.load(std::memory_order_acquire);
 		}
 
 		void wait()
 		{
-			while (m_state.load(std::memory_order_acq_rel) == S_IDLE)
+			while (m_state.load(std::memory_order_acquire) == S_IDLE)
 			{
 				unique_lock<mutex> ulk(m_mutex);
 				m_cond.wait(ulk);
@@ -100,22 +100,22 @@ namespace wawo {
 		template <class _Rep, class _Period>
 		void wait_for(std::chrono::duration<_Rep, _Period> const& dur)
 		{
-			if (m_state.load(std::memory_order_acq_rel) == S_IDLE) {
+			if (m_state.load(std::memory_order_acquire) == S_IDLE) {
 				unique_lock<mutex> ulk(m_mutex);
 				m_cond.wait_for<_Rep, _Period>(ulk, dur);
 			}
 		}
 
 		inline bool is_done() const {
-			return m_state.load(std::memory_order_acq_rel) != S_IDLE;
+			return m_state.load(std::memory_order_acquire) != S_IDLE;
 		}
 
 		inline bool is_success() const {
-			return m_state.load(std::memory_order_acq_rel) == S_SUCCESS;
+			return m_state.load(std::memory_order_acquire) == S_SUCCESS;
 		}
 
 		inline bool is_failure() const {
-			return m_state.load(std::memory_order_acq_rel) == S_FAILURE;
+			return m_state.load(std::memory_order_acquire) == S_FAILURE;
 		}
 
 		WWSP<wawo::exception> cause() const {
@@ -128,7 +128,7 @@ namespace wawo {
 			if ( !m_state.compare_exchange_strong(S_IDLE, S_CANCELLED, std::memory_order_acq_rel)) {
 				return false;
 			}
-			WAWO_ASSERT(m_state.load(std::memory_order_acq_rel) == S_CANCELLED);
+			WAWO_ASSERT(m_state.load(std::memory_order_acquire) == S_CANCELLED);
 
 			_notify_waiter();
 			_notify_listeners();
@@ -137,7 +137,7 @@ namespace wawo {
 
 		inline bool is_cancelled()
 		{
-			return m_state.load(std::memory_order_acq_rel) == S_CANCELLED;
+			return m_state.load(std::memory_order_acquire) == S_CANCELLED;
 		}
 
 		template<class _Lambda

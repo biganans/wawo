@@ -34,16 +34,16 @@ namespace wawo { namespace net {
 	{
 	public:
 		virtual WWRP<channel_future> write(WWRP<packet> const& out) = 0;
-		virtual WWRP<channel_future> write(WWRP<packet> const& out, WWRP<channel_promise>& ch_promise) = 0;
+		virtual WWRP<channel_future> write(WWRP<packet> const& out, WWRP<channel_promise> const& ch_promise) = 0;
 
 		virtual WWRP<channel_future> close() = 0;
-		virtual WWRP<channel_future> close(WWRP<channel_promise>& ch_promise) = 0;
+		virtual WWRP<channel_future> close(WWRP<channel_promise> const& ch_promise) = 0;
 
 		virtual WWRP<channel_future> close_read() = 0;
-		virtual WWRP<channel_future> close_read(WWRP<channel_promise>& ch_promise) = 0;
+		virtual WWRP<channel_future> close_read(WWRP<channel_promise> const& ch_promise) = 0;
 
 		virtual WWRP<channel_future> close_write() = 0;
-		virtual WWRP<channel_future> close_write(WWRP<channel_promise>& ch_promise) = 0;
+		virtual WWRP<channel_future> close_write(WWRP<channel_promise> const& ch_promise) = 0;
 
 		virtual void flush() = 0;
 	};

@@ -169,10 +169,10 @@ namespace wawo { namespace net {
 
 		int close();
 		int shutdown(u8_t const& flag);
+		u32_t accept(WWRP<socket> sockets[], u32_t const& size, int& ec_o);
 
-		int bind(wawo::net::address const& address);
-		int listen(int const& backlog = 128);
-		u32_t accept( WWRP<socket> sockets[], u32_t const& size, int& ec_o ) ;
+		void ch_bind(wawo::net::address const& address, WWRP<channel_promise> const& ch_promise);
+		void ch_listen( WWRP<channel_promise> const& ch_promise, int const& backlog = 128 );
 
 		int async_connect(address const& addr);
 
@@ -401,35 +401,48 @@ namespace wawo { namespace net {
 
 		//inline void ch_close() {}
 
-		inline void ch_close( WWRP<channel_promise>& ch_prommise ) { 
-			//int rt=close();
-			//channel_promise
+		inline void ch_close( WWRP<channel_promise> const& ch_promise ) {
+			if (!event_loop()->in_event_loop()) {
+				WWRP<channel> _this(this);
+				event_loop()->schedule([_this, ch_promise]() {
+					_this->ch_close(ch_promise);
+				});
+				return;
+			}
+
+			WAWO_ASSERT(event_loop()->in_event_loop());
+			if (m_state == S_CLOSED) {
+				ch_promise->set_success(wawo::E_CHANNEL_INVALID_STATE);
+				return;
+			}
+			m_state = S_CLOSED;
+			channel::ch_close(ch_promise);
 		}
 
-		inline void ch_close_read(WWRP<channel_promise>& ch_prommise) {
+		inline void ch_close_read(WWRP<channel_promise> const& ch_promise) {
 			//return shutdown(SHUTDOWN_RD); 
 		}
-		inline void ch_close_write(WWRP<channel_promise>& ch_prommise) { 
+		inline void ch_close_write(WWRP<channel_promise> const& ch_promise) {
 			//return shutdown(SHUTDOWN_WR); 
 		}
 
-		inline void ch_write(WWRP<packet> const& outlet, WWRP<channel_promise>& ch_prommise) {
+		inline void ch_write(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {
 			//return send_packet(outlet);
 		}
 
 		inline void ch_flush() {}
 
 
-		virtual void ch_close_impl(WWRP<channel_promise>& ch_promise) 
+		virtual void ch_close_impl(WWRP<channel_promise> const& ch_promise) 
 		{
 		}
-		virtual void ch_close_read_impl(WWRP<channel_promise>& ch_promise)
+		virtual void ch_close_read_impl(WWRP<channel_promise> const& ch_promise)
 		{
 		}
-		virtual void ch_close_write_impl(WWRP<channel_promise>& ch_promise)
+		virtual void ch_close_write_impl(WWRP<channel_promise> const& ch_promise)
 		{
 		}
-		virtual void ch_write_imple(WWRP<packet> const& outlet, WWRP<channel_promise>& ch_promise)
+		virtual void ch_write_imple(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise)
 		{
 		}
 		virtual void ch_flush_impl()

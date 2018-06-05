@@ -36,7 +36,7 @@ namespace wawo { namespace net { namespace handler {
 			ctx->fire_read(decrypted);
 		}
 
-		void write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise>& ch_promise) {
+		void write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(outlet != NULL);
 			WAWO_ASSERT(m_cipher != NULL);
 
