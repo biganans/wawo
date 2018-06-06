@@ -47,11 +47,11 @@ namespace wawo { namespace net {
 	{
 	public:
 		virtual void write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise ) = 0;
+		virtual void flush(WWRP<channel_handler_context> const& ctx) ;
 
 		virtual void close(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
-		virtual void close_read(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
-		virtual void close_write(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
-		virtual void flush(WWRP<channel_handler_context> const& ctx);
+		virtual void shutdown_read(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
+		virtual void shutdown_write(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
 	};
 
 #define VOID_FIRE_HANDLER_DEFAULT_IMPL_0(NAME,HANDLER_NAME) \
@@ -79,10 +79,10 @@ namespace wawo { namespace net {
 		//void accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch) ;
 		//void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) ;
 		void write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) ;
-
+		void flush(WWRP<channel_handler_context> const& ctx);
 		void close(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
-		void close_read(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
-		void close_write(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
+		void shutdown_read(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
+		void shutdown_write(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
 	};
 
 //	class channel_handler_tail :

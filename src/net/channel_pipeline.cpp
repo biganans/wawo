@@ -3,8 +3,9 @@
 
 namespace wawo { namespace net {
 
-	channel_pipeline::channel_pipeline(WWRP<channel> const& ch_ )
-		:m_ch(ch_)
+	channel_pipeline::channel_pipeline(WWRP<channel> const& ch_ ):
+		m_ch(ch_),
+		m_io_event_loop(ch_->event_loop())
 	{
 	}
 
@@ -30,11 +31,11 @@ namespace wawo { namespace net {
 
 	void channel_pipeline::deinit()
 	{
-		m_ch = NULL;
+//		m_ch = NULL;
 		WWRP<channel_handler_context> h = m_tail;
 
 		while ( h != NULL ) {
-			h->ch = NULL;
+//			h->ch = NULL;
 			h->N = NULL;
 
 			WWRP<channel_handler_context> TMP = h->P;
@@ -44,16 +45,20 @@ namespace wawo { namespace net {
 	}
 
 	WWRP<channel_pipeline> channel_pipeline::add_last(WWRP<channel_handler_abstract> const& h) {
-		if (m_ch->event_loop()->in_event_loop()) {
+		WAWO_ASSERT(m_io_event_loop != NULL);
+		WWRP<channel_pipeline> _this(this);
+		if (m_io_event_loop->in_event_loop()) {
+			//if ch closed , m_ch == NULL 
+			WAWO_ASSERT(m_ch != NULL);
 			WWRP<channel_handler_context> ctx = wawo::make_ref<channel_handler_context>(m_ch, h);
 			m_tail->N = ctx;
 			ctx->N = NULL;
 			ctx->P = m_tail;
 			m_tail = ctx;
+			return _this;
 		}
 
-		WWRP<channel_pipeline> _this(this);
-		m_ch->event_loop()->schedule([_this, h]() -> void {
+		m_io_event_loop->schedule([_this, h]() -> void {
 			_this->add_last(h);
 		});
 		return _this;

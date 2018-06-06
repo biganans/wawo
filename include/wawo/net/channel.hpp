@@ -11,53 +11,29 @@ namespace wawo { namespace net {
 	class channel:
 		public wawo::ref_base
 	{
-
 		WWRP<channel_pipeline> m_pipeline;
 		WWRP<ref_base>	m_ctx;
 		WWRP<io_event_loop> m_io_event_loop;
 		WWRP<channel_promise> m_ch_close_future;
 		int m_errno;
-		bool m_active;
-		
 
 	public:
-		channel():
+		channel(WWRP<io_event_loop> const& loop):
 			m_pipeline(NULL),
 			m_ctx(NULL),
-			m_io_event_loop(NULL),
+			m_io_event_loop(loop),
 			m_ch_close_future(NULL),
 			m_errno(0)
 		{}
-		virtual ~channel() {
-			deinit();
-		}
 
-		void init( WWRP<io_event_loop> const& loop ) {
-			m_pipeline = wawo::make_ref<channel_pipeline>(WWRP<channel>(this));
-			m_pipeline->init();
-			WAWO_ALLOC_CHECK(m_pipeline, sizeof(channel_pipeline));
-
-			WAWO_ASSERT(loop != NULL);
-			m_io_event_loop = loop;
-
-			WAWO_ASSERT(m_ch_close_future == NULL);
-			m_ch_close_future = wawo::make_ref<channel_promise>();
-		}
-
-		void deinit()
-		{
-			if (m_pipeline != NULL) {
-				m_pipeline->deinit();
-				m_pipeline = NULL;
-			}
-			m_io_event_loop = NULL;
-		}
+		virtual ~channel() {}
 
 		inline WWRP<io_event_loop> event_loop() const {
 			return m_io_event_loop;
 		}
 
 		inline WWRP<channel_pipeline>& pipeline() {
+			WAWO_ASSERT(m_pipeline != NULL);
 			return m_pipeline;
 		}
 
@@ -79,6 +55,10 @@ namespace wawo { namespace net {
 			return m_ch_close_future;
 		}
 
+		inline WWRP<channel_promise> ch_close_promise() {
+			return m_ch_close_future;
+		}
+
 #define CH_FIRE_ACTION_IMPL_PACKET_1(_NAME,_P) \
 		inline void ch_##_NAME(WWRP<packet> const& _P) { \
 			WAWO_ASSERT(m_pipeline != NULL); \
@@ -93,16 +73,23 @@ namespace wawo { namespace net {
 			m_pipeline->fire_##_NAME(_CH); \
 		} \
 
-			CH_FIRE_ACTION_IMPL_CHANNEL_1(accepted, ch)
+		CH_FIRE_ACTION_IMPL_CHANNEL_1(accepted, ch)
 
 #define CH_FIRE_ACTION_IMPL_0(_NAME) \
 		inline void ch_##_NAME() { \
+			WAWO_ASSERT(m_io_event_loop != NULL ); \
+			if (!m_io_event_loop->in_event_loop()) { \
+					WWRP<channel> _ch(this); \
+					m_io_event_loop->schedule([_ch]() { \
+						_ch->ch_##_NAME(); \
+				}); \
+				return ;\
+			} \
 			WAWO_ASSERT(m_pipeline != NULL); \
 			m_pipeline->fire_##_NAME(); \
 		} \
 
 		CH_FIRE_ACTION_IMPL_0(connected)
-		CH_FIRE_ACTION_IMPL_0(closed)
 		CH_FIRE_ACTION_IMPL_0(error)
 		CH_FIRE_ACTION_IMPL_0(read_shutdowned)
 		CH_FIRE_ACTION_IMPL_0(write_shutdowned)
@@ -110,20 +97,58 @@ namespace wawo { namespace net {
 		CH_FIRE_ACTION_IMPL_0(write_block)
 		CH_FIRE_ACTION_IMPL_0(write_unblock)
 
+		inline void ch_opened() {
+			WAWO_ASSERT(m_io_event_loop != NULL);
+			m_pipeline = wawo::make_ref<channel_pipeline>(WWRP<channel>(this));
+			m_pipeline->init();
+			WAWO_ALLOC_CHECK(m_pipeline, sizeof(channel_pipeline));
+			WAWO_ASSERT(m_ch_close_future == NULL);
+			m_ch_close_future = wawo::make_ref<channel_promise>();
+		}
+
+		inline void ch_closed() {
+			WAWO_ASSERT(m_io_event_loop != NULL);
+			WAWO_ASSERT(m_pipeline != NULL);
+			m_pipeline->fire_closed();
+			m_pipeline->deinit();
+			m_pipeline = NULL;
+		}
 
 #define CH_ACTION_IMPL_CH_PROMISE_1(_NAME) \
 		inline void ch_##_NAME(WWRP<channel_promise> const& ch_promise) { \
-			WAWO_ASSERT(m_pipeline != NULL); \
+			WAWO_ASSERT( m_io_event_loop != NULL ); \
+			if(!m_io_event_loop->in_event_loop()) { \
+				WWRP<channel> _ch(this); \
+				m_io_event_loop->schedule([_ch, ch_promise]() { \
+					_ch->ch_##_NAME(ch_promise); \
+				}); \
+				return; \
+			} \
+			if(m_pipeline == NULL) { \
+				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
+				return; \
+			} \
 			m_pipeline->##_NAME(ch_promise); \
 		} \
 
 		CH_ACTION_IMPL_CH_PROMISE_1(close)
-		CH_ACTION_IMPL_CH_PROMISE_1(close_read)
-		CH_ACTION_IMPL_CH_PROMISE_1(close_write)
+		CH_ACTION_IMPL_CH_PROMISE_1(shutdown_read)
+		CH_ACTION_IMPL_CH_PROMISE_1(shutdown_write)
 
 #define CH_ACTION_IMPL_PACKET_1_CH_PROMISE_1(_NAME) \
 		inline void ch_##_NAME(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {\
-			WAWO_ASSERT(m_pipeline != NULL); \
+			WAWO_ASSERT( m_io_event_loop != NULL ); \
+			if(!m_io_event_loop->in_event_loop()) { \
+				WWRP<channel> _ch(this); \
+				m_io_event_loop->schedule([_ch,outlet, ch_promise]() { \
+					_ch->ch_##_NAME(outlet,ch_promise); \
+				}); \
+				return; \
+			} \
+			if(m_pipeline == NULL) { \
+				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
+				return; \
+			} \
 			m_pipeline->##_NAME(outlet,ch_promise); \
 		} \
 
@@ -131,6 +156,17 @@ namespace wawo { namespace net {
 
 #define CH_ACTION_IMPL_VOID(_NAME) \
 		inline void ch_##_NAME() {\
+			WAWO_ASSERT( m_io_event_loop != NULL ); \
+			if(!m_io_event_loop->in_event_loop()) { \
+				WWRP<channel> _ch(this); \
+				m_io_event_loop->schedule([_ch]() { \
+					_ch->ch_##_NAME(); \
+				}); \
+				return; \
+			} \
+			if(m_pipeline == NULL) { \
+				return; \
+			} \
 			WAWO_ASSERT(m_pipeline != NULL); \
 			m_pipeline->##_NAME(); \
 		} \
@@ -138,12 +174,12 @@ namespace wawo { namespace net {
 		CH_ACTION_IMPL_VOID(flush)
 
 		//could be called directly in any place
-		virtual int ch_id() const = 0;		//called by context in event_loop
-		virtual void ch_close_impl(WWRP<channel_promise> const& ch_promise) = 0;
-		virtual void ch_close_read_impl(WWRP<channel_promise> const& ch_promise) = 0;
-		virtual void ch_close_write_impl(WWRP<channel_promise> const& ch_promise) = 0;
-		virtual void ch_write_imple(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) = 0;
+		virtual int ch_id() const = 0; //called by context in event_loop
+		virtual void ch_write_impl(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) = 0;
 		virtual void ch_flush_impl() = 0;
+		virtual void ch_shutdown_read_impl(WWRP<channel_promise> const& ch_promise) = 0;
+		virtual void ch_shutdown_write_impl(WWRP<channel_promise> const& ch_promise) = 0;
+		virtual void ch_close_impl(WWRP<channel_promise> const& ch_promise) = 0;
 
 		/*
 		virtual void begin_connect(WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL) {

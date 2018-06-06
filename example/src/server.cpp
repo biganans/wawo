@@ -1,5 +1,5 @@
 #include <wawo.h>
-//#include <vld.h>
+#include <vld.h>
 
 //using namespace wawo;
 //using namespace wawo::net;
@@ -35,7 +35,7 @@ public:
 	void read_shutdowned(WWRP<wawo::net::channel_handler_context> const& ctx) {
 		WAWO_INFO("read_shutdowned: %d", ctx->ch->ch_id() );
 		WWRP<wawo::net::channel_promise> ch_promise = wawo::make_ref<wawo::net::channel_promise>();
-		ctx->close_write();
+		ctx->shutdown_write();
 		ctx->fire_read_shutdowned();
 	}
 	void write_shutdowned(WWRP<wawo::net::channel_handler_context> const& ctx) {
@@ -108,8 +108,7 @@ class my_echo :
 public:
 	~my_echo() {}
 	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income) {
-		ctx->write(income);
-		ctx->close();
+		ctx->write_and_flush(income);
 	}
 
 	void read_shutdowned(WWRP<wawo::net::channel_handler_context> const& ctx) {
@@ -132,15 +131,15 @@ public:
 
 	void accepted(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::net::channel> const& ch )
 	{
-		//WWRP<wawo::net::channel_handler_abstract> example = wawo::make_ref<example_handler>();
-		//ch->pipeline()->add_last(example);
+		WWRP<wawo::net::channel_handler_abstract> example = wawo::make_ref<example_handler>();
+		ch->pipeline()->add_last(example);
 
-		//WWRP<wawo::net::channel_handler_abstract> echo = wawo::make_ref<my_echo>();
-		//ch->pipeline()->add_last(echo);
+		WWRP<wawo::net::channel_handler_abstract> echo = wawo::make_ref<my_echo>();
+		ch->pipeline()->add_last(echo);
 
-		WWRP<wawo::net::handler::http> h = wawo::make_ref<my_http_handler>();
-		h->bind<wawo::net::handler::fn_http_message_header_end_t > (wawo::net::handler::http_event::E_HEADER_COMPLETE, &http_server_handler::on_header_end, m_http_server, std::placeholders::_1, std::placeholders::_2);
-		ch->pipeline()->add_last(h);
+		//WWRP<wawo::net::handler::http> h = wawo::make_ref<my_http_handler>();
+		//h->bind<wawo::net::handler::fn_http_message_header_end_t > (wawo::net::handler::http_event::E_HEADER_COMPLETE, &http_server_handler::on_header_end, m_http_server, std::placeholders::_1, std::placeholders::_2);
+		//ch->pipeline()->add_last(h);
 
 		(void) ctx;
 	}
@@ -186,7 +185,7 @@ int main(int argc, char** argv) {
 		return listen_rt;
 	}
 
-//	app.run_for();
+	app.run_for();
 	WWRP<wawo::net::channel_promise> ch_promise_close = wawo::make_ref<wawo::net::channel_promise>();
 	lsocket->ch_close(ch_promise_close);
 	lsocket->ch_close_future()->wait();

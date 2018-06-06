@@ -95,13 +95,13 @@ namespace wawo { namespace net { namespace handler {
 		u8_t m_write_flag;
 
 		void _init() {
-			channel::init(m_ch_ctx->ch->event_loop());
 			m_rb = wawo::make_ref<bytes_ringbuffer>(MUX_STREAM_WND_SIZE);
 			m_wnd = MUX_STREAM_WND_SIZE;
 		}
 
 	public:
 		mux_stream(u32_t const& id, WWRP<wawo::net::channel_handler_context> const& ctx):
+			channel(ctx->ch->event_loop()),
 			m_ch_ctx(ctx),
 			m_state(SS_CLOSED),
 			m_flag(0),
@@ -145,7 +145,7 @@ namespace wawo { namespace net { namespace handler {
 		//	return ch_close();
 		//}
 
-		void ch_flush() {
+		void ch_flush_impl() {
 			WAWO_ASSERT(!"TODO");
 			/*
 			lock_guard<spin_mutex> lg(m_wmutex);
@@ -296,7 +296,7 @@ end_write_frame:
 			{
 				DEBUG_STREAM("[mux_cargo][s%u][fin]recv", s->ch_id);
 				WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
-				ch_close_read(ch_promise);
+				ch_shutdown_read_impl(ch_promise);
 				//ch_read_shutdowned();
 			}
 			break;
@@ -330,7 +330,7 @@ end_write_frame:
 		//	ch_close(ch_promise);
 		//}
 
-		void ch_close(WWRP<channel_promise> const& ch_promise) {
+		void ch_close_impl(WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(event_loop()->in_event_loop());
 
 			if (m_state == SS_CLOSED) {
@@ -341,15 +341,15 @@ end_write_frame:
 			WAWO_ASSERT(m_state == SS_ESTABLISHED);
 			WWRP<channel_promise> ch_promise_r = wawo::make_ref<channel_promise>();
 			WWRP<channel_promise> ch_promise_w = wawo::make_ref<channel_promise>();
-			ch_close_read(ch_promise_r);
-			ch_close_write(ch_promise_w);
+			ch_shutdown_read_impl(ch_promise_r);
+			ch_shutdown_write_impl(ch_promise_w);
 
 			m_state = SS_CLOSED;
 			ch_closed();
 			ch_promise->set_success(wawo::OK);
 		}
 
-		void ch_close_read(WWRP<channel_promise> const& ch_promise) {
+		void ch_shutdown_read_impl(WWRP<channel_promise> const& ch_promise) {
 			if (m_rflag&STREAM_READ_SHUTDOWN_CALLED) {
 				ch_promise->set_success(E_CHANNEL_RD_SHUTDOWN_ALREADY);
 				return;
@@ -372,7 +372,7 @@ end_write_frame:
 			ch_promise->set_success(wawo::OK);
 		}
 
-		void ch_close_write(WWRP<channel_promise> const& ch_promise) {
+		void ch_shutdown_write_impl(WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(event_loop()->in_event_loop());
 			if (m_wflag&STREAM_WRITE_SHUTDOWN_CALLED) {
 				ch_promise->set_success(E_CHANNEL_WR_SHUTDOWN_ALREADY);
@@ -414,7 +414,7 @@ end_write_frame:
 			}
 		}
 
-		void ch_write(WWRP<packet> const& fdata, WWRP<channel_promise> const& ch_promise) {
+		void ch_write_impl(WWRP<packet> const& fdata, WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(!"TODO");
 			/*
 			if (m_wflag&(STREAM_WRITE_SHUTDOWN_CALLED | STREAM_WRITE_SHUTDOWN)) {
@@ -450,21 +450,6 @@ end_write_frame:
 			return (m_flag&STREAM_IS_ACTIVE) != 0;
 		}
 
-		virtual void ch_close_impl(WWRP<channel_promise> const& ch_promise)
-		{
-		}
-		virtual void ch_close_read_impl(WWRP<channel_promise> const& ch_promise)
-		{
-		}
-		virtual void ch_close_write_impl(WWRP<channel_promise> const& ch_promise)
-		{
-		}
-		virtual void ch_write_imple(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise)
-		{
-		}
-		virtual void ch_flush_impl()
-		{
-		}
 	};
 
 	enum mux_ch_event {

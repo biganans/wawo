@@ -11,7 +11,6 @@
 #include <wawo/net/address.hpp>
 
 #include <wawo/net/socket_base.hpp>
-
 #include <wawo/net/channel.hpp>
 
 #define WAWO_MAX_ASYNC_WRITE_PERIOD	(90000L) //90 seconds
@@ -98,6 +97,7 @@ namespace wawo { namespace net {
 	public:
 		explicit socket(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc ,s_family const& family , s_type const& sockt, s_protocol const& proto, option const& opt = OPTION_NONE ):
 			socket_base(fd,addr,sm,sbc,family, sockt,proto,opt),
+			channel(wawo::net::io_event_loop_group::instance()->next(proto == P_WCP)),
 			m_state(S_CONNECTED),
 			m_rflag(0),
 			m_wflag(0),
@@ -107,11 +107,13 @@ namespace wawo { namespace net {
 			m_rps_q(NULL),
 			m_rps_q_standby(NULL)
 		{
+			channel::ch_opened();
 			_init();
 		}
 
 		explicit socket(s_family const& family, s_type const& type, s_protocol const& proto, option const& opt = OPTION_NONE) :
 			socket_base(family, type, proto, opt),
+			channel(wawo::net::io_event_loop_group::instance()->next(proto == P_WCP)),
 			m_state(S_CLOSED),
 			m_rflag(0),
 			m_wflag(0),
@@ -126,6 +128,7 @@ namespace wawo { namespace net {
 
 		explicit socket(socket_buffer_cfg const& sbc, s_family const& family,s_type const& type_, s_protocol const& proto, option const& opt = OPTION_NONE) :
 			socket_base(sbc, family, type_, proto, opt),
+			channel(wawo::net::io_event_loop_group::instance()->next(proto == P_WCP)),
 			m_state(S_CLOSED),
 			m_rflag(0),
 			m_wflag(0),
@@ -167,8 +170,8 @@ namespace wawo { namespace net {
 		int open();
 		int connect(address const& addr);
 
-		int close();
-		int shutdown(u8_t const& flag);
+//		int close();
+//		int shutdown(u8_t const& flag);
 		u32_t accept(WWRP<socket> sockets[], u32_t const& size, int& ec_o);
 
 		void ch_bind(wawo::net::address const& address, WWRP<channel_promise> const& ch_promise);
@@ -227,7 +230,8 @@ namespace wawo { namespace net {
 				}
 			}
 			if (nflag == SHUTDOWN_RDWR) {
-				close();
+				WWRP<channel_promise> ch_prommise = wawo::make_ref<channel_promise>();
+				ch_close(ch_prommise);
 			}
 		}
 
@@ -396,57 +400,138 @@ namespace wawo { namespace net {
 			_end_write();
 		}
 
-		//ch
 		inline int ch_id() const { return fd(); }
-
-		//inline void ch_close() {}
-
-		inline void ch_close( WWRP<channel_promise> const& ch_promise ) {
-			if (!event_loop()->in_event_loop()) {
-				WWRP<channel> _this(this);
-				event_loop()->schedule([_this, ch_promise]() {
-					_this->ch_close(ch_promise);
-				});
+		void ch_write_impl(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise)
+		{
+			WAWO_ASSERT(event_loop()->in_event_loop());
+			if ((m_wflag&SHUTDOWN_WR) != 0) {
+				ch_promise->set_success(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
 				return;
 			}
+			m_outbound_entry_q.push({
+				outlet,
+				ch_promise
+				});
+			return;
+		}
+		void ch_flush_impl()
+		{
+			WAWO_ASSERT(event_loop()->in_event_loop());
+			int _errno = 0;
+			while (m_outbound_entry_q.size()) {
+				socket_outbound_entry& entry = m_outbound_entry_q.front();
+				if (entry.ch_promise->is_cancelled()) {
+					continue;
+				}
 
+				u32_t sent = socket_base::send(entry.data->begin(), entry.data->len(), _errno);
+				if (sent == entry.data->len()) {
+					WAWO_ASSERT(_errno == wawo::OK);
+					entry.ch_promise->set_success(wawo::OK);
+					m_outbound_entry_q.pop();
+					continue;
+				}
+				entry.data->skip(sent);
+				WAWO_ASSERT(_errno != wawo::OK);
+				break;
+			}
+			if (_errno == wawo::OK) {
+				WAWO_ASSERT(m_outbound_entry_q.size() == 0);
+				if (m_wflag&WATCH_WRITE) {
+					end_write();
+					channel::ch_write_unblock();
+				}
+			} else if (_errno == wawo::E_CHANNEL_WRITE_BLOCK ) {
+				if ((m_wflag&WATCH_WRITE) == 0) {
+					begin_write();
+					channel::ch_write_block();
+				} else {
+					//clear old before setup
+					end_write();
+					begin_write();
+				}
+			} else {
+				while (m_outbound_entry_q.size()) {
+					socket_outbound_entry& entry = m_outbound_entry_q.front();
+					entry.ch_promise->set_success(_errno);
+					m_outbound_entry_q.pop();
+				}
+				WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+				ch_close(ch_promise);
+			}
+		}
+		void ch_shutdown_read_impl(WWRP<channel_promise> const& ch_promise)
+		{
+			WAWO_ASSERT(event_loop()->in_event_loop());
+			if ((m_rflag&SHUTDOWN_RD) != 0) {
+				ch_promise->set_success(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
+				return;
+			}
+			m_rflag |= SHUTDOWN_RD;
+			int rt = socket_base::shutdown(SHUT_RD);
+			end_read();
+			channel::ch_read_shutdowned();
+			__rdwr_check();
+			ch_promise->set_success(rt);
+		}
+		void ch_shutdown_write_impl(WWRP<channel_promise> const& ch_promise)
+		{
+			WAWO_ASSERT(event_loop()->in_event_loop());
+			if ((m_wflag&SHUTDOWN_WR) != 0) {
+				ch_promise->set_success(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
+				return;
+			}
+			ch_flush_impl();
+			m_wflag |= SHUTDOWN_WR;
+			int rt = socket_base::shutdown(SHUT_WR);
+			end_write();
+			channel::ch_write_shutdowned();
+			__rdwr_check();
+			ch_promise->set_success(rt);
+		}
+
+		void ch_close_impl(WWRP<channel_promise> const& ch_promise)
+		{
 			WAWO_ASSERT(event_loop()->in_event_loop());
 			if (m_state == S_CLOSED) {
-				ch_promise->set_success(wawo::E_CHANNEL_INVALID_STATE);
+				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY);
 				return;
 			}
+
+			int rt = socket_base::close();
+			if (is_listener()) {
+				end_read();
+				m_state = S_CLOSED;
+				channel::ch_closed();
+				channel::ch_close_promise()->set_success(rt);
+				ch_promise->set_success(rt);
+				return;
+			}
+
+			if (m_state != S_CONNECTED) {
+				m_state = S_CLOSED;
+				channel::ch_closed();
+				channel::ch_close_promise()->set_success(rt);
+				ch_promise->set_success(rt);
+				return;
+			}
+
+			if (!(m_rflag&SHUTDOWN_RD)) {
+				m_rflag |= SHUTDOWN_RD;
+				channel::ch_read_shutdowned();
+				end_read();
+			}
+
+			if (!(m_wflag&SHUTDOWN_WR)) {
+				ch_flush_impl();
+				m_wflag |= SHUTDOWN_WR;
+				end_write();
+			}
+
 			m_state = S_CLOSED;
-			channel::ch_close(ch_promise);
-		}
-
-		inline void ch_close_read(WWRP<channel_promise> const& ch_promise) {
-			//return shutdown(SHUTDOWN_RD); 
-		}
-		inline void ch_close_write(WWRP<channel_promise> const& ch_promise) {
-			//return shutdown(SHUTDOWN_WR); 
-		}
-
-		inline void ch_write(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {
-			//return send_packet(outlet);
-		}
-
-		inline void ch_flush() {}
-
-
-		virtual void ch_close_impl(WWRP<channel_promise> const& ch_promise) 
-		{
-		}
-		virtual void ch_close_read_impl(WWRP<channel_promise> const& ch_promise)
-		{
-		}
-		virtual void ch_close_write_impl(WWRP<channel_promise> const& ch_promise)
-		{
-		}
-		virtual void ch_write_imple(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise)
-		{
-		}
-		virtual void ch_flush_impl()
-		{
+			channel::ch_closed();
+			channel::ch_close_promise()->set_success(rt);
+			ch_promise->set_success(rt);
 		}
 	};
 }}
