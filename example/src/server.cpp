@@ -108,7 +108,14 @@ class my_echo :
 public:
 	~my_echo() {}
 	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income) {
-		ctx->write_and_flush(income);
+		 WWRP<wawo::net::channel_future> ch_future = ctx->write_and_flush(income);
+
+		ch_future->add_listener([]( WWRP<wawo::net::channel_future> const& ch_future) {
+			if (ch_future->is_success()) {
+				int wrt = ch_future->get();
+				WAWO_INFO("write rt: %d", wrt);
+			}
+		});
 	}
 
 	void read_shutdowned(WWRP<wawo::net::channel_handler_context> const& ctx) {
