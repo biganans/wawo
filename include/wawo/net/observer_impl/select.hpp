@@ -349,17 +349,9 @@ namespace wawo { namespace net { namespace observer_impl {
 						ec = wawo::socket_get_last_errno();
 					}
 					ec = WAWO_NEGATIVE(ec);
-
 					WAWO_ASSERT(fn != NULL);
 					WAWO_ASSERT(ec != wawo::OK);
-
-					wawo::task::fn_task_void _lambda = [fn,ec]() -> void {
-						WAWO_ASSERT(fn != NULL);
-						WAWO_ASSERT(ec != wawo::OK);
-						fn(ec);
-					};
-
-					_lambda();
+					fn(ec);
 				}
 			}
 		}
