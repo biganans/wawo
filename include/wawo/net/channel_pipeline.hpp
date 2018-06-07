@@ -164,20 +164,6 @@ namespace wawo { namespace net {
 		PIPELINE_CH_FUTURE_ACTION_CH_PROMISE_1(shutdown_write)
 
 		PIPELINE_VOID_ACTION_VOID(flush)
-
-			/*
-		inline WWRP<channel_future> write_and_flush(WWRP<packet> const& out) {
-			WWRP<channel_future> ch_f = write(out);
-			flush();
-			return ch_f;
-		}
-
-		inline WWRP<channel_future> write_and_flush(WWRP<packet> const& out, WWRP<channel_promise> const& ch_promise) {
-			WWRP<channel_future> ch_f = write(out, ch_promise);
-			flush();
-			return ch_f;
-		}
-		*/
 	};
 }}
 #endif

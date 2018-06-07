@@ -18,15 +18,15 @@ public:
 
 		if (m->h.have("Connection") && m->h.get("Connection") == "Keep-Alive") {
 			resp->h.set("Connection", "Keep-Alive");
-		}
-		else {
+		} else {
 			resp->h.set("Connection", "close");
 			close_after_write = true;
 		}
 
 		WWRP<wawo::packet> req;
 		m->encode(req);
-		m->body = wawo::len_cstr((char*)req->begin(), req->len());
+
+		resp->body = wawo::len_cstr((char*)req->begin(), req->len());
 
 		WWRP<wawo::packet> outp;
 		resp->encode(outp);
