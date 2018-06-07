@@ -28,17 +28,18 @@ namespace wawo { namespace net { namespace handler {
 
 	void http::closed(WWRP<wawo::net::channel_handler_context> const& ctx) {
 		WAWO_ASSERT(m_http_parser != NULL);
-		m_http_parser = NULL;
+		m_http_parser->reset() ;
 		ctx->fire_closed();
 	}
 
-
 	void http::read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income) {
 		WAWO_ASSERT(m_http_parser != NULL );
+		WAWO_ASSERT(income != NULL);
+
 		int ec;
 		m_cur_ctx = ctx;
 		u32_t nparsed = m_http_parser->parse( (char*) income->begin(), income->len(), ec );
-		WAWO_ASSERT(nparsed == income->len());
+		WAWO_ASSERT(ec == wawo::OK ? nparsed == income->len(): true);
 
 		income->skip(nparsed);
 		m_cur_ctx = NULL;

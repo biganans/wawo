@@ -57,7 +57,7 @@ namespace wawo { namespace net {
 		u64_t m_async_wt;
 
 		std::queue<socket_outbound_entry> m_outbound_entry_q;
-
+		u32_t m_noutbound_bytes;
 		void _init();
 		void _deinit();
 
@@ -70,7 +70,8 @@ namespace wawo { namespace net {
 			m_wflag(0),
 			m_trb(NULL),
 			m_delay_wp(WAWO_MAX_ASYNC_WRITE_PERIOD),
-			m_async_wt(0)
+			m_async_wt(0),
+			m_noutbound_bytes(0)
 		{
 			channel::ch_opened();
 			_init();
@@ -84,7 +85,8 @@ namespace wawo { namespace net {
 			m_wflag(0),
 			m_trb(NULL),
 			m_delay_wp(WAWO_MAX_ASYNC_WRITE_PERIOD),
-			m_async_wt(0)
+			m_async_wt(0),
+			m_noutbound_bytes(0)
 		{
 			_init();
 		}
@@ -97,7 +99,8 @@ namespace wawo { namespace net {
 			m_wflag(0),
 			m_trb(NULL),
 			m_delay_wp(WAWO_MAX_ASYNC_WRITE_PERIOD),
-			m_async_wt(0)
+			m_async_wt(0),
+			m_noutbound_bytes(0)
 		{
 			_init();
 		}
@@ -424,10 +427,50 @@ namespace wawo { namespace net {
 				ch_promise->set_success(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
 				return;
 			}
-			m_outbound_entry_q.push({
-				outlet,
-				ch_promise
-			});
+
+			if (m_noutbound_bytes>0) {
+				WAWO_ASSERT(m_outbound_entry_q.size()>0);
+				if (m_noutbound_bytes + outlet->len() > buffer_cfg().snd_size ) {
+					ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
+					return;
+				}
+				m_outbound_entry_q.push({
+					outlet,
+					ch_promise
+				});
+				m_noutbound_bytes += outlet->len();
+				return;
+			}
+
+			if (ch_promise->is_cancelled()) {
+				return;
+			}
+
+			WAWO_ASSERT((m_wflag&WATCH_WRITE) == 0);
+			int _errno;
+			u32_t sent = socket_base::send(outlet->begin(), outlet->len(), _errno);
+			if (sent == outlet->len()) {
+				WAWO_ASSERT(_errno == wawo::OK);
+				ch_promise->set_success(_errno);
+				return;
+			}
+
+			if (_errno == wawo::E_CHANNEL_WRITE_BLOCK) {
+				outlet->skip(sent);
+				WAWO_ASSERT(m_noutbound_bytes == 0);
+				m_noutbound_bytes = outlet->len();
+				m_outbound_entry_q.push({
+					outlet,
+					ch_promise
+				});
+				begin_write();
+				channel::ch_write_block();
+				return;
+			}
+
+			WWRP<channel_promise> _ch_promise = wawo::make_ref<channel_promise>();
+			ch_close(_ch_promise);
+			ch_promise->set_success(_errno);
 		}
 
 		void ch_flush_impl()
@@ -435,6 +478,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(event_loop()->in_event_loop());
 			int _errno = 0;
 			while (m_outbound_entry_q.size()) {
+				WAWO_ASSERT(m_noutbound_bytes > 0);
 				socket_outbound_entry& entry = m_outbound_entry_q.front();
 				if (entry.ch_promise->is_cancelled()) {
 					continue;
@@ -448,6 +492,8 @@ namespace wawo { namespace net {
 					continue;
 				}
 				entry.data->skip(sent);
+				WAWO_ASSERT(sent < m_noutbound_bytes);
+				m_noutbound_bytes -= sent;
 				WAWO_ASSERT(_errno != wawo::OK);
 				break;
 			}

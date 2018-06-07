@@ -48,6 +48,7 @@ namespace wawo { namespace net {
 
 	VOID_HANDLER_CONTEXT_IMPL_T_TO_H_0(channel_handler_context, flush, CH_OUTBOUND, channel_outbound_handler_abstract)
 
+		/*
 	WWRP<channel_future> channel_handler_context::write_and_flush(WWRP<packet> const& outlet) {
 		WWRP<channel_future> ch_future = write(outlet);
 		flush();
@@ -59,6 +60,7 @@ namespace wawo { namespace net {
 		flush();
 		return ch_future;
 	}
+	*/
 
 	/*
 	void channel_handler_context::begin_connect(WWRP<ref_base> const& cookie, fn_io_event const& fn_connected , fn_io_event_error const& fn_err ) {

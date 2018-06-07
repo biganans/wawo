@@ -81,8 +81,8 @@ namespace wawo { namespace net {
 		void invoke_flush();
 		void flush();
 
-		virtual WWRP<channel_future> write_and_flush(WWRP<packet> const& out) ;
-		virtual WWRP<channel_future> write_and_flush(WWRP<packet> const& out, WWRP<channel_promise> const& ch_promise) ;
+//		virtual WWRP<channel_future> write_and_flush(WWRP<packet> const& out) ;
+//		virtual WWRP<channel_future> write_and_flush(WWRP<packet> const& out, WWRP<channel_promise> const& ch_promise) ;
 
 		//void begin_connect(WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL) ;
 		//void end_connect() ;

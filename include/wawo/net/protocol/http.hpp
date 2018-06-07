@@ -180,7 +180,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 	struct parser:
 		public wawo::ref_base
 	{
-		WWRP<wawo::ref_base> ctx;
+//		WWRP<wawo::ref_base> ctx;
 
 		http_parser* _p;
 
@@ -196,6 +196,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 
 		void init(parser_type const& type);
 		void deinit();
+		void reset();
 
 		u32_t parse(char const* const data, u32_t const& len, int& ec);
 

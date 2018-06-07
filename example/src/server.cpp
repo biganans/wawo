@@ -108,7 +108,7 @@ class my_echo :
 public:
 	~my_echo() {}
 	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income) {
-		 WWRP<wawo::net::channel_future> ch_future = ctx->write_and_flush(income);
+		 WWRP<wawo::net::channel_future> ch_future = ctx->write(income);
 
 		ch_future->add_listener([]( WWRP<wawo::net::channel_future> const& ch_future) {
 			if (ch_future->is_success()) {
@@ -138,15 +138,15 @@ public:
 
 	void accepted(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::net::channel> const& ch )
 	{
-		WWRP<wawo::net::channel_handler_abstract> example = wawo::make_ref<example_handler>();
-		ch->pipeline()->add_last(example);
+		//WWRP<wawo::net::channel_handler_abstract> example = wawo::make_ref<example_handler>();
+		//ch->pipeline()->add_last(example);
 
-		WWRP<wawo::net::channel_handler_abstract> echo = wawo::make_ref<my_echo>();
-		ch->pipeline()->add_last(echo);
+//		WWRP<wawo::net::channel_handler_abstract> echo = wawo::make_ref<my_echo>();
+//		ch->pipeline()->add_last(echo);
 
-		//WWRP<wawo::net::handler::http> h = wawo::make_ref<my_http_handler>();
-		//h->bind<wawo::net::handler::fn_http_message_header_end_t > (wawo::net::handler::http_event::E_HEADER_COMPLETE, &http_server_handler::on_header_end, m_http_server, std::placeholders::_1, std::placeholders::_2);
-		//ch->pipeline()->add_last(h);
+		WWRP<wawo::net::handler::http> h = wawo::make_ref<my_http_handler>();
+		h->bind<wawo::net::handler::fn_http_message_header_end_t > (wawo::net::handler::http_event::E_HEADER_COMPLETE, &http_server_handler::on_header_end, m_http_server, std::placeholders::_1, std::placeholders::_2);
+		ch->pipeline()->add_last(h);
 
 		(void) ctx;
 	}

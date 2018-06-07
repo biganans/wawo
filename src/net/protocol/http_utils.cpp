@@ -257,7 +257,6 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		on_headers_complete(NULL),
 		on_body(NULL),
 		on_message_complete(NULL),
-
 		on_chunk_header(NULL),
 		on_chunk_complete(NULL)
 	{
@@ -287,7 +286,24 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 			::free(_p);
 			_p = NULL;
 		}
-		ctx = NULL;
+//		ctx = NULL;
+
+		reset();
+	}
+
+	void parser::reset() {
+		on_message_begin = NULL;
+		on_url = NULL;
+
+		on_status = NULL;
+		on_header_field = NULL;
+		on_header_value = NULL;
+		on_headers_complete = NULL;
+		on_body = NULL;
+		on_message_complete = NULL;
+
+		on_chunk_header = NULL;
+		on_chunk_complete = NULL;
 	}
 
 	//return number of parsed bytes 

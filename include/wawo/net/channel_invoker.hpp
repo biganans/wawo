@@ -47,8 +47,8 @@ namespace wawo { namespace net {
 
 		virtual void flush() = 0;
 
-		virtual WWRP<channel_future> write_and_flush(WWRP<packet> const& out) = 0;
-		virtual WWRP<channel_future> write_and_flush(WWRP<packet> const& out, WWRP<channel_promise> const& ch_promise) = 0;
+//		virtual WWRP<channel_future> write_and_flush(WWRP<packet> const& out) = 0;
+//		virtual WWRP<channel_future> write_and_flush(WWRP<packet> const& out, WWRP<channel_promise> const& ch_promise) = 0;
 	};
 }}
 #endif

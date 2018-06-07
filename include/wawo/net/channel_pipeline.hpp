@@ -165,6 +165,7 @@ namespace wawo { namespace net {
 
 		PIPELINE_VOID_ACTION_VOID(flush)
 
+			/*
 		inline WWRP<channel_future> write_and_flush(WWRP<packet> const& out) {
 			WWRP<channel_future> ch_f = write(out);
 			flush();
@@ -176,6 +177,7 @@ namespace wawo { namespace net {
 			flush();
 			return ch_f;
 		}
+		*/
 	};
 }}
 #endif
