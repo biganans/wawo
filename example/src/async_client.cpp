@@ -20,10 +20,10 @@ public:
 	{
 	}
 
-	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<wawo::packet> const& income ) {
+	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income ) {
 		WAWO_INFO(">>> %u", income->len() ) ;
 
-		WWSP<wawo::packet> outp = wawo::make_shared<wawo::packet>();
+		WWRP<wawo::packet> outp = wawo::make_ref<wawo::packet>();
 		outp->write( income->begin(), income->len() );
 		ctx->write(outp);
 	}
@@ -39,9 +39,9 @@ public:
 		WAWO_ASSERT(rt == wawo::OK);
 
 		so->pipeline()->add_last( WWRP<wawo::net::channel_handler_abstract>(this) );
-		rt = so->async_connect(m_addrinfo.so_address );
+		WWRP<wawo::net::channel_future> f = so->async_connect(m_addrinfo.so_address );
 
-		WAWO_ASSERT(rt == wawo::OK || rt == wawo::E_SOCKET_CONNECTING );
+		WAWO_ASSERT(f->get() == wawo::OK || f->get() == wawo::E_SOCKET_CONNECTING );
 	}
 
 	void connected( WWRP<wawo::net::channel_handler_context> const& ctx ) {
@@ -82,7 +82,7 @@ int main( int argc, char** argv ) {
 		so->pipeline()->add_last(hello);
 
 		WWRP<wawo::net::channel_future> f = so->async_connect(raddr.so_address);
-		WAWO_ASSERT(f->get() == wawo::OK);
+		WAWO_ASSERT(f->get() == wawo::OK || f->get() == wawo::E_SOCKET_CONNECTING);
 	}
 
 	application.run_for();

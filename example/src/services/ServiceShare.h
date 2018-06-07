@@ -81,14 +81,15 @@ namespace services {
 
 				//resend
 				//int cid = wawo::net::client::service::Echo<ClientType>::C_TEST ;
-				WWSP<wawo::packet> packet_o = wawo::make_shared<wawo::packet>(256);
+				WWRP<wawo::packet> packet_o = wawo::make_ref<wawo::packet>(256);
 				packet_o->write<wawo::u32_t>(services::C_ECHO_STRING_REQUEST_TEST);
 				wawo::u32_t to_snd_len = (++LAST_LEN%MAX_SND_LEN);
 
 				packet_o->write<wawo::u32_t>(to_snd_len);
 				packet_o->write((wawo::byte_t*)bytes_buffer, to_snd_len);
 
-				WWSP<wawo::packet> packet_t1 = wawo::make_shared<wawo::packet>(*packet_o);
+				WWRP<wawo::packet> packet_t1 = wawo::make_ref<wawo::packet>(packet_o->len());
+				packet_t1->write(packet_o->begin(), packet_o->len());
 
 				packet_t1->write_left < wawo::u8_t >(services::S_ECHO);
 				ctx->write(packet_t1);
@@ -143,7 +144,7 @@ namespace services {
 
 		static void SendHello(WWRP<wawo::net::channel_handler_context> const& ctx) {
 
-			WWSP<wawo::packet> packet(new wawo::packet(256));
+			WWRP<wawo::packet> packet = wawo::make_ref<wawo::packet>(256);
 			wawo::len_cstr hello_string = "hello server";
 			packet->write<wawo::u32_t>(services::C_ECHO_HELLO);
 			packet->write<wawo::u32_t>(hello_string.len);

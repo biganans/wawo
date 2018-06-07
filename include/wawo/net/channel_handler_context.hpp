@@ -27,7 +27,7 @@ namespace wawo { namespace net {
 		WWRP<channel_handler_context> N;
 		WWRP<channel_handler_abstract> m_h;
 
-		WWRP<wawo::ref_base> m_ctx;
+//		WWRP<wawo::ref_base> m_ctx;
 		u8_t m_flag;
 	public:
 		WWRP<channel> ch;
@@ -93,6 +93,7 @@ namespace wawo { namespace net {
 		void begin_write(u8_t const& async_flag = 0, fn_io_event const& fn_write = NULL, fn_io_event_error const& fn_err = NULL) ;
 		void end_write();
 
+		/*
 		template <class ctx_t>
 		inline WWRP<ctx_t> get_ctx() const {
 			return wawo::static_pointer_cast<ctx_t>(m_ctx);
@@ -101,6 +102,7 @@ namespace wawo { namespace net {
 		inline void set_ctx(WWRP<ref_base> const& ctx) {
 			m_ctx = ctx;
 		}
+		*/
 	};
 
 #define HANDLER_CONTEXT_IMPL_H_TO_T_CHANNEL_1(CTX_CLASS_NAME,CHANNEL_NAME,NAME,HANDLER_CLASS_NAME) \

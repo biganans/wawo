@@ -303,8 +303,7 @@ end_write_frame:
 			case mux_stream_frame_flag::T_RST:
 			{
 				DEBUG_STREAM("[mux_cargo][s%u][rst]recv, force close", s->ch_id);
-				WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
-				ch_close(ch_promise);
+				ch_close();
 			}
 			break;
 			case mux_stream_frame_flag::T_UWND:
@@ -322,13 +321,6 @@ end_write_frame:
 		}
 
 		int ch_id() const { return m_id; }
-
-		//void ch_close() {
-		//	WAWO_ASSERT(event_loop()->in_event_loop());
-
-		//	WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
-		//	ch_close(ch_promise);
-		//}
 
 		void ch_close_impl(WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(event_loop()->in_event_loop());

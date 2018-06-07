@@ -191,8 +191,10 @@ namespace wawo { namespace net {
 			return ch_promise;
 		}
 
-		//channel::ch_errno(rt);
-		//channel::ch_error();
+		channel::ch_errno(rt);
+		channel::ch_error();
+
+		channel::ch_close();
 		return ch_promise;
 	}
 

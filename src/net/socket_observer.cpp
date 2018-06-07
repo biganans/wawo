@@ -113,43 +113,4 @@ namespace wawo { namespace net {
 			}
 		}
 	}
-
-/*
-	namespace observer_impl {
-		
-		void io_select_task::run() {
-			WAWO_ASSERT(ctx != NULL);
-			if (ctx->poll_type == T_SELECT) {
-				switch (id) {
-				case IOE_READ:
-				{
-//					lock_guard<spin_mutex> lg_ctx(ctx->r_mutex);
-//					WAWO_ASSERT(ctx->r_state == S_READ_POSTED);
-//					ctx->r_state = S_READING;
-					task::run();
-//					ctx->r_state = S_READ_IDLE;
-				}
-				break;
-				case IOE_WRITE:
-				{
-//					lock_guard<spin_mutex> lg_ctx(ctx->r_mutex);
-//					WAWO_ASSERT(ctx->w_state == S_WRITE_POSTED);
-//					ctx->w_state = S_WRITING;
-					task::run();
-//					ctx->w_state = S_WRITE_IDLE;
-				}
-				break;
-				default:
-				{
-					WAWO_THROW("unknown ioe id");
-				}
-				break;
-				}
-			}
-			else {
-				task::run();
-			}
-		}
-		
-	}*/
 }}

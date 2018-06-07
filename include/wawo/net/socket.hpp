@@ -142,6 +142,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(is_nonblocking());
 			WAWO_ASSERT(m_state == S_CONNECTING);
 			m_state = S_CONNECTED;
+			socket::end_connect();
 
 			channel::ch_connected();
 			begin_read(WATCH_OPTION_INFINITE);
@@ -150,10 +151,11 @@ namespace wawo { namespace net {
 		inline void __cb_async_connect_error( int const& ec) {
 			WAWO_ASSERT(is_nonblocking());
 			WAWO_ASSERT(m_state == S_CONNECTING);
-			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+			socket::end_connect();
+
 			ch_errno(ec);
 			ch_error();
-			ch_close(ch_promise);
+			ch_close();
 		}
 
 		void __cb_async_accept() {
@@ -186,8 +188,7 @@ namespace wawo { namespace net {
 			} while (ec == wawo::E_TRY_AGAIN);
 
 			if (ec != wawo::OK) {
-				WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
-				ch_close(ch_promise);
+				ch_close();
 			}
 		}
 		void __cb_async_read() {
@@ -216,8 +217,7 @@ namespace wawo { namespace net {
 				break;
 				case wawo::E_SOCKET_GRACE_CLOSE:
 				{
-					WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
-					ch_shutdown_read(ch_promise);
+					ch_shutdown_read();
 				}
 				break;
 				case wawo::E_CHANNEL_RD_SHUTDOWN_ALREADY:
@@ -255,8 +255,7 @@ namespace wawo { namespace net {
 				nflag |= SHUTDOWN_WR;
 			}
 			if (nflag == SHUTDOWN_RDWR) {
-				WWRP<channel_promise> ch_prommise = wawo::make_ref<channel_promise>();
-				ch_close(ch_prommise);
+				ch_close();
 			}
 		}
 
@@ -473,8 +472,7 @@ namespace wawo { namespace net {
 				return;
 			}
 
-			WWRP<channel_promise> _ch_promise = wawo::make_ref<channel_promise>();
-			ch_close(_ch_promise);
+			ch_close();
 			ch_promise->set_success(_errno);
 		}
 
@@ -523,8 +521,7 @@ namespace wawo { namespace net {
 					entry.ch_promise->set_success(_errno);
 					m_outbound_entry_q.pop();
 				}
-				WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
-				ch_close(ch_promise);
+				ch_close();
 			}
 		}
 		void ch_shutdown_read_impl(WWRP<channel_promise> const& ch_promise)

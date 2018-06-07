@@ -17,26 +17,6 @@ namespace wawo { namespace net { namespace observer_impl {
 	using namespace wawo::net ;
 	using namespace wawo::thread;
 
-	/*
-	struct io_select_task :
-		public wawo::task::task
-	{
-		WAWO_DECLARE_NONCOPYABLE(io_select_task)
-
-	public:
-		WWRP<observer_ctx> ctx;
-		u8_t id;
-		explicit io_select_task(fn_io_event const& fn, WWRP<observer_ctx> ctx_, u8_t const& id_) :
-			task(fn),
-			ctx(ctx_),
-			id(id_)
-		{
-		}
-
-		void run();
-	};
-	*/
-
 	class select:
 		public observer_abstract
 	{
@@ -89,6 +69,7 @@ namespace wawo { namespace net { namespace observer_impl {
 
 				WAWO_ASSERT(fd >0);
 				WAWO_ASSERT(fn != NULL);
+				WAWO_ASSERT(err != NULL);
 
 				WWRP<observer_ctx> ctx;
 				observer_ctx_map::iterator it = m_ctxs.find(fd);
@@ -268,20 +249,21 @@ namespace wawo { namespace net { namespace observer_impl {
 				if( FD_ISSET( fd, &fds_r ) ) {
 					FD_CLR(fd, &fds_r);
 					--ready_c ;
+					fn_io_event _fn = ctx->fn_info[IOE_SLOT_READ].fn;
 					if ( WAWO_UNLIKELY(ctx->flag&IOE_INFINITE_WATCH_READ) == 0) {
 						unwatch(IOE_READ, ctx->fd);
 					}
-					ctx->fn_info[IOE_SLOT_READ].fn();
+					_fn();
 				}
 
 				if( FD_ISSET( fd, &fds_w ) ) {
 					FD_CLR(fd, &fds_w);
 					--ready_c;
-
+					fn_io_event _fn = ctx->fn_info[IOE_SLOT_WRITE].fn;
 					if ( WAWO_LIKELY(ctx->flag&IOE_INFINITE_WATCH_WRITE) == 0) {
 						unwatch(IOE_WRITE, ctx->fd);
 					}
-					ctx->fn_info[IOE_SLOT_WRITE].fn();
+					_fn();
 				}
 
 				if( FD_ISSET(fd, &fds_ex) ) {
@@ -289,19 +271,21 @@ namespace wawo { namespace net { namespace observer_impl {
 					--ready_c ;
 					WAWO_ASSERT(ctx->fd > 0);
 
-					unwatch(IOE_READ, ctx->fd);
-					unwatch(IOE_WRITE, ctx->fd);//only trigger once
-
 					int ec;
 					socklen_t optlen = sizeof(int);
 					int getrt = ::getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*)&ec, &optlen);
 					if (getrt == -1) {
 						ec = wawo::socket_get_last_errno();
 					}
-
+					fn_io_event_error _fn = ctx->fn_info[IOE_SLOT_WRITE].err;
 					ec = WAWO_NEGATIVE(ec);
 					WAWO_ASSERT(ec != wawo::OK);
-					ctx->fn_info[IOE_SLOT_WRITE].err(ec);
+
+					unwatch(IOE_READ, ctx->fd);
+					unwatch(IOE_WRITE, ctx->fd);//only trigger once
+
+					WAWO_ASSERT(_fn != NULL);
+					_fn(ec);
 				}
 			}
 		}
