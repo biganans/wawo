@@ -428,7 +428,7 @@ namespace wawo { namespace net {
 				return;
 			}
 
-			if (m_noutbound_bytes>0) {
+			if (WAWO_UNLIKELY(m_noutbound_bytes>0)) {
 				WAWO_ASSERT(m_outbound_entry_q.size()>0);
 				if (m_noutbound_bytes + outlet->len() > buffer_cfg().snd_size ) {
 					ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
