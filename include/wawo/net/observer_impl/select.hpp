@@ -17,6 +17,7 @@ namespace wawo { namespace net { namespace observer_impl {
 	using namespace wawo::net ;
 	using namespace wawo::thread;
 
+	/*
 	struct io_select_task :
 		public wawo::task::task
 	{
@@ -34,6 +35,7 @@ namespace wawo { namespace net { namespace observer_impl {
 
 		void run();
 	};
+	*/
 
 	class select:
 		public observer_abstract
@@ -154,11 +156,11 @@ namespace wawo { namespace net { namespace observer_impl {
 
 				WWRP<observer_ctx> const& ctx = it->second ;
 				{
-					unique_lock<spin_mutex> ulock(ctx->r_mutex, wawo::thread::try_to_lock);
-					bool lock_ok = ulock.own_lock();
+					//unique_lock<spin_mutex> ulock(ctx->r_mutex, wawo::thread::try_to_lock);
+					//bool lock_ok = ulock.own_lock();
 
-					if ( lock_ok && (ctx->flag&IOE_READ) && (ctx->r_state == S_READ_IDLE)) {
-
+					//if ( lock_ok && (ctx->flag&IOE_READ) && (ctx->r_state == S_READ_IDLE)) {
+					if(ctx->flag&IOE_READ) {
 						if (fd_added_count == WAWO_SELECT_BUCKET_ITEM_COUNT) {
 							++idx;
 							WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
@@ -177,10 +179,10 @@ namespace wawo { namespace net { namespace observer_impl {
 				}
 
 				{
-					unique_lock<spin_mutex> ulock(ctx->w_mutex, wawo::thread::try_to_lock);
-					bool lock_ok = ulock.own_lock();
-					if ( lock_ok && (ctx->flag&IOE_WRITE) && (ctx->fn_info[IOE_SLOT_WRITE].fn != NULL) && (ctx->w_state == S_WRITE_IDLE)) {
-
+					//unique_lock<spin_mutex> ulock(ctx->w_mutex, wawo::thread::try_to_lock);
+					//bool lock_ok = ulock.own_lock();
+					//if ( lock_ok && (ctx->flag&IOE_WRITE) && (ctx->fn_info[IOE_SLOT_WRITE].fn != NULL) && (ctx->w_state == S_WRITE_IDLE)) {
+					if(ctx->flag&IOE_WRITE && ctx->fn_info[IOE_SLOT_WRITE].fn != NULL ) {
 						if (fd_added_count == WAWO_SELECT_BUCKET_ITEM_COUNT) {
 							++idx;
 							WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
@@ -198,8 +200,9 @@ namespace wawo { namespace net { namespace observer_impl {
 						++fd_added_count;
 					}
 				
-					if (lock_ok && (ctx->flag&IOE_WRITE) && (ctx->fn_info[IOE_SLOT_WRITE].err != NULL) && (ctx->w_state == S_WRITE_IDLE)) {
-						//for async connect
+					//if (lock_ok && (ctx->flag&IOE_WRITE) && (ctx->fn_info[IOE_SLOT_WRITE].err != NULL) && (ctx->w_state == S_WRITE_IDLE)) {
+					if (ctx->flag&IOE_WRITE && ctx->fn_info[IOE_SLOT_WRITE].err != NULL) {
+					//for async connect
 						if (fd_added_count == WAWO_SELECT_BUCKET_ITEM_COUNT) {
 							++idx;
 							WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
@@ -279,65 +282,26 @@ namespace wawo { namespace net { namespace observer_impl {
 				if( FD_ISSET( fd, &fds_r ) ) {
 					FD_CLR(fd, &fds_r);
 					--ready_c ;
-
-					if ( WAWO_LIKELY(ctx->flag&IOE_INFINITE_WATCH_READ)) {
-						{
-							lock_guard<spin_mutex> lg_ctx(ctx->r_mutex);
-							ctx->r_state = S_READ_POSTED;
-						}
-						WWRP<wawo::task::task> _t = wawo::make_ref<io_select_task>(ctx->fn_info[IOE_SLOT_READ].fn, ctx, static_cast<u8_t>(IOE_READ));
-						_t->run();
-					}
-					else {
-
-						WWRP<observer_ctx> _ctx = wawo::make_ref<observer_ctx>();
-						_ctx->fd = ctx->fd;
-						_ctx->fn_info[IOE_SLOT_READ].fn = ctx->fn_info[IOE_SLOT_READ].fn;
-						_ctx->poll_type = ctx->poll_type;
-						_ctx->flag = ctx->flag;
-						_ctx->r_state = S_READ_POSTED;
+					if ( WAWO_UNLIKELY(ctx->flag&IOE_INFINITE_WATCH_READ) == 0) {
 						unwatch(IOE_READ, ctx->fd);
-
-						WWRP<wawo::task::task> _t = wawo::make_ref<io_select_task>( _ctx->fn_info[IOE_SLOT_READ].fn, _ctx, static_cast<u8_t>(IOE_READ));
-						_t->run();
 					}
+					ctx->fn_info[IOE_SLOT_READ].fn();
 				}
 
 				if( FD_ISSET( fd, &fds_w ) ) {
 					FD_CLR(fd, &fds_w);
 					--ready_c;
 
-					if ( WAWO_LIKELY(ctx->flag&IOE_INFINITE_WATCH_WRITE)) {
-						{
-							lock_guard<spin_mutex> lg_ctx(ctx->w_mutex);
-							ctx->w_state = S_WRITE_POSTED;
-						}
-
-						WWRP<wawo::task::task> _t = wawo::make_ref<io_select_task>(ctx->fn_info[IOE_SLOT_WRITE].fn, ctx, static_cast<u8_t>(IOE_WRITE));
-						_t->run();
-					}
-					else {
-						WWRP<observer_ctx> _ctx = wawo::make_ref<observer_ctx>();
-						_ctx->fd = ctx->fd;
-						_ctx->fn_info[IOE_SLOT_WRITE].fn = ctx->fn_info[IOE_SLOT_WRITE].fn;
-						_ctx->poll_type = ctx->poll_type;
-						_ctx->flag = ctx->flag;
-						_ctx->w_state = S_WRITE_POSTED;
-
+					if ( WAWO_LIKELY(ctx->flag&IOE_INFINITE_WATCH_WRITE) == 0) {
 						unwatch(IOE_WRITE, ctx->fd);
-
-						WWRP<wawo::task::task> _t = wawo::make_ref<io_select_task>(_ctx->fn_info[IOE_SLOT_WRITE].fn, _ctx, static_cast<u8_t>(IOE_WRITE));
-						_t->run();
 					}
+					ctx->fn_info[IOE_SLOT_WRITE].fn();
 				}
 
 				if( FD_ISSET(fd, &fds_ex) ) {
 					FD_CLR(fd, &fds_ex);
 					--ready_c ;
-
 					WAWO_ASSERT(ctx->fd > 0);
-
-					fn_io_event_error fn = ctx->fn_info[IOE_SLOT_WRITE].err;
 
 					unwatch(IOE_READ, ctx->fd);
 					unwatch(IOE_WRITE, ctx->fd);//only trigger once
@@ -348,10 +312,10 @@ namespace wawo { namespace net { namespace observer_impl {
 					if (getrt == -1) {
 						ec = wawo::socket_get_last_errno();
 					}
+
 					ec = WAWO_NEGATIVE(ec);
-					WAWO_ASSERT(fn != NULL);
 					WAWO_ASSERT(ec != wawo::OK);
-					fn(ec);
+					ctx->fn_info[IOE_SLOT_WRITE].err(ec);
 				}
 			}
 		}

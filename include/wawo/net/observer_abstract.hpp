@@ -63,8 +63,8 @@ namespace wawo { namespace net {
 		};
 
 		observer_ctx() :
-			r_state(S_READ_IDLE),
-			w_state(S_WRITE_IDLE),
+//			r_state(S_READ_IDLE),
+//			w_state(S_WRITE_IDLE),
 			flag(0),
 			fd(-2)
 		{
@@ -74,10 +74,10 @@ namespace wawo { namespace net {
 			}
 		}
 
-		spin_mutex r_mutex;
-		spin_mutex w_mutex;
-		u8_t r_state;
-		u8_t w_state;
+//		spin_mutex r_mutex;
+//		spin_mutex w_mutex;
+//		u8_t r_state;
+//		u8_t w_state;
 		u8_t flag;
 		u8_t poll_type;
 		int fd;
