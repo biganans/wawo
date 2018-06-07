@@ -21,6 +21,7 @@ namespace wawo { namespace net {
 		public wawo::net::thread_run_object_abstract
 	{
 		typedef std::function<void()> fn_io_event_task;
+		typedef wawo::task::task io_task;
 
 		spin_mutex m_tq_mtx;
 		WWSP<TASK_Q> m_tq_standby;
@@ -60,7 +61,7 @@ namespace wawo { namespace net {
 		}
 		
 		inline void schedule(fn_io_event_task&& f) {
-			WWRP<wawo::task::lambda_task> _t = wawo::make_ref<wawo::task::lambda_task>( std::forward<fn_io_event_task>(f));
+			WWRP<io_task> _t = wawo::make_ref<io_task>( std::forward<fn_io_event_task>(f));
 			lock_guard<spin_mutex> lg(m_tq_mtx);
 			m_tq_standby->push(_t);
 		}

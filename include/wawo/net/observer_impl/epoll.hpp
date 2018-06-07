@@ -79,7 +79,7 @@ namespace wawo { namespace net { namespace observer_impl {
 			int rt = epoll_ctl(m_epfd, epoll_op, fd, &epEvent);
 
 			if (rt == -1) {
-				wawo::task::fn_lambda _lambda = [err, rt, cookie]() -> void {
+				wawo::task::fn_task_void _lambda = [err, rt, cookie]() -> void {
 					err(rt, cookie);
 				};
 				WAWO_SCHEDULER->schedule(_lambda);
@@ -245,7 +245,7 @@ namespace wawo { namespace net { namespace observer_impl {
 					unwatch(IOE_WRITE, ctx->fd);
 					unwatch(IOE_READ, ctx->fd);
 
-					wawo::task::fn_lambda _lambda = [_re,ec]() -> void {
+					wawo::task::fn_task_void _lambda = [_re,ec]() -> void {
 						if (_re.read.fn != NULL) {
 							_re.read.fn(_re.read.cookie);
 						}

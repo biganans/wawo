@@ -60,7 +60,6 @@ namespace wawo { namespace net {
 		struct _fn_info {
 			fn_io_event fn;
 			fn_io_event_error err;
-			WWRP<ref_base> cookie;
 		};
 
 		observer_ctx() :
@@ -72,7 +71,6 @@ namespace wawo { namespace net {
 			for (u8_t i = 0; i < IOE_SLOT_MAX; ++i) {
 				fn_info[i].fn = NULL;
 				fn_info[i].err = NULL;
-				fn_info[i].cookie = NULL;
 			}
 		}
 
@@ -90,18 +88,15 @@ namespace wawo { namespace net {
 		fn_io_event fn;
 		WWRP<ref_base> cookie;
 		fn_read_info() :
-			fn(NULL),
-			cookie(NULL)
+			fn(NULL)
 		{}
 		~fn_read_info() {}
 	};
 
 	struct fn_error_info {
 		fn_io_event_error fn;
-		WWRP<ref_base> cookie;
 		fn_error_info() :
-			fn(NULL),
-			cookie(NULL)
+			fn(NULL)
 		{}
 		~fn_error_info() {}
 	};
@@ -111,7 +106,6 @@ namespace wawo { namespace net {
 		fn_error_info rd_err;
 		fn_error_info wr_err;
 	};
-
 
 	typedef std::map<int, WWRP<observer_ctx>> observer_ctx_map;
 	typedef std::pair<int, WWRP<observer_ctx>> fd_ctx_pair;
@@ -127,11 +121,10 @@ namespace wawo { namespace net {
 		{
 		}
 
-		inline void ctx_update_for_watch(WWRP<observer_ctx>& ctx, u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err)
+		inline void ctx_update_for_watch(WWRP<observer_ctx>& ctx, u8_t const& flag, int const& fd, fn_io_event const& fn, fn_io_event_error const& err)
 		{
 			(void)fd;
 			WAWO_ASSERT(flag != 0);
-			WAWO_ASSERT(cookie != NULL);
 
 			WAWO_ASSERT(fn != NULL);
 			WAWO_ASSERT(err != NULL);
@@ -148,11 +141,9 @@ namespace wawo { namespace net {
 				TRACE_IOE("[observer_abstract][#%d]watch IOE_READ", ctx->fd);
 				WAWO_ASSERT(ctx->fn_info[IOE_SLOT_READ].fn == NULL);
 				WAWO_ASSERT(ctx->fn_info[IOE_SLOT_READ].err == NULL);
-				WAWO_ASSERT(ctx->fn_info[IOE_SLOT_READ].cookie == NULL);
 
 				ctx->fn_info[IOE_SLOT_READ].fn = fn;
 				ctx->fn_info[IOE_SLOT_READ].err = err;
-				ctx->fn_info[IOE_SLOT_READ].cookie = cookie;
 			}
 
 			if (flag&IOE_WRITE) {
@@ -163,11 +154,9 @@ namespace wawo { namespace net {
 				TRACE_IOE("[observer_abstract][#%d]watch IOE_WRITE", ctx->fd);
 				WAWO_ASSERT(ctx->fn_info[IOE_SLOT_WRITE].fn == NULL);
 				WAWO_ASSERT(ctx->fn_info[IOE_SLOT_WRITE].err == NULL);
-				WAWO_ASSERT(ctx->fn_info[IOE_SLOT_WRITE].cookie == NULL);
 
 				ctx->fn_info[IOE_SLOT_WRITE].fn = fn;
 				ctx->fn_info[IOE_SLOT_WRITE].err = err;
-				ctx->fn_info[IOE_SLOT_WRITE].cookie = cookie;
 			}
 		}
 
@@ -181,7 +170,6 @@ namespace wawo { namespace net {
 
 				ctx->fn_info[IOE_SLOT_READ].fn = NULL;
 				ctx->fn_info[IOE_SLOT_READ].err = NULL;
-				ctx->fn_info[IOE_SLOT_READ].cookie = NULL;
 			}
 
 			if ((flag&IOE_WRITE) && (ctx->flag)&flag) {
@@ -189,7 +177,6 @@ namespace wawo { namespace net {
 				ctx->flag &= ~(IOE_WRITE|IOE_INFINITE_WATCH_WRITE);
 				ctx->fn_info[IOE_SLOT_WRITE].fn = NULL;
 				ctx->fn_info[IOE_SLOT_WRITE].err = NULL;
-				ctx->fn_info[IOE_SLOT_WRITE].cookie = NULL;
 			}
 		}
 
@@ -203,21 +190,18 @@ namespace wawo { namespace net {
 					RE _re;
 
 					_re.rd_err.fn = ctx->fn_info[IOE_SLOT_READ].err;
-					_re.rd_err.cookie = ctx->fn_info[IOE_SLOT_READ].cookie;
-
 					_re.wr_err.fn = ctx->fn_info[IOE_SLOT_WRITE].err;
-					_re.wr_err.cookie = ctx->fn_info[IOE_SLOT_WRITE].cookie;
 
 					int ec = wawo::E_OBSERVER_EXIT;
-					wawo::task::fn_lambda _lambda = [_re, ec]() -> void {
+					wawo::task::fn_task_void _lambda = [_re, ec]() -> void {
 						if (_re.read.fn != NULL) {
-							_re.read.fn(_re.read.cookie);
+							_re.read.fn();
 						}
 						if (_re.rd_err.fn != NULL) {
-							_re.rd_err.fn(ec, _re.rd_err.cookie);
+							_re.rd_err.fn(ec);
 						}
 						if (_re.wr_err.fn != NULL) {
-							_re.wr_err.fn(ec, _re.wr_err.cookie);
+							_re.wr_err.fn(ec);
 						}
 					};
 
@@ -233,7 +217,7 @@ namespace wawo { namespace net {
 
 	public:
 		virtual void check_ioe() = 0;
-		virtual void watch(u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn,fn_io_event_error const& err ) = 0;
+		virtual void watch(u8_t const& flag, int const& fd, fn_io_event const& fn,fn_io_event_error const& err ) = 0;
 		virtual void unwatch(u8_t const& flag, int const& fd) = 0;
 	};
 }}

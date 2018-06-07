@@ -102,7 +102,7 @@ namespace wawo { namespace net {
 			switch( op.op ) {
 			case OP_WATCH:
 				{
-					m_impl->watch(op.flag, op.fd,op.cookie, op.fn, op.err);
+					m_impl->watch(op.flag, op.fd, op.fn, op.err);
 				}
 				break;
 			case OP_UNWATCH:

@@ -71,9 +71,9 @@ namespace wawo { namespace net {
 		ch->end_connect();
 	}
 	*/
-	void channel_handler_context::begin_read(u8_t const& async_flag , WWRP<ref_base> const& cookie, fn_io_event const& fn_read , fn_io_event_error const& fn_err ) {
+	void channel_handler_context::begin_read(u8_t const& async_flag , fn_io_event const& fn_read , fn_io_event_error const& fn_err ) {
 		WAWO_ASSERT(ch != NULL);
-		ch->begin_read(async_flag, cookie, fn_read, fn_err);
+		ch->begin_read(async_flag, fn_read, fn_err);
 	}
 
 	void channel_handler_context::end_read() {
@@ -81,9 +81,9 @@ namespace wawo { namespace net {
 		ch->end_read();
 	}
 
-	void channel_handler_context::begin_write(u8_t const& async_flag , WWRP<ref_base> const& cookie, fn_io_event const& fn_write, fn_io_event_error const& fn_err ) {
+	void channel_handler_context::begin_write(u8_t const& async_flag , fn_io_event const& fn_write, fn_io_event_error const& fn_err ) {
 		WAWO_ASSERT(ch != NULL);
-		ch->begin_write(async_flag, cookie, fn_write, fn_err);
+		ch->begin_write(async_flag, fn_write, fn_err);
 	}
 	void channel_handler_context::end_write() {
 		WAWO_ASSERT(ch != NULL);

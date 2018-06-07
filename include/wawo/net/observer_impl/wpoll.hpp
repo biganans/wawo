@@ -34,7 +34,7 @@ namespace wawo { namespace net { namespace observer_impl {
 			m_wpHandle = -1;
 		}
 
-		virtual void watch(u8_t const& flag, int const& fd,  WWRP<ref_base> const& cookie,fn_io_event const& fn,fn_io_event_error const& err) {
+		virtual void watch(u8_t const& flag, int const& fd,fn_io_event const& fn,fn_io_event_error const& err) {
 
 			WAWO_ASSERT(flag>0);
 			WAWO_ASSERT(fd>0);
@@ -66,8 +66,8 @@ namespace wawo { namespace net { namespace observer_impl {
 			int ret = wcp::instance()->wpoll_ctl( m_wpHandle, WPOLL_CTL_ADD, evt );
 			if (ret != wawo::OK) {
 
-				wawo::task::fn_lambda _lambda = [err, ret, cookie]() -> void {
-					err(ret, cookie);
+				wawo::task::fn_task_void _lambda = [err, ret]() -> void {
+					err(ret);
 				};
 				WAWO_SCHEDULER->schedule(_lambda);
 
@@ -76,7 +76,7 @@ namespace wawo { namespace net { namespace observer_impl {
 			}
 
 			WAWO_ASSERT( (ctx->flag&flag) == 0);
-			ctx_update_for_watch(ctx, flag, fd, cookie, fn, err);
+			ctx_update_for_watch(ctx, flag, fd, fn, err);
 			if (_to_add) {
 				m_ctxs.insert({fd, ctx});
 			}
@@ -141,10 +141,8 @@ namespace wawo { namespace net { namespace observer_impl {
 						events &= ~WPOLLIN;
 
 						WAWO_ASSERT(ctx->fn_info[IOE_SLOT_READ].fn != NULL);
-						WAWO_ASSERT(ctx->fn_info[IOE_SLOT_READ].cookie != NULL);
 
 						_re.read.fn = ctx->fn_info[IOE_SLOT_READ].fn;
-						_re.read.cookie = ctx->fn_info[IOE_SLOT_READ].cookie;
 					}
 
 					int ec;
@@ -157,23 +155,21 @@ namespace wawo { namespace net { namespace observer_impl {
 					ec = WAWO_NEGATIVE(ec);
 
 					_re.rd_err.fn = ctx->fn_info[IOE_SLOT_READ].err;
-					_re.rd_err.cookie = ctx->fn_info[IOE_SLOT_READ].cookie;
 
 					_re.wr_err.fn = ctx->fn_info[IOE_SLOT_WRITE].err;
-					_re.wr_err.cookie = ctx->fn_info[IOE_SLOT_WRITE].cookie;
 
 					unwatch(IOE_WRITE, ctx->fd);
 					unwatch(IOE_READ, ctx->fd);
 
-					wawo::task::fn_lambda _lambda = [_re, ec]() -> void {
+					wawo::task::fn_task_void _lambda = [_re, ec]() -> void {
 						if (_re.read.fn != NULL) {
-							_re.read.fn(_re.read.cookie);
+							_re.read.fn();
 						}
 						if (_re.rd_err.fn != NULL) {
-							_re.rd_err.fn(ec, _re.rd_err.cookie);
+							_re.rd_err.fn(ec);
 						}
 						if (_re.wr_err.fn != NULL) {
-							_re.wr_err.fn(ec, _re.wr_err.cookie);
+							_re.wr_err.fn(ec);
 						}
 					};
 
@@ -186,12 +182,10 @@ namespace wawo { namespace net { namespace observer_impl {
 					events &= ~WPOLLIN;
 
 					fn_io_event& fn = ctx->fn_info[IOE_SLOT_READ].fn;
-					WWRP<ref_base>& cookie = ctx->fn_info[IOE_SLOT_READ].cookie;
 
 					WAWO_ASSERT(fn != NULL);
-					WAWO_ASSERT(cookie != NULL);
 
-					WWRP<wawo::task::task> _t = wawo::make_ref<wawo::task::task>(fn, cookie);
+					WWRP<wawo::task::task> _t = wawo::make_ref<wawo::task::task>(fn);
 					if (WAWO_LIKELY(!(ctx->flag&IOE_INFINITE_WATCH_READ))) {
 						unwatch(IOE_READ, ctx->fd);
 					}
@@ -203,11 +197,9 @@ namespace wawo { namespace net { namespace observer_impl {
 					events &= ~WPOLLOUT;
 
 					fn_io_event& fn = ctx->fn_info[IOE_SLOT_WRITE].fn;
-					WWRP<ref_base>& cookie = ctx->fn_info[IOE_SLOT_WRITE].cookie;
 					WAWO_ASSERT(fn != NULL);
-					WAWO_ASSERT(cookie != NULL);
 
-					WWRP<wawo::task::task> _t = wawo::make_ref<wawo::task::task>(fn, cookie);
+					WWRP<wawo::task::task> _t = wawo::make_ref<wawo::task::task>(fn);
 
 					if (WAWO_LIKELY(!(ctx->flag&IOE_INFINITE_WATCH_WRITE))) {
 						unwatch(IOE_WRITE, ctx->fd);

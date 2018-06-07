@@ -55,6 +55,7 @@ do { \
 
 namespace wawo { namespace net {
 
+	/*
 	void wcb_pump_packs(WWRP<ref_base> const& cookie_) {
 		WAWO_ASSERT(cookie_ != NULL );
 		WWRP<WCB> wcb = wawo::static_pointer_cast<WCB>(cookie_);
@@ -69,6 +70,7 @@ namespace wawo { namespace net {
 		wcb->so->close();
 		WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", wcb->so->info().to_lencstr().cstr, code );
 	}
+	*/
 
 	inline wawo::u32_t four_tuple_hash(wawo::net::address const& addr1, wawo::net::address const& addr2) {
 		return ((wawo::u32_t)(addr1.hip()) * 59) ^
@@ -1256,7 +1258,15 @@ _begin_send:
 			{
 				m_wcb_map.insert(WCBPair(op.wcb->fd, op.wcb));
 				WAWO_ASSERT(op.wcb != NULL);
-				op.wcb->so->begin_read(WATCH_OPTION_INFINITE,op.wcb, wawo::net::wcb_pump_packs, wawo::net::wcb_socket_error);
+
+				fn_io_event read = std::bind(&WCB::pump_packs, op.wcb);
+				WWRP<WCB> __wcb_for_lambda = op.wcb;
+				fn_io_event_error err = [__wcb_for_lambda](int const& err) ->void {
+					WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", __wcb_for_lambda->so->info().to_lencstr().cstr, err);
+					__wcb_for_lambda->so->close();
+				};
+
+				op.wcb->so->begin_read(WATCH_OPTION_INFINITE, read, err);
 			}
 			break;
 			case OP_NONE:
@@ -1346,7 +1356,13 @@ _begin_send:
 			m_wcb_map.insert(WCBPair(fd, wcb));
 		}
 
-		wcb->so->begin_read(WATCH_OPTION_INFINITE, wcb, wawo::net::wcb_pump_packs, wawo::net::wcb_socket_error);
+		fn_io_event read = std::bind(&WCB::pump_packs, wcb);
+		fn_io_event_error err = [wcb](int const& err) ->void {
+			WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", wcb->so->info().to_lencstr().cstr, err);
+			wcb->so->close();
+		};
+		wcb->so->begin_read(WATCH_OPTION_INFINITE, read,err);
+
 		return wcb->connect(wawo::net::address(*((sockaddr_in*)addr)));
 	}
 
@@ -1402,7 +1418,13 @@ _begin_send:
 
 		lock_guard<shared_mutex> lg_wcb_map_mutex(m_wcb_map_mutex);
 		m_wcb_map.insert(WCBPair(fd, wcb));
-		wcb->so->begin_read(WATCH_OPTION_INFINITE,wcb, wawo::net::wcb_pump_packs, wawo::net::wcb_socket_error);
+
+		fn_io_event read = std::bind(&WCB::pump_packs, wcb);
+		fn_io_event_error err = [wcb](int const& err) ->void {
+			WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", wcb->so->info().to_lencstr().cstr, err);
+			wcb->so->close();
+		};
+		wcb->so->begin_read(WATCH_OPTION_INFINITE, read, err);
 
 		return wawo::OK;
 	}

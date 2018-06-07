@@ -70,8 +70,8 @@ namespace wawo { namespace task {
 			if (m_tasks_runner_wait_count > 0) m_condition.notify_one();
 		}
 
-		inline void schedule(fn_lambda const& lambda, u8_t const& priority = wawo::task::P_NORMAL) {
-			schedule(wawo::make_ref<lambda_task>(lambda), priority);
+		inline void schedule(fn_task_void const& task_fn_, u8_t const& priority = wawo::task::P_NORMAL) {
+			schedule(wawo::make_ref<task>(task_fn_), priority);
 		}
 
 		inline void schedule(WWRP<sequencial_task> const& ta) {

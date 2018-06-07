@@ -173,7 +173,7 @@ int main(int argc, char** argv) {
 	}
 
 	WWRP<wawo::net::channel_promise> ch_bind_promise = wawo::make_ref<wawo::net::channel_promise>();
-	lsocket->ch_bind(laddr.so_address, ch_bind_promise);
+	lsocket->async_bind(laddr.so_address, ch_bind_promise);
 	int bindrt = ch_bind_promise->get();
 	if (bindrt != wawo::OK) {
 		lsocket->close();
@@ -185,7 +185,7 @@ int main(int argc, char** argv) {
 
 	WWRP<wawo::net::channel_promise> ch_listen_promise = wawo::make_ref<wawo::net::channel_promise>();
 
-	lsocket->ch_listen(ch_listen_promise);
+	lsocket->async_listen(ch_listen_promise);
 	int listen_rt = ch_listen_promise->get();
 	if (listen_rt != wawo::OK) {
 		lsocket->close();

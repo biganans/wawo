@@ -41,7 +41,6 @@ namespace wawo { namespace net {
 			u8_t flag;
 			u8_t op;
 			int fd;
-			WWRP<ref_base> cookie;
 			fn_io_event fn;
 			fn_io_event_error err;
 		};
@@ -66,16 +65,16 @@ namespace wawo { namespace net {
 		void deinit() ;
 		void update();
 
-		inline void watch(u8_t const& flag,int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err ) {
+		inline void watch(u8_t const& flag,int const& fd ,fn_io_event const& fn, fn_io_event_error const& err ) {
 			WAWO_ASSERT(fd > 0);
 			lock_guard<spin_mutex> _lg(m_ops_mutex);
-			m_ops.push( {flag, OP_WATCH,fd, cookie,fn,err } );
+			m_ops.push( {flag, OP_WATCH,fd, fn,err } );
 		}
 
 		inline void unwatch(u8_t const& flag, int const& fd) {
 			WAWO_ASSERT(fd>0 );
 			lock_guard<spin_mutex> _lg(m_ops_mutex);
-			m_ops.push({ flag, OP_UNWATCH, fd, NULL, NULL, NULL });
+			m_ops.push({ flag, OP_UNWATCH, fd, NULL, NULL });
 		}
 
 	private:

@@ -43,8 +43,8 @@ namespace wawo { namespace net {
 			wawo::this_thread::nsleep(observer_checker_interval);
 		}
 
-		void watch(u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err) {
-			m_observer->watch(flag, fd, cookie, fn, err);
+		void watch(u8_t const& flag, int const& fd, fn_io_event const& fn, fn_io_event_error const& err) {
+			m_observer->watch(flag, fd, fn, err);
 		}
 		void unwatch(u8_t const& flag, int const& fd) {
 			m_observer->unwatch(flag, fd);

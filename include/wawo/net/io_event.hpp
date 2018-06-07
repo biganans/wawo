@@ -5,8 +5,8 @@
 #include <wawo/smart_ptr.hpp>
 
 namespace wawo { namespace net{
-	typedef void(*fn_io_event) (WWRP<ref_base> const& cookie);
-	typedef void(*fn_io_event_error) (int const& code, WWRP<ref_base> const& cookie);
+	typedef std::function<void()> fn_io_event;
+	typedef std::function<void(int const& code)> fn_io_event_error;
 }}
 
 #endif

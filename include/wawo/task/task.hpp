@@ -19,23 +19,22 @@ namespace wawo { namespace task {
 		virtual void run() = 0;
 	};
 
-	typedef void (*fn_task) ( WWRP<ref_base> const& cookie);
-	class task :
+	typedef std::function<void(WWRP<ref_base> const& cookie)> fn_task_cookie_1;
+	class task_with_cookie :
 		public task_abstract {
-
 	private:
-		fn_task m_run_func;
+		fn_task_cookie_1 m_run_func;
 		WWRP<ref_base> m_cookie ;
 
 	public:
-		explicit task(fn_task const& run, WWRP<ref_base> const& cookie ):
+		explicit task_with_cookie(fn_task_cookie_1 const& run, WWRP<ref_base> const& cookie ):
 			task_abstract(),
 			m_run_func(run),
 			m_cookie(cookie)
 		{
 		}
 
-		~task() {}
+		~task_with_cookie() {}
 
 		//for run
 		void run() {
@@ -44,14 +43,14 @@ namespace wawo { namespace task {
 		}
 	};
 
-	typedef std::function<void ()> fn_lambda ;
+	typedef std::function<void()> fn_task_void ;
 
-	class lambda_task:
+	class task:
 		public task_abstract {
-		WAWO_DECLARE_NONCOPYABLE(lambda_task)
-		fn_lambda m_run_fn ;
+		WAWO_DECLARE_NONCOPYABLE(task)
+			fn_task_void m_run_fn ;
 	public:
-		explicit lambda_task( fn_lambda const& run) :
+		explicit task(fn_task_void const& run) :
 			task_abstract(),
 			m_run_fn(run)
 		{
