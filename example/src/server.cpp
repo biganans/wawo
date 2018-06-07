@@ -138,16 +138,17 @@ public:
 
 	void accepted(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::net::channel> const& ch )
 	{
-		//WWRP<wawo::net::channel_handler_abstract> example = wawo::make_ref<example_handler>();
-		//ch->pipeline()->add_last(example);
+		WWRP<wawo::net::channel_handler_abstract> example = wawo::make_ref<example_handler>();
+		ch->pipeline()->add_last(example);
 
-//		WWRP<wawo::net::channel_handler_abstract> echo = wawo::make_ref<my_echo>();
-//		ch->pipeline()->add_last(echo);
-
+		WWRP<wawo::net::channel_handler_abstract> echo = wawo::make_ref<my_echo>();
+		ch->pipeline()->add_last(echo);
+		
+		/*
 		WWRP<wawo::net::handler::http> h = wawo::make_ref<my_http_handler>();
 		h->bind<wawo::net::handler::fn_http_message_header_end_t > (wawo::net::handler::http_event::E_HEADER_COMPLETE, &http_server_handler::on_header_end, m_http_server, std::placeholders::_1, std::placeholders::_2);
 		ch->pipeline()->add_last(h);
-
+		*/
 		(void) ctx;
 	}
 };
@@ -172,9 +173,8 @@ int main(int argc, char** argv) {
 		return open;
 	}
 
-	WWRP<wawo::net::channel_promise> ch_bind_promise = wawo::make_ref<wawo::net::channel_promise>();
-	lsocket->async_bind(laddr.so_address, ch_bind_promise);
-	int bindrt = ch_bind_promise->get();
+	WWRP<wawo::net::channel_future> ch_bind_f = lsocket->async_bind(laddr.so_address);
+	int bindrt = ch_bind_f->get();
 	if (bindrt != wawo::OK) {
 		lsocket->close();
 		return bindrt;
@@ -183,18 +183,16 @@ int main(int argc, char** argv) {
 	WWRP<wawo::net::channel_handler_abstract> l_handler = wawo::make_ref<listen_server_handler>();
 	lsocket->pipeline()->add_last(l_handler);
 
-	WWRP<wawo::net::channel_promise> ch_listen_promise = wawo::make_ref<wawo::net::channel_promise>();
-
-	lsocket->async_listen(ch_listen_promise);
-	int listen_rt = ch_listen_promise->get();
+	WWRP<wawo::net::channel_future> ch_listen_f = lsocket->async_listen();
+	int listen_rt = ch_listen_f->get();
 	if (listen_rt != wawo::OK) {
 		lsocket->close();
 		return listen_rt;
 	}
 
 	app.run_for();
-	WWRP<wawo::net::channel_promise> ch_promise_close = wawo::make_ref<wawo::net::channel_promise>();
-	lsocket->ch_close(ch_promise_close);
+	WWRP<wawo::net::channel_future> ch_close_f = lsocket->ch_close();
+	WAWO_ASSERT(ch_close_f->get() == wawo::OK);
 	lsocket->ch_close_future()->wait();
 
 	WAWO_ASSERT(lsocket->ch_close_future()->is_done());

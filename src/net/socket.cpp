@@ -53,13 +53,18 @@ namespace wawo { namespace net {
 		return rt;
 	}
 
-	void socket::async_bind(wawo::net::address const& addr, WWRP<channel_promise>const& ch_promise) {
+	WWRP<channel_future> socket::async_bind(wawo::net::address const& address) {
+		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+		return async_bind(address, ch_promise);
+	}
+
+	WWRP<channel_future> socket::async_bind(wawo::net::address const& addr, WWRP<channel_promise>const& ch_promise) {
 		WWRP<socket> _this(this);
 		if (!event_loop()->in_event_loop()) {
 			event_loop()->schedule([_this,addr,ch_promise]() ->void {
 				_this->async_bind(addr, ch_promise);
 			});
-			return;
+			return ch_promise;
 		}
 
 		WAWO_ASSERT(m_state == S_OPENED);
@@ -69,20 +74,26 @@ namespace wawo { namespace net {
 		if (bindrt == 0) {
 			m_state = S_BINDED;
 			WAWO_TRACE_SOCKET("[socket][%s]socket bind ok", info().to_lencstr().cstr );
-			return;
+			return ch_promise;
 		}
 		WAWO_ASSERT(bindrt <0);
 		WAWO_ERR("[socket][%s]socket bind error, errno: %d", info().to_lencstr().cstr, bindrt);
+		return ch_promise;
 	}
 
-	void socket::async_listen(WWRP<channel_promise> const& ch_promise, int const& backlog) {
+	WWRP<channel_future> socket::async_listen(int const& backlog ) {
+		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+		return async_listen(ch_promise, backlog);
+	}
+
+	WWRP<channel_future> socket::async_listen(WWRP<channel_promise> const& ch_promise, int const& backlog ) {
 
 		WWRP<socket> _this(this);
 		if (!event_loop()->in_event_loop()) {
 			event_loop()->schedule([_this, ch_promise, backlog]() ->void {
 				_this->async_listen(ch_promise, backlog);
 			});
-			return;
+			return ch_promise;
 		}
 
 		WAWO_ASSERT(m_state == S_BINDED);
@@ -91,7 +102,7 @@ namespace wawo { namespace net {
 		int rt = socket_base::listen(backlog);
 		if (rt != wawo::OK) {
 			ch_promise->set_success(rt);
-			return;
+			return ch_promise;
 		}
 
 		if (!is_nonblocking()) {
@@ -102,7 +113,7 @@ namespace wawo { namespace net {
 		}
 		if (rt != wawo::OK) {
 			ch_promise->set_success(rt);
-			return;
+			return ch_promise;
 		}
 
 		m_state = S_LISTEN;
@@ -112,6 +123,7 @@ namespace wawo { namespace net {
 		begin_read(WATCH_OPTION_INFINITE, _fn_accept, _fn_err);
 		WAWO_TRACE_SOCKET("[socket][%s]socket listen success", info().to_lencstr().cstr);
 		ch_promise->set_success(rt);
+		return ch_promise;
 	}
 
 	u32_t socket::accept( WWRP<socket> sockets[], u32_t const& size, int& ec_o ) {
@@ -146,29 +158,42 @@ namespace wawo { namespace net {
 		return count ;
 	}
 
-	int socket::async_connect(address const& addr) {
+	WWRP<channel_future> socket::async_connect(address const& addr) {
+		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+		return async_connect(addr, ch_promise);
+	}
+
+	WWRP<channel_future> socket::async_connect(address const& addr, WWRP<channel_promise> const& ch_promise) {
+
+		if (!event_loop()->in_event_loop()) {
+			WWRP<socket> _so(this);
+			event_loop()->schedule([_so,addr,ch_promise]() {
+				_so->async_connect(addr,ch_promise);
+			});
+			return ch_promise;
+		}
+
 		int rt = turnon_nonblocking();
 		if (rt != wawo::OK) {
-			return rt;
+			ch_promise->set_success(rt);
+			return ch_promise;
 		}
 
-		rt = connect(addr);
+		rt = socket::connect(addr);
+		ch_promise->set_success(rt);
 		if (rt == wawo::OK) {
-			WWRP<channel> ch(this);
-			wawo::task::fn_task_void _lambda = [ch]() {
-				ch->ch_connected();
-			};
-
-			WWRP<wawo::task::task> _t = wawo::make_ref<wawo::task::task>(_lambda);
-			event_loop()->schedule(_t);
-			return wawo::OK;
-		} else if (rt == wawo::E_SOCKET_CONNECTING) {
+			channel::ch_connected();
+			return ch_promise;
+		}
+		if (rt == wawo::E_SOCKET_CONNECTING) {
 			TRACE_IOE("[socket_base][%s][async_connect]watch(IOE_WRITE)", info().to_lencstr().cstr );
-			begin_connect(NULL);
-			return wawo::OK;
+			socket::begin_connect();
+			return ch_promise;
 		}
 
-		return rt;
+		//channel::ch_errno(rt);
+		//channel::ch_error();
+		return ch_promise;
 	}
 
 }} //end of ns

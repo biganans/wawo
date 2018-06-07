@@ -128,9 +128,14 @@ namespace wawo { namespace net {
 		int connect(address const& addr);
 		u32_t accept(WWRP<socket> sockets[], u32_t const& size, int& ec_o);
 
-		int async_connect(address const& addr);
-		void async_bind(wawo::net::address const& address, WWRP<channel_promise> const& ch_promise);
-		void async_listen( WWRP<channel_promise> const& ch_promise, int const& backlog = 128 );
+		WWRP<channel_future> async_connect(address const& addr);
+		WWRP<channel_future> async_connect(address const& addr, WWRP<channel_promise> const& ch_promise);
+
+		WWRP<channel_future> async_bind(wawo::net::address const& addr);
+		WWRP<channel_future> async_bind(wawo::net::address const& addr, WWRP<channel_promise> const& ch_promise);
+
+		WWRP<channel_future> async_listen(int const& backlog = 128);
+		WWRP<channel_future> async_listen( WWRP<channel_promise> const& ch_promise, int const& backlog = 128 );
 
 	private:
 		inline void __cb_async_connected() {

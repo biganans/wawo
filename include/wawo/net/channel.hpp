@@ -114,45 +114,53 @@ namespace wawo { namespace net {
 			m_pipeline = NULL;
 		}
 
-#define CH_ACTION_IMPL_CH_PROMISE_1(_NAME) \
-		inline void ch_##_NAME(WWRP<channel_promise> const& ch_promise) { \
+#define CH_FUTURE_ACTION_IMPL_CH_PROMISE_1(_NAME) \
+		inline WWRP<channel_future> ch_##_NAME() { \
+			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(); \
+			return ch_##_NAME(ch_promise); \
+		} \
+		inline WWRP<channel_future> ch_##_NAME(WWRP<channel_promise> const& ch_promise) { \
 			WAWO_ASSERT( m_io_event_loop != NULL ); \
 			if(!m_io_event_loop->in_event_loop()) { \
 				WWRP<channel> _ch(this); \
 				m_io_event_loop->schedule([_ch, ch_promise]() { \
 					_ch->ch_##_NAME(ch_promise); \
 				}); \
-				return; \
+				return ch_promise; \
 			} \
 			if(m_pipeline == NULL) { \
 				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
-				return; \
+				return ch_promise; \
 			} \
-			m_pipeline->##_NAME(ch_promise); \
+			return m_pipeline->##_NAME(ch_promise); \
 		} \
 
-		CH_ACTION_IMPL_CH_PROMISE_1(close)
-		CH_ACTION_IMPL_CH_PROMISE_1(shutdown_read)
-		CH_ACTION_IMPL_CH_PROMISE_1(shutdown_write)
+		CH_FUTURE_ACTION_IMPL_CH_PROMISE_1(close)
+		CH_FUTURE_ACTION_IMPL_CH_PROMISE_1(shutdown_read)
+		CH_FUTURE_ACTION_IMPL_CH_PROMISE_1(shutdown_write)
 
-#define CH_ACTION_IMPL_PACKET_1_CH_PROMISE_1(_NAME) \
-		inline void ch_##_NAME(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {\
+#define CH_FUTURE_ACTION_IMPL_PACKET_1_CH_PROMISE_1(_NAME) \
+		inline WWRP<channel_future> ch_##_NAME(WWRP<packet> const& outlet) { \
+			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(); \
+			return ch_##_NAME(outlet,ch_promise); \
+		} \
+		inline WWRP<channel_future> ch_##_NAME(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {\
 			WAWO_ASSERT( m_io_event_loop != NULL ); \
 			if(!m_io_event_loop->in_event_loop()) { \
 				WWRP<channel> _ch(this); \
 				m_io_event_loop->schedule([_ch,outlet, ch_promise]() { \
 					_ch->ch_##_NAME(outlet,ch_promise); \
 				}); \
-				return; \
+				return ch_promise; \
 			} \
 			if(m_pipeline == NULL) { \
 				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
-				return; \
+				return ch_promise; \
 			} \
-			m_pipeline->##_NAME(outlet,ch_promise); \
+			return m_pipeline->##_NAME(outlet,ch_promise); \
 		} \
 
-		CH_ACTION_IMPL_PACKET_1_CH_PROMISE_1(write)
+		CH_FUTURE_ACTION_IMPL_PACKET_1_CH_PROMISE_1(write)
 
 #define CH_ACTION_IMPL_VOID(_NAME) \
 		inline void ch_##_NAME() {\
@@ -208,6 +216,7 @@ namespace wawo { namespace net {
 		virtual int turnoff_nodelay() { return wawo::OK; }
 		
 		virtual bool is_active() const = 0;
+
 		/*virtual bool is_read_shutdowned() const = 0;
 		virtual bool is_write_shutdowned() const = 0;
 		virtual bool is_readwrite_shutdowned() const = 0;

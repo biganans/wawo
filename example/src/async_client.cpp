@@ -81,8 +81,8 @@ int main( int argc, char** argv ) {
 		WWRP<wawo::net::channel_handler_abstract> hello = wawo::make_ref<hello_handler>( raddr,20 );
 		so->pipeline()->add_last(hello);
 
-		rt = so->async_connect(raddr.so_address);
-		WAWO_ASSERT(rt == wawo::OK);
+		WWRP<wawo::net::channel_future> f = so->async_connect(raddr.so_address);
+		WAWO_ASSERT(f->get() == wawo::OK);
 	}
 
 	application.run_for();
