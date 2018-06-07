@@ -153,71 +153,57 @@ namespace wawo { namespace net { namespace observer_impl {
 
 			observer_ctx_map::iterator it = m_ctxs.begin();
 			while( it != m_ctxs.end() ) {
-
 				WWRP<observer_ctx> const& ctx = it->second ;
-				{
-					//unique_lock<spin_mutex> ulock(ctx->r_mutex, wawo::thread::try_to_lock);
-					//bool lock_ok = ulock.own_lock();
-
-					//if ( lock_ok && (ctx->flag&IOE_READ) && (ctx->r_state == S_READ_IDLE)) {
-					if(ctx->flag&IOE_READ) {
-						if (fd_added_count == WAWO_SELECT_BUCKET_ITEM_COUNT) {
-							++idx;
-							WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
-							fd_added_count = 0;
-							m_ctxs_to_check[idx]->max_fd_v = 0;
-						}
-
-						FD_SET((ctx->fd), &m_ctxs_to_check[idx]->fds_r);
-						m_ctxs_to_check[idx]->ctxs[m_ctxs_to_check[idx]->count++] = ctx;
-
-						if (ctx->fd > m_ctxs_to_check[idx]->max_fd_v) {
-							m_ctxs_to_check[idx]->max_fd_v = ctx->fd;
-						}
-						++fd_added_count;
+				if(ctx->flag&IOE_READ) {
+					if (fd_added_count == WAWO_SELECT_BUCKET_ITEM_COUNT) {
+						++idx;
+						WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
+						fd_added_count = 0;
+						m_ctxs_to_check[idx]->max_fd_v = 0;
 					}
+
+					FD_SET((ctx->fd), &m_ctxs_to_check[idx]->fds_r);
+					m_ctxs_to_check[idx]->ctxs[m_ctxs_to_check[idx]->count++] = ctx;
+
+					if (ctx->fd > m_ctxs_to_check[idx]->max_fd_v) {
+						m_ctxs_to_check[idx]->max_fd_v = ctx->fd;
+					}
+					++fd_added_count;
 				}
 
-				{
-					//unique_lock<spin_mutex> ulock(ctx->w_mutex, wawo::thread::try_to_lock);
-					//bool lock_ok = ulock.own_lock();
-					//if ( lock_ok && (ctx->flag&IOE_WRITE) && (ctx->fn_info[IOE_SLOT_WRITE].fn != NULL) && (ctx->w_state == S_WRITE_IDLE)) {
-					if(ctx->flag&IOE_WRITE && ctx->fn_info[IOE_SLOT_WRITE].fn != NULL ) {
-						if (fd_added_count == WAWO_SELECT_BUCKET_ITEM_COUNT) {
-							++idx;
-							WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
-							fd_added_count = 0;
-							m_ctxs_to_check[idx]->max_fd_v = 0;
-						}
-
-						FD_SET((ctx->fd), &m_ctxs_to_check[idx]->fds_w);
-						m_ctxs_to_check[idx]->ctxs[m_ctxs_to_check[idx]->count++] = ctx;
-
-						if (ctx->fd > m_ctxs_to_check[idx]->max_fd_v) {
-							m_ctxs_to_check[idx]->max_fd_v = ctx->fd;
-						}
-
-						++fd_added_count;
+				if(ctx->flag&IOE_WRITE && ctx->fn_info[IOE_SLOT_WRITE].fn != NULL ) {
+					if (fd_added_count == WAWO_SELECT_BUCKET_ITEM_COUNT) {
+						++idx;
+						WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
+						fd_added_count = 0;
+						m_ctxs_to_check[idx]->max_fd_v = 0;
 					}
+
+					FD_SET((ctx->fd), &m_ctxs_to_check[idx]->fds_w);
+					m_ctxs_to_check[idx]->ctxs[m_ctxs_to_check[idx]->count++] = ctx;
+
+					if (ctx->fd > m_ctxs_to_check[idx]->max_fd_v) {
+						m_ctxs_to_check[idx]->max_fd_v = ctx->fd;
+					}
+
+					++fd_added_count;
+				}
 				
-					//if (lock_ok && (ctx->flag&IOE_WRITE) && (ctx->fn_info[IOE_SLOT_WRITE].err != NULL) && (ctx->w_state == S_WRITE_IDLE)) {
-					if (ctx->flag&IOE_WRITE && ctx->fn_info[IOE_SLOT_WRITE].err != NULL) {
-					//for async connect
-						if (fd_added_count == WAWO_SELECT_BUCKET_ITEM_COUNT) {
-							++idx;
-							WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
-							fd_added_count = 0;
-							m_ctxs_to_check[idx]->max_fd_v = 0;
-						}
-
-						FD_SET((ctx->fd), &m_ctxs_to_check[idx]->fds_ex);
-						m_ctxs_to_check[idx]->ctxs[m_ctxs_to_check[idx]->count++] = ctx;
-
-						if (ctx->fd > m_ctxs_to_check[idx]->max_fd_v) {
-							m_ctxs_to_check[idx]->max_fd_v = ctx->fd;
-						}
-						++fd_added_count;
+				if (ctx->flag&IOE_WRITE && ctx->fn_info[IOE_SLOT_WRITE].err != NULL) {
+					if (fd_added_count == WAWO_SELECT_BUCKET_ITEM_COUNT) {
+						++idx;
+						WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
+						fd_added_count = 0;
+						m_ctxs_to_check[idx]->max_fd_v = 0;
 					}
+
+					FD_SET((ctx->fd), &m_ctxs_to_check[idx]->fds_ex);
+					m_ctxs_to_check[idx]->ctxs[m_ctxs_to_check[idx]->count++] = ctx;
+
+					if (ctx->fd > m_ctxs_to_check[idx]->max_fd_v) {
+						m_ctxs_to_check[idx]->max_fd_v = ctx->fd;
+					}
+					++fd_added_count;
 				}
 
 				++it;
