@@ -184,7 +184,7 @@ namespace wawo {
 	public:
 		void set_success(T const& v) {
 			lock_guard<mutex> lg(m_mutex);
-			future<T>::state s = future<T>::S_IDLE;
+			typename future<T>::state s = future<T>::S_IDLE;
 			int ok = future<T>::m_state.compare_exchange_strong( s, future<T>::S_SUCCESS, std::memory_order_acq_rel);
 			WAWO_ASSERT(ok);
 

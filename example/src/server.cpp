@@ -54,52 +54,6 @@ public:
 	}
 };
 
-class http_server_handler:
-	public wawo::ref_base
-{
-public:
-	void on_header_end( WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<wawo::net::protocol::http::message> const& m )
-	{
-		//WAWO_INFO("[%d]", ctx->ch->ch_id());
-		bool close_after_write = false;
-		WWSP<wawo::net::protocol::http::message> resp = wawo::make_shared<wawo::net::protocol::http::message>();
-
-		resp->status_code = 200;
-		resp->status = "OK";
-
-		resp->h.set("server", "wawo");
-
-		if (m->h.have("Connection") && m->h.get("Connection") == "Keep-Alive") {
-			resp->h.set("Connection", "Keep-Alive");
-		} else {
-			resp->h.set("Connection", "close");
-			close_after_write = true;
-		}
-
-		WWRP<wawo::packet> req;
-		m->encode(req);
-		m->body = wawo::len_cstr( (char*)req->begin(), req->len() );
-
-		WWRP<wawo::packet> outp;
-		resp->encode(outp);
-
-		ctx->write(outp);
-
-		if(close_after_write) {
-			ctx->close();
-		}
-	}
-};
-
-class my_http_handler :
-	public wawo::net::handler::http
-{
-public:
-	~my_http_handler() {}
-	void read_shutdowned(WWRP<wawo::net::channel_handler_context> const& ctx) {
-		ctx->close();
-	}
-};
 
 class my_echo :
 	public wawo::net::handler::echo,
@@ -127,11 +81,9 @@ class listen_server_handler :
 	public wawo::net::channel_activity_handler_abstract,
 	public wawo::net::channel_acceptor_handler_abstract
 {
-	WWRP<http_server_handler> m_http_server;
 public:
 	listen_server_handler()
 	{
-		m_http_server = wawo::make_ref<http_server_handler>();
 	}
 
 	~listen_server_handler() {}
@@ -143,12 +95,6 @@ public:
 
 		WWRP<wawo::net::channel_handler_abstract> echo = wawo::make_ref<my_echo>();
 		ch->pipeline()->add_last(echo);
-		
-		/*
-		WWRP<wawo::net::handler::http> h = wawo::make_ref<my_http_handler>();
-		h->bind<wawo::net::handler::fn_http_message_header_end_t > (wawo::net::handler::http_event::E_HEADER_COMPLETE, &http_server_handler::on_header_end, m_http_server, std::placeholders::_1, std::placeholders::_2);
-		ch->pipeline()->add_last(h);
-		*/
 		(void) ctx;
 	}
 };
