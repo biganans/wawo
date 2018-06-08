@@ -7,7 +7,7 @@ class send_hello :
 public:
 	void connected(WWRP<wawo::net::channel_handler_context> const& ctx) {
 		WAWO_INFO("client connected");
-		WWSP<wawo::packet> hello = wawo::make_shared<wawo::packet>();
+		WWRP<wawo::packet> hello = wawo::make_ref<wawo::packet>();
 		const char* hello_str = "hello there";
 		hello->write((wawo::byte_t*)hello_str, wawo::strlen(hello_str) );
 		ctx->write( hello );
@@ -33,6 +33,9 @@ int main(int argc, char** argv) {
 		WWRP<wawo::net::channel_handler_abstract> dhh = wawo::make_ref<wawo::net::handler::dh_symmetric_encrypt>();
 		so->pipeline()->add_last(dhh);
 
+		WWRP<wawo::net::channel_handler_abstract> dumpjn = wawo::make_ref<wawo::net::handler::dump_in_len>();
+		so->pipeline()->add_last(dumpjn);
+
 		WWRP<wawo::net::channel_handler_abstract> echoh = wawo::make_ref<wawo::net::handler::echo>();
 		so->pipeline()->add_last(echoh);
 
@@ -40,9 +43,10 @@ int main(int argc, char** argv) {
 		so->pipeline()->add_last(sendh);
 
 		wawo::net::address addr("127.0.0.1", 22311);
-		rt = so->async_connect(addr);
+		WWRP < wawo::net::channel_future> f_connect = so->async_connect(addr);
 
-		WAWO_ASSERT(rt == wawo::OK);
+		WAWO_ASSERT(f_connect->get() == wawo::OK );
+		so->ch_close_future()->wait();
 	}
 
 	app.run_for();

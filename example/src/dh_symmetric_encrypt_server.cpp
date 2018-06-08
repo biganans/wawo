@@ -37,22 +37,25 @@ int main(int argc, char** argv) {
 	}
 
 	wawo::net::address addr("0.0.0.0", 22311);
-	rt = so->bind(addr);
+	WWRP<wawo::net::channel_future> f_bind = so->async_bind(addr);
 
-	if (rt != wawo::OK) {
-		so->close();
+	if (f_bind->get() != wawo::OK) {
+		so->ch_close();
 		return rt;
 	}
 
 	WWRP<wawo::net::channel_handler_abstract> h = wawo::make_ref<listen_handler>();
 	so->pipeline()->add_last(h);
 
-	rt = so->listen();
+	WWRP<wawo::net::channel_future> f_listen = so->async_listen();
 
-	if (rt != wawo::OK) {
-		so->close();
+	if (f_listen->get() != wawo::OK) {
+		so->ch_close();
 		return rt;
 	}
 
 	app.run_for();
+	so->ch_close_future()->wait();
+
+	return wawo::OK;
 }

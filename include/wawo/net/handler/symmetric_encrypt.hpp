@@ -44,7 +44,7 @@ namespace wawo { namespace net { namespace handler {
 			int rt = m_cipher->encrypt(outlet, encrypted);
 			WAWO_ASSERT(rt == wawo::OK);
 
-			ctx->write(encrypted);
+			ctx->write(encrypted, ch_promise);
 		}
 	};
 }}}

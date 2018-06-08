@@ -485,13 +485,13 @@ namespace wawo {namespace net {namespace handler {
 			}
 		}
 
-		void write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) {
+		void write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise ) {
 			WAWO_ASSERT(m_dhstate == DH_DATA_TRANSFER);
 			WAWO_ASSERT(m_cipher != NULL);
 			WWRP<packet> encrypted;
 			int encrt = m_cipher->encrypt(outlet, encrypted);
 			WAWO_ASSERT(encrt == wawo::OK);
-			ctx->write(encrypted);
+			ctx->write(encrypted, ch_promise);
 		}
 	};
 }}}

@@ -180,22 +180,22 @@ namespace wawo { namespace net {
 		}
 
 		rt = socket::connect(addr);
-		ch_promise->set_success(rt);
 		if (rt == wawo::OK) {
+			ch_promise->set_success(wawo::OK);
 			channel::ch_connected();
 			return ch_promise;
-		}
-		if (rt == wawo::E_SOCKET_CONNECTING) {
+		} else if (rt == wawo::E_SOCKET_CONNECTING) {
 			TRACE_IOE("[socket_base][%s][async_connect]watch(IOE_WRITE)", info().to_lencstr().cstr );
+			ch_promise->set_success(wawo::OK);
 			socket::begin_connect();
 			return ch_promise;
+		} else {
+			ch_promise->set_success(rt);
+			channel::ch_errno(rt);
+			channel::ch_error();
+			channel::ch_close();
+			return ch_promise;
 		}
-
-		channel::ch_errno(rt);
-		channel::ch_error();
-
-		channel::ch_close();
-		return ch_promise;
 	}
 
 }} //end of ns

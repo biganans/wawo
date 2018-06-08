@@ -16,7 +16,7 @@ public:
 	void write(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& outlet,WWRP<channel_promise> const& ch_promise)
 	{
 		WAWO_INFO(">>> %s", wawo::len_cstr( (char*)outlet->begin(), outlet->len() ).cstr );
-		ctx->write(outlet);
+		ctx->write(outlet,ch_promise);
 	}
 };
 
