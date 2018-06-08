@@ -43,10 +43,16 @@ namespace wawo { namespace net {
 		WWRP<channel_promise> ch_promise;
 	};
 
+	typedef std::function<void(WWRP<channel>const& ch)> fn_accepted_channel_initializer;
+	typedef std::function<void(WWRP<channel>const& ch)> fn_dial_channel_initializer;
+
 	class socket:
 		public socket_base,
 		public channel
 	{
+		//friend class wcp;
+		//friend struct WCB;
+
 		u8_t	m_state;
 		u8_t	m_rflag;
 		u8_t	m_wflag;
@@ -55,6 +61,8 @@ namespace wawo { namespace net {
 
 		u64_t m_delay_wp;
 		u64_t m_async_wt;
+		
+		fn_accepted_channel_initializer m_fn_accepted;
 
 		std::queue<socket_outbound_entry> m_outbound_entry_q;
 		u32_t m_noutbound_bytes;
@@ -73,7 +81,6 @@ namespace wawo { namespace net {
 			m_async_wt(0),
 			m_noutbound_bytes(0)
 		{
-			channel::ch_opened();
 			_init();
 		}
 
@@ -110,6 +117,8 @@ namespace wawo { namespace net {
 			_deinit();
 		}
 		
+		int open();
+
 		/*
 		inline bool is_connected() const { return m_state == S_CONNECTED; }
 		inline bool is_connecting() const { return (m_state == S_CONNECTING); }
@@ -124,27 +133,32 @@ namespace wawo { namespace net {
 		inline int turnon_nodelay() { return socket_base::turnon_nodelay(); }
 		inline int turnoff_nodelay() { return socket_base::turnoff_nodelay(); }
 
-		int open();
-		int connect(address const& addr);
+		WWRP<wawo::net::channel_future> listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, int const& backlog = 128 );
+		WWRP<wawo::net::channel_future> listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise , int const& backlog = 128 );
+
+		WWRP<channel_future> dial(address const& addr, fn_dial_channel_initializer const& initializer);
+		WWRP<channel_future> dial(address const& addr, fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise);
+
+		int bind(address const& addr);
+		int listen(int const& backlog = 128);
+
 		u32_t accept(WWRP<socket> sockets[], u32_t const& size, int& ec_o);
-
-		WWRP<channel_future> async_connect(address const& addr);
-		WWRP<channel_future> async_connect(address const& addr, WWRP<channel_promise> const& ch_promise);
-
-		WWRP<channel_future> async_bind(wawo::net::address const& addr);
-		WWRP<channel_future> async_bind(wawo::net::address const& addr, WWRP<channel_promise> const& ch_promise);
-
-		WWRP<channel_future> async_listen(int const& backlog = 128);
-		WWRP<channel_future> async_listen( WWRP<channel_promise> const& ch_promise, int const& backlog = 128 );
+		int connect(address const& addr);
 
 	private:
+		inline int close() {
+			int rt = socket_base::close();
+			m_state = S_CLOSED;
+			return rt;
+		}
+
 		inline void __cb_async_connected() {
 			WAWO_ASSERT(is_nonblocking());
 			WAWO_ASSERT(m_state == S_CONNECTING);
 			m_state = S_CONNECTED;
 			socket::end_connect();
 
-			channel::ch_connected();
+			channel::ch_fire_connected();
 			begin_read(WATCH_OPTION_INFINITE);
 		}
 
@@ -154,11 +168,12 @@ namespace wawo { namespace net {
 			socket::end_connect();
 
 			ch_errno(ec);
-			ch_error();
+			ch_fire_error();
 			ch_close();
 		}
 
 		void __cb_async_accept() {
+			WAWO_ASSERT(m_fn_accepted != NULL);
 			int ec;
 			do {
 				WWRP<socket> accepted_sockets[WAWO_MAX_ACCEPTS_ONE_TIME];
@@ -181,8 +196,8 @@ namespace wawo { namespace net {
 						continue;
 					}
 
-					channel::ch_accepted(accepted_sockets[i]);
-					accepted_sockets[i]->ch_connected();
+					m_fn_accepted(accepted_sockets[i]);
+					accepted_sockets[i]->ch_fire_connected();
 					accepted_sockets[i]->begin_read(WATCH_OPTION_INFINITE);
 				}
 			} while (ec == wawo::E_TRY_AGAIN);
@@ -468,7 +483,7 @@ namespace wawo { namespace net {
 					ch_promise
 				});
 				begin_write();
-				channel::ch_write_block();
+				channel::ch_fire_write_block();
 				return;
 			}
 
@@ -504,12 +519,12 @@ namespace wawo { namespace net {
 				WAWO_ASSERT(m_outbound_entry_q.size() == 0);
 				if (m_wflag&WATCH_WRITE) {
 					end_write();
-					channel::ch_write_unblock();
+					channel::ch_fire_write_unblock();
 				}
 			} else if (_errno == wawo::E_CHANNEL_WRITE_BLOCK ) {
 				if ((m_wflag&WATCH_WRITE) == 0) {
 					begin_write();
-					channel::ch_write_block();
+					channel::ch_fire_write_block();
 				} else {
 					//clear old before setup
 					end_write();
@@ -534,7 +549,7 @@ namespace wawo { namespace net {
 			m_rflag |= SHUTDOWN_RD;
 			int rt = socket_base::shutdown(SHUT_RD);
 			end_read();
-			channel::ch_read_shutdowned();
+			channel::ch_fire_read_shutdowned();
 			__rdwr_check();
 			ch_promise->set_success(rt);
 		}
@@ -549,7 +564,7 @@ namespace wawo { namespace net {
 			m_wflag |= SHUTDOWN_WR;
 			int rt = socket_base::shutdown(SHUT_WR);
 			end_write();
-			channel::ch_write_shutdowned();
+			channel::ch_fire_write_shutdowned();
 			__rdwr_check();
 			ch_promise->set_success(rt);
 		}
@@ -566,7 +581,6 @@ namespace wawo { namespace net {
 			if (is_listener()) {
 				end_read();
 				m_state = S_CLOSED;
-				channel::ch_closed();
 				channel::ch_close_promise()->set_success(rt);
 				ch_promise->set_success(rt);
 				return;
@@ -574,7 +588,7 @@ namespace wawo { namespace net {
 
 			if (m_state != S_CONNECTED) {
 				m_state = S_CLOSED;
-				channel::ch_closed();
+				channel::ch_fire_closed();
 				channel::ch_close_promise()->set_success(rt);
 				ch_promise->set_success(rt);
 				return;
@@ -583,7 +597,7 @@ namespace wawo { namespace net {
 			m_state = S_CLOSED;
 			if (!(m_rflag&SHUTDOWN_RD)) {
 				m_rflag |= SHUTDOWN_RD;
-				channel::ch_read_shutdowned();
+				channel::ch_fire_read_shutdowned();
 				end_read();
 			}
 
@@ -593,7 +607,7 @@ namespace wawo { namespace net {
 				end_write();
 			}
 
-			channel::ch_closed();
+			channel::ch_fire_closed();
 			channel::ch_close_promise()->set_success(rt);
 			ch_promise->set_success(rt);
 		}

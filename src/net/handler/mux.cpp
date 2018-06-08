@@ -48,7 +48,7 @@ namespace wawo { namespace net { namespace handler {
 			}
 
 			invoke<fn_mux_stream_accepted_t>(E_MUX_CH_STREAM_ACCEPTED,WWRP<mux>(this),s);
-			s->ch_connected();
+			s->ch_fire_connected();
 			return;
 		}
 

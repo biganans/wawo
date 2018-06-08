@@ -35,13 +35,11 @@ public:
 	void async_spawn() {
 		WWRP<wawo::net::socket> so = wawo::make_ref<wawo::net::socket>(m_addrinfo.so_family, m_addrinfo.so_type, m_addrinfo.so_protocol);
 
-		int rt = so->open();
-		WAWO_ASSERT(rt == wawo::OK);
+		WWRP<wawo::net::channel_future> f = so->dial(m_addrinfo.so_address, [&](WWRP<wawo::net::channel> const& ch) {
+			ch->pipeline()->add_last(WWRP<wawo::net::channel_handler_abstract>(this));
+		});
 
-		so->pipeline()->add_last( WWRP<wawo::net::channel_handler_abstract>(this) );
-		WWRP<wawo::net::channel_future> f = so->async_connect(m_addrinfo.so_address );
-
-		WAWO_ASSERT(f->get() == wawo::OK || f->get() == wawo::E_SOCKET_CONNECTING );
+		WAWO_ASSERT(f->get() == wawo::OK );
 	}
 
 	void connected( WWRP<wawo::net::channel_handler_context> const& ctx ) {
@@ -75,14 +73,12 @@ int main( int argc, char** argv ) {
 	{
 		WWRP<wawo::net::socket> so = wawo::make_ref<wawo::net::socket>(raddr.so_family, raddr.so_type, raddr.so_protocol);
 
-		int rt = so->open();
-		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
+		WWRP<wawo::net::channel_future> f = so->dial(raddr.so_address, [raddr](WWRP<wawo::net::channel> const& ch) {
+			WWRP<wawo::net::channel_handler_abstract> hello = wawo::make_ref<hello_handler>(raddr, 2000);
+			ch->pipeline()->add_last(hello);
+		});
 
-		WWRP<wawo::net::channel_handler_abstract> hello = wawo::make_ref<hello_handler>( raddr,20 );
-		so->pipeline()->add_last(hello);
-
-		WWRP<wawo::net::channel_future> f = so->async_connect(raddr.so_address);
-		WAWO_ASSERT(f->get() == wawo::OK || f->get() == wawo::E_SOCKET_CONNECTING);
+		WAWO_ASSERT(f->get() == wawo::OK);
 	}
 
 	application.run_for();

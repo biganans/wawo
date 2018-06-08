@@ -229,6 +229,15 @@ namespace wawo { namespace net {
 		void _socket_fn_init();
 		int set_options(int const& options);
 
+	protected:
+		int open();
+		int shutdown(int const& flag);
+		int close();
+		int bind(address const& addr);
+		int listen(int const& backlog);
+		int accept(address& addr);
+		int connect(address const& addr);
+
 	public:
 		explicit socket_base(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt = OPTION_NONE); //by pass a connected socket fd
 		explicit socket_base(s_family const& family, s_type const& type, s_protocol const& protocol, option const& opt = OPTION_NONE);
@@ -302,13 +311,8 @@ namespace wawo { namespace net {
 		int reuse_addr();
 		int reuse_port();
 
-		int open();
-		int shutdown(int const& flag);
-		int close();
-		int bind(address const& addr);
-		int listen(int const& backlog);
-		int accept(address& addr);
-		int connect(address const& addr);
+
+
 		u32_t send(byte_t const* const buffer, u32_t const& size, int& ec_o, int const& flag = 0);
 		u32_t recv(byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag = 0);
 		u32_t sendto(byte_t const* const buff, wawo::u32_t const& size, const address& addr, int& ec_o, int const& flag = 0);

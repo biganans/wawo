@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27428.2015
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ws_server", "ws_server.vcxproj", "{43198CA5-D846-4871-8CB0-D8F49F64918A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wawo.2015", "..\..\..\..\projects\msvc\wawo.2015.vcxproj", "{CDCE0809-6C77-480B-8912-09C043B9C268}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wawo_with_websocket.2015", "..\..\..\..\projects\msvc\wawo_with_websocket.2015.vcxproj", "{CDCE0809-6C77-480B-8912-09C043B9C268}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

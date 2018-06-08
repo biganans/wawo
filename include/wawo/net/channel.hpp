@@ -17,6 +17,10 @@ namespace wawo { namespace net {
 		WWRP<channel_promise> m_ch_close_future;
 		int m_errno;
 
+	protected:
+		inline WWRP<channel_promise> ch_close_promise() {
+			return m_ch_close_future;
+		}
 	public:
 		channel(WWRP<io_event_loop> const& loop):
 			m_pipeline(NULL),
@@ -55,10 +59,6 @@ namespace wawo { namespace net {
 			return m_ch_close_future;
 		}
 
-		inline WWRP<channel_promise> ch_close_promise() {
-			return m_ch_close_future;
-		}
-
 #define CH_FIRE_ACTION_IMPL_PACKET_1(_NAME,_P) \
 		inline void ch_##_NAME(WWRP<packet> const& _P) { \
 			WAWO_ASSERT(m_pipeline != NULL); \
@@ -67,21 +67,13 @@ namespace wawo { namespace net {
 
 		CH_FIRE_ACTION_IMPL_PACKET_1(read, income)
 
-#define CH_FIRE_ACTION_IMPL_CHANNEL_1(_NAME,_CH) \
-		inline void ch_##_NAME(WWRP<channel> const& _CH) { \
-			WAWO_ASSERT(m_pipeline != NULL); \
-			m_pipeline->fire_##_NAME(_CH); \
-		} \
-
-		CH_FIRE_ACTION_IMPL_CHANNEL_1(accepted, ch)
-
 #define CH_FIRE_ACTION_IMPL_0(_NAME) \
-		inline void ch_##_NAME() { \
+		inline void ch_fire_##_NAME() { \
 			WAWO_ASSERT(m_io_event_loop != NULL ); \
 			if (!m_io_event_loop->in_event_loop()) { \
 					WWRP<channel> _ch(this); \
 					m_io_event_loop->schedule([_ch]() { \
-						_ch->ch_##_NAME(); \
+						_ch->ch_fire_##_NAME(); \
 				}); \
 				return ;\
 			} \
@@ -97,7 +89,7 @@ namespace wawo { namespace net {
 		CH_FIRE_ACTION_IMPL_0(write_block)
 		CH_FIRE_ACTION_IMPL_0(write_unblock)
 
-		inline void ch_opened() {
+		inline void ch_fire_opened() {
 			WAWO_ASSERT(m_io_event_loop != NULL);
 			m_pipeline = wawo::make_ref<channel_pipeline>(WWRP<channel>(this));
 			m_pipeline->init();
@@ -106,7 +98,7 @@ namespace wawo { namespace net {
 			m_ch_close_future = wawo::make_ref<channel_promise>();
 		}
 
-		inline void ch_closed() {
+		inline void ch_fire_closed() {
 			WAWO_ASSERT(m_io_event_loop != NULL);
 			WAWO_ASSERT(m_pipeline != NULL);
 			m_pipeline->fire_closed();
@@ -114,17 +106,21 @@ namespace wawo { namespace net {
 			m_pipeline = NULL;
 		}
 
-#define CH_FUTURE_ACTION_IMPL_CH_PROMISE_1(_NAME) \
-		inline WWRP<channel_future> ch_##_NAME() { \
+		inline bool is_ch_closed() const {
+			return m_pipeline == NULL;
+		}
+
+#define CH_FUTURE_ACTION_IMPL_CH_PROMISE_1(NAME) \
+		inline WWRP<channel_future> ch_##NAME() { \
 			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(); \
-			return ch_##_NAME(ch_promise); \
+			return ch_##NAME(ch_promise); \
 		} \
-		inline WWRP<channel_future> ch_##_NAME(WWRP<channel_promise> const& ch_promise) { \
+		inline WWRP<channel_future> ch_##NAME(WWRP<channel_promise> const& ch_promise) { \
 			WAWO_ASSERT( m_io_event_loop != NULL ); \
 			if(!m_io_event_loop->in_event_loop()) { \
 				WWRP<channel> _ch(this); \
 				m_io_event_loop->schedule([_ch, ch_promise]() { \
-					_ch->ch_##_NAME(ch_promise); \
+					_ch->ch_##NAME(ch_promise); \
 				}); \
 				return ch_promise; \
 			} \
@@ -132,7 +128,7 @@ namespace wawo { namespace net {
 				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
 				return ch_promise; \
 			} \
-			return m_pipeline->##_NAME(ch_promise); \
+			return m_pipeline->##NAME(ch_promise); \
 		} \
 
 		CH_FUTURE_ACTION_IMPL_CH_PROMISE_1(close)
@@ -183,20 +179,12 @@ namespace wawo { namespace net {
 
 		//could be called directly in any place
 		virtual int ch_id() const = 0; //called by context in event_loop
+		
 		virtual void ch_write_impl(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) = 0;
 		virtual void ch_flush_impl() = 0;
 		virtual void ch_shutdown_read_impl(WWRP<channel_promise> const& ch_promise) = 0;
 		virtual void ch_shutdown_write_impl(WWRP<channel_promise> const& ch_promise) = 0;
 		virtual void ch_close_impl(WWRP<channel_promise> const& ch_promise) = 0;
-
-		/*
-		virtual void begin_connect(WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL) {
-			(void)cookie;
-			(void)fn_connected;
-			(void)fn_err;
-		}
-		virtual void end_connect() {}
-		*/
 
 		virtual void begin_read(u8_t const& async_flag = 0, fn_io_event const& fn_read = NULL, fn_io_event_error const& fn_err = NULL) {
 			(void)async_flag;

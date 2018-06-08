@@ -221,19 +221,6 @@ namespace wcp_test {
 
 WWRP<wcp_test::StreamNode> g_streamnode;
 
-class server_listen_handler :
-	public wawo::net::channel_acceptor_handler_abstract
-{
-public:
-	void accepted(WWRP < wawo::net::channel_handler_context> const& ctx, WWRP<wawo::net::channel> const& ch) {
-		//WWRP<wawo::net::socket_handler_abstract> h = wawo::make_ref<StreamNode>();
-		ch->pipeline()->add_last(g_streamnode);
-
-		(void)ctx;
-	}
-};
-
-
 int main(int argc, char** argv) {
 
 	wawo::app _app;
@@ -256,20 +243,15 @@ int main(int argc, char** argv) {
 	}
 
 	WWRP<wawo::net::socket> so = wawo::make_ref<wawo::net::socket>(sbc, laddr.so_family, laddr.so_type, laddr.so_protocol);
+	WWRP<wawo::net::channel_future> f_listen = so->listen_on(laddr.so_address, [](WWRP < wawo::net::channel> const& ch) {
+		ch->pipeline()->add_last(g_streamnode);
+	});
 
-	rt = so->open();
-	WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
+	so->ch_close_future()->add_listener([so](WWRP<wawo::net::channel_future> const& f) {
+		WAWO_INFO("[#%d]listener closed", so->ch_id());
+	});
 
-	rt = so->bind(laddr.so_address);
-	WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
-
-	WWRP<wawo::net::channel_handler_abstract> h = wawo::make_ref<server_listen_handler>();
-	so->pipeline()->add_last(h);
-
-	rt = so->listen();
-	WAWO_ASSERT(rt == wawo::OK);
-
-	_app.run_for();
+	so->ch_close_future()->wait();
 	g_streamnode->stop();
 
 	WAWO_INFO("[roger]server exiting...");

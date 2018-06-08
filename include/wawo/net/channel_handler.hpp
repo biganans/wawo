@@ -28,13 +28,6 @@ namespace wawo { namespace net {
 		virtual void write_unblock(WWRP<channel_handler_context> const& ctx);
 	};
 
-	class channel_acceptor_handler_abstract :
-		virtual public channel_handler_abstract
-	{
-	public:
-		virtual void accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch) = 0;
-	};
-
 	class channel_inbound_handler_abstract:
 		virtual public channel_handler_abstract
 	{

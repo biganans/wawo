@@ -9,18 +9,6 @@
 
 #include <wawo/net/io_event_loop.hpp>
 
-#define PIPELINE_VOID_FIRE_CHANNEL_1(NAME) \
-	inline void fire_##NAME(WWRP<channel> const& ch) {\
-		WAWO_ASSERT(m_io_event_loop != NULL); \
-		if(!m_io_event_loop->in_event_loop()) {\
-			WWRP<channel_pipeline> _p(this); \
-			m_io_event_loop->schedule([_p,ch](){ \
-				_p->fire_##NAME(ch); \
-			}); \
-			return ; \
-		}\
-		m_head->fire_##NAME(ch); \
-	}\
 
 #define PIPELINE_VOID_FIRE_VOID(NAME) \
 	inline void fire_##NAME() {\
@@ -120,7 +108,6 @@ namespace wawo { namespace net {
 	//class channel;
 	class channel_pipeline :
 		public ref_base,
-		public channel_acceptor_invoker_abstract,
 		public channel_activity_invoker_abstract,
 		public channel_inbound_invoker_abstract,
 		public channel_outbound_invoker_abstract
@@ -142,7 +129,6 @@ namespace wawo { namespace net {
 		WWRP<channel_pipeline> add_last(WWRP<channel_handler_abstract> const& h);
 
 	protected:
-		PIPELINE_VOID_FIRE_CHANNEL_1(accepted)
 		PIPELINE_VOID_FIRE_VOID(connected)
 		PIPELINE_VOID_FIRE_VOID(closed)
 		PIPELINE_VOID_FIRE_VOID(error)

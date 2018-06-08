@@ -49,14 +49,15 @@ int main(int argc, char** argv) {
 	WWRP<wawo::net::channel_handler_abstract> lhandler = wawo::make_ref<ws_server_handler>();
 	so->pipeline()->add_last( lhandler );
 
-	rt = so->listen();
+	WWRP<wawo::net::channel_future> f_listen = so->async_listen();
 
-	if (rt != wawo::OK) {
+	if ( f_listen->get() != wawo::OK) {
 		so->close();
 		return rt;
 	}
 
 	app.run_for();
+	so->ch_close_future()->wait();
 
 	WAWO_INFO("main end");
 	return wawo::OK;

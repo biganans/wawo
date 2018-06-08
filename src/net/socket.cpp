@@ -23,22 +23,20 @@ namespace wawo { namespace net {
 
 	int socket::open() {
 		WAWO_ASSERT(m_state == S_CLOSED);
-		channel::ch_opened();
 		int rt = socket_base::open();
 		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
+		channel::ch_fire_opened();
 		m_state = S_OPENED;
 		m_rflag = 0;
 		m_wflag = 0;
 		return rt;
 	}
 
-	int socket::connect(address const& addr)
-	{
+	int socket::connect(address const& addr) {
 		if (!(m_state == S_OPENED || m_state == S_BINDED)) {
 			return wawo::E_INVALID_STATE;
 		}
 		int rt= socket_base::connect(addr);
-
 		if (rt == wawo::OK) {
 			m_state = S_CONNECTED;
 			return wawo::OK;
@@ -49,81 +47,119 @@ namespace wawo { namespace net {
 			m_state = S_CONNECTING;
 			return wawo::E_SOCKET_CONNECTING;
 		}
-
 		return rt;
 	}
 
-	WWRP<channel_future> socket::async_bind(wawo::net::address const& address) {
-		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
-		return async_bind(address, ch_promise);
-	}
-
-	WWRP<channel_future> socket::async_bind(wawo::net::address const& addr, WWRP<channel_promise>const& ch_promise) {
-		WWRP<socket> _this(this);
-		if (!event_loop()->in_event_loop()) {
-			event_loop()->schedule([_this,addr,ch_promise]() ->void {
-				_this->async_bind(addr, ch_promise);
-			});
-			return ch_promise;
-		}
-
+	int socket::bind(wawo::net::address const& addr) {
+		WAWO_ASSERT(event_loop()->in_event_loop());
 		WAWO_ASSERT(m_state == S_OPENED);
-
-		int bindrt = socket_base::bind(addr);
-		ch_promise->set_success(bindrt);
-		if (bindrt == 0) {
-			m_state = S_BINDED;
-			WAWO_TRACE_SOCKET("[socket][%s]socket bind ok", info().to_lencstr().cstr );
-			return ch_promise;
-		}
-		WAWO_ASSERT(bindrt <0);
-		WAWO_ERR("[socket][%s]socket bind error, errno: %d", info().to_lencstr().cstr, bindrt);
-		return ch_promise;
+		int rt = socket_base::bind(addr);
+		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
+		m_state = S_BINDED;
+		WAWO_TRACE_SOCKET("[socket][%s]socket bind ok", info().to_lencstr().cstr );
+		return wawo::OK;
 	}
 
-	WWRP<channel_future> socket::async_listen(int const& backlog ) {
-		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
-		return async_listen(ch_promise, backlog);
-	}
-
-	WWRP<channel_future> socket::async_listen(WWRP<channel_promise> const& ch_promise, int const& backlog ) {
-
-		WWRP<socket> _this(this);
-		if (!event_loop()->in_event_loop()) {
-			event_loop()->schedule([_this, ch_promise, backlog]() ->void {
-				_this->async_listen(ch_promise, backlog);
-			});
-			return ch_promise;
-		}
+	int socket::listen( int const& backlog ) {
+		WAWO_ASSERT(event_loop()->in_event_loop());
 
 		WAWO_ASSERT(m_state == S_BINDED);
 		WAWO_ASSERT(fd() > 0);
 
 		int rt = socket_base::listen(backlog);
-		if (rt != wawo::OK) {
-			ch_promise->set_success(rt);
-			return ch_promise;
-		}
-
-		if (!is_nonblocking()) {
-			rt = turnon_nonblocking();
-			if (rt != wawo::OK) {
-				close();
-			}
-		}
-		if (rt != wawo::OK) {
-			ch_promise->set_success(rt);
-			return ch_promise;
-		}
+		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 
 		m_state = S_LISTEN;
-		fn_io_event _fn_accept = std::bind(&socket::__cb_async_accept, WWRP<socket>(this));
-		fn_io_event_error _fn_err = std::bind(&socket::__cb_async_error, WWRP<socket>(this), std::placeholders::_1);
-
-		begin_read(WATCH_OPTION_INFINITE, _fn_accept, _fn_err);
 		WAWO_TRACE_SOCKET("[socket][%s]socket listen success", info().to_lencstr().cstr);
+		return wawo::OK;
+	}
+
+	WWRP<wawo::net::channel_future> socket::listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, int const& backlog) {
+		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+		return socket::listen_on(addr, fn_accepted, ch_promise, backlog);
+	}
+
+	WWRP<wawo::net::channel_future> socket::listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise, int const& backlog ) {
+		if (!event_loop()->in_event_loop()) {
+			WWRP<socket> _this(this);
+			event_loop()->schedule([_this, addr, fn_accepted, backlog, ch_promise]() ->void {
+				_this->listen_on(addr, fn_accepted, ch_promise, backlog);
+			});
+			return ch_promise;
+		}
+		int rt = socket::open();
+		if (rt != wawo::OK) {
+			ch_promise->set_success(rt);
+			return ch_promise;
+		}
+		rt = turnon_nonblocking();
+		if (rt != wawo::OK) {
+			ch_promise->set_success(rt);
+			return ch_promise;
+		}
+
+		rt = socket::bind(addr);
+		if (rt != wawo::OK) {
+			ch_promise->set_success(rt);
+			return ch_promise;
+		}
+		rt = socket::listen(backlog);
 		ch_promise->set_success(rt);
+
+		if (rt == wawo::OK) {
+			fn_io_event _fn_accept = std::bind(&socket::__cb_async_accept, WWRP<socket>(this));
+			fn_io_event_error _fn_err = std::bind(&socket::__cb_async_error, WWRP<socket>(this), std::placeholders::_1);
+			begin_read(WATCH_OPTION_INFINITE, _fn_accept, _fn_err);
+		}
+
+		m_fn_accepted = fn_accepted;
 		return ch_promise;
+	}
+
+	WWRP<channel_future> socket::dial(address const& addr, fn_dial_channel_initializer const& initializer) {
+		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+		return dial(addr, initializer, ch_promise);
+	}
+
+	WWRP<channel_future> socket::dial(address const& addr, fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise) {
+		if (!event_loop()->in_event_loop()) {
+			WWRP<socket> _this(this);
+			event_loop()->schedule([_this, initializer, addr, ch_promise]() ->void {
+				_this->dial(addr, initializer, ch_promise);
+			});
+			return ch_promise;
+		}
+
+		int rt = socket::open();
+		if (rt != wawo::OK) {
+			ch_promise->set_success(rt);
+			return ch_promise;
+		}
+		rt = turnon_nonblocking();
+		if (rt != wawo::OK) {
+			ch_promise->set_success(rt);
+			return ch_promise;
+		}
+
+		initializer( WWRP<channel>(this) );
+
+		rt = socket::connect(addr);
+		if (rt == wawo::OK) {
+			ch_promise->set_success(wawo::OK);
+			channel::ch_fire_connected();
+			return ch_promise;
+		} else if (rt == wawo::E_SOCKET_CONNECTING) {
+			TRACE_IOE("[socket_base][%s][async_connect]watch(IOE_WRITE)", info().to_lencstr().cstr);
+			ch_promise->set_success(wawo::OK);
+			socket::begin_connect();
+			return ch_promise;
+		} else {
+			ch_promise->set_success(rt);
+			channel::ch_errno(rt);
+			channel::ch_fire_error();
+			channel::ch_close();
+			return ch_promise;
+		}
 	}
 
 	u32_t socket::accept( WWRP<socket> sockets[], u32_t const& size, int& ec_o ) {
@@ -148,7 +184,18 @@ namespace wawo { namespace net {
 			}
 
 			WWRP<socket> so = wawo::make_ref<socket>(fd, addr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
-			sockets[count++] = so;
+
+			int fire_open_ok = true;
+			try {
+				so->ch_fire_opened();
+			} catch (...) {
+				fire_open_ok = false;
+			}
+			if (fire_open_ok) {
+				sockets[count++] = so;
+			} else {
+				so->close();
+			}
 		} while( count<size );
 
 		if( count == size ) {
@@ -156,46 +203,6 @@ namespace wawo { namespace net {
 		}
 
 		return count ;
-	}
-
-	WWRP<channel_future> socket::async_connect(address const& addr) {
-		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
-		return async_connect(addr, ch_promise);
-	}
-
-	WWRP<channel_future> socket::async_connect(address const& addr, WWRP<channel_promise> const& ch_promise) {
-
-		if (!event_loop()->in_event_loop()) {
-			WWRP<socket> _so(this);
-			event_loop()->schedule([_so,addr,ch_promise]() {
-				_so->async_connect(addr,ch_promise);
-			});
-			return ch_promise;
-		}
-
-		int rt = turnon_nonblocking();
-		if (rt != wawo::OK) {
-			ch_promise->set_success(rt);
-			return ch_promise;
-		}
-
-		rt = socket::connect(addr);
-		if (rt == wawo::OK) {
-			ch_promise->set_success(wawo::OK);
-			channel::ch_connected();
-			return ch_promise;
-		} else if (rt == wawo::E_SOCKET_CONNECTING) {
-			TRACE_IOE("[socket_base][%s][async_connect]watch(IOE_WRITE)", info().to_lencstr().cstr );
-			ch_promise->set_success(wawo::OK);
-			socket::begin_connect();
-			return ch_promise;
-		} else {
-			ch_promise->set_success(rt);
-			channel::ch_errno(rt);
-			channel::ch_error();
-			channel::ch_close();
-			return ch_promise;
-		}
 	}
 
 }} //end of ns

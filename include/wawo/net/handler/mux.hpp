@@ -133,7 +133,7 @@ namespace wawo { namespace net { namespace handler {
 
 			WWRP<mux_stream> s(this);
 			auto l = [s]() ->void {
-				s->ch_connected();
+				s->ch_fire_connected();
 			};
 			WWRP<wawo::task::task> t = wawo::make_ref<wawo::task::task>(l);
 			event_loop()->schedule(t);
@@ -337,7 +337,7 @@ end_write_frame:
 			ch_shutdown_write_impl(ch_promise_w);
 
 			m_state = SS_CLOSED;
-			ch_closed();
+			ch_fire_closed();
 			ch_promise->set_success(wawo::OK);
 		}
 
@@ -358,7 +358,7 @@ end_write_frame:
 				} while (wrt != wawo::OK);
 			}
 
-			ch_read_shutdowned();
+			ch_fire_read_shutdowned();
 			__rdwr_shutdown_check();
 
 			ch_promise->set_success(wawo::OK);
@@ -381,7 +381,7 @@ end_write_frame:
 				}
 			} while ((!(m_wflag |= STREAM_WRITE_SHUTDOWN_CALLED)));
 
-			ch_read_shutdowned();
+			ch_fire_read_shutdowned();
 			__rdwr_shutdown_check();
 			ch_promise->set_success(wawo::OK);
 		}

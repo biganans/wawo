@@ -30,6 +30,7 @@ namespace wawo { namespace net {
 	{
 		WWRP<channel_handler_context> _hctx = m_tail;
 		while (_hctx != NULL ) {
+			_hctx->m_flag |= (CH_REMOVED|CH_CH_CLOSED);
 			_hctx->N = NULL;
 			WWRP<channel_handler_context> TMP = _hctx->P;
 			_hctx->P = NULL;

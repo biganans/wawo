@@ -178,12 +178,11 @@ namespace wawo { namespace net { namespace protocol { namespace ipv4 {
 
 		int _init_socket()
 		{
-
 			if (m_so == NULL) {
-			m_so = wawo::make_ref<wawo::net::socket>(wawo::net::F_AF_INET, wawo::net::T_RAW, wawo::net::P_ICMP);
-			WAWO_ALLOC_CHECK(m_so, sizeof(wawo::net::socket));
-			int openrt = m_so->open();
-			return openrt;
+				m_so = wawo::make_ref<wawo::net::socket>(wawo::net::F_AF_INET, wawo::net::T_RAW, wawo::net::P_ICMP);
+				WAWO_ALLOC_CHECK(m_so, sizeof(wawo::net::socket));
+				int openrt = m_so->open();
+				return openrt;
 			}
 
 			return wawo::OK;

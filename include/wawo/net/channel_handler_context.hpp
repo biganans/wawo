@@ -1,23 +1,10 @@
 #ifndef _WAWO_NET_CHANNEL_HANDLER_CONTEXT_HPP
 #define _WAWO_NET_CHANNEL_HANDLER_CONTEXT_HPP
 
-#include <wawo/net/channel_invoker.hpp>
-#include <wawo/net/channel_handler.hpp>
 #include <wawo/net/io_event_loop.hpp>
 
-#define VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_CHANNEL_1(CTX_CLASS_NAME,CHANNEL_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
-	inline void fire_##NAME##( WWRP<CHANNEL_NAME> const& ch_ ) { \
-		WWRP<CTX_CLASS_NAME> _ctx = CTX_CLASS_NAME::_find_next(HANDLER_FLAG); \
-		WAWO_ASSERT(_ctx != NULL); \
-		_ctx->invoke_##NAME##(ch_); \
-	} \
-	inline void invoke_##NAME##( WWRP<CHANNEL_NAME> const& ch_) { \
-		WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
-		WAWO_ASSERT(m_h != NULL); \
-		WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
-		WAWO_ASSERT(_h != NULL); \
-		_h->##NAME##(WWRP<CTX_CLASS_NAME>(this),ch_); \
-	}
+#include <wawo/net/channel_invoker.hpp>
+#include <wawo/net/channel_handler.hpp>
 
 #define VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
 	inline void fire_##NAME##() { \
@@ -63,6 +50,10 @@
 			}); \
 			return ch_promise; \
 		} \
+		if( WAWO_UNLIKELY(m_flag&CH_CH_CLOSED) ) {\
+			ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
+			return ch_promise; \
+		} \
 		WWRP<CTX_CLASS_NAME> _ctx = CTX_CLASS_NAME::_find_prev(HANDLER_FLAG); \
 		WAWO_ASSERT(_ctx != NULL); \
 		_ctx->invoke_##NAME##(p,ch_promise); \
@@ -88,6 +79,10 @@
 			}); \
 			return ch_promise; \
 		} \
+		if( WAWO_UNLIKELY(m_flag&CH_CH_CLOSED) ) {\
+			ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
+			return ch_promise; \
+		} \
 		WWRP<CTX_CLASS_NAME> _ctx = CTX_CLASS_NAME::_find_prev(HANDLER_FLAG); \
 		WAWO_ASSERT(_ctx != NULL); \
 		_ctx->invoke_##NAME##(ch_promise); \
@@ -109,6 +104,9 @@
 			}); \
 			return; \
 		} \
+		if( WAWO_UNLIKELY(m_flag&CH_CH_CLOSED) ) {\
+			return ; \
+		} \
 		WWRP<CTX_CLASS_NAME> _ctx = CTX_CLASS_NAME::_find_prev(HANDLER_FLAG); \
 		WAWO_ASSERT(_ctx != NULL); \
 		_ctx->invoke_##NAME##(); \
@@ -124,15 +122,15 @@
 namespace wawo { namespace net {
 
 	enum channel_handler_flag {
-		CH_ACCEPTOR	= 0x01,
-		CH_ACTIVITY	= 0x02,
-		CH_INBOUND	= 0x04,
-		CH_OUTBOUND	= 0x08,
+		CH_ACTIVITY	= 0x01,
+		CH_INBOUND	= 0x02,
+		CH_OUTBOUND	= 0x04,
+		CH_REMOVED = 0x08,
+		CH_CH_CLOSED = 0x10
 	};
 
 	class channel_handler_context :
 		public ref_base,
-		public channel_acceptor_invoker_abstract,
 		public channel_activity_invoker_abstract,
 		public channel_inbound_invoker_abstract,
 		public channel_outbound_invoker_abstract
@@ -143,7 +141,7 @@ namespace wawo { namespace net {
 		WWRP<channel_handler_context> N;
 		WWRP<channel_handler_abstract> m_h;
 		WWRP<io_event_loop> m_io_event_loop;
-		u8_t m_flag;
+		u16_t m_flag;
 
 		inline WWRP<channel_handler_context> _find_next(channel_handler_flag const& f) {
 			WWRP<channel_handler_context> ctx = WWRP<channel_handler_context>(this);
@@ -168,8 +166,6 @@ namespace wawo { namespace net {
 
 		channel_handler_context(WWRP<channel> const& ch_, WWRP<channel_handler_abstract> const& h);
 		virtual ~channel_handler_context();
-
-		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_CHANNEL_1(channel_handler_context, channel, accepted, CH_ACCEPTOR, channel_acceptor_handler_abstract)
 
 		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, connected, CH_ACTIVITY, channel_activity_handler_abstract)
 		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, closed, CH_ACTIVITY, channel_activity_handler_abstract)

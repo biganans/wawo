@@ -921,7 +921,7 @@ _begin_send:
 			int openrt = accepted_so->open();
 			if (openrt != wawo::OK) {
 				WAWO_ERR("[wcp]WCB::accept, call socket() failed: %d", openrt);
-				accepted_so->close();
+				accepted_so->ch_close();
 
 				reply_rst_to_address(so, pack->header.ack, from);
 				continue;
@@ -931,7 +931,7 @@ _begin_send:
 			if(reusert != wawo::OK) {
 				WAWO_ERR("[wcp]WCB::accept, call reuse_addr() failed: %d", reusert);
 
-				accepted_so->close();
+				accepted_so->ch_close();
 				reply_rst_to_address(so, pack->header.ack, from);
 				continue;
 			}
@@ -939,7 +939,7 @@ _begin_send:
 			reusert = accepted_so->reuse_port();
 			if(reusert != wawo::OK) {
 				WAWO_ERR("[wcp]WCB::accept, call reuse_port() failed: %d", reusert);
-				accepted_so->close();
+				accepted_so->ch_close();
 
 				reply_rst_to_address(so, pack->header.ack, from);
 				continue;
@@ -957,9 +957,9 @@ _begin_send:
 			wawo::net::address bind_addr(addr_local);
 
 			int bindrt = accepted_so->bind(bind_addr);
-			if (bindrt != wawo::OK ) {
+			if ( bindrt != wawo::OK ) {
 				WAWO_ERR("[wcp]WCB::accept, call bind failed: %d", bindrt);
-				accepted_so->close();
+				accepted_so->ch_close();
 
 				reply_rst_to_address(so, pack->header.ack, from);
 				continue;
@@ -968,7 +968,7 @@ _begin_send:
 			int connrt = accepted_so->connect(from);
 			if (connrt != wawo::OK ) {
 				WAWO_ERR("[wcp]WCB::accept, call connect failed: %d", connrt);
-				accepted_so->close();
+				accepted_so->ch_close();
 
 				reply_rst_to_address(so, pack->header.ack, from);
 				continue;
@@ -977,7 +977,7 @@ _begin_send:
 			int nonblocking = accepted_so->turnon_nonblocking();
 			if (nonblocking != wawo::OK) {
 				WAWO_ERR("[wcp]WCB::accept, turn on nonblocking failed: %d", nonblocking);
-				accepted_so->close();
+				accepted_so->ch_close();
 
 				reply_rst_to_address(so, pack->header.ack, from);
 				continue;
@@ -1000,7 +1000,7 @@ _begin_send:
 
 			if ( wcp::instance()->add_to_four_tuple_hash_map(wcb)<0 ) {
 				WAWO_WARN("[wcp]WCB::accept, add_to_four_tuple_hash_map failed, remote addr: %s, reply rst", from.info().cstr);
-				accepted_so->close();
+				accepted_so->ch_close();
 				reply_rst_to_address(so, pack->header.ack, wcb->remote_addr );
 				continue;
 			}
@@ -1221,7 +1221,7 @@ _begin_send:
 			WCBMap::iterator it = m_wcb_map.begin();
 			while (it != m_wcb_map.end()) {
 				it->second->close();
-				it->second->so->close();
+				it->second->so->ch_close();
 				++it;
 			}
 
@@ -1263,7 +1263,7 @@ _begin_send:
 				WWRP<WCB> __wcb_for_lambda = op.wcb;
 				fn_io_event_error err = [__wcb_for_lambda](int const& err) ->void {
 					WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", __wcb_for_lambda->so->info().to_lencstr().cstr, err);
-					__wcb_for_lambda->so->close();
+					__wcb_for_lambda->so->ch_close();
 				};
 
 				op.wcb->so->begin_read(WATCH_OPTION_INFINITE, read, err);
@@ -1289,7 +1289,7 @@ _begin_send:
 					WWRP<wawo::net::socket> const& so = it->second->so;
 					WAWO_ASSERT( so != NULL );
 
-					so->close();
+					so->ch_close();
 					wcb_to_delete.push_back(it->second);
 				}
 				++it;
@@ -1311,7 +1311,6 @@ _begin_send:
 	std::atomic<int> wcp::s_wcb_auto_increament_id(1);
 
 	int wcp::socket(int const& family, int const& socket_type, int const& protocol) {
-
 		WAWO_ASSERT(family == AF_INET);
 		WAWO_ASSERT(socket_type == SOCK_DGRAM);
 		WAWO_ASSERT(protocol == IPPROTO_UDP);
@@ -1359,7 +1358,7 @@ _begin_send:
 		fn_io_event read = std::bind(&WCB::pump_packs, wcb);
 		fn_io_event_error err = [wcb](int const& err) ->void {
 			WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", wcb->so->info().to_lencstr().cstr, err);
-			wcb->so->close();
+			wcb->so->ch_close();
 		};
 		wcb->so->begin_read(WATCH_OPTION_INFINITE, read,err);
 
@@ -1382,7 +1381,6 @@ _begin_send:
 
 		wcb->local_addr = wawo::net::address(*((sockaddr_in*)addr));
 		int bindrt = wcb->so->bind( wcb->local_addr );
-
 		if (bindrt != wawo::OK) {
 			wcb->wcb_errno = WAWO_NEGATIVE(wawo::socket_get_last_errno());
 			return wcb->wcb_errno;
@@ -1422,7 +1420,7 @@ _begin_send:
 		fn_io_event read = std::bind(&WCB::pump_packs, wcb);
 		fn_io_event_error err = [wcb](int const& err) ->void {
 			WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", wcb->so->info().to_lencstr().cstr, err);
-			wcb->so->close();
+			wcb->so->ch_close();
 		};
 		wcb->so->begin_read(WATCH_OPTION_INFINITE, read, err);
 

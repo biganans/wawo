@@ -30,7 +30,12 @@ public:
 		WWRP<wawo::packet> outp;
 		resp->encode(outp);
 
-		ctx->write(outp);
+		//WWRP<wawo::net::channel_promise> ch_promise = wawo::make_ref < wawo::net::channel_promise>();
+		//ch_promise->add_listener([](WWRP<wawo::net::channel_future> const& f) {
+			//WAWO_INFO("write rt: %d", f->get());
+		//});
+		//WWRP<wawo::net::channel_future> f_write = ctx->write(outp, ch_promise);
+		WWRP<wawo::net::channel_future> f_write = ctx->write(outp);
 
 		if (close_after_write) {
 			ctx->close();
@@ -44,35 +49,17 @@ class my_http_handler :
 public:
 	~my_http_handler() {}
 	void read_shutdowned(WWRP<wawo::net::channel_handler_context> const& ctx) {
+		ctx->fire_read_shutdowned();
 		ctx->close();
 	}
 };
 
 
-class listen_server_handler :
-	public wawo::net::channel_activity_handler_abstract,
-	public wawo::net::channel_acceptor_handler_abstract
-{
-	WWRP<http_server_handler> m_http_server;
-public:
-	listen_server_handler()
-	{
-		m_http_server = wawo::make_ref<http_server_handler>();
-	}
-
-	~listen_server_handler() {}
-
-	void accepted(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::net::channel> const& ch)
-	{
-		WWRP<wawo::net::handler::http> h = wawo::make_ref<my_http_handler>();
-		h->bind<wawo::net::handler::fn_http_message_header_end_t > (wawo::net::handler::http_event::E_HEADER_COMPLETE, &http_server_handler::on_header_end, m_http_server, std::placeholders::_1, std::placeholders::_2);
-		ch->pipeline()->add_last(h);
-	}
-};
-
 int main(int argc, char* argv) {
 
 	wawo::app app;
+
+	WWRP<http_server_handler> http_handler = wawo::make_ref<http_server_handler>();
 
 	wawo::net::socketaddr laddr;
 	laddr.so_family = wawo::net::F_AF_INET;
@@ -82,26 +69,15 @@ int main(int argc, char* argv) {
 	laddr.so_address = wawo::net::address("0.0.0.0", 8082);
 	WWRP<wawo::net::socket> lsocket = wawo::make_ref<wawo::net::socket>(laddr.so_family, laddr.so_type, laddr.so_protocol);
 
-	int open = lsocket->open();
-	if (open != wawo::OK) {
-		lsocket->close();
-		return open;
-	}
+	WWRP<wawo::net::channel_future> ch_listen_f = lsocket->listen_on(laddr.so_address, [http_handler](WWRP<wawo::net::channel> const& ch) {
+		WWRP<wawo::net::handler::http> h = wawo::make_ref<my_http_handler>();
+		h->bind<wawo::net::handler::fn_http_message_header_end_t >(wawo::net::handler::http_event::E_HEADER_COMPLETE, &http_server_handler::on_header_end, http_handler, std::placeholders::_1, std::placeholders::_2);
+		ch->pipeline()->add_last(h);
+	});
 
-	WWRP<wawo::net::channel_future> ch_bind_f = lsocket->async_bind(laddr.so_address);
-	int bindrt = ch_bind_f->get();
-	if (bindrt != wawo::OK) {
-		lsocket->close();
-		return bindrt;
-	}
-
-	WWRP<wawo::net::channel_handler_abstract> l_handler = wawo::make_ref<listen_server_handler>();
-	lsocket->pipeline()->add_last(l_handler);
-
-	WWRP<wawo::net::channel_future> ch_listen_f = lsocket->async_listen();
 	int listen_rt = ch_listen_f->get();
 	if (listen_rt != wawo::OK) {
-		lsocket->close();
+		lsocket->ch_close();
 		return listen_rt;
 	}
 
