@@ -27,7 +27,6 @@ public:
 		m->encode(req);
 
 		resp->body = wawo::len_cstr((char*)req->begin(), req->len());
-
 		WWRP<wawo::packet> outp;
 		resp->encode(outp);
 

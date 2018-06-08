@@ -70,14 +70,9 @@ namespace wawo { namespace net {
 	}
 
 	class channel_handler_head :
-//		public channel_activity_handler_abstract,
-//		public channel_acceptor_handler_abstract,
-//		public channel_inbound_handler_abstract,
 		public channel_outbound_handler_abstract
 	{
 	public:
-		//void accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch) ;
-		//void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) ;
 		void write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) ;
 		void flush(WWRP<channel_handler_context> const& ctx);
 		void close(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
@@ -85,15 +80,20 @@ namespace wawo { namespace net {
 		void shutdown_write(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise);
 	};
 
-//	class channel_handler_tail :
-//		public channel_activity_handler_abstract,
-//		public channel_acceptor_handler_abstract,
-//		public channel_inbound_handler_abstract
-//		public channel_outbound_handler_abstract
-//	{
-		//void accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch) ;
-//		void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) ;
-		//int write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet) ;
-//	};
+	class channel_handler_tail :
+		public channel_activity_handler_abstract,
+		public channel_inbound_handler_abstract
+	{
+		void connected(WWRP<channel_handler_context> const& ctx);
+		void closed(WWRP<channel_handler_context > const& ctx);
+		void error(WWRP<channel_handler_context> const& ctx);
+		void read_shutdowned(WWRP<channel_handler_context> const& ctx);
+		void write_shutdowned(WWRP<channel_handler_context> const& ctx);
+		void write_block(WWRP<channel_handler_context> const& ctx);
+		void write_unblock(WWRP<channel_handler_context> const& ctx);
+
+		void read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) ;
+	};
+
 }}
 #endif

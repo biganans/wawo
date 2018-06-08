@@ -17,30 +17,23 @@ namespace wawo { namespace net {
 		WWRP<channel_handler_head> h = wawo::make_ref<channel_handler_head>();
 		m_head = wawo::make_ref<channel_handler_context>(m_ch, h);
 
-		//WWRP<channel_handler_tail> t = wawo::make_ref<channel_handler_tail>();
-		//m_tail = wawo::make_ref<channel_handler_context>(m_ch, t);
+		WWRP<channel_handler_tail> t = wawo::make_ref<channel_handler_tail>();
+		m_tail = wawo::make_ref<channel_handler_context>(m_ch, t);
 
 		m_head->P = NULL;
-		m_head->N = NULL;
-
-		m_tail = m_head;
-
-		//m_tail->P = m_head;
-		//m_tail->N = NULL;
+		m_head->N = m_tail;
+		m_tail->P = m_head;
+		m_tail->N = NULL;
 	}
 
 	void channel_pipeline::deinit()
 	{
-//		m_ch = NULL;
-		WWRP<channel_handler_context> h = m_tail;
-
-		while ( h != NULL ) {
-//			h->ch = NULL;
-			h->N = NULL;
-
-			WWRP<channel_handler_context> TMP = h->P;
-			h->P = NULL;
-			h = TMP;
+		WWRP<channel_handler_context> _hctx = m_tail;
+		while (_hctx != NULL ) {
+			_hctx->N = NULL;
+			WWRP<channel_handler_context> TMP = _hctx->P;
+			_hctx->P = NULL;
+			_hctx = TMP;
 		}
 	}
 
@@ -51,10 +44,12 @@ namespace wawo { namespace net {
 			//if ch closed , m_ch == NULL 
 			WAWO_ASSERT(m_ch != NULL);
 			WWRP<channel_handler_context> ctx = wawo::make_ref<channel_handler_context>(m_ch, h);
-			m_tail->N = ctx;
-			ctx->N = NULL;
-			ctx->P = m_tail;
-			m_tail = ctx;
+			ctx->N = m_tail;
+			ctx->P = m_tail->P;
+
+			m_tail->P->N = ctx;
+			m_tail->P = ctx;
+
 			return _this;
 		}
 

@@ -18,23 +18,11 @@ namespace wawo { namespace net {
 	VOID_HANDLER_DEFAULT_IMPL_PROMISE(shutdown_write, channel_outbound_handler_abstract)
 	VOID_HANDLER_DEFAULT_IMPL_0(flush, channel_outbound_handler_abstract)
 
-	//void channel_handler_head::accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch)
-	//{
-	//	ctx->fire_accepted( newch );
-	//}
-
-	//void channel_handler_head::read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) 
-	//{
-	//	ctx->fire_read(income);
-	//}
-	
-	void channel_handler_head::write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise)
-	{
+	void channel_handler_head::write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {
 		ctx->ch->ch_write_impl(outlet,ch_promise);
 	}
 
-	void channel_handler_head::flush(WWRP<channel_handler_context> const& ctx)
-	{
+	void channel_handler_head::flush(WWRP<channel_handler_context> const& ctx) {
 		ctx->ch->ch_flush_impl();
 	}	
 	void channel_handler_head::close(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise) {
@@ -48,25 +36,39 @@ namespace wawo { namespace net {
 	void channel_handler_head::shutdown_write(WWRP<channel_handler_context> const& ctx, WWRP<channel_promise> const& ch_promise) {
 		ctx->ch->ch_shutdown_write_impl(ch_promise);
 	}
-	
-	//--
-	//void channel_handler_tail::accepted(WWRP<channel_handler_context> const& ctx, WWRP<channel> const& newch )
-	//{
-	//	ctx->fire_accepted(newch);
-	//}
 
-	//void channel_handler_tail::read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income)
-	//{
-	//	ctx->fire_read(income);
-	//}
-
-	//int channel_handler_tail::write(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& outlet)
-	//{
-	//	WAWO_ASSERT(!"socket_handler_head::write,,, send a flush ?");
-	//	return wawo::OK;
-
-	//	(void)ctx;
-	//	(void)outlet;
-	//}
+	void channel_handler_tail::connected(WWRP<channel_handler_context> const& ctx) {
+		WAWO_DEBUG("[#%d]channel connected, no action", ctx->ch->ch_id() );
+		(void)ctx;
+	}
+	void channel_handler_tail::closed(WWRP<channel_handler_context > const& ctx) {
+		WAWO_DEBUG("[#%d]channel closed, no action", ctx->ch->ch_id());
+		(void)ctx;
+	}
+	void channel_handler_tail::error(WWRP<channel_handler_context> const& ctx) {
+		WAWO_DEBUG("[#%d]channel error, no action", ctx->ch->ch_id());
+		(void)ctx;
+	}
+	void channel_handler_tail::read_shutdowned(WWRP<channel_handler_context> const& ctx) {
+		WAWO_DEBUG("[#%d]channel read_shutdowned, no action", ctx->ch->ch_id());
+		(void)ctx;
+	}
+	void channel_handler_tail::write_shutdowned(WWRP<channel_handler_context> const& ctx) {
+		WAWO_DEBUG("[#%d]channel write_shutdowned, no action", ctx->ch->ch_id());
+		(void)ctx;
+	}
+	void channel_handler_tail::write_block(WWRP<channel_handler_context> const& ctx) {
+		WAWO_DEBUG("[#%d]channel write_block, no action", ctx->ch->ch_id());
+		(void)ctx;
+	}
+	void channel_handler_tail::write_unblock(WWRP<channel_handler_context> const& ctx) {
+		WAWO_DEBUG("[#%d]channel write_unblock, no action", ctx->ch->ch_id());
+		(void)ctx;
+	}
+	void channel_handler_tail::read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) {
+		WAWO_ERR("we reach the end of the pipeline , please check your pipeline configure");
+		(void)ctx;
+		(void)income;
+	}
 
 }}
