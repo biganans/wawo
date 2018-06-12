@@ -21,10 +21,12 @@ namespace wawo {
 		}
 	};
 
+	//@note
+	//if you inherit this class, you must impl inline void _notify_listeners() at least
 	template <typename T>
 	class future:
 		public ref_base,
-		private event_trigger
+		protected event_trigger
 	{
 
 	protected:
@@ -32,7 +34,7 @@ namespace wawo {
 			E_COMPLETE
 		};
 
-		typedef std::function<void(WWRP< future<T> > const& f)> fn_operation_complete;
+		typedef std::function<void(WWRP<future<T>> const& f)> fn_operation_complete;
 		typedef std::vector<int> listener_handler_vector;
 
 		enum state {
@@ -54,13 +56,11 @@ namespace wawo {
 			return m_cond.notify_all();
 		}
 
-		inline void _notify_listeners()
-		{
+		void _notify_listeners() {
 			if (m_handlers.size() == 0) {
 				return;
 			}
-			WWRP<future<T>>(this);
-			event_trigger::invoke<fn_operation_complete>(E_COMPLETE, WWRP<future<T>>(this));
+			event_trigger::invoke<std::function<void()>>(E_COMPLETE);
 			for( size_t i=0;i<m_handlers.size();++i) {
 				event_trigger::unbind(m_handlers[i]);
 			}
@@ -75,15 +75,13 @@ namespace wawo {
 		virtual ~future()
 		{}
 
-		T get()
-		{
+		T get() {
 			wait();
 			return m_v.load(std::memory_order_acquire);
 		}
 
 		template <class _Rep, class _Period>
-		T get(std::chrono::duration<_Rep, _Period> const& dur)
-		{
+		T get(std::chrono::duration<_Rep, _Period> const& dur) {
 			wait_for<_Rep,_Period>(dur);
 			return m_v.load(std::memory_order_acquire);
 		}
@@ -98,8 +96,7 @@ namespace wawo {
 		}
 
 		template <class _Rep, class _Period>
-		void wait_for(std::chrono::duration<_Rep, _Period> const& dur)
-		{
+		void wait_for(std::chrono::duration<_Rep, _Period> const& dur) {
 			if (m_state.load(std::memory_order_acquire) == S_IDLE) {
 				unique_lock<mutex> ulk(m_mutex);
 				m_cond.wait_for<_Rep, _Period>(ulk, dur);
@@ -142,22 +139,10 @@ namespace wawo {
 
 		template<class _Lambda
 			, class = typename std::enable_if<std::is_convertible<_Lambda, fn_operation_complete>::value>::type>
-		int add_listener(_Lambda&& lambda)
+			int add_listener(_Lambda&& lambda)
 		{
 			lock_guard<mutex> lg(m_mutex);
 			int id = event_trigger::bind<fn_operation_complete>(E_COMPLETE, std::forward<_Lambda>(lambda));
-			m_handlers.push_back(id);
-			if( is_done() ) {
-				_notify_listeners();
-			}
-			return id;
-		}
-
-		template<class _Fx, class... _Args>
-		int add_listener(_Fx&& _func, _Args&&... _args)
-		{
-			lock_guard<mutex> lg(m_mutex);
-			int id = event_trigger::bind<fn_operation_complete>(E_COMPLETE, std::forward<_Fx>(_func), std::forward<_Args>(_args)...);
 			m_handlers.push_back(id);
 			if (is_done()) {
 				_notify_listeners();
@@ -165,13 +150,43 @@ namespace wawo {
 			return id;
 		}
 
+		template<class _Callable, class _Lambda, class... _Args
+			, class = typename std::enable_if<std::is_convertible<_Lambda, _Callable>::value>::type>
+		int add_listener(_Lambda&& _lambda, _Args&&... _args)
+		{
+			lock_guard<mutex> lg(m_mutex);
+			std::function<void()> _f = [&_lambda,&_args...]() {
+				_lambda(std::forward<_Args>(_args)...);
+			};
+
+			int id = event_trigger::bind<std::function<void()>>(E_COMPLETE, _f);
+			m_handlers.push_back(id);
+			if( is_done() ) {
+				_notify_listeners();
+			}
+			return id;
+		}
+		/*
+		template<class _Callable, class _Fx, class... _Args>
+		int add_listener(_Fx&& _func, _Args&&... _args)
+		{
+			lock_guard<mutex> lg(m_mutex);
+			int id = event_trigger::bind<_Callable>(E_COMPLETE, std::forward<_Fx>(_func), std::forward<_Args>(_args)...);
+			m_handlers.push_back(id);
+			if (is_done()) {
+				_notify_listeners();
+			}
+			return id;
+		}
+		*/
+
 		void remove_listener(int const& id)
 		{
 			lock_guard<mutex> lg(m_mutex);
 			typename listener_handler_vector::iterator it = std::find(m_handlers.begin(), m_handlers.end(), id) ;
 			if (it != m_handlers.end())
 			{
-				m_listeners.erase(it);
+				m_handlers.erase(it);
 				event_trigger::unbind(id);
 			}
 		}
@@ -193,8 +208,8 @@ namespace wawo {
 			WAWO_ASSERT(ok);
 			(void)ok;
 
-			future<T>::_notify_waiter();
 			future<T>::_notify_listeners();
+			future<T>::_notify_waiter();
 		}
 
 		void set_failure(WWSP<wawo::promise_exception> const& e) {
@@ -205,8 +220,8 @@ namespace wawo {
 
 			future<T>::m_exception = e;
 
-			future<T>::_notify_waiter();
 			future<T>::_notify_listeners();
+			future<T>::_notify_waiter();
 		}
 	};
 }

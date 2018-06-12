@@ -9,6 +9,7 @@ namespace wawo { namespace net {
 	class channel;
 	class channel_future;
 	class channel_promise;
+
 	class channel_handler_context;
 
 	class channel_handler_abstract :

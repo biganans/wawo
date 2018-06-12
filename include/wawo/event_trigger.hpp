@@ -85,18 +85,18 @@ namespace wawo {
 			return handler->id;
 		}
 
-		template<class handler_func_t, class _Lambda
-			, class = typename std::enable_if<std::is_convertible<_Lambda, handler_func_t>::value>::type>
+		template<class _Callable, class _Lambda
+			, class = typename std::enable_if<std::is_convertible<_Lambda, _Callable>::value>::type>
 		int bind(int const& id, _Lambda&& lambda) {
 			typedef std::remove_reference<_Lambda>::type lambda_t;
-			WWRP<event_handler_base> handler = make_event_handler<handler_func_t>(std::forward<lambda_t>(lambda));
+			WWRP<event_handler_base> handler = make_event_handler<_Callable>(std::forward<lambda_t>(lambda));
 			_insert_into_map(id, handler);
 			return handler->id;
 		}
 
-		template<class handler_func_t, class _Fx, class... _Args>
+		template<class _Callable, class _Fx, class... _Args>
 		int bind(int const& id, _Fx&& _func, _Args&&... _args) {
-			WWRP<event_handler_base> handler = make_event_handler<handler_func_t>(std::bind(std::forward<_Fx>(_func), std::forward<_Args>(_args)...));
+			WWRP<event_handler_base> handler = make_event_handler<_Callable>(std::bind(std::forward<_Fx>(_func), std::forward<_Args>(_args)...));
 			_insert_into_map(id, handler);
 			return handler->id;
 		}

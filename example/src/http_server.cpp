@@ -31,12 +31,11 @@ public:
 		WWRP<wawo::packet> outp;
 		resp->encode(outp);
 
-		//WWRP<wawo::net::channel_promise> ch_promise = wawo::make_ref < wawo::net::channel_promise>();
-		//ch_promise->add_listener([](WWRP<wawo::net::channel_future> const& f) {
-			//WAWO_INFO("write rt: %d", f->get());
-		//});
-		//WWRP<wawo::net::channel_future> f_write = ctx->write(outp, ch_promise);
 		WWRP<wawo::net::channel_future> f_write = ctx->write(outp);
+		f_write->add_listener([](WWRP<wawo::net::channel_future> const& f) {
+			WAWO_INFO("write rt: %d", f->get());
+		});
+		//f_write->wait();
 
 		if (close_after_write) {
 			ctx->close();
@@ -55,7 +54,16 @@ public:
 	}
 };
 
+class base {};
+class sub : public base {};
+typedef std::function< void(base*)> fn_pass_base;
+//fn_pass_base f1 = [](sub* s) {};
+
+
 int main(int argc, char* argv) {
+
+
+
 	int* vldi = new int;
 
 	wawo::app app;
@@ -76,7 +84,7 @@ int main(int argc, char* argv) {
 		return listen_rt;
 	}
 
-//	app.run_for();
+	app.run_for();
 	WWRP<wawo::net::channel_future> ch_close_f = lsocket->ch_close();
 	WAWO_ASSERT(ch_close_f->get() == wawo::OK);
 	lsocket->ch_close_future()->wait();

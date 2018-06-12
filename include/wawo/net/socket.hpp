@@ -11,8 +11,8 @@
 #include <wawo/net/address.hpp>
 
 #include <wawo/net/socket_base.hpp>
-#include <wawo/net/channel.hpp>
 
+#include <wawo/net/channel.hpp>
 #include <wawo/net/channel_future.hpp>
 
 #define WAWO_MAX_ASYNC_WRITE_PERIOD	(90000L) //90 seconds

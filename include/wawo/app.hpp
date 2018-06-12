@@ -7,7 +7,7 @@
 #include <wawo/log/logger_manager.h>
 #include <wawo/time/time.hpp>
 
-#include <wawo/net/socket_observer.hpp>
+#include <wawo/net/io_event_loop.hpp>
 #include <wawo/net/wcp.hpp>
 
 namespace wawo {
