@@ -78,18 +78,13 @@ public:
 
 int main(int argc, char** argv) {
 
-	int* p = new int(3);
+	int* p = new int(3);//vld check
 	wawo::app app;
 
-	wawo::net::socketaddr laddr;
-	laddr.so_family = wawo::net::F_AF_INET;
-	laddr.so_type = wawo::net::T_STREAM;
-	laddr.so_protocol = wawo::net::P_TCP;
+	wawo::net::address laddr = wawo::net::address("0.0.0.0", 22310);
+	WWRP<wawo::net::socket> lsocket = wawo::make_ref<wawo::net::socket>(wawo::net::F_AF_INET, wawo::net::T_STREAM, wawo::net::P_TCP);
 
-	laddr.so_address = wawo::net::address("0.0.0.0", 22310);
-	WWRP<wawo::net::socket> lsocket = wawo::make_ref<wawo::net::socket>(laddr.so_family, laddr.so_type, laddr.so_protocol);
-
-	WWRP<wawo::net::channel_future> f_listen = lsocket->listen_on(laddr.so_address, [](WWRP<wawo::net::channel> const& ch) {
+	WWRP<wawo::net::channel_future> f_listen = lsocket->listen_on(laddr, [](WWRP<wawo::net::channel> const& ch) {
 		WWRP<wawo::net::channel_handler_abstract> example = wawo::make_ref<example_handler>();
 		ch->pipeline()->add_last(example);
 

@@ -39,7 +39,7 @@
 #define PIPELINE_CH_FUTURE_ACTION_PACKET_1(NAME) \
 	inline WWRP<channel_future> NAME(WWRP<packet> const& packet_) {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \
-		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(); \
+		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(m_ch); \
 		if(!m_io_event_loop->in_event_loop()) { \
 			WWRP<channel_pipeline> _p(this); \
 			m_io_event_loop->schedule([_p,packet_,ch_promise](){ \
@@ -66,7 +66,7 @@
 #define PIPELINE_CH_FUTURE_ACTION_VOID(NAME) \
 	inline WWRP<channel_future> NAME() {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \
-		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(); \
+		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(m_ch); \
 		if(!m_io_event_loop->in_event_loop()) { \
 			WWRP<channel_pipeline> _p(this); \
 			m_io_event_loop->schedule([_p,ch_promise](){ \

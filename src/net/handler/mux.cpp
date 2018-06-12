@@ -85,8 +85,7 @@ namespace wawo { namespace net { namespace handler {
 		lock_guard<spin_mutex> lg(m_mutex);
 		stream_map_t::iterator it = m_stream_map.begin();
 		while (it != m_stream_map.end()) {
-			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
-			it->second->ch_close(ch_promise);
+			it->second->ch_close();
 			DEBUG_STREAM("[mux_cargo][s%u][mux_close]force close stream, for E_CLOSE", it->second->id);
 			++it;
 		}

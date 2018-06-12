@@ -1,13 +1,11 @@
 #ifndef _WAWO_NET_SOCKET_OBSERVER_HPP_
 #define _WAWO_NET_SOCKET_OBSERVER_HPP_
 
-#include <queue>
-
 #include <wawo/core.hpp>
 #include <wawo/smart_ptr.hpp>
-
 #include <wawo/net/observer_abstract.hpp>
-#include <wawo/net/io_event_executor.hpp>
+
+#include <queue>
 
 namespace wawo { namespace net {
 

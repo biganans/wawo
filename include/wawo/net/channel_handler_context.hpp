@@ -6,6 +6,8 @@
 #include <wawo/net/channel_invoker.hpp>
 #include <wawo/net/channel_handler.hpp>
 
+#include <wawo/net/channel_future.hpp>
+
 #define VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
 	inline void fire_##NAME##() { \
 		WWRP<CTX_CLASS_NAME> _ctx = CTX_CLASS_NAME::_find_next(HANDLER_FLAG); \
@@ -38,7 +40,7 @@
 #define CH_FUTURE_ACTION_HANDLER_CONTEXT_IMPL_T_TO_H_PACKET_1(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
 	inline WWRP<channel_future> NAME##(WWRP<packet> const& p) { \
 		WAWO_ASSERT(m_io_event_loop != NULL); \
-		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(); \
+		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(ch); \
 		return NAME##(p,ch_promise); \
 	} \
 	inline WWRP<channel_future> NAME##(WWRP<packet> const& p, WWRP<channel_promise> const& ch_promise) { \
@@ -68,7 +70,7 @@
 
 #define CH_FUTURE_ACTION_HANDLER_CONTEXT_IMPL_T_TO_H_PROMISE(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
 	inline WWRP<channel_future> NAME##() { \
-		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(); \
+		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(ch); \
 		return CTX_CLASS_NAME::##NAME##(ch_promise); \
 	} \
 	inline WWRP<channel_future> NAME##(WWRP<channel_promise> const& ch_promise) { \

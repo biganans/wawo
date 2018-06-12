@@ -150,6 +150,7 @@
     <ClCompile Include="..\..\src\log\logger_manager.cpp" />
     <ClCompile Include="..\..\src\log\sys_logger.cpp" />
     <ClCompile Include="..\..\src\net\address.cpp" />
+    <ClCompile Include="..\..\src\net\channel_future.cpp" />
     <ClCompile Include="..\..\src\net\channel_handler_context.cpp" />
     <ClCompile Include="..\..\src\net\handler\http.cpp" />
     <ClCompile Include="..\..\src\net\handler\mux.cpp" />

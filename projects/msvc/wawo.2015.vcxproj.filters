@@ -189,6 +189,9 @@
     <ClCompile Include="..\..\src\net\handler\mux.cpp">
       <Filter>Source Files\src\net\handler</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\net\channel_future.cpp">
+      <Filter>Source Files\src\net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\3rd\http_parser\http_parser.h">

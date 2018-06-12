@@ -13,6 +13,8 @@
 #include <wawo/net/socket_base.hpp>
 #include <wawo/net/channel.hpp>
 
+#include <wawo/net/channel_future.hpp>
+
 #define WAWO_MAX_ASYNC_WRITE_PERIOD	(90000L) //90 seconds
 
 namespace wawo { namespace net {
@@ -242,7 +244,7 @@ namespace wawo { namespace net {
 				default:
 				{
 					WAWO_TRACE_SOCKET("[socket][%s]async read, pump error: %d, close", info().to_lencstr().cstr, ec);
-					WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+					WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
 					ch_errno(ec);
 					ch_close(ch_promise);
 				}
@@ -255,7 +257,7 @@ namespace wawo { namespace net {
 
 		void __cb_async_error(int const& code) {
 			WAWO_WARN("[socket][%s]socket error: %d, close", info().to_lencstr().cstr, code);
-			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
 			ch_close(ch_promise);
 		}
 
@@ -581,16 +583,20 @@ namespace wawo { namespace net {
 			if (is_listener()) {
 				end_read();
 				m_state = S_CLOSED;
-				channel::ch_close_promise()->set_success(rt);
 				ch_promise->set_success(rt);
+				channel::ch_close_promise()->set_success(rt);
+				channel::ch_fire_closed();
+				channel::ch_close_future()->reset();
 				return;
 			}
 
 			if (m_state != S_CONNECTED) {
 				m_state = S_CLOSED;
-				channel::ch_fire_closed();
-				channel::ch_close_promise()->set_success(rt);
 				ch_promise->set_success(rt);
+
+				channel::ch_close_promise()->set_success(rt);
+				channel::ch_fire_closed();
+				channel::ch_close_future()->reset();
 				return;
 			}
 
@@ -607,9 +613,11 @@ namespace wawo { namespace net {
 				end_write();
 			}
 
-			channel::ch_fire_closed();
-			channel::ch_close_promise()->set_success(rt);
 			ch_promise->set_success(rt);
+
+			channel::ch_close_promise()->set_success(rt);
+			channel::ch_fire_closed();
+			channel::ch_close_future()->reset();
 		}
 	};
 }}

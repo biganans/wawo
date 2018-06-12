@@ -203,7 +203,7 @@ namespace wawo {
 			WAWO_ASSERT(ok);
 			(void)ok;
 
-			ok = future<T>::m_exception = e;
+			future<T>::m_exception = e;
 
 			future<T>::_notify_waiter();
 			future<T>::_notify_listeners();

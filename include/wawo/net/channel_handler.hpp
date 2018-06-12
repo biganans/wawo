@@ -3,11 +3,12 @@
 
 #include <wawo/core.hpp>
 #include <wawo/packet.hpp>
-#include <wawo/net/channel_future.hpp>
 
 namespace wawo { namespace net {
 
 	class channel;
+	class channel_future;
+	class channel_promise;
 	class channel_handler_context;
 
 	class channel_handler_abstract :

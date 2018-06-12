@@ -295,7 +295,7 @@ end_write_frame:
 			case mux_stream_frame_flag::T_FIN:
 			{
 				DEBUG_STREAM("[mux_cargo][s%u][fin]recv", s->ch_id);
-				WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+				WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
 				ch_shutdown_read_impl(ch_promise);
 				//ch_read_shutdowned();
 			}
@@ -331,8 +331,8 @@ end_write_frame:
 			}
 
 			WAWO_ASSERT(m_state == SS_ESTABLISHED);
-			WWRP<channel_promise> ch_promise_r = wawo::make_ref<channel_promise>();
-			WWRP<channel_promise> ch_promise_w = wawo::make_ref<channel_promise>();
+			WWRP<channel_promise> ch_promise_r = wawo::make_ref<channel_promise>(WWRP<channel>(this));
+			WWRP<channel_promise> ch_promise_w = wawo::make_ref<channel_promise>(WWRP<channel>(this));
 			ch_shutdown_read_impl(ch_promise_r);
 			ch_shutdown_write_impl(ch_promise_w);
 
@@ -401,7 +401,7 @@ end_write_frame:
 				}
 			}
 			if (nflag == (STREAM_READ_SHUTDOWN | STREAM_WRITE_SHUTDOWN)) {
-				WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+				WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
 				ch_close(ch_promise);
 			}
 		}

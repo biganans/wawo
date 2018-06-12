@@ -75,7 +75,7 @@ namespace wawo { namespace net {
 	}
 
 	WWRP<wawo::net::channel_future> socket::listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, int const& backlog) {
-		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
 		return socket::listen_on(addr, fn_accepted, ch_promise, backlog);
 	}
 
@@ -117,7 +117,7 @@ namespace wawo { namespace net {
 	}
 
 	WWRP<channel_future> socket::dial(address const& addr, fn_dial_channel_initializer const& initializer) {
-		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>();
+		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
 		return dial(addr, initializer, ch_promise);
 	}
 
