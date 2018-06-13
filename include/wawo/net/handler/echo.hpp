@@ -8,8 +8,7 @@
 namespace wawo {namespace net {namespace handler {
 
 	class echo:
-	public wawo::net::channel_inbound_handler_abstract
-{
+	public wawo::net::channel_inbound_handler_abstract {
 public:
 	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income)
 	{	

@@ -243,6 +243,7 @@ namespace wawo {
 		E_SOCKET_INVALID_FAMILY								= -30012,
 		E_SOCKET_INVALID_TYPE								= -30013,
 		E_SOCKET_INVALID_ADDRESS							= -30014,
+		E_SOCKET_INVALID_PROTOCOL							= -30015,
 
 		E_OBSERVER_EXIT										= -30023,
 

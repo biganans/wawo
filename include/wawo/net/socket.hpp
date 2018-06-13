@@ -52,9 +52,6 @@ namespace wawo { namespace net {
 		public socket_base,
 		public channel
 	{
-		//friend class wcp;
-		//friend struct WCB;
-
 		u8_t	m_state;
 		u8_t	m_rflag;
 		u8_t	m_wflag;
@@ -146,6 +143,53 @@ namespace wawo { namespace net {
 
 		u32_t accept(WWRP<socket> sockets[], u32_t const& size, int& ec_o);
 		int connect(address const& addr);
+
+		/*
+		 example:
+			socket::listen("tcp://127.0.0.1:80", [](WWRP<channel> const& ch) {
+				WWRP<wawo::net::channel_handler_abstract> h = wawo::make_ref<wawo::net::handler::echo>():
+				ch->pipeline()->add_last(h);
+			});
+		*/
+
+		static WWRP<channel_future> listen(std::string const& addrinfo, fn_accepted_channel_initializer const& fn_accepted) {
+			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(NULL);
+
+			std::vector<std::string> _arr;
+			wawo::split(addrinfo, ":", _arr);
+			if (_arr.size() != 3) {
+				ch_promise->set_success(wawo::E_SOCKET_INVALID_ADDRESS);
+				goto end_listen;
+			}
+
+			wawo::net::s_protocol proto;
+
+			if (_arr[0] == "tcp") {
+				proto = P_TCP;
+			}
+			else if (_arr[0] == "wcp") {
+				proto = P_WCP;
+			}
+			else if (_arr[0] == "udp") {
+				proto = P_UDP;
+			}
+			else {
+				ch_promise->set_success(wawo::E_SOCKET_INVALID_PROTOCOL);
+				goto end_listen;
+			}
+
+			if (_arr[1].substr(0, 2) != "//") {
+				ch_promise->set_success(wawo::E_SOCKET_INVALID_ADDRESS);
+				goto end_listen;
+			}
+
+
+			
+
+
+		end_listen:
+			return ch_promise;
+		}
 
 	private:
 		inline int close() {
