@@ -10,6 +10,7 @@ namespace wawo { namespace net {
 		public wawo::future<int>
 	{
 		WWRP<wawo::net::channel> m_ch;
+		typedef std::function<void(WWRP<channel_future> const& f)> fn_operation_complete;
 
 		/*
 		protected:
@@ -34,18 +35,19 @@ namespace wawo { namespace net {
 		void reset();
 
 		
-		template<class _Lambda
-			, class = typename std::enable_if<std::is_convertible<_Lambda, fn_operation_complete>::value>::type>
-		inline int add_listener(_Lambda&& lambda)
+		template<class _Callable
+			, class = typename std::enable_if<std::is_convertible<_Callable, fn_operation_complete>::value>::type>
+		inline int add_listener(_Callable&& _callee)
 		{
-			return future<int>::add_listener<fn_operation_complete>(std::forward<_Lambda>(lambda), WWRP<channel_future>(this));
+			return future<int>::add_listener<fn_operation_complete>(std::forward<_Callable>(_callee), WWRP<channel_future>(this));
 		}
-
+		/*
 		template<class _Fx, class... _Args>
 		inline int add_listener(_Fx&& _func, _Args&&... _args)
 		{
 			return future<int>::add_listener<fn_operation_complete>(std::forward<_Fx>(_func), std::forward<_Args>(_args)...);
 		}
+		*/
 	};
 
 	class channel_promise:

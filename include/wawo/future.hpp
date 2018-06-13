@@ -137,12 +137,12 @@ namespace wawo {
 			return m_state.load(std::memory_order_acquire) == S_CANCELLED;
 		}
 
-		template<class _Lambda
+		template<class _Callable
 			, class = typename std::enable_if<std::is_convertible<_Lambda, fn_operation_complete>::value>::type>
-			int add_listener(_Lambda&& lambda)
+			int add_listener(_Callable&& callee)
 		{
 			lock_guard<mutex> lg(m_mutex);
-			int id = event_trigger::bind<fn_operation_complete>(E_COMPLETE, std::forward<_Lambda>(lambda));
+			int id = event_trigger::bind<fn_operation_complete>(E_COMPLETE, std::forward<_Callable>(callee));
 			m_handlers.push_back(id);
 			if (is_done()) {
 				_notify_listeners();
@@ -150,13 +150,17 @@ namespace wawo {
 			return id;
 		}
 
-		template<class _Callable, class _Lambda, class... _Args
-			, class = typename std::enable_if<std::is_convertible<_Lambda, _Callable>::value>::type>
-		int add_listener(_Lambda&& _lambda, _Args&&... _args)
+		template<class _Callable_Hint, class _Callable, class... _Args
+			, class = typename std::enable_if<std::is_convertible<_Callable, _Callable_Hint>::value>::type>
+		int add_listener(_Callable&& _callee, _Args&&... _args)
 		{
+			static_assert( !std::is_member_function_pointer<_Callable>::value, "please use std::bind for member pointer function");
+			static_assert(sizeof...(_Args) == 1, "invalid parameter count");
+
 			lock_guard<mutex> lg(m_mutex);
-			std::function<void()> _f = [&_lambda,&_args...]() {
-				_lambda(std::forward<_Args>(_args)...);
+			std::function<void()> _f = [_callee,_args...]() -> void {
+				//we must copy it for a later call , as we may in a state of !is_done() at the moment
+				_callee(_args...);
 			};
 
 			int id = event_trigger::bind<std::function<void()>>(E_COMPLETE, _f);

@@ -33,7 +33,8 @@ public:
 
 		WWRP<wawo::net::channel_future> f_write = ctx->write(outp);
 		f_write->add_listener([](WWRP<wawo::net::channel_future> const& f) {
-			WAWO_INFO("write rt: %d", f->get());
+			WAWO_ASSERT(f->get() == wawo::OK);
+			//WAWO_INFO("write rt: %d", f->get());
 		});
 		//f_write->wait();
 
@@ -54,16 +55,8 @@ public:
 	}
 };
 
-class base {};
-class sub : public base {};
-typedef std::function< void(base*)> fn_pass_base;
-//fn_pass_base f1 = [](sub* s) {};
-
 
 int main(int argc, char* argv) {
-
-
-
 	int* vldi = new int;
 
 	wawo::app app;

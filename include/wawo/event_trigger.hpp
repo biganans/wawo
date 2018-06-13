@@ -25,7 +25,7 @@ namespace wawo {
 	class event_handler : public wawo::event_handler_base
 	{
 		friend class event_trigger;
-		_Callable _callee;
+		typename std::remove_reference<_Callable>::type _callee;
 
 		template<class... Args>
 		void call(Args&&... args) {
@@ -77,39 +77,39 @@ namespace wawo {
 			}
 		}
 
-		template<class _Lambda>
-		int bind(int const& id, _Lambda&& lambda) {
-			typedef std::remove_reference<_Lambda>::type lambda_t;
-			WWRP<event_handler_base> handler = make_event_handler<lambda_t>(std::forward<lambda_t>(lambda));
-			_insert_into_map( id, handler );
-			return handler->id;
+		template<class _Callable>
+		int bind(int const& id, _Callable&& evt_callee ) {
+			static_assert(std::is_class<std::remove_reference<_Callable>>::value, "_Callable must be lambda or std::function type");
+			WWRP<event_handler_base> evt_handler = make_event_handler<_Callable>(std::forward<_Callable>(evt_callee));
+			_insert_into_map( id, evt_handler);
+			return evt_handler->id;
 		}
 
-		template<class _Callable, class _Lambda
-			, class = typename std::enable_if<std::is_convertible<_Lambda, _Callable>::value>::type>
-		int bind(int const& id, _Lambda&& lambda) {
-			typedef std::remove_reference<_Lambda>::type lambda_t;
-			WWRP<event_handler_base> handler = make_event_handler<_Callable>(std::forward<lambda_t>(lambda));
-			_insert_into_map(id, handler);
-			return handler->id;
+		template<class _Callable_Hint, class _Callable
+			, class = typename std::enable_if<std::is_convertible<_Callable, _Callable_Hint>::value>::type>
+		int bind(int const& id, _Callable&& evt_callee) {
+			static_assert(std::is_class<std::remove_reference<_Callable>>::value, "_Callable must be lambda or std::function type");
+			WWRP<event_handler_base> evt_handler = make_event_handler<_Callable_Hint>(std::forward<std::remove_reference<_Callable>::type>(evt_callee));
+			_insert_into_map(id, evt_handler);
+			return evt_handler->id;
 		}
 
-		template<class _Callable, class _Fx, class... _Args>
+		template<class _Callable_Hint, class _Fx, class... _Args>
 		int bind(int const& id, _Fx&& _func, _Args&&... _args) {
-			WWRP<event_handler_base> handler = make_event_handler<_Callable>(std::bind(std::forward<_Fx>(_func), std::forward<_Args>(_args)...));
-			_insert_into_map(id, handler);
-			return handler->id;
+			WWRP<event_handler_base> evt_handler = make_event_handler<_Callable_Hint>(std::bind(std::forward<_Fx>(_func), std::forward<_Args>(_args)...));
+			_insert_into_map(id, evt_handler);
+			return evt_handler->id;
 		}
 
-		template<class _Callable, class... _Args>
+		template<class _Callable_Hint, class... _Args>
 		void invoke(int id, _Args&&... _args) {
 			typename event_map_t::iterator it = m_handlers.find(id);
 			if (it != m_handlers.end()) {
 				handler_vector_t::iterator it_handler = it->second.begin() ;
 				while (it_handler != it->second.end()) {
-					WWRP<event_handler<_Callable>> callee = wawo::dynamic_pointer_cast<event_handler<_Callable>>( *(it_handler++) );
-					WAWO_ASSERT(callee != NULL);
-					callee->call(std::forward<_Args>(_args)...);
+					WWRP<event_handler<_Callable_Hint>> callee_handler = wawo::dynamic_pointer_cast<event_handler<_Callable_Hint>>( *(it_handler++) );
+					WAWO_ASSERT(callee_handler != NULL);
+					callee_handler->call(std::forward<_Args>(_args)...);
 				}
 			}
 		}
