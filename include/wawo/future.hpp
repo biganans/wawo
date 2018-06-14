@@ -44,8 +44,8 @@ namespace wawo {
 			S_FAILURE //operation failed
 		};
 
-		std::mutex m_mutex;
-		std::condition_variable m_cond;
+		wawo::mutex m_mutex;
+		wawo::condition_variable m_cond;
 
 		listener_handler_vector m_handlers;
 		WWSP<wawo::exception> m_exception;
@@ -91,9 +91,9 @@ namespace wawo {
 		{
 			while (m_state.load(std::memory_order_acquire) == S_IDLE)
 			{
-				std::unique_lock<std::mutex> ulk(m_mutex);
+				unique_lock<mutex> ulk(m_mutex);
 				if (m_state.load(std::memory_order_acquire) == S_IDLE) {
-					m_cond.wait(ulk);
+					m_cond.no_interrupt_wait(ulk);
 				}
 			}
 		}
@@ -160,7 +160,7 @@ namespace wawo {
 			static_assert( !std::is_member_function_pointer<_Callable>::value, "please use std::bind for member pointer function");
 			static_assert(sizeof...(_Args) == 1, "invalid parameter count");
 
-			std::lock_guard<std::mutex> lg(m_mutex);
+			lock_guard<mutex> lg(m_mutex);
 			std::function<void()> _f = [_callee,_args...]() -> void {
 				//we must copy it for a later call , as we may in a state of !is_done() at the moment
 				_callee(_args...);
@@ -192,7 +192,7 @@ namespace wawo {
 	{
 	public:
 		void set_success(T const& v) {
-			std::lock_guard<std::mutex> lg(m_mutex);
+			lock_guard<mutex> lg(m_mutex);
 			typename future<T>::state s = future<T>::S_IDLE;
 			int ok = future<T>::m_state.compare_exchange_strong( s, future<T>::S_SUCCESS, std::memory_order_acq_rel);
 			WAWO_ASSERT(ok);

@@ -36,7 +36,7 @@ namespace wawo { namespace net {
 		{}
 
 		void set_success(int const& v) {
-			std::lock_guard<std::mutex> lg(channel_future::m_mutex);
+			lock_guard<mutex> lg(channel_future::m_mutex);
 			typename channel_future::state s = channel_future::S_IDLE;
 			int ok = channel_future::m_state.compare_exchange_strong(s, channel_future::S_SUCCESS, std::memory_order_acq_rel);
 			WAWO_ASSERT(ok);
@@ -50,7 +50,7 @@ namespace wawo { namespace net {
 		}
 
 		void set_failure(WWSP<wawo::promise_exception> const& e) {
-			std::lock_guard<std::mutex> lg(channel_future::m_mutex);
+			lock_guard<mutex> lg(channel_future::m_mutex);
 			typename channel_future::state s = channel_future::S_IDLE;
 			int ok = channel_future::m_state.compare_exchange_strong(s, channel_future::S_FAILURE, std::memory_order_acq_rel);
 			WAWO_ASSERT(ok);
