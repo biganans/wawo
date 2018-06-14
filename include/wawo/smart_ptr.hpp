@@ -603,11 +603,13 @@ namespace wawo {
 			(void)r;
 		}
 
-		template <typename _Tp_rel>
-		explicit ref_ptr(_Tp_rel* const& p)
+		template <typename _Tp_rel
+			,class = typename std::enable_if<std::is_convertible<_Tp_rel*, ELEMENT_TYPE*>::value>::type
+		>
+		ref_ptr(_Tp_rel* const& p)
 			:_p(p)
 		{
-			static_assert(std::is_convertible<_Tp_rel*, ELEMENT_TYPE*>::value, "convertible check failed");
+			//static_assert(std::is_convertible<_Tp_rel*, ELEMENT_TYPE*>::value, "convertible check failed");
 			if (_p != 0) _p->_ref_grab();
 		}
 
@@ -807,6 +809,7 @@ template<class _Ty COMMA LIST(_CLASS_TYPE)> \
 _VARIADIC_EXPAND_0X(_ALLOCATE_MAKE_REF, , , ,)
 #undef _ALLOCATE_MAKE_REF
 #else
+
 	template <class _TTM, typename... _Args>
 	inline ref_ptr<_TTM> make_ref(_Args&&... args)
 	{

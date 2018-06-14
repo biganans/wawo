@@ -154,20 +154,20 @@ namespace wawo { namespace net {
 		return wawo::OK;
 	}
 
-	bool is_ipv4_in_dotted_decimal_notation(const char* string) {
+	bool is_ipv4_in_dotted_decimal_notation(const char* cstr) {
 		struct in_addr inaddr;
-		int rval = inet_pton(AF_INET, string, &inaddr);
+		int rval = inet_pton(AF_INET, cstr, &inaddr);
 		if (rval == 0) return false;
 
-		std::vector<wawo::len_cstr> vectors;
-		wawo::split(string, ".", vectors);
+		std::vector<std::string> vectors;
+		wawo::split(std::string(cstr), ".", vectors);
 
 		if (vectors.size() != 4) return false;
 
 		char _tmp[256] = { 0 };
-		snprintf(_tmp, 256, "%u.%u.%u.%u", wawo::to_u32(vectors[0].cstr), wawo::to_u32(vectors[1].cstr), wawo::to_u32(vectors[2].cstr), wawo::to_u32(vectors[3].cstr));
+		snprintf(_tmp, 256, "%u.%u.%u.%u", wawo::to_u32(vectors[0].c_str()), wawo::to_u32(vectors[1].c_str()), wawo::to_u32(vectors[2].c_str()), wawo::to_u32(vectors[3].c_str()));
 
-		return wawo::len_cstr(_tmp) == wawo::len_cstr(string);
+		return wawo::strcmp(_tmp, cstr) == 0;
 	}
 
 

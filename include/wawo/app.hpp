@@ -10,6 +10,14 @@
 #include <wawo/net/io_event_loop.hpp>
 #include <wawo/net/wcp.hpp>
 
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
+
 namespace wawo {
 
 	class app :
@@ -106,23 +114,38 @@ namespace wawo {
 			return m_should_exit;
 		}
 
-		//ten years, in mill
-		int run_for( u64_t const& time = 315360000000ULL )
+		int run() {
+			return run_until( std::chrono::system_clock::now() + std::chrono::seconds(3600*24*12*10) );
+		}
+
+		template <class _Rep, class _Period>
+		int run_for(std::chrono::duration<_Rep, _Period> const& duration)
 		{
 			wawo::thread::unique_lock<wawo::thread::mutex> ulk(m_mutex);
-			u64_t _begin_time = wawo::time::curr_milliseconds();
+			std::chrono::time_point<std::chrono::system_clock> exit_tp = std::chrono::system_clock::now() + duration;
 			while (!m_should_exit) {
-				u64_t now = wawo::time::curr_milliseconds();
-				if ((now - _begin_time) > time) {
+				std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+				if (now>=exit_tp) {
 					break;
 				}
-				m_cond.wait_for(ulk, std::chrono::milliseconds(time));
+				m_cond.wait_for(ulk, exit_tp-now );
 			}
-			u64_t _end_time = wawo::time::curr_milliseconds();
-			WAWO_INFO("[APP]RunUntil return, total run time: %llu seconds", (_end_time - _begin_time));
 			return 0;
 		}
 
+		template <class _Clock, class _Duration>
+		int run_until(std::chrono::time_point<_Clock, _Duration> const& tp)
+		{
+			wawo::thread::unique_lock<wawo::thread::mutex> ulk(m_mutex);
+			while (!m_should_exit) {
+				std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+				if (now >= tp) {
+					break;
+				}
+				m_cond.wait_until(ulk, tp);
+			}
+			return 0;
+		}
 
 		u32_t static get_process_id() {
 

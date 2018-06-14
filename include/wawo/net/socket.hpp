@@ -152,42 +152,65 @@ namespace wawo { namespace net {
 			});
 		*/
 
-		static WWRP<channel_future> listen(std::string const& addrinfo, fn_accepted_channel_initializer const& fn_accepted) {
-			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(NULL);
-
+		static WWRP<channel_future> listen(std::string const& addrinfo, fn_accepted_channel_initializer const& accepted) {
+			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(nullptr);
 			std::vector<std::string> _arr;
+
 			wawo::split(addrinfo, ":", _arr);
 			if (_arr.size() != 3) {
 				ch_promise->set_success(wawo::E_SOCKET_INVALID_ADDRESS);
-				goto end_listen;
+				return ch_promise;
 			}
 
+			wawo::net::s_family family;
 			wawo::net::s_protocol proto;
+			wawo::net::s_type type;
 
 			if (_arr[0] == "tcp") {
+				family = wawo::net::F_AF_INET;
+				type = T_STREAM;
 				proto = P_TCP;
 			}
 			else if (_arr[0] == "wcp") {
+				family = wawo::net::F_AF_INET;
+				type = T_DGRAM;
 				proto = P_WCP;
 			}
 			else if (_arr[0] == "udp") {
+				family = wawo::net::F_AF_INET;
+				type = T_DGRAM;
 				proto = P_UDP;
 			}
 			else {
 				ch_promise->set_success(wawo::E_SOCKET_INVALID_PROTOCOL);
-				goto end_listen;
+				return ch_promise;
 			}
 
 			if (_arr[1].substr(0, 2) != "//") {
 				ch_promise->set_success(wawo::E_SOCKET_INVALID_ADDRESS);
-				goto end_listen;
+				return ch_promise;
+			}
+			std::string ip = _arr[1].substr(2);
+			if (!is_ipv4_in_dotted_decimal_notation(ip.c_str()) ) {
+				ch_promise->set_success(wawo::E_SOCKET_UNKNOWN_ADDRESS_FORMAT);
+				return ch_promise;
 			}
 
+			u16_t port = wawo::to_u32(_arr[2].c_str())&0xFFFF;
+			WWRP<socket> so = wawo::make_ref<socket>(family, type, proto);
+			if (so == NULL) {
+				ch_promise->set_success(wawo::get_last_errno());
+				return ch_promise;
+			}
 
-			
+			WWRP<channel_future> listen_future = so->listen_on(wawo::net::address(ip.c_str(), port), accepted, 128);
+			int rt = listen_future->get();
+			WAWO_RETURN_V_IF_MATCH(listen_future, rt == wawo::OK);
 
+			//clean res in case of failure
+			so->ch_close();
 
-		end_listen:
+			ch_promise->set_success(rt);
 			return ch_promise;
 		}
 

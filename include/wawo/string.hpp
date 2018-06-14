@@ -486,40 +486,40 @@ namespace wawo {
 		goto begin;
 	}
 
-	inline void split(wawo::len_cstr const& string, wawo::len_cstr const& delimiter, std::vector<wawo::len_cstr>& result ) {
+	inline void split(std::string const& string, std::string const& delimiter, std::vector<std::string>& result ) {
 
 		WAWO_ASSERT( result.size() == 0 );
-		char const* check_cstr = string.cstr;
-		u32_t check_length = string.len;
+		char const* check_cstr = string.c_str();
+		u32_t check_length = string.length();
 		u32_t next_check_idx = 0;
 
-		char const* delimiter_cstr = delimiter.cstr;
-		u32_t delimiter_length = delimiter.len;
+		char const* delimiter_cstr = delimiter.c_str();
+		u32_t delimiter_length = delimiter.length();
 
 		int hit_pos ;
 
 		while( (next_check_idx < check_length) && ( hit_pos = wawo::strpos( check_cstr + next_check_idx, delimiter_cstr )) != -1 )
 		{
-			wawo::len_cstr tmp( (check_cstr + next_check_idx), hit_pos );
+			std::string tmp( (check_cstr + next_check_idx), hit_pos );
 			next_check_idx += (hit_pos + delimiter_length);
 
-			if( tmp.len > 0 ) {
+			if( tmp.length() > 0 ) {
 				result.push_back( tmp );
 			}
 		}
 
 		if( (check_length - next_check_idx) > 0 ) {
-			wawo::len_cstr left_string( (check_cstr + next_check_idx), check_length-next_check_idx );
+			std::string left_string( (check_cstr + next_check_idx), check_length-next_check_idx );
 			result.push_back( left_string );
 		}
 	}
+	
+	inline void split( wawo::len_cstr const& lcstr, wawo::len_cstr const& delimiter_string, std::vector<wawo::len_cstr>& result ) {
+		std::vector<std::string> length_result;
+		split( std::string(lcstr.cstr, lcstr.len ), std::string(delimiter_string.cstr, delimiter_string.len), length_result);
 
-	inline void split( std::string const& string, std::string const& delimiter_string, std::vector<std::string>& result ) {
-		std::vector<len_cstr> length_cstr_result;
-		split( len_cstr( string.c_str(), string.length() ), len_cstr(delimiter_string.c_str(), delimiter_string.length()), length_cstr_result );
-
-		std::for_each( length_cstr_result.begin(), length_cstr_result.end(), [&result]( len_cstr const& lengthcstr ) {
-			result.push_back( std::string( lengthcstr.cstr, lengthcstr.len) );
+		std::for_each(length_result.begin(), length_result.end(), [&result]( std::string const& lengthcstr ) {
+			result.push_back( wawo::len_cstr( lengthcstr.c_str(), lengthcstr.length()) );
 		});
 	}
 
@@ -565,6 +565,5 @@ namespace std {
 		}
 	};
 }
-
 
 #endif
