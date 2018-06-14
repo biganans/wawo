@@ -64,7 +64,7 @@ int main(int argc, char* argv) {
 	wawo::app app;
 	WWRP<http_server_handler> http_handler = make_ref<http_server_handler>();
 
-	WWRP<channel_future> ch_future = socket::listen("tcp://0.0.0.0:8082", [http_handler](WWRP<channel> const& ch) {
+	WWRP<channel_future> ch_future = socket::listen_on("tcp://0.0.0.0:8082", [http_handler](WWRP<channel> const& ch) {
 		WWRP<handler::http> h = make_ref<my_http_handler>();
 		h->bind<handler::fn_http_message_header_end_t >(handler::http_event::E_HEADER_COMPLETE, &http_server_handler::on_header_end, http_handler, std::placeholders::_1, std::placeholders::_2);
 		ch->pipeline()->add_last(h);
