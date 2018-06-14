@@ -6,10 +6,7 @@ int main(int argc, char** argv) {
 
 	wawo::app app;
 
-	WWRP<wawo::net::socket> so = wawo::make_ref<wawo::net::socket>(wawo::net::F_AF_INET, wawo::net::T_STREAM, wawo::net::P_TCP);
-	wawo::net::address addr("0.0.0.0", 22311);
-
-	WWRP<wawo::net::channel_future> f_listen = so->listen_on(addr, [](WWRP<wawo::net::channel> const& ch) {
+	WWRP<wawo::net::channel_future> f_listen = wawo::net::socket::listen_on("tcp://0.0.0.0:22311", [](WWRP<wawo::net::channel> const& ch) {
 		WWRP<wawo::net::channel_handler_abstract> hlen_handler = wawo::make_ref<wawo::net::handler::hlen>();
 		ch->pipeline()->add_last(hlen_handler);
 
@@ -25,12 +22,12 @@ int main(int argc, char** argv) {
 
 	int rt = f_listen->get();
 	if (rt != wawo::OK) {
-		so->ch_close();
 		return rt;
 	}
 
-	app.run_for();
-	so->ch_close_future()->wait();
+	app.run();
+	f_listen->channel()->ch_close();
+	f_listen->channel()->ch_close_future()->wait();
 
 	return wawo::OK;
 }
