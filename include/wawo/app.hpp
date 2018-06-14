@@ -27,8 +27,8 @@ namespace wawo {
 	private:
 		bool m_should_exit;
 
-		wawo::thread::mutex m_mutex;
-		wawo::thread::condition m_cond;
+		wawo::mutex m_mutex;
+		wawo::condition m_cond;
 
 	public:
 		app( u8_t const& c = 0 ) :
@@ -54,14 +54,14 @@ namespace wawo {
 		}
 
 		void deinit_signal() {
-			wawo::thread::unique_lock<wawo::thread::mutex> ulk(m_mutex);
+			wawo::unique_lock<wawo::mutex> ulk(m_mutex);
 
 			//@todo
 			//wawo::signal::signal_manager::instance()->register_signal(SIGINT, this);
 			//wawo::signal::signal_manager::instance()->register_signal(SIGTERM, this);
 		}
 		void init_signal() {
-			wawo::thread::unique_lock<wawo::thread::mutex> ulk(m_mutex);
+			wawo::unique_lock<wawo::mutex> ulk(m_mutex);
 
 #ifdef WAWO_PLATFORM_GNU
 			wawo::signal::signal_manager::instance()->register_signal(SIGPIPE, NULL);
@@ -89,7 +89,7 @@ namespace wawo {
 		}
 
 		void handle_signal( int signo ) {
-			wawo::thread::unique_lock<wawo::thread::mutex> ulk(m_mutex);
+			wawo::unique_lock<wawo::mutex> ulk(m_mutex);
 
 			WAWO_INFO( "[APP]receive signo: %d", signo );
 			m_cond.notify_one();
@@ -121,7 +121,7 @@ namespace wawo {
 		template <class _Rep, class _Period>
 		int run_for(std::chrono::duration<_Rep, _Period> const& duration)
 		{
-			wawo::thread::unique_lock<wawo::thread::mutex> ulk(m_mutex);
+			wawo::unique_lock<wawo::mutex> ulk(m_mutex);
 			std::chrono::time_point<std::chrono::system_clock> exit_tp = std::chrono::system_clock::now() + duration;
 			while (!m_should_exit) {
 				std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
@@ -136,7 +136,7 @@ namespace wawo {
 		template <class _Clock, class _Duration>
 		int run_until(std::chrono::time_point<_Clock, _Duration> const& tp)
 		{
-			wawo::thread::unique_lock<wawo::thread::mutex> ulk(m_mutex);
+			wawo::unique_lock<wawo::mutex> ulk(m_mutex);
 			while (!m_should_exit) {
 				std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
 				if (now >= tp) {

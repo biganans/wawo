@@ -11,7 +11,7 @@
 
 namespace wawo { namespace net { namespace observer_impl {
 
-	using namespace wawo::thread;
+	
 
 	class epoll:
 		public observer_abstract

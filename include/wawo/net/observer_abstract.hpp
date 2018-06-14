@@ -2,7 +2,7 @@
 #define _WAWO_NET_OBSERVER_IMPL_SOCKET_OBSERVER_ABSTRACT_HPP_
 
 #include <wawo/smart_ptr.hpp>
-#include <wawo/thread/mutex.hpp>
+#include <wawo/mutex.hpp>
 #include <wawo/task/scheduler.hpp>
 #include <wawo/net/io_event.hpp>
 
@@ -17,7 +17,7 @@
 #endif
 
 namespace wawo { namespace net {
-	using namespace wawo::thread;
+	
 
 	enum ioe_flag {
 		IOE_READ	= 1, //check read, sys io

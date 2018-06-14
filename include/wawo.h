@@ -12,10 +12,10 @@
 #include <wawo/bytes_ringbuffer.hpp>
 #include <wawo/heap.hpp>
 
-#include <wawo/thread/mutex.hpp>
-#include <wawo/thread/condition.hpp>
-#include <wawo/thread/thread.hpp>
-#include <wawo/thread/ticker.hpp>
+#include <wawo/mutex.hpp>
+#include <wawo/condition.hpp>
+#include <wawo/thread.hpp>
+#include <wawo/ticker.hpp>
 
 #include <wawo/event_trigger.hpp>
 #include <wawo/timer.hpp>

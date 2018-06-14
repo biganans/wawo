@@ -40,7 +40,7 @@ namespace wawo { namespace signal {
 #include <vector>
 
 #include <wawo/singleton.hpp>
-#include <wawo/thread/mutex.hpp>
+#include <wawo/mutex.hpp>
 
 namespace wawo { namespace signal {
 
@@ -71,7 +71,7 @@ namespace wawo { namespace signal {
 	private:
 		void handle_signal( int signo );
 
-		wawo::thread::mutex m_signalHandlersMutex;
+		wawo::mutex m_signalHandlersMutex;
 		SIGNAL_AND_SIGNAL_HANDLER_MAP m_signalHandlers;
 
 		DECLARE_SINGLETON_FRIEND(signal_manager);

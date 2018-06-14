@@ -7,7 +7,7 @@
 
 namespace wawo { namespace signal {
 
-	using namespace wawo::thread;
+	
 
 	signal_manager::signal_manager():
 		m_signalHandlersMutex(),

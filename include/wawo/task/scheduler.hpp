@@ -7,7 +7,7 @@
 #include <wawo/smart_ptr.hpp>
 #include <wawo/singleton.hpp>
 
-#include <wawo/thread/thread.hpp>
+#include <wawo/thread.hpp>
 #include <wawo/task/task.hpp>
 #include <wawo/task/runner.hpp>
 
@@ -23,8 +23,6 @@ namespace wawo { namespace task {
 #else
 	typedef mutex scheduler_mutext_t;
 #endif
-
-	using namespace wawo::thread;
 
 	class scheduler:
 		public wawo::singleton<scheduler>

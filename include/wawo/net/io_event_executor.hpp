@@ -3,8 +3,8 @@
 
 #include <wawo/core.hpp>
 #include <wawo/smart_ptr.hpp>
-#include <wawo/thread/thread_run_object_abstract.hpp>
-#include <wawo/thread/mutex.hpp>
+#include <wawo/thread_run_object_abstract.hpp>
+#include <wawo/mutex.hpp>
 
 #include <wawo/task/task.hpp>
 #include <wawo/timer.hpp>
@@ -13,12 +13,11 @@
 
 namespace wawo { namespace net {
 	//@todo impl block until no new task feature
-	using namespace wawo::thread;
 
 	typedef std::queue<WWRP<wawo::task::task_abstract>> TASK_Q;
 	class io_event_executor :
 		public wawo::ref_base,
-		public wawo::net::thread_run_object_abstract
+		public wawo::thread_run_object_abstract
 	{
 		typedef std::function<void()> fn_io_event_task;
 		typedef wawo::task::task io_task;

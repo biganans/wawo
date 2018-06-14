@@ -14,7 +14,7 @@ namespace wcp_test {
 			S_SEND_END
 		};
 
-		wawo::thread::spin_mutex m_mutex;
+		wawo::spin_mutex m_mutex;
 
 		wawo::u32_t s_total;
 		wawo::byte_t* file_content;
@@ -37,7 +37,7 @@ namespace wcp_test {
 		}
 
 		void begin_send(WWRP<wawo::net::channel_handler_context> const& ctx) {
-			wawo::thread::lock_guard<wawo::thread::spin_mutex> lg(m_mutex);
+			wawo::lock_guard<wawo::spin_mutex> lg(m_mutex);
 
 			if (state == S_SEND_BEGIN) {
 				state = S_SEND_HEADER;
@@ -112,7 +112,7 @@ namespace wcp_test {
 	class StreamNode :
 		public wawo::net::channel_inbound_handler_abstract,
 		public wawo::net::channel_activity_handler_abstract,
-		public wawo::thread::thread_run_object_abstract
+		public wawo::thread_run_object_abstract
 	{
 		wawo::byte_t* m_file_content;
 		wawo::u32_t m_file_len;
@@ -147,7 +147,7 @@ namespace wcp_test {
 
 		~StreamNode() {}
 
-		wawo::thread::spin_mutex msg_queue_mutex;
+		wawo::spin_mutex msg_queue_mutex;
 
 		struct income_queue {
 			WWRP<wawo::net::channel_handler_context> ctx;
@@ -157,7 +157,7 @@ namespace wcp_test {
 
 		void run() {
 			{
-				wawo::thread::lock_guard<wawo::thread::spin_mutex> _lg(msg_queue_mutex);
+				wawo::lock_guard<wawo::spin_mutex> _lg(msg_queue_mutex);
 				while (msg_queue.size()) {
 
 					income_queue in = msg_queue.front();
@@ -195,7 +195,7 @@ namespace wcp_test {
 		}
 
 		void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income) {
-			wawo::thread::lock_guard < wawo::thread::spin_mutex > _lg(msg_queue_mutex);
+			wawo::lock_guard < wawo::spin_mutex > _lg(msg_queue_mutex);
 			msg_queue.push({ ctx,income });
 		}
 

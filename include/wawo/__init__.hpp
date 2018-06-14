@@ -1,8 +1,8 @@
 #ifndef __WAWO___INIT___HPP_
 #define __WAWO___INIT___HPP_
 
-#include <wawo/thread/mutex.hpp>
-#include <wawo/thread/thread.hpp>
+#include <wawo/mutex.hpp>
+#include <wawo/thread.hpp>
 
 /////////////////////////////////////////
 namespace __wawo__ {
@@ -37,17 +37,17 @@ namespace __wawo__ {
 
 #if defined(_DEBUG_MUTEX) || defined(_DEBUG_SHARED_MUTEX)
 			//for mutex/lock deubg
-			wawo::thread::tls_create<wawo::thread::MutexSet>() ;
+			wawo::tls_create<wawo::MutexSet>() ;
 #endif
 
 #ifdef _DEBUG_THREAD_CREATE_JOIN
-			wawo::thread::thread_debugger::instance()->init();
+			wawo::thread_debugger::instance()->init();
 #endif
 		}
 		~__init__() {
 #ifdef _DEBUG_THREAD_CREATE_JOIN
 			try {
-				wawo::thread::thread_debugger::instance()->deinit();
+				wawo::thread_debugger::instance()->deinit();
 			}
 			catch (...) {
 			}

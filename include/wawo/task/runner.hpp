@@ -3,9 +3,9 @@
 
 #include <wawo/core.hpp>
 #include <wawo/smart_ptr.hpp>
-#include <wawo/thread/mutex.hpp>
-#include <wawo/thread/thread_run_object_abstract.hpp>
-#include <wawo/thread/condition.hpp>
+#include <wawo/mutex.hpp>
+#include <wawo/thread_run_object_abstract.hpp>
+#include <wawo/condition.hpp>
 #include <wawo/task/task.hpp>
 
 //#define WAWO_TASK_RUNNER_USE_SPIN_MUTEX
@@ -43,7 +43,7 @@ namespace wawo { namespace task {
 }}
 
 namespace wawo { namespace task {
-	using namespace wawo::thread;
+	
 	typedef std::vector< WWRP<task_abstract> > task_vector;
 	typedef std::vector< WWRP<sequencial_task> > sequencial_task_vector;
 

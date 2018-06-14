@@ -10,12 +10,12 @@
 #include <chrono>
 #include <queue>
 
-#include <wawo/thread/mutex.hpp>
-#include <wawo/thread/thread.hpp>
+#include <wawo/mutex.hpp>
+#include <wawo/thread.hpp>
 
 namespace wawo {
 	
-	using namespace wawo::thread;
+	
 
 	enum timer_state {
 		S_IDLE,
@@ -129,12 +129,12 @@ namespace wawo {
 		typedef std::queue<timer_> _timer_queue;
 		typedef wawo::binary_heap< WWRP<timer>, wawo::timer_less > _timer_heaper_t;
 
-		wawo::thread::mutex m_mutex;
-		wawo::thread::condition_variable m_cond;
-		WWRP<wawo::thread::thread> m_th;
+		wawo::mutex m_mutex;
+		wawo::condition_variable m_cond;
+		WWRP<wawo::thread> m_th;
 		WWRP<_timer_heaper_t> m_heap;
 
-		wawo::thread::spin_mutex m_mutex_tq;
+		wawo::spin_mutex m_mutex_tq;
 		_timer_queue m_tq;
 
 		bool m_has_own_run_th;
@@ -154,8 +154,8 @@ namespace wawo {
 				return;
 			}
 
-			m_th = wawo::make_ref<wawo::thread::thread>();
-			WAWO_ALLOC_CHECK(m_th, sizeof(wawo::thread::thread));
+			m_th = wawo::make_ref<wawo::thread>();
+			WAWO_ALLOC_CHECK(m_th, sizeof(wawo::thread));
 			int rt = m_th->start(&timer_manager::_run, this);
 			WAWO_CONDITION_CHECK(rt == wawo::OK);
 			m_th_break = false;

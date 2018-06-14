@@ -6,11 +6,11 @@
 #include <wawo/event_trigger.hpp>
 
 
-#include <wawo/thread/condition.hpp>
-#include <wawo/thread/mutex.hpp>
+#include <wawo/condition.hpp>
+#include <wawo/mutex.hpp>
 
 namespace wawo {
-	using namespace wawo::thread;
+	
 
 	class promise_exception:
 		public exception
@@ -44,8 +44,9 @@ namespace wawo {
 			S_FAILURE //operation failed
 		};
 
-		mutex m_mutex;
-		condition m_cond;
+		std::mutex m_mutex;
+		std::condition_variable m_cond;
+
 		listener_handler_vector m_handlers;
 		WWSP<wawo::exception> m_exception;
 		
@@ -90,8 +91,10 @@ namespace wawo {
 		{
 			while (m_state.load(std::memory_order_acquire) == S_IDLE)
 			{
-				unique_lock<mutex> ulk(m_mutex);
-				m_cond.wait(ulk);
+				std::unique_lock<std::mutex> ulk(m_mutex);
+				if (m_state.load(std::memory_order_acquire) == S_IDLE) {
+					m_cond.wait(ulk);
+				}
 			}
 		}
 
@@ -157,7 +160,7 @@ namespace wawo {
 			static_assert( !std::is_member_function_pointer<_Callable>::value, "please use std::bind for member pointer function");
 			static_assert(sizeof...(_Args) == 1, "invalid parameter count");
 
-			lock_guard<mutex> lg(m_mutex);
+			std::lock_guard<std::mutex> lg(m_mutex);
 			std::function<void()> _f = [_callee,_args...]() -> void {
 				//we must copy it for a later call , as we may in a state of !is_done() at the moment
 				_callee(_args...);
@@ -170,19 +173,6 @@ namespace wawo {
 			}
 			return id;
 		}
-		/*
-		template<class _Callable, class _Fx, class... _Args>
-		int add_listener(_Fx&& _func, _Args&&... _args)
-		{
-			lock_guard<mutex> lg(m_mutex);
-			int id = event_trigger::bind<_Callable>(E_COMPLETE, std::forward<_Fx>(_func), std::forward<_Args>(_args)...);
-			m_handlers.push_back(id);
-			if (is_done()) {
-				_notify_listeners();
-			}
-			return id;
-		}
-		*/
 
 		void remove_listener(int const& id)
 		{
@@ -202,7 +192,7 @@ namespace wawo {
 	{
 	public:
 		void set_success(T const& v) {
-			lock_guard<mutex> lg(m_mutex);
+			std::lock_guard<std::mutex> lg(m_mutex);
 			typename future<T>::state s = future<T>::S_IDLE;
 			int ok = future<T>::m_state.compare_exchange_strong( s, future<T>::S_SUCCESS, std::memory_order_acq_rel);
 			WAWO_ASSERT(ok);

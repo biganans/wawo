@@ -165,8 +165,8 @@
     <ClCompile Include="..\..\src\signal\signal_manager.cpp" />
     <ClCompile Include="..\..\src\task\scheduler.cpp" />
     <ClCompile Include="..\..\src\task\runner.cpp" />
-    <ClCompile Include="..\..\src\thread\impl\mutex.cpp" />
-    <ClCompile Include="..\..\src\thread\thread.cpp" />
+    <ClCompile Include="..\..\src\thread.cpp" />
+    <ClCompile Include="..\..\src\thread_impl\mutex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\3rd\http_parser\http_parser.h" />
@@ -176,6 +176,7 @@
     <ClInclude Include="..\..\include\wawo\basic.hpp" />
     <ClInclude Include="..\..\include\wawo\bytes_helper.hpp" />
     <ClInclude Include="..\..\include\wawo\bytes_ringbuffer.hpp" />
+    <ClInclude Include="..\..\include\wawo\condition.hpp" />
     <ClInclude Include="..\..\include\wawo\config\compiler.h" />
     <ClInclude Include="..\..\include\wawo\config\compiler\compiler_gnugcc_.h" />
     <ClInclude Include="..\..\include\wawo\config\compiler\compiler_msvc_.h" />
@@ -203,6 +204,7 @@
     <ClInclude Include="..\..\include\wawo\macros.h" />
     <ClInclude Include="..\..\include\wawo\math\formula.hpp" />
     <ClInclude Include="..\..\include\wawo\memory.hpp" />
+    <ClInclude Include="..\..\include\wawo\mutex.hpp" />
     <ClInclude Include="..\..\include\wawo\net\address.hpp" />
     <ClInclude Include="..\..\include\wawo\net\channel.hpp" />
     <ClInclude Include="..\..\include\wawo\net\channel_future.hpp" />
@@ -248,19 +250,17 @@
     <ClInclude Include="..\..\include\wawo\task\runner.hpp" />
     <ClInclude Include="..\..\include\wawo\task\task.hpp" />
     <ClInclude Include="..\..\include\wawo\task\scheduler.hpp" />
-    <ClInclude Include="..\..\include\wawo\thread\condition.hpp" />
-    <ClInclude Include="..\..\include\wawo\thread\impl\condition.hpp" />
-    <ClInclude Include="..\..\include\wawo\thread\impl\mutex.hpp" />
-    <ClInclude Include="..\..\include\wawo\thread\impl\mutex_basic.hpp" />
-    <ClInclude Include="..\..\include\wawo\thread\impl\shared_mutex.hpp" />
-    <ClInclude Include="..\..\include\wawo\thread\impl\spin_mutex.hpp" />
-    <ClInclude Include="..\..\include\wawo\thread\mutex.hpp" />
-    <ClInclude Include="..\..\include\wawo\thread\thread.hpp" />
-    <ClInclude Include="..\..\include\wawo\thread\thread_run_object_abstract.hpp" />
-    <ClInclude Include="..\..\include\wawo\thread\ticker.hpp" />
-    <ClInclude Include="..\..\include\wawo\thread\tls.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread_impl\condition.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread_impl\mutex.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread_impl\mutex_basic.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread_impl\shared_mutex.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread_impl\spin_mutex.hpp" />
+    <ClInclude Include="..\..\include\wawo\thread_run_object_abstract.hpp" />
+    <ClInclude Include="..\..\include\wawo\ticker.hpp" />
     <ClInclude Include="..\..\include\wawo\timer.hpp" />
     <ClInclude Include="..\..\include\wawo\time\time.hpp" />
+    <ClInclude Include="..\..\include\wawo\tls.hpp" />
     <ClInclude Include="..\..\include\wawo\__init__.hpp" />
   </ItemGroup>
   <ItemGroup>

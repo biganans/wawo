@@ -4,7 +4,7 @@
 #include <wawo/task/scheduler.hpp>
 
 namespace wawo { namespace task {
-	using namespace wawo::thread;
+	
 
 	runner::runner( u8_t const& id, scheduler* s ) :
 		m_id( id ),
@@ -227,7 +227,7 @@ namespace wawo { namespace task {
 	runner_pool::~runner_pool() {}
 
 	void runner_pool::init( scheduler* s ) {
-		wawo::thread::lock_guard<mutex> _lg(m_mutex);
+		wawo::lock_guard<mutex> _lg(m_mutex);
 		m_is_running = true;
 		m_last_runner_idx = 0;
 
@@ -246,7 +246,7 @@ namespace wawo { namespace task {
 	}
 
 	void runner_pool::deinit() {
-		wawo::thread::lock_guard<mutex> _lg(m_mutex);
+		wawo::lock_guard<mutex> _lg(m_mutex);
 		if (m_is_running == false) { return; }
 
 		m_is_running = false;

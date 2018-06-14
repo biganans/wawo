@@ -6,8 +6,8 @@
 #include <wawo/bytes_ringbuffer.hpp>
 #include <wawo/net/channel.hpp>
 
-#include <wawo/thread/thread.hpp>
-#include <wawo/thread/mutex.hpp>
+#include <wawo/thread.hpp>
+#include <wawo/mutex.hpp>
 
 #include <wawo/event_trigger.hpp>
 #include <map>
@@ -20,7 +20,7 @@
 #endif
 
 namespace wawo { namespace net { namespace handler {
-	using namespace wawo::thread;
+	
 
 	enum mux_stream_frame_flag {
 		T_SYN = 1,
@@ -465,7 +465,7 @@ end_write_frame:
 		typedef std::map<mux_stream_id_t, WWRP<mux_stream> > stream_map_t;
 		typedef std::pair<mux_stream_id_t, WWRP<mux_stream> > stream_pair_t;
 
-		wawo::thread::spin_mutex m_mutex;
+		wawo::spin_mutex m_mutex;
 		stream_map_t m_stream_map;
 
 		WWRP<wawo::net::channel_handler_context> m_ch_ctx;

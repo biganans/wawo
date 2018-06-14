@@ -12,28 +12,12 @@ namespace wawo { namespace net {
 		WWRP<wawo::net::channel> m_ch;
 		typedef std::function<void(WWRP<channel_future> const& f)> fn_operation_complete;
 
-		/*
-		protected:
-		void _notify_listeners() {
-			if (m_handlers.size() == 0) {
-				return;
-			}
-			WWRP<channel_future>(this);
-			event_trigger::invoke<fn_operation_complete>(E_COMPLETE, WWRP<channel_future>(this));
-			for (size_t i = 0; i<m_handlers.size(); ++i) {
-				event_trigger::unbind(m_handlers[i]);
-			}
-			m_handlers.clear();
-		}
-		*/
-
 	public:
 		channel_future(WWRP<wawo::net::channel> const& ch);
 		virtual ~channel_future();
 		WWRP<wawo::net::channel> channel();
 
 		void reset();
-
 		
 		template<class _Callable
 			, class = typename std::enable_if<std::is_convertible<_Callable, fn_operation_complete>::value>::type>
@@ -41,13 +25,6 @@ namespace wawo { namespace net {
 		{
 			return future<int>::add_listener<fn_operation_complete>(std::forward<_Callable>(_callee), WWRP<channel_future>(this));
 		}
-		/*
-		template<class _Fx, class... _Args>
-		inline int add_listener(_Fx&& _func, _Args&&... _args)
-		{
-			return future<int>::add_listener<fn_operation_complete>(std::forward<_Fx>(_func), std::forward<_Args>(_args)...);
-		}
-		*/
 	};
 
 	class channel_promise:
@@ -59,7 +36,7 @@ namespace wawo { namespace net {
 		{}
 
 		void set_success(int const& v) {
-			lock_guard<mutex> lg(channel_future::m_mutex);
+			std::lock_guard<std::mutex> lg(channel_future::m_mutex);
 			typename channel_future::state s = channel_future::S_IDLE;
 			int ok = channel_future::m_state.compare_exchange_strong(s, channel_future::S_SUCCESS, std::memory_order_acq_rel);
 			WAWO_ASSERT(ok);
@@ -73,7 +50,7 @@ namespace wawo { namespace net {
 		}
 
 		void set_failure(WWSP<wawo::promise_exception> const& e) {
-			lock_guard<mutex> lg(channel_future::m_mutex);
+			std::lock_guard<std::mutex> lg(channel_future::m_mutex);
 			typename channel_future::state s = channel_future::S_IDLE;
 			int ok = channel_future::m_state.compare_exchange_strong(s, channel_future::S_FAILURE, std::memory_order_acq_rel);
 			WAWO_ASSERT(ok);

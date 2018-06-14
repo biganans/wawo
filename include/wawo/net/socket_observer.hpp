@@ -9,7 +9,7 @@
 
 namespace wawo { namespace net {
 
-	using namespace wawo::thread;
+	
 
 #define WAWO_HIGH_IO_PERFORMANCE
 

@@ -3,7 +3,7 @@
 #include <wawo/log/logger_manager.h>
 #include <wawo/time/time.hpp>
 #include <wawo/log/format_normal.h>
-#include <wawo/thread/mutex.hpp>
+#include <wawo/mutex.hpp>
 
 #include <wawo/log/console_logger.h>
 #include <wawo/log/file_logger.h>
@@ -12,7 +12,7 @@
 	#include <wawo/log/sys_logger.h>
 #endif
 
-#include <wawo/thread/thread.hpp>
+#include <wawo/thread.hpp>
 
 
 namespace wawo { namespace log {

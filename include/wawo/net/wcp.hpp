@@ -9,8 +9,8 @@
 #include <wawo/core.hpp>
 #include <wawo/singleton.hpp>
 
-#include <wawo/thread/mutex.hpp>
-#include <wawo/thread/ticker.hpp>
+#include <wawo/mutex.hpp>
+#include <wawo/ticker.hpp>
 
 #include <wawo/bytes_ringbuffer.hpp>
 #include <wawo/packet.hpp>
@@ -79,7 +79,7 @@
 
 namespace wawo { namespace net {
 
-	using namespace wawo::thread;
+	
 
 	enum WCP_Flag {
 		WCP_FLAG_SYN =	1 << 0,
@@ -612,7 +612,7 @@ namespace wawo { namespace net {
 	typedef std::pair<int, WWSP<wpoll>> WpollPair;
 
 	class wcp :
-		public wawo::thread::thread_run_object_abstract,
+		public wawo::thread_run_object_abstract,
 		public wawo::singleton<wcp>
 	{
 		enum State {

@@ -2,7 +2,7 @@
 #define _WAWO_NET_SOCKET_BASE_HPP
 
 #include <wawo/core.hpp>
-#include <wawo/thread/thread.hpp>
+#include <wawo/thread.hpp>
 #include <wawo/log/logger_manager.h>
 
 #include <wawo/net/address.hpp>
@@ -102,7 +102,7 @@ namespace wawo { namespace net {
 }}
 
 namespace wawo { namespace net {
-	using namespace wawo::thread;
+	
 
 	enum socket_buffer_cfg_type {
 		BT_SUPER_LARGE,

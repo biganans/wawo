@@ -5,7 +5,7 @@
 
 #include <wawo/smart_ptr.hpp>
 #include <wawo/time/time.hpp>
-#include <wawo/thread/mutex.hpp>
+#include <wawo/mutex.hpp>
 
 #include <wawo/packet.hpp>
 #include <wawo/net/address.hpp>
