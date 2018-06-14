@@ -81,28 +81,23 @@ int main(int argc, char** argv) {
 	int* p = new int(3);//vld check
 	wawo::app app;
 
-	wawo::net::address laddr = wawo::net::address("0.0.0.0", 22310);
-	WWRP<wawo::net::socket> lsocket = wawo::make_ref<wawo::net::socket>(wawo::net::F_AF_INET, wawo::net::T_STREAM, wawo::net::P_TCP);
-
-	WWRP<wawo::net::channel_future> f_listen = lsocket->listen_on(laddr, [](WWRP<wawo::net::channel> const& ch) {
-		WWRP<wawo::net::channel_handler_abstract> example = wawo::make_ref<example_handler>();
-		ch->pipeline()->add_last(example);
-
-		WWRP<wawo::net::channel_handler_abstract> echo = wawo::make_ref<my_echo>();
-		ch->pipeline()->add_last(echo);
+	WWRP<wawo::net::channel_future> f_listen = wawo::net::socket::listen_on( "tcp://0.0.0.0:22310", [](WWRP<wawo::net::channel> const& ch) {
+		WWRP<wawo::net::channel_handler_abstract> h_example = wawo::make_ref<example_handler>();
+		ch->pipeline()->add_last(h_example);
+		WWRP<wawo::net::channel_handler_abstract> h_echo = wawo::make_ref<my_echo>();
+		ch->pipeline()->add_last(h_echo);
 	});
 
 	int listenrt = f_listen->get();
 	if (listenrt != wawo::OK) {
-		lsocket->ch_close();
 		return listenrt;
 	}
 
-	app.run_for();
-	lsocket->ch_close_future()->wait();
+	app.run();
+	f_listen->channel()->ch_close_future()->wait();
 
-	WAWO_ASSERT(lsocket->ch_close_future()->is_done());
-	WAWO_INFO("lsocket closed close: %d", lsocket->ch_close_future()->get());
+	WAWO_ASSERT(f_listen->channel()->ch_close_future()->is_done());
+	WAWO_INFO("lsocket closed close: %d", f_listen->channel()->ch_close_future()->get());
 
 	return wawo::OK;
 }

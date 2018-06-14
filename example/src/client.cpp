@@ -7,13 +7,13 @@ class hello_handler :
 	public wawo::net::channel_activity_handler_abstract
 {
 private:
-	wawo::net::address m_addr;
+	std::string m_addr;
 	int m_max_concurrency;
 	int m_curr_peer_count;
 
 public:
-	hello_handler(wawo::net::address const& addr, int max_concurrency = 1)
-		:m_addr(addr),
+	hello_handler(std::string const& url, int max_concurrency = 1)
+		:m_addr(url),
 		m_max_concurrency(max_concurrency),
 		m_curr_peer_count(0)
 	{
@@ -59,23 +59,18 @@ public:
 
 
 int main( int argc, char** argv ) {
-
 	wawo::app app ;
-	wawo::net::address raddr("127.0.0.1", 22310);
 
-	WWRP<wawo::net::socket> so = wawo::make_ref<wawo::net::socket>(wawo::net::F_AF_INET, wawo::net::T_STREAM, wawo::net::P_TCP);
-
-	WWRP<wawo::net::channel_future> f = so->dial(raddr, [raddr](WWRP<wawo::net::channel> const& ch) {
-		WWRP<wawo::net::channel_handler_abstract> hello = wawo::make_ref<hello_handler>(raddr, 2000);
+	std::string url = "tcp://127.0.0.1:22310";
+	WWRP<wawo::net::channel_future> f = wawo::net::socket::dial(url, [url](WWRP<wawo::net::channel> const& ch) {
+		WWRP<wawo::net::channel_handler_abstract> hello = wawo::make_ref<hello_handler>(url, 2000);
 		ch->pipeline()->add_last(hello);
 	});
-
 	WAWO_ASSERT(f->get() == wawo::OK);
 
-	app.run_for();
+	app.run();
+	f->channel()->ch_close_future()->wait();
 	WAWO_WARN("[main]socket server exit done ...");
-	
 
 	return wawo::OK;
-	
 }

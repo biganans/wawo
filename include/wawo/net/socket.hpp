@@ -132,17 +132,32 @@ namespace wawo { namespace net {
 		inline int turnon_nodelay() { return socket_base::turnon_nodelay(); }
 		inline int turnoff_nodelay() { return socket_base::turnoff_nodelay(); }
 
-		WWRP<wawo::net::channel_future> listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, int const& backlog = 128 );
-		WWRP<wawo::net::channel_future> listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise , int const& backlog = 128 );
-
-		WWRP<channel_future> dial(address const& addr, fn_dial_channel_initializer const& initializer);
-		WWRP<channel_future> dial(address const& addr, fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise);
-
 		int bind(address const& addr);
 		int listen(int const& backlog = 128);
 
 		u32_t accept(WWRP<socket> sockets[], u32_t const& size, int& ec_o);
 		int connect(address const& addr);
+
+		static WWRP<channel_future> dial(std::string const& addrurl, fn_dial_channel_initializer const& initializer) {
+			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(nullptr);
+			socketaddr addr;
+			int rt = _parse_socketaddr_from_url(addrurl, addr);
+			if (rt != wawo::OK) {
+				ch_promise->set_success(rt);
+				return ch_promise;
+			}
+
+			WWRP<socket> so = wawo::make_ref<socket>(addr.so_family, addr.so_type, addr.so_protocol);
+			WWRP<channel_future> dial_future = so->_dial(addr.so_address, initializer);
+			rt = dial_future->get();
+			WAWO_RETURN_V_IF_MATCH(dial_future, rt == wawo::OK);
+
+			//clean res in case of failure
+			so->ch_close();
+
+			ch_promise->set_success(rt);
+			return ch_promise;
+		}
 
 		/*
 		 example:
@@ -151,60 +166,20 @@ namespace wawo { namespace net {
 				ch->pipeline()->add_last(h);
 			});
 		*/
+		static WWRP<channel_future> listen_on(std::string const& addrurl, fn_accepted_channel_initializer const& accepted) {
 
-		static WWRP<channel_future> listen(std::string const& addrinfo, fn_accepted_channel_initializer const& accepted) {
 			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(nullptr);
-			std::vector<std::string> _arr;
 
-			wawo::split(addrinfo, ":", _arr);
-			if (_arr.size() != 3) {
-				ch_promise->set_success(wawo::E_SOCKET_INVALID_ADDRESS);
+			socketaddr addr;
+			int rt = _parse_socketaddr_from_url(addrurl, addr);
+			if (rt != wawo::OK) {
+				ch_promise->set_success(rt);
 				return ch_promise;
 			}
 
-			wawo::net::s_family family;
-			wawo::net::s_protocol proto;
-			wawo::net::s_type type;
-
-			if (_arr[0] == "tcp") {
-				family = wawo::net::F_AF_INET;
-				type = T_STREAM;
-				proto = P_TCP;
-			}
-			else if (_arr[0] == "wcp") {
-				family = wawo::net::F_AF_INET;
-				type = T_DGRAM;
-				proto = P_WCP;
-			}
-			else if (_arr[0] == "udp") {
-				family = wawo::net::F_AF_INET;
-				type = T_DGRAM;
-				proto = P_UDP;
-			}
-			else {
-				ch_promise->set_success(wawo::E_SOCKET_INVALID_PROTOCOL);
-				return ch_promise;
-			}
-
-			if (_arr[1].substr(0, 2) != "//") {
-				ch_promise->set_success(wawo::E_SOCKET_INVALID_ADDRESS);
-				return ch_promise;
-			}
-			std::string ip = _arr[1].substr(2);
-			if (!is_ipv4_in_dotted_decimal_notation(ip.c_str()) ) {
-				ch_promise->set_success(wawo::E_SOCKET_UNKNOWN_ADDRESS_FORMAT);
-				return ch_promise;
-			}
-
-			u16_t port = wawo::to_u32(_arr[2].c_str())&0xFFFF;
-			WWRP<socket> so = wawo::make_ref<socket>(family, type, proto);
-			if (so == NULL) {
-				ch_promise->set_success(wawo::get_last_errno());
-				return ch_promise;
-			}
-
-			WWRP<channel_future> listen_future = so->listen_on(wawo::net::address(ip.c_str(), port), accepted, 128);
-			int rt = listen_future->get();
+			WWRP<socket> so = wawo::make_ref<socket>(addr.so_family, addr.so_type, addr.so_protocol);
+			WWRP<channel_future> listen_future = so->_listen_on(addr.so_address, accepted, 128);
+			rt = listen_future->get();
 			WAWO_RETURN_V_IF_MATCH(listen_future, rt == wawo::OK);
 
 			//clean res in case of failure
@@ -215,6 +190,52 @@ namespace wawo { namespace net {
 		}
 
 	private:
+		//example
+		//tcp://0.0.0.0:80
+		static int _parse_socketaddr_from_url(std::string const& url, socketaddr& addr ) {
+			std::vector<std::string> _arr;
+
+			wawo::split(url, ":", _arr);
+			if (_arr.size() != 3) {
+				return wawo::E_SOCKET_INVALID_ADDRESS;
+			}
+
+			if (_arr[0] == "tcp") {
+				addr.so_family = wawo::net::F_AF_INET;
+				addr.so_type = T_STREAM;
+				addr.so_protocol = P_TCP;
+			}
+			else if (_arr[0] == "wcp") {
+				addr.so_family = wawo::net::F_AF_INET;
+				addr.so_type = T_DGRAM;
+				addr.so_protocol = P_WCP;
+			}
+			else if (_arr[0] == "udp") {
+				addr.so_family = wawo::net::F_AF_INET;
+				addr.so_type = T_DGRAM;
+				addr.so_protocol = P_UDP;
+			}
+			else {
+				return wawo::E_SOCKET_INVALID_PROTOCOL;
+			}
+
+			if (_arr[1].substr(0, 2) != "//") {
+				return wawo::E_SOCKET_INVALID_ADDRESS;
+			}
+			std::string ip = _arr[1].substr(2);
+			if (!is_ipv4_in_dotted_decimal_notation(ip.c_str())) {
+				return wawo::E_SOCKET_UNKNOWN_ADDRESS_FORMAT;
+			}
+			addr.so_address = address( ip.c_str(), wawo::to_u32(_arr[2].c_str()) & 0xFFFF);
+			return wawo::OK;
+		}
+
+		WWRP<wawo::net::channel_future> _listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, int const& backlog = 128);
+		WWRP<wawo::net::channel_future> _listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise, int const& backlog = 128);
+
+		WWRP<channel_future> _dial(address const& addr, fn_dial_channel_initializer const& initializer);
+		WWRP<channel_future> _dial(address const& addr, fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise);
+
 		inline int close() {
 			int rt = socket_base::close();
 			m_state = S_CLOSED;

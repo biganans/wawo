@@ -74,16 +74,16 @@ namespace wawo { namespace net {
 		return wawo::OK;
 	}
 
-	WWRP<wawo::net::channel_future> socket::listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, int const& backlog) {
+	WWRP<wawo::net::channel_future> socket::_listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, int const& backlog) {
 		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
-		return socket::listen_on(addr, fn_accepted, ch_promise, backlog);
+		return socket::_listen_on(addr, fn_accepted, ch_promise, backlog);
 	}
 
-	WWRP<wawo::net::channel_future> socket::listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise, int const& backlog ) {
+	WWRP<wawo::net::channel_future> socket::_listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise, int const& backlog ) {
 		if (!event_loop()->in_event_loop()) {
 			WWRP<socket> _this(this);
 			event_loop()->schedule([_this, addr, fn_accepted, backlog, ch_promise]() ->void {
-				_this->listen_on(addr, fn_accepted, ch_promise, backlog);
+				_this->_listen_on(addr, fn_accepted, ch_promise, backlog);
 			});
 			return ch_promise;
 		}
@@ -116,16 +116,16 @@ namespace wawo { namespace net {
 		return ch_promise;
 	}
 
-	WWRP<channel_future> socket::dial(address const& addr, fn_dial_channel_initializer const& initializer) {
+	WWRP<channel_future> socket::_dial(address const& addr, fn_dial_channel_initializer const& initializer) {
 		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
-		return dial(addr, initializer, ch_promise);
+		return _dial(addr, initializer, ch_promise);
 	}
 
-	WWRP<channel_future> socket::dial(address const& addr, fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise) {
+	WWRP<channel_future> socket::_dial(address const& addr, fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise) {
 		if (!event_loop()->in_event_loop()) {
 			WWRP<socket> _this(this);
 			event_loop()->schedule([_this, initializer, addr, ch_promise]() ->void {
-				_this->dial(addr, initializer, ch_promise);
+				_this->_dial(addr, initializer, ch_promise);
 			});
 			return ch_promise;
 		}
