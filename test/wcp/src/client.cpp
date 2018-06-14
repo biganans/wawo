@@ -8,10 +8,10 @@ class client_req_handler:
 {
 	int transfer_state;
 	wawo::byte_t* file_content;
-	WWSP<wawo::packet> received_packet;
+	WWRP<wawo::packet> received_packet;
 	wawo::u32_t filelen;
 
-	WWSP<wawo::packet> tmp;
+	WWRP<wawo::packet> tmp;
 
 public:
 	client_req_handler():
@@ -44,19 +44,19 @@ public:
 		::size_t rbytes = fread((char*)file_content, 1, flen, fp);
 		int fclosert = fclose(fp);
 
-		received_packet = wawo::make_shared < wawo::packet>(flen);
+		received_packet = wawo::make_ref < wawo::packet>(flen);
 		transfer_state = wcp_test::C_REQUEST;
-		tmp = wawo::make_shared < wawo::packet>(flen);
+		tmp = wawo::make_ref < wawo::packet>(flen);
 
-		WWSP<wawo::packet> outp = wawo::make_shared<wawo::packet>();
+		WWRP<wawo::packet> outp = wawo::make_ref<wawo::packet>();
 		outp->write<wawo::u8_t>(wcp_test::C_TRANSFER_FILE);
 
-		int sndrt = ctx->write(outp);
-		WAWO_ASSERT(sndrt == wawo::OK);
+		WWRP < wawo::net::channel_future> f_write = ctx->write(outp);
+		WAWO_ASSERT(f_write->get() == wawo::OK);
 		transfer_state = wcp_test::C_RECEIVE_HEADER;
 	}
 
-	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWSP<wawo::packet> const& income) {
+	void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income) {
 
 		if (tmp->len()) {
 			income->write_left(tmp->begin(), tmp->len() );
@@ -67,11 +67,11 @@ _CHECK:
 		switch (transfer_state) {
 		case wcp_test::C_REQUEST:
 			{
-				WWSP<wawo::packet> outp = wawo::make_shared<wawo::packet>();
+				WWRP<wawo::packet> outp = wawo::make_ref<wawo::packet>();
 				outp->write<wawo::u8_t>(wcp_test::C_TRANSFER_FILE);
 
-				int sndrt = ctx->write(outp);
-				WAWO_ASSERT(sndrt == wawo::OK);
+				WWRP<wawo::net::channel_future> f_write = ctx->write(outp);
+				WAWO_ASSERT(f_write->get() == wawo::OK);
 				transfer_state = wcp_test::C_RECEIVE_HEADER;
 				goto _CHECK;
 			}
@@ -124,33 +124,28 @@ _CHECK:
 
 
 int main(int argc, char** argv) {
-
 	wawo::app _app;
 
-	wawo::net::socketaddr raddr;
-	raddr.so_family = wawo::net::F_AF_INET;
-
+	std::string url;
 	if (argc == 2) {
-		raddr.so_type = wawo::net::T_STREAM;
-		raddr.so_protocol = wawo::net::P_TCP;
+		url = std::string("wcp://127.0.0.1:32310");
 	} else {
-		raddr.so_type = wawo::net::T_DGRAM;
-		raddr.so_protocol = wawo::net::P_WCP;
+		url = std::string("tcp://127.0.0.1:32310");
 	}
 
-	raddr.so_address = wawo::net::address("127.0.0.1", 32310);
+	WWRP<wawo::net::channel_future> dial_future = wawo::net::socket::dial(url, [](WWRP<wawo::net::channel> const& ch) {
+		WWRP < wawo::net::channel_handler_abstract > h = wawo::make_ref<client_req_handler>();
+		ch->pipeline()->add_last(h);
+	});
 
-	WWRP<wawo::net::socket> so = wawo::make_ref<wawo::net::socket>(sbc, raddr.so_family, raddr.so_type, raddr.so_protocol);
+	if (dial_future->get() != wawo::OK) {
+		WAWO_ERR("dial %s failed", url.c_str());
+		return dial_future->get();
+	}
+	_app.run();
 
-	int openrt = so->open();
-	WAWO_RETURN_V_IF_NOT_MATCH(openrt, openrt == wawo::OK);
+	dial_future->channel()->ch_close();
+	dial_future->channel()->ch_close_future()->wait();
 
-	WWRP < wawo::net::channel_handler_abstract > h = wawo::make_ref<client_req_handler>();
-	so->pipeline()->add_last(h);
-
-	int rt = so->async_connect(raddr.so_address);
-	WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
-
-	_app.run_for();
 	return wawo::OK;
 }

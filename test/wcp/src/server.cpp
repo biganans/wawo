@@ -2,8 +2,6 @@
 #include <wawo.h>
 #include "shared.hpp"
 
-
-
 namespace wcp_test {
 
 	struct async_send_broker :
@@ -22,20 +20,20 @@ namespace wcp_test {
 		wawo::byte_t* file_content;
 		wawo::u32_t file_len;
 		wawo::u32_t one_time_bytes;
-		wawo::i32_t test_times;
-		wawo::i32_t now_times;
+		wawo::u32_t test_times;
+		wawo::u32_t now_times;
 
 		int state;
 
 		void on_block(WWRP<wawo::net::channel_handler_context> const& ctx) {
-			ctx->end_read();
+			ctx->ch->end_read();
 			WAWO_INFO("[wcp_test][%d]wr_block, end async read", ctx->ch->ch_id() );
 		}
 
 		void on_unblock(WWRP<wawo::net::channel_handler_context> const& ctx) {
 			WAWO_INFO("[wcp_test][%d]wr_unblock, begin async read", ctx->ch->ch_id() );
-			begin_send(ctx);
-			ctx->begin_read();
+//			begin_send(ctx);
+			ctx->ch->begin_read();
 		}
 
 		void begin_send(WWRP<wawo::net::channel_handler_context> const& ctx) {
@@ -59,9 +57,9 @@ namespace wcp_test {
 				s_total = 0;
 				state = S_SEND_BEGIN;
 
-				if ((now_times < test_times) || test_times == -1) {
+				if ((now_times < test_times) ) {
 					WWRP<async_send_broker> sender_broker = WWRP<async_send_broker>(this);
-					wawo::task::fn_lambda lambda = [sender_broker, ctx]() -> void {
+					wawo::task::fn_task_void lambda = [sender_broker, ctx]() -> void {
 						sender_broker->begin_send(ctx);
 					};
 					WAWO_SCHEDULER->schedule(lambda);
@@ -74,9 +72,8 @@ namespace wcp_test {
 			WWRP<wawo::packet> outp_BEGIN = wawo::make_ref<wawo::packet>();
 			outp_BEGIN->write<wawo::u8_t>(wcp_test::C_TRANSFER_FILE_HEADER);
 			outp_BEGIN->write<wawo::u32_t>(file_len);
-			int sndrt_BEGIN = ctx->write(outp_BEGIN);
-			
-			if (sndrt_BEGIN == wawo::OK) {
+			WWRP<wawo::net::channel_future> f_write = ctx->write(outp_BEGIN);
+			if(f_write->get() == wawo::OK) {
 				state = S_SEND_CONTENT;
 			}
 		}
@@ -94,11 +91,11 @@ namespace wcp_test {
 				WWRP<wawo::packet> outp_CONTENT = wawo::make_ref<wawo::packet>();
 				outp_CONTENT->write(file_content + s_total, to_sent);
 
-				int sndrt_CONTENT = ctx->write(outp_CONTENT);
-				if (sndrt_CONTENT == wawo::OK) {
+				WWRP<wawo::net::channel_future> f_write = ctx->write(outp_CONTENT);
+				if (f_write->get() == wawo::OK) {
 					s_total += to_sent;
 				}
-				else if (sndrt_CONTENT == wawo::E_SOCKET_SEND_BLOCK) {
+				else if (f_write->get() == wawo::E_CHANNEL_WRITE_BLOCK) {
 					break;
 				}
 				else {
@@ -183,7 +180,7 @@ namespace wcp_test {
 						sender_broker->test_times = -1;
 						sender_broker->state = async_send_broker::S_SEND_BEGIN;
 
-						wawo::task::fn_lambda lambda = [sender_broker, ctx]() -> void {
+						wawo::task::fn_task_void lambda = [sender_broker, ctx]() -> void {
 							sender_broker->begin_send(ctx);
 						};
 
@@ -219,40 +216,32 @@ namespace wcp_test {
 	};
 }
 
-WWRP<wcp_test::StreamNode> g_streamnode;
-
 int main(int argc, char** argv) {
-
 	wawo::app _app;
 
-	g_streamnode = wawo::make_ref<wcp_test::StreamNode>();
-	int rt = g_streamnode->start();
+	WWRP<wcp_test::StreamNode> streamnode = wawo::make_ref<wcp_test::StreamNode>();
+
+	int rt = streamnode->start();
 	WAWO_ASSERT(rt == wawo::OK);
 
-	wawo::net::socketaddr laddr;
-	laddr.so_address = wawo::net::address("0.0.0.0", 32310);
-	laddr.so_family = wawo::net::F_AF_INET;
-
+	std::string url;
 	if (argc == 2) {
-		laddr.so_type = wawo::net::T_STREAM;
-		laddr.so_protocol = wawo::net::P_TCP;
+		url = std::string("wcp://0.0.0.0:32310");
 	}
 	else {
-		laddr.so_type = wawo::net::T_DGRAM;
-		laddr.so_protocol = wawo::net::P_WCP;
+		url = std::string("tcp://0.0.0.0:32310");
 	}
 
-	WWRP<wawo::net::socket> so = wawo::make_ref<wawo::net::socket>(sbc, laddr.so_family, laddr.so_type, laddr.so_protocol);
-	WWRP<wawo::net::channel_future> f_listen = so->listen_on(laddr.so_address, [](WWRP < wawo::net::channel> const& ch) {
-		ch->pipeline()->add_last(g_streamnode);
+	WWRP<wawo::net::channel_future> f_listen = wawo::net::socket::listen_on(url, [&streamnode](WWRP < wawo::net::channel> const& ch) {
+		ch->pipeline()->add_last(streamnode);
 	});
 
-	so->ch_close_future()->add_listener([so](WWRP<wawo::net::channel_future> const& f) {
-		WAWO_INFO("[#%d]listener closed", so->ch_id());
+	f_listen->channel()->ch_close_future()->add_listener([](WWRP<wawo::net::channel_future> const& f) {
+		WAWO_INFO("[#%d]channel closed", f->channel()->ch_id());
 	});
 
-	so->ch_close_future()->wait();
-	g_streamnode->stop();
+	f_listen->channel()->ch_close_future()->wait();
+	streamnode->stop();
 
 	WAWO_INFO("[roger]server exiting...");
 	return 0;

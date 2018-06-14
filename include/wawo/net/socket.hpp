@@ -589,10 +589,15 @@ namespace wawo { namespace net {
 				WAWO_ASSERT(m_noutbound_bytes > 0);
 				socket_outbound_entry& entry = m_outbound_entry_q.front();
 				if (entry.ch_promise->is_cancelled()) {
+					m_noutbound_bytes -= entry.data->len();
+					m_outbound_entry_q.pop();
 					continue;
 				}
 
 				u32_t sent = socket_base::send(entry.data->begin(), entry.data->len(), _errno);
+				WAWO_ASSERT(sent <= m_noutbound_bytes);
+				m_noutbound_bytes -= sent;
+				
 				if (sent == entry.data->len()) {
 					WAWO_ASSERT(_errno == wawo::OK);
 					entry.ch_promise->set_success(wawo::OK);
@@ -600,8 +605,7 @@ namespace wawo { namespace net {
 					continue;
 				}
 				entry.data->skip(sent);
-				WAWO_ASSERT(sent < m_noutbound_bytes);
-				m_noutbound_bytes -= sent;
+				WAWO_ASSERT(entry.data->len());
 				WAWO_ASSERT(_errno != wawo::OK);
 				break;
 			}
