@@ -1,6 +1,6 @@
 
 #include <wawo.h>
-#include <vld.h>
+//#include <vld.h>
 
 class http_server_handler :
 	public wawo::ref_base

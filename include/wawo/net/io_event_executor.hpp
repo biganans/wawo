@@ -71,7 +71,7 @@ namespace wawo { namespace net {
 			lock_guard<spin_mutex> lg(m_tq_mtx);
 			if (m_tq_standby->size() == 0) {
 				m_in_wait = true;
-				m_cond.no_interrupt_wait_for<spin_mutex>(m_tq_mtx, std::chrono::microseconds(64));
+				m_cond.no_interrupt_wait_for<spin_mutex>(m_tq_mtx, std::chrono::microseconds(32));
 				m_in_wait = false;
 			}
 		}
