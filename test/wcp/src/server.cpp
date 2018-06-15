@@ -27,11 +27,11 @@ namespace wcp_test {
 
 		void on_block(WWRP<wawo::net::channel_handler_context> const& ctx) {
 			ctx->ch->end_read();
-			WAWO_INFO("[wcp_test][%d]wr_block, end async read", ctx->ch->ch_id() );
+//			WAWO_INFO("[wcp_test][%d]wr_block, end async read", ctx->ch->ch_id() );
 		}
 
 		void on_unblock(WWRP<wawo::net::channel_handler_context> const& ctx) {
-			WAWO_INFO("[wcp_test][%d]wr_unblock, begin async read", ctx->ch->ch_id() );
+//			WAWO_INFO("[wcp_test][%d]wr_unblock, begin async read", ctx->ch->ch_id() );
 //			begin_send(ctx);
 			ctx->ch->begin_read();
 		}
