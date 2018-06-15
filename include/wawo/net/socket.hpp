@@ -381,7 +381,7 @@ namespace wawo { namespace net {
 		inline void end_read() {
 			if (!event_loop()->in_event_loop()) {
 				WWRP<socket> _so(this);
-				event_loop()->schedule([_so]()->void {
+				event_loop()->execute([_so]()->void {
 					_so->end_read();
 				});
 				return;
@@ -397,7 +397,7 @@ namespace wawo { namespace net {
 		inline void end_write() {
 			if (!event_loop()->in_event_loop()) {
 				WWRP<socket> _so(this);
-				event_loop()->schedule([_so]()->void {
+				event_loop()->execute([_so]()->void {
 					_so->end_write();
 				});
 				return;
@@ -413,7 +413,7 @@ namespace wawo { namespace net {
 		inline void begin_connect( fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL ) {
 			if (!event_loop()->in_event_loop()) {
 				WWRP<socket> _so(this);
-				event_loop()->schedule([_so]()->void {
+				event_loop()->execute([_so]()->void {
 					_so->begin_connect();
 				});
 				return;
@@ -446,7 +446,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(is_nonblocking());
 			if (!event_loop()->in_event_loop()) {
 				WWRP<socket> _so(this);
-				event_loop()->schedule([_so]()->void {
+				event_loop()->execute([_so]()->void {
 					_so->begin_read();
 				});
 				return;
@@ -489,7 +489,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(is_nonblocking());
 			if (!event_loop()->in_event_loop()) {
 				WWRP<socket> _so(this);
-				event_loop()->schedule([_so]()->void {
+				event_loop()->execute([_so]()->void {
 					_so->begin_write();
 				});
 				return;

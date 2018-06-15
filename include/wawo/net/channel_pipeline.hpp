@@ -12,94 +12,71 @@
 #define PIPELINE_VOID_FIRE_VOID(NAME) \
 	inline void fire_##NAME() {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \
-		if(!m_io_event_loop->in_event_loop()) {\
-			WWRP<channel_pipeline> _p(this); \
-			m_io_event_loop->schedule([_p](){ \
-				_p->fire_##NAME(); \
-			}); \
-			return ; \
-		}\
-		m_head->fire_##NAME(); \
+		WAWO_ASSERT(m_head != NULL); \
+		m_io_event_loop->execute([h=m_head](){ \
+			h->fire_##NAME(); \
+		}); \
 	}\
 
 #define PIPELINE_VOID_FIRE_PACKET_1(NAME) \
 	inline void fire_##NAME(WWRP<packet> const& packet_) {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \
-		if(!m_io_event_loop->in_event_loop()) {\
-			WWRP<channel_pipeline> _p(this); \
-			m_io_event_loop->schedule([_p,packet_](){ \
-				_p->fire_##NAME(packet_); \
-			}); \
-			return ; \
-		}\
-		m_head->fire_##NAME(packet_); \
+		WAWO_ASSERT(m_head != NULL); \
+		m_io_event_loop->execute([h=m_head,packet_](){ \
+			h->fire_##NAME(packet_); \
+		}); \
 	}\
 
 #define PIPELINE_CH_FUTURE_ACTION_PACKET_1(NAME) \
 	inline WWRP<channel_future> NAME(WWRP<packet> const& packet_) {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \
+		WAWO_ASSERT(m_tail != NULL); \
 		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(m_ch); \
-		if(!m_io_event_loop->in_event_loop()) { \
-			WWRP<channel_pipeline> _p(this); \
-			m_io_event_loop->schedule([_p,packet_,ch_promise](){ \
-				_p->##NAME(packet_,ch_promise); \
-			}); \
-			return ch_promise; \
-		}\
-		return m_tail->##NAME(packet_,ch_promise); \
+		m_io_event_loop->execute([t=m_tail,packet_,ch_promise](){ \
+			t->##NAME(packet_,ch_promise); \
+		}); \
+		return ch_promise; \
 	}\
 
 #define PIPELINE_CH_FUTURE_ACTION_PACKET_1_CH_PROMISE_1(NAME) \
 	inline WWRP<channel_future> NAME(WWRP<packet> const& packet_, WWRP<channel_promise> const& ch_promise) {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \
-		if(!m_io_event_loop->in_event_loop()) { \
-			WWRP<channel_pipeline> _p(this); \
-			m_io_event_loop->schedule([_p,packet_,ch_promise](){ \
-				_p->##NAME(packet_,ch_promise); \
-			}); \
-			return ch_promise; \
-		}\
-		return m_tail->##NAME(packet_,ch_promise); \
+		WAWO_ASSERT(m_tail != NULL); \
+		m_io_event_loop->execute([t=m_tail,packet_,ch_promise](){ \
+			t->##NAME(packet_,ch_promise); \
+		}); \
+		return ch_promise; \
 	}\
 
 #define PIPELINE_CH_FUTURE_ACTION_VOID(NAME) \
 	inline WWRP<channel_future> NAME() {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \
+		WAWO_ASSERT(m_tail != NULL); \
 		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(m_ch); \
-		if(!m_io_event_loop->in_event_loop()) { \
-			WWRP<channel_pipeline> _p(this); \
-			m_io_event_loop->schedule([_p,ch_promise](){ \
-				_p->##NAME(ch_promise); \
-			}); \
-			return ch_promise; \
-		}\
-		return m_tail->##NAME(ch_promise); \
+		m_io_event_loop->execute([t=m_tail,ch_promise](){ \
+			t->##NAME(ch_promise); \
+		}); \
+		return ch_promise; \
 	}\
 
 #define PIPELINE_CH_FUTURE_ACTION_CH_PROMISE_1(NAME) \
 	inline WWRP<channel_future> NAME( WWRP<channel_promise> const& ch_promise) {\
+		WAWO_ASSERT(m_tail != NULL); \
 		WAWO_ASSERT(m_io_event_loop != NULL); \
-		if(!m_io_event_loop->in_event_loop()) { \
-			WWRP<channel_pipeline> _p(this); \
-			m_io_event_loop->schedule([_p,ch_promise](){ \
-				_p->##NAME(ch_promise); \
-			}); \
-			return ch_promise; \
-		}\
-		return m_tail->##NAME(ch_promise); \
+		m_io_event_loop->execute([t=m_tail,ch_promise](){ \
+			t->##NAME(ch_promise); \
+		}); \
+		return ch_promise; \
 	}\
 
 #define PIPELINE_VOID_ACTION_VOID(NAME) \
 	inline void NAME() {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \
-		if(!m_io_event_loop->in_event_loop()) { \
-			WWRP<channel_pipeline> _p(this); \
-			m_io_event_loop->schedule([_p](){ \
-				_p->##NAME(); \
-			}); \
-			return ; \
-		}\
-		m_tail->##NAME(); \
+		WAWO_ASSERT(m_tail != NULL); \
+		m_io_event_loop->execute([t=m_tail](){ \
+			t->##NAME(); \
+		}); \
+		return ; \
 	}\
 
 namespace wawo { namespace net {

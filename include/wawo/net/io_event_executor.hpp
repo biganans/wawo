@@ -13,12 +13,12 @@
 namespace wawo { namespace net {
 	//@todo impl block until no new task feature
 
+	typedef std::function<void()> fn_io_event_task;
+	typedef wawo::task::task io_task;
 	typedef std::queue<WWRP<wawo::task::task_abstract>> TASK_Q;
+
 	class io_event_executor
 	{
-		typedef std::function<void()> fn_io_event_task;
-		typedef wawo::task::task io_task;
-
 		spin_mutex m_tq_mtx;
 		WWSP<TASK_Q> m_tq_standby;
 		WWSP<TASK_Q> m_tq;
@@ -32,14 +32,28 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_tq_standby->empty());
 		}
 
+		inline void execute(WWRP<wawo::task::task_abstract> const& t) {
+			WAWO_ASSERT(t != NULL);
+			if (in_event_loop()) {
+				t->run();
+				return;
+			}
+			schedule(t);
+		}
 		inline void schedule(WWRP<wawo::task::task_abstract> const& t) {
 			WAWO_ASSERT(t != NULL);
 			lock_guard<spin_mutex> lg(m_tq_mtx);
 			m_tq_standby->push(t);
 		}
-		
+		inline void execute(fn_io_event_task&& f) {
+			if (in_event_loop()) {
+				f();
+				return;
+			}
+			schedule(std::forward<fn_io_event_task>(f));
+		}
 		inline void schedule(fn_io_event_task&& f) {
-			WWRP<io_task> _t = wawo::make_ref<io_task>( std::forward<fn_io_event_task>(f));
+			WWRP<io_task> _t = wawo::make_ref<io_task>(std::forward<fn_io_event_task>(f));
 			lock_guard<spin_mutex> lg(m_tq_mtx);
 			m_tq_standby->push(_t);
 		}

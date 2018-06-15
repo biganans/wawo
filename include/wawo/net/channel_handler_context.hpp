@@ -45,23 +45,21 @@
 	} \
 	inline WWRP<channel_future> NAME##(WWRP<packet> const& p, WWRP<channel_promise> const& ch_promise) { \
 		WAWO_ASSERT(m_io_event_loop != NULL); \
-		if (!m_io_event_loop->in_event_loop()) { \
-			WWRP<CTX_CLASS_NAME> _ctx(this); \
-			m_io_event_loop->schedule([_ctx, p, ch_promise]() { \
-				_ctx->NAME##(p, ch_promise); \
-			}); \
-			return ch_promise; \
-		} \
+		WWRP<CTX_CLASS_NAME> _ctx(this); \
+		m_io_event_loop->execute([_ctx, p, ch_promise]() { \
+			_ctx->_##NAME##(p, ch_promise); \
+		}); \
+		return ch_promise; \
+	} \
+	inline void _##NAME##(WWRP<packet> const& p, WWRP<channel_promise> const& ch_promise) { \
 		if( WAWO_UNLIKELY(m_flag&CH_CH_CLOSED) ) {\
 			ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
-			return ch_promise; \
 		} \
 		WWRP<CTX_CLASS_NAME> _ctx = CTX_CLASS_NAME::_find_prev(HANDLER_FLAG); \
 		WAWO_ASSERT(_ctx != NULL); \
 		_ctx->invoke_##NAME##(p,ch_promise); \
-		return ch_promise; \
 	} \
-	void CTX_CLASS_NAME::invoke_##NAME##(WWRP<packet> const& p, WWRP<channel_promise> const& ch_promise) { \
+	inline void invoke_##NAME##(WWRP<packet> const& p, WWRP<channel_promise> const& ch_promise) { \
 		WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 		WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
 		WAWO_ASSERT(_h != NULL); \
@@ -74,21 +72,20 @@
 		return CTX_CLASS_NAME::##NAME##(ch_promise); \
 	} \
 	inline WWRP<channel_future> NAME##(WWRP<channel_promise> const& ch_promise) { \
-		if (!m_io_event_loop->in_event_loop()) { \
-			WWRP<CTX_CLASS_NAME> _ctx(this); \
-			m_io_event_loop->schedule([_ctx, ch_promise]() { \
-				_ctx->NAME##(ch_promise); \
-			}); \
-			return ch_promise; \
-		} \
+		WWRP<CTX_CLASS_NAME> _ctx(this); \
+		m_io_event_loop->execute([_ctx, ch_promise]() { \
+			_ctx->_##NAME##(ch_promise); \
+		}); \
+		return ch_promise; \
+	} \
+	inline void _##NAME##(WWRP<channel_promise> const& ch_promise) { \
 		if( WAWO_UNLIKELY(m_flag&CH_CH_CLOSED) ) {\
 			ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
-			return ch_promise; \
+			return; \
 		} \
 		WWRP<CTX_CLASS_NAME> _ctx = CTX_CLASS_NAME::_find_prev(HANDLER_FLAG); \
 		WAWO_ASSERT(_ctx != NULL); \
 		_ctx->invoke_##NAME##(ch_promise); \
-		return ch_promise; \
 	} \
 	inline void invoke_##NAME##(WWRP<channel_promise> const& ch_promise) {\
 		WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
@@ -99,13 +96,12 @@
 
 #define VOID_ACTION_HANDLER_CONTEXT_IMPL_T_TO_H_0(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
 	inline void NAME##() { \
-		if (!m_io_event_loop->in_event_loop()) {\
-			WWRP<CTX_CLASS_NAME> _ctx(this); \
-			m_io_event_loop->schedule([_ctx]() { \
-				_ctx->NAME##(); \
-			}); \
-			return; \
-		} \
+		WWRP<CTX_CLASS_NAME> _ctx(this); \
+		m_io_event_loop->execute([_ctx]() { \
+			_ctx->_##NAME##(); \
+		}); \
+	} \
+	inline void _##NAME##() { \
 		if( WAWO_UNLIKELY(m_flag&CH_CH_CLOSED) ) {\
 			return ; \
 		} \
@@ -113,7 +109,7 @@
 		WAWO_ASSERT(_ctx != NULL); \
 		_ctx->invoke_##NAME##(); \
 	} \
-	void CTX_CLASS_NAME::invoke_##NAME##() {\
+	inline void invoke_##NAME##() {\
 		WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 		WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
 		WAWO_ASSERT(_h != NULL); \
@@ -184,25 +180,6 @@ namespace wawo { namespace net {
 		CH_FUTURE_ACTION_HANDLER_CONTEXT_IMPL_T_TO_H_PROMISE(channel_handler_context, shutdown_write, CH_OUTBOUND, channel_outbound_handler_abstract)
 
 		VOID_ACTION_HANDLER_CONTEXT_IMPL_T_TO_H_0(channel_handler_context, flush, CH_OUTBOUND, channel_outbound_handler_abstract)
-
-		/*
-		inline void begin_read(u8_t const& async_flag = 0, fn_io_event const& fn_read = NULL, fn_io_event_error const& fn_err = NULL) {
-			WAWO_ASSERT(ch != NULL);
-			ch->begin_read(async_flag, fn_read, fn_err);
-		}
-		inline void end_read() {
-			WAWO_ASSERT(ch != NULL);
-			ch->end_read();
-		}
-		inline void begin_write(u8_t const& async_flag = 0, fn_io_event const& fn_write = NULL, fn_io_event_error const& fn_err = NULL) {
-			WAWO_ASSERT(ch != NULL);
-			ch->begin_write(async_flag, fn_write, fn_err);
-		}
-		inline void end_write() {
-			WAWO_ASSERT(ch != NULL);
-			ch->end_write();
-		}
-		*/
 	};
 }}
 #endif

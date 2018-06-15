@@ -54,7 +54,7 @@ namespace wawo { namespace net {
 			return _this;
 		}
 
-		m_io_event_loop->schedule([_this, h]() -> void {
+		m_io_event_loop->execute([_this, h]() -> void {
 			_this->add_last(h);
 		});
 		return _this;

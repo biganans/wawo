@@ -136,7 +136,7 @@ namespace wawo { namespace net { namespace handler {
 				s->ch_fire_connected();
 			};
 			WWRP<wawo::task::task> t = wawo::make_ref<wawo::task::task>(l);
-			event_loop()->schedule(t);
+			event_loop()->execute(t);
 
 			return wrt;
 		}
