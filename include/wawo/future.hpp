@@ -87,13 +87,11 @@ namespace wawo {
 			return m_v.load(std::memory_order_acquire);
 		}
 
-		void wait()
-		{
-			while (m_state.load(std::memory_order_acquire) == S_IDLE)
-			{
+		void wait(){
+			while (m_state.load(std::memory_order_acquire) == S_IDLE) {
 				unique_lock<mutex> ulk(m_mutex);
 				if (m_state.load(std::memory_order_acquire) == S_IDLE) {
-					m_cond.no_interrupt_wait(ulk);
+					m_cond.wait(ulk);
 				}
 			}
 		}
@@ -102,7 +100,14 @@ namespace wawo {
 		void wait_for(std::chrono::duration<_Rep, _Period> const& dur) {
 			if (m_state.load(std::memory_order_acquire) == S_IDLE) {
 				unique_lock<mutex> ulk(m_mutex);
-				m_cond.wait_for<_Rep, _Period>(ulk, dur);
+				const std::chrono::time_point< std::chrono::system_clock> tp_expire = std::chrono::system_clock::now() + dur;
+				while (m_state.load(std::memory_order_acquire) == S_IDLE ) {
+					const std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+					if (now >= tp_expire) {
+						break;
+					}
+					m_cond.wait_for<_Rep, _Period>(ulk, now- tp_expire);
+				}
 			}
 		}
 

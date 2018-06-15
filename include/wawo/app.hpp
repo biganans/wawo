@@ -122,9 +122,9 @@ namespace wawo {
 		int run_for(std::chrono::duration<_Rep, _Period> const& duration)
 		{
 			wawo::unique_lock<wawo::mutex> ulk(m_mutex);
-			std::chrono::time_point<std::chrono::system_clock> exit_tp = std::chrono::system_clock::now() + duration;
+			const std::chrono::time_point<std::chrono::system_clock> exit_tp = std::chrono::system_clock::now() + duration;
 			while (!m_should_exit) {
-				std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+				const std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
 				if (now>=exit_tp) {
 					break;
 				}
@@ -138,7 +138,7 @@ namespace wawo {
 		{
 			wawo::unique_lock<wawo::mutex> ulk(m_mutex);
 			while (!m_should_exit) {
-				std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+				const std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
 				if (now >= tp) {
 					break;
 				}
