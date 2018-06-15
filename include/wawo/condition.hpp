@@ -159,9 +159,9 @@ namespace wawo {
 		void wait(unique_lock<mutex>& ulock) {
 			{
 				impl::defer_lock_t _defer_lock_v;
-				impl::lock_on_exit<unique_lock<mutex>> guard;
+				impl::lock_on_exit<mutex> guard;
 				impl::interruption_checker<impl::mutex> _interruption_checker(&m_mtx, &m_impl);
-				guard.activate(ulock);
+				guard.activate(ulock.mutex());
 				impl::unique_lock<impl::cv_mutex>::type self_implulk(m_mtx, _defer_lock_v);
 				m_impl.wait(self_implulk);
 			}
@@ -173,9 +173,9 @@ namespace wawo {
 			impl::cv_status cvs;
 			{
 				impl::defer_lock_t _defer_lock_v;
-				impl::lock_on_exit<unique_lock<mutex>> guard;
+				impl::lock_on_exit<mutex> guard;
 				impl::interruption_checker<impl::mutex> _interruption_checker(&m_mtx, &m_impl);
-				guard.activate(ulock);
+				guard.activate(ulock.mutex());
 
 				impl::unique_lock<impl::cv_mutex>::type self_implulk(m_mtx, _defer_lock_v);
 				cvs = m_impl.wait_for(self_implulk, duration);
@@ -189,9 +189,9 @@ namespace wawo {
 			impl::cv_status cvs;
 			{
 				impl::defer_lock_t _defer_lock_v;
-				impl::lock_on_exit<unique_lock<mutex>> guard;
+				impl::lock_on_exit<mutex> guard;
 				impl::interruption_checker<impl::mutex> _interruption_checker(&m_mtx, &m_impl);
-				guard.activate(ulock);
+				guard.activate(ulock.mutex());
 
 				impl::unique_lock<impl::cv_mutex>::type self_implulk(m_mtx, _defer_lock_v);
 				cvs = m_impl.wait_until(self_implulk, atime);
