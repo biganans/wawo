@@ -12,7 +12,7 @@
 #define WAWO_SELECT_LIMIT (WAWO_SELECT_BUCKET_MAX*WAWO_SELECT_BUCKET_ITEM_COUNT)
 
 
-namespace wawo { namespace net { namespace observer_impl {
+namespace wawo { namespace net { namespace impl {
 
 	using namespace wawo::net ;
 	
@@ -128,7 +128,7 @@ namespace wawo { namespace net { namespace observer_impl {
 			}
 
 	public:
-		void check_ioe() {
+		void do_poll() {
 			int fd_added_count = 0;
 			int idx = 0;
 

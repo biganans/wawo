@@ -1,4 +1,3 @@
-#include <wawo/net/socket_observer.hpp>
 #include <wawo/net/socket.hpp>
 #include <wawo/net/wcp.hpp>
 

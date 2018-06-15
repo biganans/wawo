@@ -9,7 +9,6 @@
 
 #include <wawo/net/io_event_loop.hpp>
 
-
 #define PIPELINE_VOID_FIRE_VOID(NAME) \
 	inline void fire_##NAME() {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \

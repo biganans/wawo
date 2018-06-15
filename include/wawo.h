@@ -34,10 +34,7 @@
 #include <wawo/net/protocol/icmp.hpp>
 
 #include <wawo/net/address.hpp>
-
 #include <wawo/net/socket.hpp>
-#include <wawo/net/socket_observer.hpp>
-
 #include <wawo/net/wcp.hpp>
 
 #include <wawo/net/handler/hlen.hpp>

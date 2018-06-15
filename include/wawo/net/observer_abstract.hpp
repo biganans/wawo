@@ -17,7 +17,6 @@
 #endif
 
 namespace wawo { namespace net {
-	
 
 	enum ioe_flag {
 		IOE_READ	= 1, //check read, sys io
@@ -42,18 +41,6 @@ namespace wawo { namespace net {
 	static const u8_t IOE_SLOT_WRITE	= 1;
 	static const u8_t IOE_SLOT_MAX		= 2;
 
-	enum ctx_io_state {
-		//read scope
-		S_READ_IDLE = 1,
-		S_READ_POSTED = 2,
-		S_READING = 3,
-
-		//write scope
-		S_WRITE_IDLE = 4,
-		S_WRITE_POSTED = 5,
-		S_WRITING = 6
-	};
-
 	struct observer_ctx :
 		public wawo::ref_base
 	{
@@ -63,8 +50,6 @@ namespace wawo { namespace net {
 		};
 
 		observer_ctx() :
-//			r_state(S_READ_IDLE),
-//			w_state(S_WRITE_IDLE),
 			flag(0),
 			fd(-2)
 		{
@@ -74,10 +59,6 @@ namespace wawo { namespace net {
 			}
 		}
 
-//		spin_mutex r_mutex;
-//		spin_mutex w_mutex;
-//		u8_t r_state;
-//		u8_t w_state;
 		u8_t flag;
 		u8_t poll_type;
 		int fd;
@@ -111,10 +92,10 @@ namespace wawo { namespace net {
 	typedef std::pair<int, WWRP<observer_ctx>> fd_ctx_pair;
 
 	class observer_abstract
+		:public wawo::ref_base
 	{
 	protected:
 		observer_ctx_map m_ctxs;
-
 	public:
 		observer_abstract():
 			m_ctxs()
@@ -216,7 +197,7 @@ namespace wawo { namespace net {
 		virtual void deinit() {};
 
 	public:
-		virtual void check_ioe() = 0;
+		virtual void do_poll() = 0;
 		virtual void watch(u8_t const& flag, int const& fd, fn_io_event const& fn,fn_io_event_error const& err ) = 0;
 		virtual void unwatch(u8_t const& flag, int const& fd) = 0;
 	};

@@ -6,16 +6,14 @@
 #include <wawo/singleton.hpp>
 #include <wawo/heap.hpp>
 
+#include <wawo/mutex.hpp>
+#include <wawo/thread.hpp>
+
 #include <functional>
 #include <chrono>
 #include <queue>
 
-#include <wawo/mutex.hpp>
-#include <wawo/thread.hpp>
-
 namespace wawo {
-	
-	
 
 	enum timer_state {
 		S_IDLE,

@@ -10,7 +10,6 @@
 #include <wawo/mutex.hpp>
 
 namespace wawo {
-	
 
 	class promise_exception:
 		public exception

@@ -4,6 +4,7 @@
 #include <wawo/config/compiler.h>
 #include <wawo/basic.hpp>
 #include <wawo/exception.hpp>
+#include <wawo/memory.hpp>
 
 namespace wawo {
 

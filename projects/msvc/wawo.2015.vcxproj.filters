@@ -135,9 +135,6 @@
     <ClCompile Include="..\..\src\net\socket_base.cpp">
       <Filter>Source Files\src\net</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\net\socket_observer.cpp">
-      <Filter>Source Files\src\net</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\net\wcp.cpp">
       <Filter>Source Files\src\net</Filter>
     </ClCompile>
@@ -185,6 +182,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\thread_impl\mutex.cpp">
       <Filter>Source Files\src\thread_impl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\net\io_event_loop.cpp">
+      <Filter>Source Files\src\net</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -261,9 +261,6 @@
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\socket_base.hpp">
-      <Filter>Header Files\wawo\net</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\socket_observer.hpp">
       <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\wcp.hpp">

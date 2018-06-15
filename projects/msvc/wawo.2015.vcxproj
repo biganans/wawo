@@ -159,7 +159,7 @@
     <ClCompile Include="..\..\src\net\socket.cpp" />
     <ClCompile Include="..\..\src\net\socket_base.cpp" />
     <ClCompile Include="..\..\src\net\channel_handler.cpp" />
-    <ClCompile Include="..\..\src\net\socket_observer.cpp" />
+    <ClCompile Include="..\..\src\net\io_event_loop.cpp" />
     <ClCompile Include="..\..\src\net\channel_pipeline.cpp" />
     <ClCompile Include="..\..\src\net\wcp.cpp" />
     <ClCompile Include="..\..\src\signal\signal_manager.cpp" />
@@ -233,7 +233,6 @@
     <ClInclude Include="..\..\include\wawo\net\socket_base.hpp" />
     <ClInclude Include="..\..\include\wawo\net\channel_handler.hpp" />
     <ClInclude Include="..\..\include\wawo\net\channel_invoker.hpp" />
-    <ClInclude Include="..\..\include\wawo\net\socket_observer.hpp" />
     <ClInclude Include="..\..\include\wawo\net\channel_pipeline.hpp" />
     <ClInclude Include="..\..\include\wawo\net\wcp.hpp" />
     <ClInclude Include="..\..\include\wawo\packet.hpp" />

@@ -4,7 +4,7 @@
 #include <wawo/net/observer_abstract.hpp>
 #include <wawo/net/wcp.hpp>
 
-namespace wawo { namespace net { namespace observer_impl {
+namespace wawo { namespace net { namespace impl {
 	class wpoll :
 		public observer_abstract
 	{
@@ -112,7 +112,7 @@ namespace wawo { namespace net { namespace observer_impl {
 			TRACE_IOE("[WPOLL][##%d][#%d][unwatch]wpoll op success, op flag: %d, new flag: %d", m_wpHandle, fd, flag, ctx->flag);
 		}
 
-		void check_ioe() {
+		void do_poll() {
 			WAWO_ASSERT(m_wpHandle > 0);
 			wpoll_event wpEvents[1024];
 			int nEvents = wcp::instance()->wpoll_wait(m_wpHandle, wpEvents, 1024);

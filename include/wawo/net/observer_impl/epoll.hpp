@@ -9,7 +9,7 @@
 #include <syscall.h>
 #include <poll.h>
 
-namespace wawo { namespace net { namespace observer_impl {
+namespace wawo { namespace net { namespace impl {
 
 	
 
@@ -186,7 +186,7 @@ namespace wawo { namespace net { namespace observer_impl {
 			TRACE_IOE("[EPOLL] EPOLL::deinit() done" ) ;
 		}
 
-		void check_ioe() {
+		void do_poll() {
 			WAWO_ASSERT( m_epfd > 0 );
 
 			struct epoll_event epEvents[WAWO_EPOLL_PER_HANDLE_SIZE] ;
