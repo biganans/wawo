@@ -38,6 +38,17 @@
 
 //--T_TO_H--BEGIN
 #define CH_FUTURE_ACTION_HANDLER_CONTEXT_IMPL_T_TO_H_PACKET_1(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
+private:\
+	inline void _##NAME##(WWRP<packet> const& p, WWRP<channel_promise> const& ch_promise) { \
+		if( WAWO_UNLIKELY(m_flag&CH_CH_CLOSED) ) {\
+			ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
+			return ;\
+		} \
+		WWRP<CTX_CLASS_NAME> _ctx = CTX_CLASS_NAME::_find_prev(HANDLER_FLAG); \
+		WAWO_ASSERT(_ctx != NULL); \
+		_ctx->invoke_##NAME##(p,ch_promise); \
+	} \
+public:\
 	inline WWRP<channel_future> NAME##(WWRP<packet> const& p) { \
 		WAWO_ASSERT(m_io_event_loop != NULL); \
 		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(ch); \
@@ -51,14 +62,6 @@
 		}); \
 		return ch_promise; \
 	} \
-	inline void _##NAME##(WWRP<packet> const& p, WWRP<channel_promise> const& ch_promise) { \
-		if( WAWO_UNLIKELY(m_flag&CH_CH_CLOSED) ) {\
-			ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
-		} \
-		WWRP<CTX_CLASS_NAME> _ctx = CTX_CLASS_NAME::_find_prev(HANDLER_FLAG); \
-		WAWO_ASSERT(_ctx != NULL); \
-		_ctx->invoke_##NAME##(p,ch_promise); \
-	} \
 	inline void invoke_##NAME##(WWRP<packet> const& p, WWRP<channel_promise> const& ch_promise) { \
 		WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 		WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
@@ -67,6 +70,17 @@
 	}
 
 #define CH_FUTURE_ACTION_HANDLER_CONTEXT_IMPL_T_TO_H_PROMISE(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
+private:\
+	inline void _##NAME##(WWRP<channel_promise> const& ch_promise) { \
+		if( WAWO_UNLIKELY(m_flag&CH_CH_CLOSED) ) {\
+			ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
+			return; \
+		} \
+		WWRP<CTX_CLASS_NAME> _ctx = CTX_CLASS_NAME::_find_prev(HANDLER_FLAG); \
+		WAWO_ASSERT(_ctx != NULL); \
+		_ctx->invoke_##NAME##(ch_promise); \
+	} \
+public:\
 	inline WWRP<channel_future> NAME##() { \
 		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(ch); \
 		return CTX_CLASS_NAME::##NAME##(ch_promise); \
@@ -78,15 +92,6 @@
 		}); \
 		return ch_promise; \
 	} \
-	inline void _##NAME##(WWRP<channel_promise> const& ch_promise) { \
-		if( WAWO_UNLIKELY(m_flag&CH_CH_CLOSED) ) {\
-			ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
-			return; \
-		} \
-		WWRP<CTX_CLASS_NAME> _ctx = CTX_CLASS_NAME::_find_prev(HANDLER_FLAG); \
-		WAWO_ASSERT(_ctx != NULL); \
-		_ctx->invoke_##NAME##(ch_promise); \
-	} \
 	inline void invoke_##NAME##(WWRP<channel_promise> const& ch_promise) {\
 		WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 		WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
@@ -95,12 +100,7 @@
 	}
 
 #define VOID_ACTION_HANDLER_CONTEXT_IMPL_T_TO_H_0(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
-	inline void NAME##() { \
-		WWRP<CTX_CLASS_NAME> _ctx(this); \
-		m_io_event_loop->execute([_ctx]() { \
-			_ctx->_##NAME##(); \
-		}); \
-	} \
+private: \
 	inline void _##NAME##() { \
 		if( WAWO_UNLIKELY(m_flag&CH_CH_CLOSED) ) {\
 			return ; \
@@ -108,6 +108,13 @@
 		WWRP<CTX_CLASS_NAME> _ctx = CTX_CLASS_NAME::_find_prev(HANDLER_FLAG); \
 		WAWO_ASSERT(_ctx != NULL); \
 		_ctx->invoke_##NAME##(); \
+	} \
+public:\
+	inline void NAME##() { \
+		WWRP<CTX_CLASS_NAME> _ctx(this); \
+		m_io_event_loop->execute([_ctx]() { \
+			_ctx->_##NAME##(); \
+		}); \
 	} \
 	inline void invoke_##NAME##() {\
 		WAWO_ASSERT(m_io_event_loop->in_event_loop()); \

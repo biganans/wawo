@@ -37,8 +37,7 @@ namespace wawo { namespace net {
 		void run() {
 			io_event_executor::exec_task();
 			m_observer->do_poll();
-			io_event_executor::exec_task();
-			wawo::this_thread::nsleep(1);
+			io_event_executor::wait();
 		}
 
 		inline void watch(u8_t const& flag, int const& fd, fn_io_event const& fn, fn_io_event_error const& err) {
@@ -49,18 +48,10 @@ namespace wawo { namespace net {
 		}
 		inline void unwatch(u8_t const& flag, int const& fd) {
 			WAWO_ASSERT(fd > 0);
-			io_event_executor::execute([observer = m_observer, flag, fd]() -> void {
+			io_event_executor::execute([observer=m_observer, flag, fd]() -> void {
 				observer->unwatch(flag, fd);
 			});
 		}
-		/*
-		inline void schedule(fn_io_event_task&& f) {
-			if( in_even)
-			WWRP<io_task> _t = wawo::make_ref<io_task>(std::forward<fn_io_event_task>(f));
-			lock_guard<spin_mutex> lg(m_tq_mtx);
-			m_tq_standby->push(_t);
-		}
-		*/
 	};
 
 	typedef std::vector<WWRP<io_event_loop>> io_event_loop_vector;

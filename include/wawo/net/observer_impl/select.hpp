@@ -13,9 +13,7 @@
 
 
 namespace wawo { namespace net { namespace impl {
-
 	using namespace wawo::net ;
-	
 
 	class select:
 		public observer_abstract
