@@ -2,7 +2,7 @@
 #define _WAWO_NET_IO_EVENT_LOOP_HPP
 
 #include <wawo/net/io_event_executor.hpp>
-#include <wawo/net/observer_abstract.hpp>
+#include <wawo/net/poller_abstract.hpp>
 
 namespace wawo { namespace net {
 
@@ -11,15 +11,15 @@ namespace wawo { namespace net {
 		public wawo::thread_run_object_abstract,
 		public io_event_executor
 	{
-		WWRP<observer_abstract> m_observer;
-		u8_t m_observer_type;
+		WWRP<poller_abstract> m_observer;
+		u8_t m_poller_type;
 	public:
 		io_event_loop(u8_t t = get_os_default_poll_type()) :
-			m_observer_type(t)
+			m_poller_type(t)
 		{}
 		~io_event_loop() {}
 
-		u8_t get_type() const { return m_observer_type; }
+		u8_t get_type() const { return m_poller_type; }
 
 		void init_observer();
 		void deinit_observer();

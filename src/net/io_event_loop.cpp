@@ -1,8 +1,8 @@
 #if WAWO_ISGNU
-#include <wawo/net/observer_impl/epoll.hpp>
+#include <wawo/net/poller_impl/epoll.hpp>
 #endif
-#include <wawo/net/observer_impl/select.hpp>
-#include <wawo/net/observer_impl/wpoll.hpp>
+#include <wawo/net/poller_impl/select.hpp>
+#include <wawo/net/poller_impl/wpoll.hpp>
 
 #include <wawo/net/io_event_loop.hpp>
 #include <wawo/net/wcp.hpp>
@@ -10,7 +10,7 @@
 namespace wawo { namespace net {
 
 	void io_event_loop::init_observer() {
-		switch (m_observer_type) {
+		switch (m_poller_type) {
 		case T_SELECT:
 		{
 			m_observer = wawo::make_ref<impl::select>();

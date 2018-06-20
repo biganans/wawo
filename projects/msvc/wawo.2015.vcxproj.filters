@@ -76,9 +76,6 @@
     <Filter Include="Source Files\src\context">
       <UniqueIdentifier>{2bfb8462-d0b8-4865-a8d8-90298ffc3923}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\wawo\net\observer_impl">
-      <UniqueIdentifier>{80026568-fcac-4a41-944a-2eb02afb7008}</UniqueIdentifier>
-    </Filter>
     <Filter Include="3rd\stack_walker">
       <UniqueIdentifier>{932e0e04-f05e-4085-a689-c60a1088183d}</UniqueIdentifier>
     </Filter>
@@ -99,6 +96,9 @@
     </Filter>
     <Filter Include="Source Files\src\thread_impl">
       <UniqueIdentifier>{37411f93-7eb7-402e-9a30-2b2374a317c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\net\poller_impl">
+      <UniqueIdentifier>{f51c6c6c-4b98-498e-8042-5e0d0febe1fb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -323,18 +323,6 @@
     <ClInclude Include="..\..\include\wawo\string.hpp">
       <Filter>Header Files\wawo</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\observer_impl\epoll.hpp">
-      <Filter>Header Files\wawo\net\observer_impl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\observer_impl\select.hpp">
-      <Filter>Header Files\wawo\net\observer_impl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\observer_impl\wpoll.hpp">
-      <Filter>Header Files\wawo\net\observer_impl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\observer_abstract.hpp">
-      <Filter>Header Files\wawo\net</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\wawo\smart_ptr.hpp">
       <Filter>Header Files\wawo</Filter>
     </ClInclude>
@@ -463,6 +451,18 @@
     </ClInclude>
     <ClInclude Include="..\..\include\wawo\tls.hpp">
       <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\poller_impl\epoll.hpp">
+      <Filter>Header Files\wawo\net\poller_impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\poller_impl\select.hpp">
+      <Filter>Header Files\wawo\net\poller_impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\poller_impl\wpoll.hpp">
+      <Filter>Header Files\wawo\net\poller_impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\poller_abstract.hpp">
+      <Filter>Header Files\wawo\net</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

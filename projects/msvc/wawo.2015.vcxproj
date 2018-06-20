@@ -223,10 +223,10 @@
     <ClInclude Include="..\..\include\wawo\net\io_event.hpp" />
     <ClInclude Include="..\..\include\wawo\net\io_event_loop.hpp" />
     <ClInclude Include="..\..\include\wawo\net\io_event_executor.hpp" />
-    <ClInclude Include="..\..\include\wawo\net\observer_abstract.hpp" />
-    <ClInclude Include="..\..\include\wawo\net\observer_impl\epoll.hpp" />
-    <ClInclude Include="..\..\include\wawo\net\observer_impl\select.hpp" />
-    <ClInclude Include="..\..\include\wawo\net\observer_impl\wpoll.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\poller_abstract.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\poller_impl\epoll.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\poller_impl\select.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\poller_impl\wpoll.hpp" />
     <ClInclude Include="..\..\include\wawo\net\protocol\http.hpp" />
     <ClInclude Include="..\..\include\wawo\net\protocol\icmp.hpp" />
     <ClInclude Include="..\..\include\wawo\net\socket.hpp" />
