@@ -27,11 +27,11 @@ namespace wcp_test {
 
 		void on_block(WWRP<wawo::net::channel_handler_context> const& ctx) {
 			ctx->ch->end_read();
-//			WAWO_INFO("[wcp_test][%d]wr_block, end async read", ctx->ch->ch_id() );
+			WAWO_INFO("[wcp_test][%d]wr_block, end async read", ctx->ch->ch_id() );
 		}
 
 		void on_unblock(WWRP<wawo::net::channel_handler_context> const& ctx) {
-//			WAWO_INFO("[wcp_test][%d]wr_unblock, begin async read", ctx->ch->ch_id() );
+			WAWO_INFO("[wcp_test][%d]wr_unblock, begin async read", ctx->ch->ch_id() );
 //			begin_send(ctx);
 			ctx->ch->begin_read();
 		}
@@ -92,6 +92,14 @@ namespace wcp_test {
 				outp_CONTENT->write(file_content + s_total, to_sent);
 
 				WWRP<wawo::net::channel_future> f_write = ctx->write(outp_CONTENT);
+				f_write->add_listener([](WWRP < wawo::net::channel_future> const& ch) {
+					
+				//go func();
+				
+				});
+
+
+
 				if (f_write->get() == wawo::OK) {
 					s_total += to_sent;
 				}

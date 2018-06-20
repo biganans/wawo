@@ -187,6 +187,7 @@ namespace wawo { namespace net {
 		virtual void do_poll() = 0;
 		virtual void watch(u8_t const& flag, int const& fd, fn_io_event const& fn,fn_io_event_error const& err, WWRP<ref_base> const& fnctx) = 0;
 		virtual void unwatch(u8_t const& flag, int const& fd) = 0;
+		virtual void in_wait() = 0;
 	};
 }}
 #endif //
