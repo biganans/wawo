@@ -20,20 +20,31 @@ namespace wawo { namespace net {
 
 	enum ioe_flag {
 		IOE_READ	= 1, //check read, sys io
-		IOE_WRITE	= 1 << 1, //check write, sys io
+		IOE_WRITE	= 1<<1, //check write, sys io
 		IOE_INFINITE_WATCH_READ		= 1<<2,
 		IOE_INFINITE_WATCH_WRITE	= 1<<3,
 	};
 
-	static const u8_t T_SELECT = 1;
-	static const u8_t T_EPOLL = 2;
-	static const u8_t T_WPOLL = 3;
+	enum poller_type {
+		T_SELECT,
+		T_EPOLL,
+		T_IOCP,
+		T_WPOLL
+	};
+
+	//static const u8_t T_SELECT = 1;
+	//static const u8_t T_EPOLL = 2;
+	//static const u8_t T_WPOLL = 3;
 
 	inline u8_t get_os_default_poll_type() {
 #if WAWO_ISGNU
 		return T_EPOLL;
 #else
-		return T_SELECT;
+	#ifdef WAWO_ENABLE_IOCP
+			return T_IOCP;
+	#else
+			return T_SELECT;
+	#endif
 #endif
 	}
 
@@ -47,45 +58,24 @@ namespace wawo { namespace net {
 		struct _fn_info {
 			fn_io_event fn;
 			fn_io_event_error err;
+			WWRP<ref_base> fnctx;
 		};
 
-		poller_ctx() :
-			flag(0),
-			fd(-2)
-		{
-			for (u8_t i = 0; i < IOE_SLOT_MAX; ++i) {
-				fn_info[i].fn = NULL;
-				fn_info[i].err = NULL;
-			}
-		}
-
+		int fd;
 		u8_t flag;
 		u8_t poll_type;
-		int fd;
-		_fn_info fn_info[IOE_SLOT_MAX];;
-	};
+		_fn_info fn[IOE_SLOT_MAX];
 
-	struct fn_read_info {
-		fn_io_event fn;
-		WWRP<ref_base> cookie;
-		fn_read_info() :
-			fn(NULL)
-		{}
-		~fn_read_info() {}
-	};
-
-	struct fn_error_info {
-		fn_io_event_error fn;
-		fn_error_info() :
-			fn(NULL)
-		{}
-		~fn_error_info() {}
-	};
-
-	struct RE {
-		fn_read_info read;
-		fn_error_info rd_err;
-		fn_error_info wr_err;
+		poller_ctx() :
+			fd(-2),
+			flag(0)
+		{
+			for (u8_t i = 0; i < IOE_SLOT_MAX; ++i) {
+				fn[i].fn = NULL;
+				fn[i].err = NULL;
+				fn[i].fnctx = NULL;
+			}
+		}
 	};
 
 	typedef std::map<int, WWRP<poller_ctx>> poller_ctx_map;
@@ -102,7 +92,7 @@ namespace wawo { namespace net {
 		{
 		}
 
-		inline void ctx_update_for_watch(WWRP<poller_ctx>& ctx, u8_t const& flag, int const& fd, fn_io_event const& fn, fn_io_event_error const& err)
+		inline void ctx_update_for_watch(WWRP<poller_ctx>& ctx, u8_t const& flag, int const& fd, fn_io_event const& fn, fn_io_event_error const& err, WWRP<ref_base> const& fnctx)
 		{
 			(void)fd;
 			WAWO_ASSERT(flag != 0);
@@ -120,11 +110,12 @@ namespace wawo { namespace net {
 				}
 
 				TRACE_IOE("[poller_abstract][#%d]watch IOE_READ", ctx->fd);
-				WAWO_ASSERT(ctx->fn_info[IOE_SLOT_READ].fn == NULL);
-				WAWO_ASSERT(ctx->fn_info[IOE_SLOT_READ].err == NULL);
+				WAWO_ASSERT(ctx->fn[IOE_SLOT_READ].fn == NULL);
+				WAWO_ASSERT(ctx->fn[IOE_SLOT_READ].err == NULL);
 
-				ctx->fn_info[IOE_SLOT_READ].fn = fn;
-				ctx->fn_info[IOE_SLOT_READ].err = err;
+				ctx->fn[IOE_SLOT_READ].fn = fn;
+				ctx->fn[IOE_SLOT_READ].err = err;
+				ctx->fn[IOE_SLOT_READ].fnctx = fnctx;
 			}
 
 			if (flag&IOE_WRITE) {
@@ -133,11 +124,12 @@ namespace wawo { namespace net {
 					ctx->flag |= IOE_INFINITE_WATCH_WRITE;
 				}
 				TRACE_IOE("[poller_abstract][#%d]watch IOE_WRITE", ctx->fd);
-				WAWO_ASSERT(ctx->fn_info[IOE_SLOT_WRITE].fn == NULL);
-				WAWO_ASSERT(ctx->fn_info[IOE_SLOT_WRITE].err == NULL);
+				WAWO_ASSERT(ctx->fn[IOE_SLOT_WRITE].fn == NULL);
+				WAWO_ASSERT(ctx->fn[IOE_SLOT_WRITE].err == NULL);
 
-				ctx->fn_info[IOE_SLOT_WRITE].fn = fn;
-				ctx->fn_info[IOE_SLOT_WRITE].err = err;
+				ctx->fn[IOE_SLOT_WRITE].fn = fn;
+				ctx->fn[IOE_SLOT_WRITE].err = err;
+				ctx->fn[IOE_SLOT_WRITE].fnctx = fnctx;
 			}
 		}
 
@@ -149,15 +141,17 @@ namespace wawo { namespace net {
 				TRACE_IOE("[poller_abstract][#%d]unwatch IOE_READ", ctx->fd);
 				ctx->flag &= ~(IOE_READ|IOE_INFINITE_WATCH_READ);
 
-				ctx->fn_info[IOE_SLOT_READ].fn = NULL;
-				ctx->fn_info[IOE_SLOT_READ].err = NULL;
+				ctx->fn[IOE_SLOT_READ].fn = NULL;
+				ctx->fn[IOE_SLOT_READ].err = NULL;
+				ctx->fn[IOE_SLOT_READ].fnctx = NULL;
 			}
 
 			if ((flag&IOE_WRITE) && (ctx->flag)&flag) {
 				TRACE_IOE("[poller_abstract][#%d]unwatch IOE_WRITE", ctx->fd);
 				ctx->flag &= ~(IOE_WRITE|IOE_INFINITE_WATCH_WRITE);
-				ctx->fn_info[IOE_SLOT_WRITE].fn = NULL;
-				ctx->fn_info[IOE_SLOT_WRITE].err = NULL;
+				ctx->fn[IOE_SLOT_WRITE].fn = NULL;
+				ctx->fn[IOE_SLOT_WRITE].err = NULL;
+				ctx->fn[IOE_SLOT_WRITE].fnctx = NULL;
 			}
 		}
 
@@ -168,37 +162,30 @@ namespace wawo { namespace net {
 				++it;
 
 				if (ctx->fd > 0) {
-					RE _re;
+					//LAST TRY
+					if (ctx->fn[IOE_SLOT_READ].fn != NULL) {
+						ctx->fn[IOE_SLOT_READ].fn(ctx->fn[IOE_SLOT_READ].fnctx);
+					}
 
-					_re.rd_err.fn = ctx->fn_info[IOE_SLOT_READ].err;
-					_re.wr_err.fn = ctx->fn_info[IOE_SLOT_WRITE].err;
+					if (ctx->fn[IOE_SLOT_READ].err != NULL) {
+						ctx->fn[IOE_SLOT_READ].err(wawo::E_OBSERVER_EXIT, ctx->fn[IOE_SLOT_READ].fnctx);
+					}
 
-					int ec = wawo::E_OBSERVER_EXIT;
-					wawo::task::fn_task_void _lambda = [_re, ec]() -> void {
-						if (_re.read.fn != NULL) {
-							_re.read.fn();
-						}
-						if (_re.rd_err.fn != NULL) {
-							_re.rd_err.fn(ec);
-						}
-						if (_re.wr_err.fn != NULL) {
-							_re.wr_err.fn(ec);
-						}
-					};
-
-					_lambda();
+					if (ctx->fn[IOE_SLOT_WRITE].err != NULL) {
+						ctx->fn[IOE_SLOT_WRITE].err(wawo::E_OBSERVER_EXIT, ctx->fn[IOE_SLOT_WRITE].fnctx);
+					}
 				}
 			}
 		}
 
 		virtual ~poller_abstract() {}
 
-		virtual void init() {};
-		virtual void deinit() {};
+		virtual void init() = 0;
+		virtual void deinit() = 0;
 
 	public:
 		virtual void do_poll() = 0;
-		virtual void watch(u8_t const& flag, int const& fd, fn_io_event const& fn,fn_io_event_error const& err ) = 0;
+		virtual void watch(u8_t const& flag, int const& fd, fn_io_event const& fn,fn_io_event_error const& err, WWRP<ref_base> const& fnctx) = 0;
 		virtual void unwatch(u8_t const& flag, int const& fd) = 0;
 	};
 }}

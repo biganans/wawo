@@ -311,8 +311,6 @@ namespace wawo { namespace net {
 		int reuse_addr();
 		int reuse_port();
 
-
-
 		u32_t send(byte_t const* const buffer, u32_t const& size, int& ec_o, int const& flag = 0);
 		u32_t recv(byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag = 0);
 		u32_t sendto(byte_t const* const buff, wawo::u32_t const& size, const address& addr, int& ec_o, int const& flag = 0);

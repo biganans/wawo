@@ -226,6 +226,16 @@ namespace wawo { namespace net { namespace standard_socket {
 	}
 }}}
 
+#ifdef WAWO_ENABLE_IOCP
+namespace wawo { namespace net { namespace iocp_socket { 
+	inline int socket(int const& family, int const& socket_type, int const& protocol) {
+		int rt = ::WSASocket(family, socket_type, protocol, NULL, 0, WSA_FLAG_OVERLAPPED);
+		WAWO_RETURN_V_IF_MATCH(rt, rt > 0);
+		return WAWO_NEGATIVE(socket_get_last_errno());
+	}
+}}}
+#endif
+
 
 #include <wawo/net/wcp.hpp>
 namespace wawo { namespace net { namespace wcp_socket {
@@ -391,7 +401,12 @@ namespace wawo { namespace net {
 			m_fn_sendto = wawo::net::standard_socket::sendto;
 			m_fn_recvfrom = wawo::net::standard_socket::recvfrom;
 		} else {
+
+#ifdef WAWO_ENABLE_IOCP
+			m_fn_socket = wawo::net::iocp_socket::socket;
+#else
 			m_fn_socket = wawo::net::standard_socket::socket;
+#endif
 			m_fn_connect = wawo::net::standard_socket::connect;
 			m_fn_bind = wawo::net::standard_socket::bind;
 			m_fn_shutdown = wawo::net::standard_socket::shutdown;

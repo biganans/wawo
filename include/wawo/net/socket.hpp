@@ -169,7 +169,6 @@ namespace wawo { namespace net {
 		static WWRP<channel_future> listen_on(std::string const& addrurl, fn_accepted_channel_initializer const& accepted) {
 
 			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(nullptr);
-
 			socketaddr addr;
 			int rt = _parse_socketaddr_from_url(addrurl, addr);
 			if (rt != wawo::OK) {
@@ -242,7 +241,8 @@ namespace wawo { namespace net {
 			return rt;
 		}
 
-		inline void __cb_async_connected() {
+		inline void __cb_async_connected(WWRP<ref_base> const& fnctx ) {
+			(void) fnctx;
 			WAWO_ASSERT(is_nonblocking());
 			WAWO_ASSERT(m_state == S_CONNECTING);
 			m_state = S_CONNECTED;
@@ -252,7 +252,8 @@ namespace wawo { namespace net {
 			begin_read(WATCH_OPTION_INFINITE);
 		}
 
-		inline void __cb_async_connect_error( int const& ec) {
+		inline void __cb_async_connect_error( int const& ec, WWRP<ref_base> const& fnctx) {
+			(void)fnctx;
 			WAWO_ASSERT(is_nonblocking());
 			WAWO_ASSERT(m_state == S_CONNECTING);
 			socket::end_connect();
@@ -262,7 +263,8 @@ namespace wawo { namespace net {
 			ch_close();
 		}
 
-		void __cb_async_accept() {
+		void __cb_async_accept(WWRP<ref_base> const& fnctx) {
+			(void)fnctx;
 			WAWO_ASSERT(m_fn_accepted != NULL);
 			int ec;
 			do {
@@ -296,7 +298,8 @@ namespace wawo { namespace net {
 				ch_close();
 			}
 		}
-		void __cb_async_read() {
+		void __cb_async_read(WWRP<ref_base> const& fnctx) {
+			(void)fnctx;
 			WAWO_ASSERT(event_loop()->in_event_loop());
 			WAWO_ASSERT(is_data_socket());
 			WAWO_ASSERT(is_nonblocking());
@@ -339,11 +342,13 @@ namespace wawo { namespace net {
 			}
 		}
 
-		void __cb_async_flush() {
+		void __cb_async_flush(WWRP<ref_base> const& fnctx) {
+			(void)fnctx;
 			socket::ch_flush_impl();
 		}
 
-		void __cb_async_error(int const& code) {
+		void __cb_async_error(int const& code,WWRP<ref_base> const& fnctx) {
+			(void)fnctx;
 			WAWO_WARN("[socket][%s]socket error: %d, close", info().to_lencstr().cstr, code);
 			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
 			ch_close(ch_promise);
@@ -430,10 +435,10 @@ namespace wawo { namespace net {
 			fn_io_event _fn_io= fn_connected;
 			fn_io_event_error _fn_err = fn_err;
 			if (_fn_io == NULL) {
-				_fn_io = std::bind(&socket::__cb_async_connected, WWRP<socket>(this));
+				_fn_io = std::bind(&socket::__cb_async_connected, WWRP<socket>(this), std::placeholders::_1);
 			}
 			if (_fn_err == NULL) {
-				_fn_err = std::bind(&socket::__cb_async_connect_error, WWRP<socket>(this), std::placeholders::_1);
+				_fn_err = std::bind(&socket::__cb_async_connect_error, WWRP<socket>(this), std::placeholders::_1, std::placeholders::_2);
 			}
 			event_loop()->watch( IOE_WRITE, fd(), _fn_io, _fn_err);
 		}
@@ -455,7 +460,7 @@ namespace wawo { namespace net {
 			if (m_rflag&SHUTDOWN_RD) {
 				TRACE_IOE("[socket][%s][begin_read]cancel for rd shutdowned already", info().to_lencstr().cstr );
 				if (fn_err != NULL) {
-					fn_err(wawo::E_CHANNEL_RD_SHUTDOWN_ALREADY);
+					fn_err(wawo::E_CHANNEL_RD_SHUTDOWN_ALREADY, NULL);
 				}
 				return;
 			}
@@ -467,10 +472,10 @@ namespace wawo { namespace net {
 			fn_io_event _fn_io = fn_read;
 			fn_io_event_error _fn_err = fn_err;
 			if (_fn_io == NULL) {
-				_fn_io = std::bind(&socket::__cb_async_read, WWRP<socket>(this));
+				_fn_io = std::bind(&socket::__cb_async_read, WWRP<socket>(this), std::placeholders::_1);
 			}
 			if (_fn_err == NULL) {
-				_fn_err = std::bind(&socket::__cb_async_error, WWRP<socket>(this), std::placeholders::_1);
+				_fn_err = std::bind(&socket::__cb_async_error, WWRP<socket>(this), std::placeholders::_1, std::placeholders::_2);
 			}
 			m_rflag |= (WATCH_READ | async_flag);
 			TRACE_IOE("[socket][%s][begin_read]watch IOE_READ", info().to_lencstr().cstr );
@@ -498,7 +503,7 @@ namespace wawo { namespace net {
 			if (m_wflag&SHUTDOWN_WR) {
 				TRACE_IOE("[socket][%s][begin_write]cancel for wr shutdowned already", info().to_lencstr().cstr );
 				if (fn_err != NULL) {
-					fn_err(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
+					fn_err(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY, NULL);
 				}
 				return;
 			}
@@ -511,10 +516,10 @@ namespace wawo { namespace net {
 			fn_io_event _fn_io = fn_write;
 			fn_io_event_error _fn_err = fn_err;
 			if (_fn_io == NULL) {
-				_fn_io = std::bind(&socket::__cb_async_flush, WWRP<socket>(this));
+				_fn_io = std::bind(&socket::__cb_async_flush, WWRP<socket>(this), std::placeholders::_1);
 			}
 			if (_fn_err == NULL) {
-				_fn_err = std::bind(&socket::__cb_async_error, WWRP<socket>(this), std::placeholders::_1);
+				_fn_err = std::bind(&socket::__cb_async_error, WWRP<socket>(this), std::placeholders::_1, std::placeholders::_2);
 			}
 
 			m_wflag |= (WATCH_WRITE | async_flag);
@@ -525,7 +530,7 @@ namespace wawo { namespace net {
 				flag |= IOE_INFINITE_WATCH_WRITE;
 			}
 
-			event_loop()->watch(flag,fd(), _fn_io, _fn_err );
+			event_loop()->watch(flag,fd(), _fn_io, _fn_err);
 		}
 
 		inline int ch_id() const { return fd(); }

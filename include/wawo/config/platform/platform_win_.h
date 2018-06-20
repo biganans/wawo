@@ -11,6 +11,10 @@ namespace wawo {
 	typedef int SOCKET ;
 }
 
+#ifndef WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN
+#endif
+
 //generic
 #include <SDKDDKVer.h>
 #include <winsock2.h> //WIN32_LEAN_AND_MEAN will exclude this from Windows.h
@@ -18,6 +22,7 @@ namespace wawo {
 #include <mstcpip.h>
 #include <Windows.h> //will include winsock.h
 #include <tchar.h>
+#include <malloc.h>
 
 #pragma comment(lib,"ws2_32.lib")
 #pragma comment(lib,"mswsock.lib")

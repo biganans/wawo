@@ -28,13 +28,9 @@
 
 #ifdef WAWO_PLATFORM_WIN
 
-#include <windows.h>
-#include <tchar.h>
-#include <stdio.h>
 #pragma comment(lib, "version.lib")  // for "VerQueryValue"
-
 #include "win_stack_walker.hpp"
-
+#include <stdio.h>
 
 // If VC7 and later, then use the shipped 'dbghelp.h'-file
 #if _MSC_VER >= 1300

@@ -107,8 +107,8 @@ namespace wawo { namespace net {
 		ch_promise->set_success(rt);
 
 		if (rt == wawo::OK) {
-			fn_io_event _fn_accept = std::bind(&socket::__cb_async_accept, WWRP<socket>(this));
-			fn_io_event_error _fn_err = std::bind(&socket::__cb_async_error, WWRP<socket>(this), std::placeholders::_1);
+			fn_io_event _fn_accept = std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1);
+			fn_io_event_error _fn_err = std::bind(&socket::__cb_async_error, WWRP<socket>(this), std::placeholders::_1, std::placeholders::_2);
 			begin_read(WATCH_OPTION_INFINITE, _fn_accept, _fn_err);
 		}
 

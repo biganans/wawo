@@ -225,6 +225,7 @@
     <ClInclude Include="..\..\include\wawo\net\io_event_executor.hpp" />
     <ClInclude Include="..\..\include\wawo\net\poller_abstract.hpp" />
     <ClInclude Include="..\..\include\wawo\net\poller_impl\epoll.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\poller_impl\iocp.hpp" />
     <ClInclude Include="..\..\include\wawo\net\poller_impl\select.hpp" />
     <ClInclude Include="..\..\include\wawo\net\poller_impl\wpoll.hpp" />
     <ClInclude Include="..\..\include\wawo\net\protocol\http.hpp" />

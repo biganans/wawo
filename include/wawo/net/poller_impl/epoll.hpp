@@ -215,11 +215,11 @@ namespace wawo { namespace net { namespace impl {
 					if (events&EPOLLIN) {
 						events &= ~EPOLLIN;
 
-						WAWO_ASSERT(ctx->fn_info[IOE_SLOT_READ].fn != NULL);
-						WAWO_ASSERT(ctx->fn_info[IOE_SLOT_READ].cookie != NULL);
+						WAWO_ASSERT(ctx->fn[IOE_SLOT_READ].fn != NULL);
+						WAWO_ASSERT(ctx->fn[IOE_SLOT_READ].cookie != NULL);
 
-						_re.read.fn = ctx->fn_info[IOE_SLOT_READ].fn;
-						_re.read.cookie = ctx->fn_info[IOE_SLOT_READ].cookie;
+						_re.read.fn = ctx->fn[IOE_SLOT_READ].fn;
+						_re.read.cookie = ctx->fn[IOE_SLOT_READ].cookie;
 					}
 
 					int ec;
@@ -236,11 +236,11 @@ namespace wawo { namespace net { namespace impl {
 
 					WAWO_ASSERT( (events&EPOLLERR) ? ec != wawo::OK: true);
 
-					_re.rd_err.fn = ctx->fn_info[IOE_SLOT_READ].err;
-					_re.rd_err.cookie = ctx->fn_info[IOE_SLOT_READ].cookie;
+					_re.rd_err.fn = ctx->fn[IOE_SLOT_READ].err;
+					_re.rd_err.cookie = ctx->fn[IOE_SLOT_READ].cookie;
 
-					_re.wr_err.fn = ctx->fn_info[IOE_SLOT_WRITE].err;
-					_re.wr_err.cookie = ctx->fn_info[IOE_SLOT_WRITE].cookie;
+					_re.wr_err.fn = ctx->fn[IOE_SLOT_WRITE].err;
+					_re.wr_err.cookie = ctx->fn[IOE_SLOT_WRITE].cookie;
 
 					unwatch(IOE_WRITE, ctx->fd);
 					unwatch(IOE_READ, ctx->fd);
@@ -267,8 +267,8 @@ namespace wawo { namespace net { namespace impl {
 					//TRACE_IOE("[EPOLL][##%d][#%d]EVT: EPOLLIN", m_epfd, ctx->fd);
 					events &= ~EPOLLIN;
 
-					fn_io_event& fn = ctx->fn_info[IOE_SLOT_READ].fn;
-					WWRP<ref_base>& cookie = ctx->fn_info[IOE_SLOT_READ].cookie;
+					fn_io_event& fn = ctx->fn[IOE_SLOT_READ].fn;
+					WWRP<ref_base>& cookie = ctx->fn[IOE_SLOT_READ].cookie;
 					WAWO_ASSERT(fn != NULL);
 					WAWO_ASSERT(cookie != NULL);
 
@@ -285,8 +285,8 @@ namespace wawo { namespace net { namespace impl {
 					//TRACE_IOE("[EPOLL][##%d][#%d]EVT: EPOLLOUT", m_epfd, ctx->fd);
 					events &= ~EPOLLOUT;
 
-					fn_io_event& fn = ctx->fn_info[IOE_SLOT_WRITE].fn;
-					WWRP<ref_base>& cookie = ctx->fn_info[IOE_SLOT_WRITE].cookie;
+					fn_io_event& fn = ctx->fn[IOE_SLOT_WRITE].fn;
+					WWRP<ref_base>& cookie = ctx->fn[IOE_SLOT_WRITE].cookie;
 					WAWO_ASSERT(fn != NULL);
 					WAWO_ASSERT(cookie != NULL );
 

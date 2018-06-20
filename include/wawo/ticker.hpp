@@ -7,9 +7,10 @@
 #include <wawo/thread.hpp>
 
 namespace wawo {
-
+	
 	typedef std::function<void()> fn_ticker;
 	template <u64_t precision_interval /*in nanoseconds*/, u8_t slot_max=32>
+	
 	class ticker {
 
 	public:

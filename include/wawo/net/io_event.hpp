@@ -7,8 +7,8 @@
 #include <functional>
 
 namespace wawo { namespace net{
-	typedef std::function<void()> fn_io_event;
-	typedef std::function<void(int const& code)> fn_io_event_error;
+	typedef std::function<void(WWRP<ref_base> const& fnctx)> fn_io_event;
+	typedef std::function<void(int const& code,WWRP<ref_base> const& fnctx)> fn_io_event_error;
 }}
 
 #endif

@@ -1,6 +1,13 @@
+
+#include <wawo/core.hpp>
 #if WAWO_ISGNU
 #include <wawo/net/poller_impl/epoll.hpp>
 #endif
+
+#ifdef WAWO_ENABLE_IOCP
+	#include <wawo/net/poller_impl/iocp.hpp>
+#endif
+
 #include <wawo/net/poller_impl/select.hpp>
 #include <wawo/net/poller_impl/wpoll.hpp>
 
@@ -9,26 +16,32 @@
 
 namespace wawo { namespace net {
 
-	void io_event_loop::init_observer() {
+	void io_event_loop::init_poller() {
 		switch (m_poller_type) {
 		case T_SELECT:
 		{
-			m_observer = wawo::make_ref<impl::select>();
-			WAWO_ALLOC_CHECK(m_observer, sizeof(impl::select));
+			m_poller = wawo::make_ref<impl::select>();
+			WAWO_ALLOC_CHECK(m_poller, sizeof(impl::select));
+		}
+		break;
+		case T_IOCP:
+		{
+			m_poller = wawo::make_ref<impl::iocp>();
+			WAWO_ALLOC_CHECK(m_poller, sizeof(impl::iocp));
 		}
 		break;
 #if WAWO_ISGNU
 		case T_EPOLL:
 		{
-			m_observer = wawo::make_ref<impl::epoll>();
-			WAWO_ALLOC_CHECK(m_observer, sizeof(impl::epoll));
+			m_poller = wawo::make_ref<impl::epoll>();
+			WAWO_ALLOC_CHECK(m_poller, sizeof(impl::epoll));
 		}
 		break;
 #endif
 		case T_WPOLL:
 		{
-			m_observer = wawo::make_ref<impl::wpoll>();
-			WAWO_ALLOC_CHECK(m_observer, sizeof(impl::wpoll));
+			m_poller = wawo::make_ref<impl::wpoll>();
+			WAWO_ALLOC_CHECK(m_poller, sizeof(impl::wpoll));
 		}
 		break;
 		default:
@@ -37,16 +50,15 @@ namespace wawo { namespace net {
 			}
 		}
 
-		WAWO_ASSERT(m_observer != NULL);
-		m_observer->init();
+		WAWO_ASSERT(m_poller != NULL);
+		m_poller->init();
 	}
 
-	void io_event_loop::deinit_observer() {
-		WAWO_ASSERT(m_observer != NULL);
-		m_observer->deinit();
-		m_observer = NULL;
+	void io_event_loop::deinit_poller() {
+		WAWO_ASSERT(m_poller != NULL);
+		m_poller->deinit();
+		m_poller = NULL;
 	}
-
 
 
 	io_event_loop_group::io_event_loop_group()

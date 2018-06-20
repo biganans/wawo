@@ -11,7 +11,7 @@ namespace wawo { namespace net {
 		public wawo::thread_run_object_abstract,
 		public io_event_executor
 	{
-		WWRP<poller_abstract> m_observer;
+		WWRP<poller_abstract> m_poller;
 		u8_t m_poller_type;
 	public:
 		io_event_loop(u8_t t = get_os_default_poll_type()) :
@@ -21,35 +21,35 @@ namespace wawo { namespace net {
 
 		u8_t get_type() const { return m_poller_type; }
 
-		void init_observer();
-		void deinit_observer();
+		void init_poller();
+		void deinit_poller();
 
 		void on_start() {
 			io_event_executor::init();
-			init_observer();
+			init_poller();
 		}
 
 		void on_stop() {
 			io_event_executor::deinit();
-			deinit_observer();
+			deinit_poller();
 		}
 
 		void run() {
 			io_event_executor::exec_task();
-			m_observer->do_poll();
+			m_poller->do_poll();
 			io_event_executor::wait();
 		}
 
-		inline void watch(u8_t const& flag, int const& fd, fn_io_event const& fn, fn_io_event_error const& err) {
+		inline void watch(u8_t const& flag, int const& fd, fn_io_event const& fn, fn_io_event_error const& err, WWRP<ref_base> const& fnctx = NULL ) {
 			WAWO_ASSERT(fd > 0);
-			io_event_executor::execute([observer=m_observer,flag,fd,fn,err]() -> void {
-				observer->watch(flag,fd,fn,err);
+			io_event_executor::execute([poller=m_poller,flag,fd,fn,err,fnctx]() -> void {
+				poller->watch(flag,fd,fn,err,fnctx );
 			});
 		}
 		inline void unwatch(u8_t const& flag, int const& fd) {
 			WAWO_ASSERT(fd > 0);
-			io_event_executor::execute([observer=m_observer, flag, fd]() -> void {
-				observer->unwatch(flag, fd);
+			io_event_executor::execute([poller=m_poller, flag, fd]() -> void {
+				poller->unwatch(flag, fd);
 			});
 		}
 	};

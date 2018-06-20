@@ -34,7 +34,7 @@ namespace wawo { namespace net { namespace impl {
 			m_wpHandle = -1;
 		}
 
-		virtual void watch(u8_t const& flag, int const& fd,fn_io_event const& fn,fn_io_event_error const& err) {
+		virtual void watch(u8_t const& flag, int const& fd,fn_io_event const& fn,fn_io_event_error const& err, WWRP<ref_base> const& fnctx ) {
 
 			WAWO_ASSERT(flag>0);
 			WAWO_ASSERT(fd>0);
@@ -67,7 +67,7 @@ namespace wawo { namespace net { namespace impl {
 			if (ret != wawo::OK) {
 
 				wawo::task::fn_task_void _lambda = [err, ret]() -> void {
-					err(ret);
+					err(ret, NULL);
 				};
 				WAWO_SCHEDULER->schedule(_lambda);
 
@@ -76,7 +76,7 @@ namespace wawo { namespace net { namespace impl {
 			}
 
 			WAWO_ASSERT( (ctx->flag&flag) == 0);
-			ctx_update_for_watch(ctx, flag, fd, fn, err);
+			ctx_update_for_watch(ctx, flag, fd, fn, err,fnctx );
 			if (_to_add) {
 				m_ctxs.insert({fd, ctx});
 			}
@@ -134,15 +134,10 @@ namespace wawo { namespace net { namespace impl {
 				if (events&WPOLLERR) {
 					//TRACE_IOE("[WPOLL][##%d][#%d]EVT: WPOLLERR", m_wpHandle, ctx->fd);
 					events &= ~WPOLLERR;
-
-					RE _re;
-
+					bool has_in = false;
 					if (events&WPOLLIN) {
 						events &= ~WPOLLIN;
-
-						WAWO_ASSERT(ctx->fn_info[IOE_SLOT_READ].fn != NULL);
-
-						_re.read.fn = ctx->fn_info[IOE_SLOT_READ].fn;
+						has_in = true;
 					}
 
 					int ec;
@@ -154,26 +149,19 @@ namespace wawo { namespace net { namespace impl {
 					WAWO_ASSERT(ec != 0);
 					ec = WAWO_NEGATIVE(ec);
 
-					_re.rd_err.fn = ctx->fn_info[IOE_SLOT_READ].err;
+					if (has_in && ctx->fn[IOE_SLOT_READ].fn ) {
+						ctx->fn[IOE_SLOT_READ].fn(ctx->fn[IOE_SLOT_READ].fnctx);
+					}
 
-					_re.wr_err.fn = ctx->fn_info[IOE_SLOT_WRITE].err;
+					if (ctx->fn[IOE_SLOT_READ].err) {
+						ctx->fn[IOE_SLOT_READ].err(ec,ctx->fn[IOE_SLOT_READ].fnctx);
+					}
+					if (ctx->fn[IOE_SLOT_WRITE].err) {
+						ctx->fn[IOE_SLOT_WRITE].err(ec, ctx->fn[IOE_SLOT_WRITE].fnctx);
+					}
 
 					unwatch(IOE_WRITE, ctx->fd);
 					unwatch(IOE_READ, ctx->fd);
-
-					wawo::task::fn_task_void _lambda = [_re, ec]() -> void {
-						if (_re.read.fn != NULL) {
-							_re.read.fn();
-						}
-						if (_re.rd_err.fn != NULL) {
-							_re.rd_err.fn(ec);
-						}
-						if (_re.wr_err.fn != NULL) {
-							_re.wr_err.fn(ec);
-						}
-					};
-
-					WAWO_SCHEDULER->schedule(_lambda);
 					continue;
 				}
 
@@ -181,30 +169,29 @@ namespace wawo { namespace net { namespace impl {
 					//TRACE_IOE("[WPOLL][##%d][#%d]EVT: WPOLLIN", m_wpHandle, wpEvents[i].fd);
 					events &= ~WPOLLIN;
 
-					fn_io_event& fn = ctx->fn_info[IOE_SLOT_READ].fn;
+					fn_io_event fn = ctx->fn[IOE_SLOT_READ].fn;
+					WWRP<ref_base> fnctx = ctx->fn[IOE_SLOT_READ].fnctx;
 
 					WAWO_ASSERT(fn != NULL);
-
-					WWRP<wawo::task::task> _t = wawo::make_ref<wawo::task::task>(fn);
 					if (WAWO_LIKELY(!(ctx->flag&IOE_INFINITE_WATCH_READ))) {
 						unwatch(IOE_READ, ctx->fd);
 					}
-					WAWO_SCHEDULER->schedule(_t);
+					fn(fnctx);
 				}
 
 				if (events&WPOLLOUT) {
 					//TRACE_IOE("[WPOLL][##%d][#%d]EVT: WPOLLOUT", m_wpHandle, ctx->fd);
 					events &= ~WPOLLOUT;
 
-					fn_io_event& fn = ctx->fn_info[IOE_SLOT_WRITE].fn;
+					fn_io_event fn = ctx->fn[IOE_SLOT_WRITE].fn;
+					WWRP<ref_base> fnctx = ctx->fn[IOE_SLOT_WRITE].fnctx;
 					WAWO_ASSERT(fn != NULL);
-
-					WWRP<wawo::task::task> _t = wawo::make_ref<wawo::task::task>(fn);
 
 					if (WAWO_LIKELY(!(ctx->flag&IOE_INFINITE_WATCH_WRITE))) {
 						unwatch(IOE_WRITE, ctx->fd);
 					}
-					WAWO_SCHEDULER->schedule(_t);
+
+					fn(fnctx);
 				}
 
 				WAWO_ASSERT(events == 0);
