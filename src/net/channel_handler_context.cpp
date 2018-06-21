@@ -5,7 +5,7 @@
 namespace wawo { namespace net {
 
 	channel_handler_context::channel_handler_context(WWRP<channel> const& ch_, WWRP<channel_handler_abstract> const& h):
-		P(NULL), N(NULL), m_h(h), m_io_event_loop(ch_->event_loop()), m_flag(0), ch(ch_)
+		P(NULL), N(NULL), m_h(h), m_io_event_loop(ch_->event_poller()), m_flag(0), ch(ch_)
 	{
 		if (wawo::dynamic_pointer_cast<channel_activity_handler_abstract>(h) != NULL) {
 			m_flag |= CH_ACTIVITY;

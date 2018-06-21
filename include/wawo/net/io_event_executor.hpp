@@ -13,12 +13,19 @@
 namespace wawo { namespace net {
 	//@todo impl block until no new task feature
 
+	namespace impl {
+		class iocp;
+	}
+
+
 	typedef std::function<void()> fn_io_event_task;
 	typedef wawo::task::task io_task;
 	typedef std::queue<WWRP<wawo::task::task_abstract>> TASK_Q;
 
-	class io_event_executor
+	class io_event_executor:
+		public ref_base
 	{
+	protected:
 		spin_mutex m_tq_mtx;
 		condition_any m_cond;
 
@@ -27,6 +34,7 @@ namespace wawo { namespace net {
 		WWSP<timer_manager> m_tm;
 		std::thread::id m_tid;
 		bool m_in_wait;
+
 	public:
 		io_event_executor():m_in_wait(false) {}
 		virtual ~io_event_executor() {
@@ -40,7 +48,7 @@ namespace wawo { namespace net {
 
 		inline void execute(WWRP<wawo::task::task_abstract> const& t) {
 			WAWO_ASSERT(t != NULL);
-			if (in_event_loop()) {
+			if (in_poller()) {
 				t->run();
 				return;
 			}
@@ -54,7 +62,7 @@ namespace wawo { namespace net {
 			if (m_in_wait) m_cond.notify_one();
 		}
 		inline void execute(fn_io_event_task&& f) {
-			if (in_event_loop()) {
+			if (in_poller()) {
 				f();
 				return;
 			}
@@ -71,12 +79,12 @@ namespace wawo { namespace net {
 			lock_guard<spin_mutex> lg(m_tq_mtx);
 			if (m_tq_standby->size() == 0) {
 				m_in_wait = true;
-				m_cond.no_interrupt_wait_for<spin_mutex>(m_tq_mtx, std::chrono::microseconds(32));
+				m_cond.no_interrupt_wait_for<spin_mutex>(m_tq_mtx, std::chrono::microseconds(64));
 				m_in_wait = false;
 			}
 		}
 
-		inline bool in_event_loop() const {
+		inline bool in_poller() const {
 			return std::this_thread::get_id() == m_tid;
 		}
 
@@ -119,7 +127,5 @@ namespace wawo { namespace net {
 			}
 		}
 	};
-
-
 }}
 #endif

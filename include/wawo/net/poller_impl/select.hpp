@@ -72,7 +72,7 @@ namespace wawo { namespace net { namespace impl {
 				poller_ctx_map::iterator it = m_ctxs.find(fd);
 				
 				if (it == m_ctxs.end()) {
-					TRACE_IOE("[poller_abstract][#%d]watch_ioe: make new, flag: %u", fd, flag );
+					TRACE_IOE("[io_event_loop][#%d]watch_ioe: make new, flag: %u", fd, flag );
 					WWRP<poller_ctx> _ctx = wawo::make_ref<poller_ctx>();
 					_ctx->fd = fd;
 					_ctx->poll_type = T_SELECT;
@@ -86,7 +86,7 @@ namespace wawo { namespace net { namespace impl {
 				}
 
 				ctx_update_for_watch(ctx, flag, fd, fn, err, NULL );
-				TRACE_IOE("[poller_abstract][#%d]watch_ioe: update: %d, now: %d", fd, flag, ctx->flag);
+				TRACE_IOE("[io_event_loop][#%d]watch_ioe: update: %d, now: %d", fd, flag, ctx->flag);
 			}
 
 			inline void unwatch_ioe( u8_t const& flag, int const& fd) {
@@ -107,16 +107,17 @@ namespace wawo { namespace net { namespace impl {
 				}
 			}
 
-			void watch(u8_t const& flag, int const& fd, fn_io_event const& fn, fn_io_event_error const& err , WWRP<ref_base> const& fnctx)
+			void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn, fn_io_event_error const& err , WWRP<ref_base> const& fnctx)
 			{
 				WAWO_ASSERT( flag > 0 );
 				if( 0 != flag ) {
 					WAWO_CONDITION_CHECK( m_ctxs.size() < WAWO_SELECT_LIMIT ) ;
 					watch_ioe(flag, fd, fn, err);
 				}
+				(void)fnctx;
 			}
 
-			void unwatch(u8_t const& flag, int const& fd)
+			void do_unwatch(u8_t const& flag, int const& fd)
 			{
 				WAWO_ASSERT( flag > 0 );
 				if( 0 != flag ) {
@@ -124,7 +125,6 @@ namespace wawo { namespace net { namespace impl {
 				}
 			}
 
-	public:
 		void do_poll() {
 			int fd_added_count = 0;
 			int idx = 0;
@@ -193,16 +193,20 @@ namespace wawo { namespace net { namespace impl {
 					m_ctxs_to_check[j]->reset();
 				}
 			}
+			io_event_executor::wait();
 		}
 
-	public:
 		void init() {
+			poller_abstract::init();
+
 			for( int i=0;i<WAWO_SELECT_BUCKET_MAX;++i ) {
 				m_ctxs_to_check[i] = new ctxs_to_check();
 				WAWO_ALLOC_CHECK( m_ctxs_to_check[i] , sizeof(ctxs_to_check) );
 			}
 		}
 		void deinit() {
+			poller_abstract::deinit();
+
 			poller_abstract::ctxs_cancel_all(m_ctxs);
 			m_ctxs.clear();
 

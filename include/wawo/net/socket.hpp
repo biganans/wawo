@@ -11,9 +11,10 @@
 #include <wawo/net/address.hpp>
 
 #include <wawo/net/socket_base.hpp>
-
 #include <wawo/net/channel.hpp>
 #include <wawo/net/channel_future.hpp>
+
+#include <wawo/net/io_event.hpp>
 
 #define WAWO_MAX_ASYNC_WRITE_PERIOD	(90000L) //90 seconds
 
@@ -300,7 +301,7 @@ namespace wawo { namespace net {
 		}
 		void __cb_async_read(WWRP<ref_base> const& fnctx) {
 			(void)fnctx;
-			WAWO_ASSERT(event_loop()->in_event_loop());
+			WAWO_ASSERT(event_poller()->in_poller());
 			WAWO_ASSERT(is_data_socket());
 			WAWO_ASSERT(is_nonblocking());
 
@@ -355,7 +356,7 @@ namespace wawo { namespace net {
 		}
 
 		inline void __rdwr_check() {
-			WAWO_ASSERT(event_loop()->in_event_loop());
+			WAWO_ASSERT(event_poller()->in_poller());
 			u8_t nflag = 0;
 			if (m_rflag& SHUTDOWN_RD) {
 				nflag |= SHUTDOWN_RD;
@@ -384,9 +385,9 @@ namespace wawo { namespace net {
 
 	public:
 		inline void end_read() {
-			if (!event_loop()->in_event_loop()) {
+			if (!event_poller()->in_poller()) {
 				WWRP<socket> _so(this);
-				event_loop()->execute([_so]()->void {
+				event_poller()->execute([_so]()->void {
 					_so->end_read();
 				});
 				return;
@@ -395,14 +396,14 @@ namespace wawo { namespace net {
 			if ((m_rflag&WATCH_READ) && is_nonblocking()) {
 				m_rflag &= ~(WATCH_READ | WATCH_OPTION_INFINITE);
 				TRACE_IOE("[socket][%s][end_read]unwatch IOE_READ", info().to_lencstr()().cstr);
-				event_loop()->unwatch(IOE_READ, fd() );
+				event_poller()->unwatch(IOE_READ, fd() );
 			}
 		}
 
 		inline void end_write() {
-			if (!event_loop()->in_event_loop()) {
+			if (!event_poller()->in_poller()) {
 				WWRP<socket> _so(this);
-				event_loop()->execute([_so]()->void {
+				event_poller()->execute([_so]()->void {
 					_so->end_write();
 				});
 				return;
@@ -411,14 +412,14 @@ namespace wawo { namespace net {
 			if ((m_wflag&WATCH_WRITE) && is_nonblocking()) {
 				m_wflag &= ~(WATCH_WRITE | WATCH_OPTION_INFINITE);
 				TRACE_IOE("[socket][%s][end_write]unwatch IOE_WRITE", info().to_lencstr().cstr );
-				event_loop()->unwatch(IOE_WRITE, fd());
+				event_poller()->unwatch(IOE_WRITE, fd());
 			}
 		}
 
 		inline void begin_connect( fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL ) {
-			if (!event_loop()->in_event_loop()) {
+			if (!event_poller()->in_poller()) {
 				WWRP<socket> _so(this);
-				event_loop()->execute([_so]()->void {
+				event_poller()->execute([_so]()->void {
 					_so->begin_connect();
 				});
 				return;
@@ -440,7 +441,7 @@ namespace wawo { namespace net {
 			if (_fn_err == NULL) {
 				_fn_err = std::bind(&socket::__cb_async_connect_error, WWRP<socket>(this), std::placeholders::_1, std::placeholders::_2);
 			}
-			event_loop()->watch( IOE_WRITE, fd(), _fn_io, _fn_err);
+			event_poller()->watch( IOE_WRITE, fd(), _fn_io, _fn_err);
 		}
 
 		inline void end_connect() {
@@ -449,9 +450,9 @@ namespace wawo { namespace net {
 
 		inline void begin_read(u8_t const& async_flag = WATCH_OPTION_INFINITE, fn_io_event const& fn_read = NULL, fn_io_event_error const& fn_err = NULL) {
 			WAWO_ASSERT(is_nonblocking());
-			if (!event_loop()->in_event_loop()) {
+			if (!event_poller()->in_poller()) {
 				WWRP<socket> _so(this);
-				event_loop()->execute([_so]()->void {
+				event_poller()->execute([_so]()->void {
 					_so->begin_read();
 				});
 				return;
@@ -484,7 +485,7 @@ namespace wawo { namespace net {
 			if (async_flag&WATCH_OPTION_INFINITE) {
 				flag |= IOE_INFINITE_WATCH_READ;
 			}
-			event_loop()->watch(flag, fd(), _fn_io, _fn_err);
+			event_poller()->watch(flag, fd(), _fn_io, _fn_err);
 		}
 
 		inline void begin_write(u8_t const& async_flag = 0, fn_io_event const& fn_write = NULL, fn_io_event_error const& fn_err = NULL ) {
@@ -492,9 +493,9 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(is_nonblocking());
 
 			WAWO_ASSERT(is_nonblocking());
-			if (!event_loop()->in_event_loop()) {
+			if (!event_poller()->in_poller()) {
 				WWRP<socket> _so(this);
-				event_loop()->execute([_so]()->void {
+				event_poller()->execute([_so]()->void {
 					_so->begin_write();
 				});
 				return;
@@ -530,13 +531,13 @@ namespace wawo { namespace net {
 				flag |= IOE_INFINITE_WATCH_WRITE;
 			}
 
-			event_loop()->watch(flag,fd(), _fn_io, _fn_err);
+			event_poller()->watch(flag,fd(), _fn_io, _fn_err);
 		}
 
 		inline int ch_id() const { return fd(); }
 		void ch_write_impl(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise)
 		{
-			WAWO_ASSERT(event_loop()->in_event_loop());
+			WAWO_ASSERT(event_poller()->in_poller());
 			if ((m_wflag&SHUTDOWN_WR) != 0) {
 				ch_promise->set_success(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
 				return;
@@ -588,7 +589,7 @@ namespace wawo { namespace net {
 
 		void ch_flush_impl()
 		{
-			WAWO_ASSERT(event_loop()->in_event_loop());
+			WAWO_ASSERT(event_poller()->in_poller());
 			int _errno = 0;
 			while (m_outbound_entry_q.size()) {
 				WAWO_ASSERT(m_noutbound_bytes > 0);
@@ -640,7 +641,7 @@ namespace wawo { namespace net {
 		}
 		void ch_shutdown_read_impl(WWRP<channel_promise> const& ch_promise)
 		{
-			WAWO_ASSERT(event_loop()->in_event_loop());
+			WAWO_ASSERT(event_poller()->in_poller());
 			if ((m_rflag&SHUTDOWN_RD) != 0) {
 				ch_promise->set_success(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
 				return;
@@ -654,7 +655,7 @@ namespace wawo { namespace net {
 		}
 		void ch_shutdown_write_impl(WWRP<channel_promise> const& ch_promise)
 		{
-			WAWO_ASSERT(event_loop()->in_event_loop());
+			WAWO_ASSERT(event_poller()->in_poller());
 			if ((m_wflag&SHUTDOWN_WR) != 0) {
 				ch_promise->set_success(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
 				return;
@@ -670,7 +671,7 @@ namespace wawo { namespace net {
 
 		void ch_close_impl(WWRP<channel_promise> const& ch_promise)
 		{
-			WAWO_ASSERT(event_loop()->in_event_loop());
+			WAWO_ASSERT(event_poller()->in_poller());
 			if (m_state == S_CLOSED) {
 				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY);
 				return;

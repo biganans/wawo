@@ -7,7 +7,7 @@
 #include <wawo/net/channel_invoker.hpp>
 #include <wawo/net/channel_handler_context.hpp>
 
-#include <wawo/net/io_event_loop.hpp>
+//#include <wawo/net/io_event_loop.hpp>
 
 #define PIPELINE_VOID_FIRE_VOID(NAME) \
 	inline void fire_##NAME() {\

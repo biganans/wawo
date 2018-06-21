@@ -101,7 +101,7 @@ namespace wawo { namespace net { namespace handler {
 
 	public:
 		mux_stream(u32_t const& id, WWRP<wawo::net::channel_handler_context> const& ctx):
-			channel(ctx->ch->event_loop()),
+			channel(ctx->ch->event_poller()),
 			m_ch_ctx(ctx),
 			m_state(SS_CLOSED),
 			m_flag(0),
@@ -136,7 +136,7 @@ namespace wawo { namespace net { namespace handler {
 				s->ch_fire_connected();
 			};
 			WWRP<wawo::task::task> t = wawo::make_ref<wawo::task::task>(l);
-			event_loop()->execute(t);
+			event_poller()->execute(t);
 
 			return wrt;
 		}
@@ -323,7 +323,7 @@ end_write_frame:
 		int ch_id() const { return m_id; }
 
 		void ch_close_impl(WWRP<channel_promise> const& ch_promise) {
-			WAWO_ASSERT(event_loop()->in_event_loop());
+			WAWO_ASSERT(event_poller()->in_poller());
 
 			if (m_state == SS_CLOSED) {
 				ch_promise->set_success(wawo::E_CHANNEL_INVALID_STATE);
@@ -365,7 +365,7 @@ end_write_frame:
 		}
 
 		void ch_shutdown_write_impl(WWRP<channel_promise> const& ch_promise) {
-			WAWO_ASSERT(event_loop()->in_event_loop());
+			WAWO_ASSERT(event_poller()->in_poller());
 			if (m_wflag&STREAM_WRITE_SHUTDOWN_CALLED) {
 				ch_promise->set_success(E_CHANNEL_WR_SHUTDOWN_ALREADY);
 				return ;

@@ -3,27 +3,13 @@
 
 #include <wawo/smart_ptr.hpp>
 #include <wawo/mutex.hpp>
-#include <wawo/task/scheduler.hpp>
 #include <wawo/net/io_event.hpp>
+#include <wawo/net/io_event_loop.hpp>
 
 #include <map>
 #include <queue>
 
-//#define ENABLE_TRACE_IOE
-#ifdef ENABLE_TRACE_IOE
-	#define TRACE_IOE WAWO_INFO
-#else
-	#define TRACE_IOE(...)
-#endif
-
 namespace wawo { namespace net {
-
-	enum ioe_flag {
-		IOE_READ	= 1, //check read, sys io
-		IOE_WRITE	= 1<<1, //check write, sys io
-		IOE_INFINITE_WATCH_READ		= 1<<2,
-		IOE_INFINITE_WATCH_WRITE	= 1<<3,
-	};
 
 	enum poller_type {
 		T_SELECT,
@@ -32,19 +18,13 @@ namespace wawo { namespace net {
 		T_WPOLL
 	};
 
-	//static const u8_t T_SELECT = 1;
-	//static const u8_t T_EPOLL = 2;
-	//static const u8_t T_WPOLL = 3;
-
-	inline u8_t get_os_default_poll_type() {
-#if WAWO_ISGNU
+	inline poller_type get_poll_type() {
+#ifdef WAWO_ENABLE_EPOLL
 		return T_EPOLL;
+#elif defined(WAWO_ENABLE_IOCP)
+		return T_IOCP;
 #else
-	#ifdef WAWO_ENABLE_IOCP
-			return T_IOCP;
-	#else
-			return T_SELECT;
-	#endif
+		return T_SELECT;
 #endif
 	}
 
@@ -81,9 +61,10 @@ namespace wawo { namespace net {
 	typedef std::map<int, WWRP<poller_ctx>> poller_ctx_map;
 	typedef std::pair<int, WWRP<poller_ctx>> fd_ctx_pair;
 
-	class poller_abstract
-		:public wawo::ref_base
+	class poller_abstract:
+		public io_event_loop
 	{
+
 	protected:
 		poller_ctx_map m_ctxs;
 	public:
@@ -109,7 +90,7 @@ namespace wawo { namespace net {
 					ctx->flag |= IOE_INFINITE_WATCH_READ;
 				}
 
-				TRACE_IOE("[poller_abstract][#%d]watch IOE_READ", ctx->fd);
+				TRACE_IOE("[io_event_loop][#%d]watch IOE_READ", ctx->fd);
 				WAWO_ASSERT(ctx->fn[IOE_SLOT_READ].fn == NULL);
 				WAWO_ASSERT(ctx->fn[IOE_SLOT_READ].err == NULL);
 
@@ -123,7 +104,7 @@ namespace wawo { namespace net {
 				if (flag&IOE_INFINITE_WATCH_WRITE) {
 					ctx->flag |= IOE_INFINITE_WATCH_WRITE;
 				}
-				TRACE_IOE("[poller_abstract][#%d]watch IOE_WRITE", ctx->fd);
+				TRACE_IOE("[io_event_loop][#%d]watch IOE_WRITE", ctx->fd);
 				WAWO_ASSERT(ctx->fn[IOE_SLOT_WRITE].fn == NULL);
 				WAWO_ASSERT(ctx->fn[IOE_SLOT_WRITE].err == NULL);
 
@@ -138,7 +119,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(ctx->fd == fd);
 			(void)fd;
 			if ((flag&IOE_READ) && (ctx->flag)&flag) {
-				TRACE_IOE("[poller_abstract][#%d]unwatch IOE_READ", ctx->fd);
+				TRACE_IOE("[io_event_loop][#%d]unwatch IOE_READ", ctx->fd);
 				ctx->flag &= ~(IOE_READ|IOE_INFINITE_WATCH_READ);
 
 				ctx->fn[IOE_SLOT_READ].fn = NULL;
@@ -147,7 +128,7 @@ namespace wawo { namespace net {
 			}
 
 			if ((flag&IOE_WRITE) && (ctx->flag)&flag) {
-				TRACE_IOE("[poller_abstract][#%d]unwatch IOE_WRITE", ctx->fd);
+				TRACE_IOE("[io_event_loop][#%d]unwatch IOE_WRITE", ctx->fd);
 				ctx->flag &= ~(IOE_WRITE|IOE_INFINITE_WATCH_WRITE);
 				ctx->fn[IOE_SLOT_WRITE].fn = NULL;
 				ctx->fn[IOE_SLOT_WRITE].err = NULL;
@@ -180,14 +161,16 @@ namespace wawo { namespace net {
 
 		virtual ~poller_abstract() {}
 
-		virtual void init() = 0;
-		virtual void deinit() = 0;
-
+		virtual void init() {
+			io_event_loop::init();
+		}
+		virtual void deinit() {
+			io_event_loop::deinit();
+		}
 	public:
 		virtual void do_poll() = 0;
-		virtual void watch(u8_t const& flag, int const& fd, fn_io_event const& fn,fn_io_event_error const& err, WWRP<ref_base> const& fnctx) = 0;
-		virtual void unwatch(u8_t const& flag, int const& fd) = 0;
-		virtual void in_wait() = 0;
+		virtual void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn,fn_io_event_error const& err, WWRP<ref_base> const& fnctx) = 0;
+		virtual void do_unwatch(u8_t const& flag, int const& fd) = 0;
 	};
 }}
 #endif //

@@ -51,7 +51,7 @@ namespace wawo { namespace net {
 	}
 
 	int socket::bind(wawo::net::address const& addr) {
-		WAWO_ASSERT(event_loop()->in_event_loop());
+		WAWO_ASSERT(event_poller()->in_poller());
 		WAWO_ASSERT(m_state == S_OPENED);
 		int rt = socket_base::bind(addr);
 		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
@@ -61,7 +61,7 @@ namespace wawo { namespace net {
 	}
 
 	int socket::listen( int const& backlog ) {
-		WAWO_ASSERT(event_loop()->in_event_loop());
+		WAWO_ASSERT(event_poller()->in_poller());
 
 		WAWO_ASSERT(m_state == S_BINDED);
 		WAWO_ASSERT(fd() > 0);
@@ -80,9 +80,9 @@ namespace wawo { namespace net {
 	}
 
 	WWRP<wawo::net::channel_future> socket::_listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise, int const& backlog ) {
-		if (!event_loop()->in_event_loop()) {
+		if (!event_poller()->in_poller()) {
 			WWRP<socket> _this(this);
-			event_loop()->execute([_this, addr, fn_accepted, backlog, ch_promise]() ->void {
+			event_poller()->execute([_this, addr, fn_accepted, backlog, ch_promise]() ->void {
 				_this->_listen_on(addr, fn_accepted, ch_promise, backlog);
 			});
 			return ch_promise;
@@ -122,9 +122,9 @@ namespace wawo { namespace net {
 	}
 
 	WWRP<channel_future> socket::_dial(address const& addr, fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise) {
-		if (!event_loop()->in_event_loop()) {
+		if (!event_poller()->in_poller()) {
 			WWRP<socket> _this(this);
-			event_loop()->execute([_this, initializer, addr, ch_promise]() ->void {
+			event_poller()->execute([_this, initializer, addr, ch_promise]() ->void {
 				_this->_dial(addr, initializer, ch_promise);
 			});
 			return ch_promise;

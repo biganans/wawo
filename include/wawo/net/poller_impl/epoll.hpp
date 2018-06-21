@@ -4,7 +4,7 @@
 #include <sys/epoll.h>
 
 #include <wawo/core.hpp>
-#include <wawo/net/poller_abstract.hpp>
+#include <wawo/net/io_event_loop.hpp>
 
 #include <syscall.h>
 #include <poll.h>
@@ -14,13 +14,13 @@ namespace wawo { namespace net { namespace impl {
 	
 
 	class epoll:
-		public poller_abstract
+		public io_event_loop
 	{
 		int m_epfd;
 
 	public:
 		epoll():
-			poller_abstract(),
+			io_event_loop(),
 			m_epfd(-1)
 		{
 		}
@@ -155,7 +155,7 @@ namespace wawo { namespace net { namespace impl {
 
 	public:
 		void init() {
-			//poller_abstract::init();
+			//io_event_loop::init();
 
 			//the size argument is ignored since Linux 2.6.8, but must be greater than zero
 			m_epfd = epoll_create( WAWO_EPOLL_CREATE_HINT_SIZE );
@@ -168,9 +168,9 @@ namespace wawo { namespace net { namespace impl {
 		}
 		void deinit() {
 			WAWO_DEBUG( "[EPOLL]deinit ..." ) ;
-			poller_abstract::deinit();
+			io_event_loop::deinit();
 
-			poller_abstract::ctxs_cancel_all(m_ctxs);
+			io_event_loop::ctxs_cancel_all(m_ctxs);
 			m_ctxs.clear();
 
 			WAWO_CONDITION_CHECK( m_epfd != -1);

@@ -100,6 +100,8 @@
 
 #if WAWO_ISWIN
 	#define WAWO_ENABLE_IOCP
+#elif WAWO_ISGNU
+	#define WAWO_ENABLE_EPOLL
 #endif
 
 #define WAWO_DEFAULT_KEEPALIVE_IDLETIME	60
@@ -115,6 +117,14 @@
 #endif
 
 //#define ENABLE_WEBSOCKET
+
+
+//#define ENABLE_TRACE_IOE
+#ifdef ENABLE_TRACE_IOE
+	#define TRACE_IOE WAWO_INFO
+#else
+	#define TRACE_IOE(...)
+#endif
 
 
 #endif // end for _CONFIG_WAWO_CONFIG_H_

@@ -2,7 +2,7 @@
 #define _WAWO_NET_POLLER_IMPL_IOCP_HPP
 
 #include <wawo/core.hpp>
-#include <wawo/net/poller_abstract.hpp>
+#include <wawo/net/io_event_loop.hpp>
 
 #include <wawo/net/socket.hpp>
 #include <mswsock.h>
@@ -11,7 +11,7 @@
 namespace wawo { namespace net { namespace impl {
 
 	class iocp :
-		public poller_abstract
+		public io_event_loop
 	{
 		struct iocp_overlapped_ctx {
 			WSAOVERLAPPED* _overlapped;
@@ -36,7 +36,7 @@ namespace wawo { namespace net { namespace impl {
 
 	public:
 		iocp():
-			poller_abstract(),
+			io_event_loop(),
 			m_handle(NULL)
 		{}
 
@@ -59,18 +59,32 @@ namespace wawo { namespace net { namespace impl {
 			DWORD len;
 			WSAOVERLAPPED* ov;
 			int ii;
-			BOOL getOk = GetQueuedCompletionStatus(m_handle, &len, (LPDWORD)&ii, &ov, INFINITE);
-
+			DWORD dwWaitMill = INFINITE;
+			bool bLastWait = false;
+			{
+				//for wait time
+				lock_guard<spin_mutex> exector_lg(m_tq_mtx);
+				if (m_tq_standby->size()) {
+					dwWaitMill = 0;
+				} else {
+					m_in_wait = true;
+					bLastWait = true;
+				}
+			}
+			BOOL getOk = GetQueuedCompletionStatus(m_handle, &len, (LPDWORD)&ii, &ov, dwWaitMill);
+			if (bLastWait) {
+				lock_guard<spin_mutex> exector_lg(m_tq_mtx);
+				{
+					m_in_wait = false;
+				}
+			}
 			if (!getOk) {
 				WAWO_ERR("[iocp]GetQueuedCompletionStatus failed, %d", wawo::socket_get_last_errno());
 				return;
 			}
-
-
-
 		}
 
-		void watch(u8_t const& flag, int const& fd, fn_io_event const& fn, fn_io_event_error const& err, WWRP<ref_base> const& fnctx ) {
+		void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn, fn_io_event_error const& err, WWRP<ref_base> const& fnctx ) {
 			WWRP<socket> so = wawo::dynamic_pointer_cast<socket>(fnctx);
 			WAWO_ASSERT(so != NULL);
 			if (flag&IOE_READ) {
@@ -132,7 +146,7 @@ namespace wawo { namespace net { namespace impl {
 			}
 		}
 
-		void unwatch(u8_t const& flag, int const& fd)
+		void do_unwatch(u8_t const& flag, int const& fd)
 		{
 		
 		}

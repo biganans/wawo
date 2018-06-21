@@ -468,12 +468,4 @@
       <Filter>Header Files\wawo\net\poller_impl</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="..\..\src\context\jump_i386_ms_pe_masm.asm">
-      <Filter>Source Files\src\context</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\..\src\context\make_i386_ms_pe_masm.asm">
-      <Filter>Source Files\src\context</Filter>
-    </CustomBuild>
-  </ItemGroup>
 </Project>

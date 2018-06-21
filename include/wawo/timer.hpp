@@ -137,12 +137,12 @@ namespace wawo {
 
 		bool m_has_own_run_th;
 		bool m_th_break;
-		bool m_in_callee_loop;
+		bool m_in_callee_poller;
 		bool m_in_wait;
 
 		void _check_start() {
 			WAWO_ASSERT(m_has_own_run_th);
-			if (m_in_callee_loop) { return; }//same thread...skip lock
+			if (m_in_callee_poller) { return; }//same thread...skip lock
 			lock_guard<mutex> lg(m_mutex);
 			if (m_th != NULL && m_th_break != true) {
 				//interrupt wait state
@@ -163,7 +163,7 @@ namespace wawo {
 		timer_manager(bool has_own_th = true ):
 			m_has_own_run_th(has_own_th),
 			m_th_break(true),
-			m_in_callee_loop(false),
+			m_in_callee_poller(false),
 			m_in_wait(false)
 		{
 			m_heap = wawo::make_ref<_timer_heaper_t>();
@@ -205,9 +205,9 @@ namespace wawo {
 			while (1) {
 				unique_lock<mutex> ulg(m_mutex);
 				std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> nexpire;
-				m_in_callee_loop = true;
+				m_in_callee_poller = true;
 				update(nexpire);
-				m_in_callee_loop = false;
+				m_in_callee_poller = false;
 				if ( nexpire.time_since_epoch().count() > 0) {
 					m_in_wait = true;
 					m_cond.wait_until<std::chrono::steady_clock, std::chrono::nanoseconds>(ulg, nexpire );

@@ -1,6 +1,7 @@
 #ifndef _WAWO_NET_OBSERVER_IMPL_WPOLL_HPP_
 #define _WAWO_NET_OBSERVER_IMPL_WPOLL_HPP_
 
+#include <wawo/net/io_event_executor.hpp>
 #include <wawo/net/poller_abstract.hpp>
 #include <wawo/net/wcp.hpp>
 
@@ -20,11 +21,13 @@ namespace wawo { namespace net { namespace impl {
 		~wpoll() {}
 
 		void init() {
+			poller_abstract::init();
 			m_wpHandle = wcp::instance()->wpoll_create();
 			WAWO_ASSERT( m_wpHandle > 0 );
 		}
 
 		void deinit() {
+			poller_abstract::deinit();
 			WAWO_ASSERT( m_wpHandle > 0 );
 
 			poller_abstract::ctxs_cancel_all(m_ctxs);
@@ -34,7 +37,7 @@ namespace wawo { namespace net { namespace impl {
 			m_wpHandle = -1;
 		}
 
-		virtual void watch(u8_t const& flag, int const& fd,fn_io_event const& fn,fn_io_event_error const& err, WWRP<ref_base> const& fnctx ) {
+		virtual void do_watch(u8_t const& flag, int const& fd,fn_io_event const& fn,fn_io_event_error const& err, WWRP<ref_base> const& fnctx ) {
 
 			WAWO_ASSERT(flag>0);
 			WAWO_ASSERT(fd>0);
@@ -65,12 +68,7 @@ namespace wawo { namespace net { namespace impl {
 
 			int ret = wcp::instance()->wpoll_ctl( m_wpHandle, WPOLL_CTL_ADD, evt );
 			if (ret != wawo::OK) {
-
-				wawo::task::fn_task_void _lambda = [err, ret]() -> void {
-					err(ret, NULL);
-				};
-				WAWO_SCHEDULER->schedule(_lambda);
-
+				err(ret, NULL);
 				WAWO_ERR("[WPOLL]WPOLL CTL ADD FAILED: %d", ret);
 				return;
 			}
@@ -83,7 +81,7 @@ namespace wawo { namespace net { namespace impl {
 			TRACE_IOE("[WPOLL][##%d][#%d][watch]wpoll op success,op flag: %d, new flag: %d", m_wpHandle, fd, flag, ctx->flag);
 		}
 
-		virtual void unwatch(u8_t const&flag, int const& fd) {
+		virtual void do_unwatch(u8_t const&flag, int const& fd) {
 			WAWO_ASSERT( flag>0 );
 			WAWO_ASSERT( fd>0 );
 			WAWO_ASSERT(m_wpHandle > 0);

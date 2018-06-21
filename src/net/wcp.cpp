@@ -321,7 +321,7 @@ namespace wawo { namespace net {
 						WCP_TRACE("[wcp]check_recv, duplicate (new), update rwnd, seq: %u, flag: %u, wnd: %u, ack: %u, expect: %u",
 							pack->header.seq, pack->header.flag, pack->header.wnd, pack->header.ack, rcv_info.next);
 
-						goto _end_current_loop;
+						goto _end_current_poller;
 					}
 					else if (pack->header.seq < seq) {
 						++it;
@@ -332,7 +332,7 @@ namespace wawo { namespace net {
 				}
 				rcv_received.insert(it.base(), pack);
 				//wcb_flag |= RCV_ARRIVE_NEW;
-			_end_current_loop:
+			_end_current_poller:
 				(void)it;//for compile grammar
 			}
 

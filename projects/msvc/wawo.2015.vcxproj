@@ -263,18 +263,6 @@
     <ClInclude Include="..\..\include\wawo\tls.hpp" />
     <ClInclude Include="..\..\include\wawo\__init__.hpp" />
   </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="..\..\src\context\jump_i386_ms_pe_masm.asm">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ml /c $(ProjectDir)./../../src/context/%(fileName).asm</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(fileName).obj</Outputs>
-    </CustomBuild>
-    <CustomBuild Include="..\..\src\context\make_i386_ms_pe_masm.asm">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ml -coff -c /Zi /Zd -Fo $(IntDir)/%(fileName).obj  $(ProjectDir)./../../src/context/%(fileName).asm</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)/%(fileName).obj</Outputs>
-    </CustomBuild>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
