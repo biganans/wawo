@@ -622,7 +622,7 @@ namespace wawo { namespace net {
 
 		int socket_base::shutdown(int const& flag) {
 
-			WAWO_ASSERT(is_data_socket());
+			WAWO_ASSERT(!is_listener());
 
 			const char* shutdown_flag_str[3] = {
 				"SHUT_RD",

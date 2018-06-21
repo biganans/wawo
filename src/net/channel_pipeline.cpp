@@ -41,7 +41,7 @@ namespace wawo { namespace net {
 	WWRP<channel_pipeline> channel_pipeline::add_last(WWRP<channel_handler_abstract> const& h) {
 		WAWO_ASSERT(m_io_event_loop != NULL);
 		WWRP<channel_pipeline> _this(this);
-		if (m_io_event_loop->in_poller()) {
+		if (m_io_event_loop->in_event_loop()) {
 			//if ch closed , m_ch == NULL 
 			WAWO_ASSERT(m_ch != NULL);
 			WWRP<channel_handler_context> ctx = wawo::make_ref<channel_handler_context>(m_ch, h);

@@ -323,7 +323,7 @@ end_write_frame:
 		int ch_id() const { return m_id; }
 
 		void ch_close_impl(WWRP<channel_promise> const& ch_promise) {
-			WAWO_ASSERT(event_poller()->in_poller());
+			WAWO_ASSERT(event_poller()->in_event_loop());
 
 			if (m_state == SS_CLOSED) {
 				ch_promise->set_success(wawo::E_CHANNEL_INVALID_STATE);
@@ -365,7 +365,7 @@ end_write_frame:
 		}
 
 		void ch_shutdown_write_impl(WWRP<channel_promise> const& ch_promise) {
-			WAWO_ASSERT(event_poller()->in_poller());
+			WAWO_ASSERT(event_poller()->in_event_loop());
 			if (m_wflag&STREAM_WRITE_SHUTDOWN_CALLED) {
 				ch_promise->set_success(E_CHANNEL_WR_SHUTDOWN_ALREADY);
 				return ;

@@ -107,7 +107,7 @@ namespace wawo { namespace net {
 #define CH_FUTURE_ACTION_IMPL_CH_PROMISE_1(NAME) \
 private: \
 		inline void _ch_##NAME(WWRP<channel_promise> const& ch_promise) {\
-			WAWO_ASSERT(m_io_event_loop->in_poller()); \
+			WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 			if (m_pipeline == NULL) { \
 				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
 				return; \
@@ -121,7 +121,7 @@ public: \
 		} \
 		WWRP<channel_future> ch_##NAME(WWRP<channel_promise> const& ch_promise) { \
 			WAWO_ASSERT( m_io_event_loop != NULL ); \
-			if( !m_io_event_loop->in_poller() ) { \
+			if( !m_io_event_loop->in_event_loop() ) { \
 				WWRP<channel> _ch(this); \
 				m_io_event_loop->schedule([_ch, ch_promise]() { \
 					_ch->_ch_##NAME(ch_promise); \
@@ -139,7 +139,7 @@ public: \
 #define CH_FUTURE_ACTION_IMPL_PACKET_1_CH_PROMISE_1(_NAME) \
 private: \
 			inline void _ch_##_NAME(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {\
-			WAWO_ASSERT(m_io_event_loop->in_poller()); \
+			WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 			if (m_pipeline == NULL) { \
 				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
 				return; \
@@ -153,7 +153,7 @@ public: \
 		} \
 		WWRP<channel_future> ch_##_NAME(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {\
 			WAWO_ASSERT(m_io_event_loop != NULL); \
-			if(!m_io_event_loop->in_poller()) { \
+			if(!m_io_event_loop->in_event_loop()) { \
 				WWRP<channel> _ch(this); \
 				m_io_event_loop->schedule([_ch, outlet, ch_promise]() { \
 					_ch->_ch_##_NAME(outlet, ch_promise); \
@@ -169,7 +169,7 @@ public: \
 #define CH_ACTION_IMPL_VOID(NAME) \
 private: \
 	inline void _ch_##NAME() { \
-			WAWO_ASSERT(m_io_event_loop->in_poller()); \
+			WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 			if (m_pipeline == NULL) { \
 				return; \
 			} \
@@ -178,7 +178,7 @@ private: \
 public: \
 		void ch_##NAME() {\
 			WAWO_ASSERT( m_io_event_loop != NULL ); \
-			if(!m_io_event_loop->in_poller()) { \
+			if(!m_io_event_loop->in_event_loop()) { \
 				WWRP<channel> _ch(this); \
 				m_io_event_loop->schedule([_ch]() { \
 					_ch->_ch_##NAME(); \

@@ -15,7 +15,7 @@
 		_ctx->invoke_##NAME##(); \
 	} \
 	inline void invoke_##NAME##() { \
-		WAWO_ASSERT(m_io_event_loop->in_poller()); \
+		WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 		WAWO_ASSERT(m_h != NULL); \
 		WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
 		WAWO_ASSERT(_h != NULL); \
@@ -29,7 +29,7 @@
 		_ctx->invoke_##NAME##(p); \
 	} \
 	inline void invoke_##NAME##(WWRP<packet> const& p) { \
-		WAWO_ASSERT(m_io_event_loop->in_poller()); \
+		WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 		WAWO_ASSERT(m_h != NULL); \
 		WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
 		WAWO_ASSERT(_h != NULL); \
@@ -63,7 +63,7 @@ public:\
 		return ch_promise; \
 	} \
 	inline void invoke_##NAME##(WWRP<packet> const& p, WWRP<channel_promise> const& ch_promise) { \
-		WAWO_ASSERT(m_io_event_loop->in_poller()); \
+		WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 		WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
 		WAWO_ASSERT(_h != NULL); \
 		_h->##NAME##(WWRP<CTX_CLASS_NAME>(this), p, ch_promise); \
@@ -93,7 +93,7 @@ public:\
 		return ch_promise; \
 	} \
 	inline void invoke_##NAME##(WWRP<channel_promise> const& ch_promise) {\
-		WAWO_ASSERT(m_io_event_loop->in_poller()); \
+		WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 		WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
 		WAWO_ASSERT(_h != NULL); \
 		_h->##NAME##(WWRP<CTX_CLASS_NAME>(this),ch_promise); \
@@ -117,7 +117,7 @@ public:\
 		}); \
 	} \
 	inline void invoke_##NAME##() {\
-		WAWO_ASSERT(m_io_event_loop->in_poller()); \
+		WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 		WWRP<HANDLER_CLASS_NAME> _h = wawo::dynamic_pointer_cast<HANDLER_CLASS_NAME>(m_h); \
 		WAWO_ASSERT(_h != NULL); \
 		_h->##NAME##(WWRP<CTX_CLASS_NAME>(this)); \

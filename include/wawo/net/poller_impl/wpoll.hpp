@@ -1,7 +1,6 @@
 #ifndef _WAWO_NET_OBSERVER_IMPL_WPOLL_HPP_
 #define _WAWO_NET_OBSERVER_IMPL_WPOLL_HPP_
 
-#include <wawo/net/io_event_executor.hpp>
 #include <wawo/net/poller_abstract.hpp>
 #include <wawo/net/wcp.hpp>
 
@@ -27,7 +26,6 @@ namespace wawo { namespace net { namespace impl {
 		}
 
 		void deinit() {
-			poller_abstract::deinit();
 			WAWO_ASSERT( m_wpHandle > 0 );
 
 			poller_abstract::ctxs_cancel_all(m_ctxs);
@@ -35,6 +33,8 @@ namespace wawo { namespace net { namespace impl {
 
 			wcp::instance()->wpoll_close(m_wpHandle);
 			m_wpHandle = -1;
+
+			poller_abstract::deinit();
 		}
 
 		virtual void do_watch(u8_t const& flag, int const& fd,fn_io_event const& fn,fn_io_event_error const& err, WWRP<ref_base> const& fnctx ) {

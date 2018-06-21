@@ -13,7 +13,7 @@
 
 namespace wawo { namespace net {
 
-		static inline WWRP<io_event_loop> make_poller_by_type(poller_type t) {
+	inline static WWRP<io_event_loop> make_poller_by_type(poller_type t) {
 			WWRP<io_event_loop> rt;
 			switch (t) {
 #ifdef WAWO_ENABLE_EPOLL

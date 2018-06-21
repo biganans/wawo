@@ -193,7 +193,7 @@ namespace wawo { namespace net { namespace impl {
 					m_ctxs_to_check[j]->reset();
 				}
 			}
-			io_event_executor::wait();
+			io_event_executor::cond_wait();
 		}
 
 		void init() {
@@ -205,7 +205,6 @@ namespace wawo { namespace net { namespace impl {
 			}
 		}
 		void deinit() {
-			poller_abstract::deinit();
 
 			poller_abstract::ctxs_cancel_all(m_ctxs);
 			m_ctxs.clear();
@@ -219,6 +218,8 @@ namespace wawo { namespace net { namespace impl {
 			for( int i=0;i<WAWO_SELECT_BUCKET_MAX;++i ) {
 				WAWO_DELETE( m_ctxs_to_check[i]) ;
 			}
+			poller_abstract::deinit();
+
 		}
 
 		void _select_sockets( ctxs_to_check* const sockets ) {

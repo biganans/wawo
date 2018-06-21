@@ -13,14 +13,21 @@
 namespace wawo { namespace net {
 	//@todo impl block until no new task feature
 
-	namespace impl {
-		class iocp;
-	}
-
-
 	typedef std::function<void()> fn_io_event_task;
 	typedef wawo::task::task io_task;
 	typedef std::queue<WWRP<wawo::task::task_abstract>> TASK_Q;
+
+	enum wait_type {
+		W_NOWAIT,
+		W_COND,
+		W_CUSTOM
+	};
+
+	enum wait_time {
+		W_0,
+		W_INFINITE,
+		W_MICROSECOND
+	};
 
 	class io_event_executor:
 		public ref_base
@@ -33,22 +40,28 @@ namespace wawo { namespace net {
 		WWSP<TASK_Q> m_tq;
 		WWSP<timer_manager> m_tm;
 		std::thread::id m_tid;
-		bool m_in_wait;
+		wait_type m_wait_t;
+
+		inline void __wait_check() {
+			if (WAWO_LIKELY(m_wait_t == W_NOWAIT)) {
+				return;
+			} else if (m_wait_t == W_COND) {
+				m_cond.notify_one();
+			} else {
+				interrupt_wait();
+			}
+		}
 
 	public:
-		io_event_executor():m_in_wait(false) {}
+		io_event_executor():m_wait_t(W_NOWAIT) {}
 		virtual ~io_event_executor() {
 			WAWO_ASSERT(m_tq->empty());
 			WAWO_ASSERT(m_tq_standby->empty());
 		}
 
-		inline void wait_check() {
-			if (m_in_wait) m_cond.notify_one();
-		}
-
 		inline void execute(WWRP<wawo::task::task_abstract> const& t) {
 			WAWO_ASSERT(t != NULL);
-			if (in_poller()) {
+			if (in_event_loop()) {
 				t->run();
 				return;
 			}
@@ -59,10 +72,10 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(t != NULL);
 			lock_guard<spin_mutex> lg(m_tq_mtx);
 			m_tq_standby->push(t);
-			if (m_in_wait) m_cond.notify_one();
+			__wait_check();
 		}
 		inline void execute(fn_io_event_task&& f) {
-			if (in_poller()) {
+			if (in_event_loop()) {
 				f();
 				return;
 			}
@@ -72,19 +85,38 @@ namespace wawo { namespace net {
 			WWRP<io_task> _t = wawo::make_ref<io_task>(std::forward<fn_io_event_task>(f));
 			lock_guard<spin_mutex> lg(m_tq_mtx);
 			m_tq_standby->push(_t);
-			if (m_in_wait) m_cond.notify_one();
+			__wait_check();
 		}
 
-		inline void wait() {
+		void cond_wait() {
 			lock_guard<spin_mutex> lg(m_tq_mtx);
 			if (m_tq_standby->size() == 0) {
-				m_in_wait = true;
+				m_wait_t = W_COND;
 				m_cond.no_interrupt_wait_for<spin_mutex>(m_tq_mtx, std::chrono::microseconds(64));
-				m_in_wait = false;
+				m_wait_t = W_NOWAIT;
 			}
 		}
+		//0,	NO WAIT
+		//-1,	INFINITE WAIT
+		//>0,	WAIT MICROSECOND
+		inline int _before_wait() {
+			lock_guard<spin_mutex> lg(m_tq_mtx);
+			WAWO_ASSERT(m_wait_t == W_NOWAIT);
+			if (m_tq_standby->size() == 0) {
+				m_wait_t = W_CUSTOM;
+				return -1;
+			}
+			return 0;
+		}
+		inline void _after_wait() {
+			lock_guard<spin_mutex> lg(m_tq_mtx);
+//			WAWO_ASSERT(m_tq_standby->size() != 0);
+			WAWO_ASSERT(m_wait_t != W_NOWAIT);
+			m_wait_t = W_NOWAIT;
+		}
+		virtual void interrupt_wait() { WAWO_ASSERT(!"NOT IMPLEMENTED"); }
 
-		inline bool in_poller() const {
+		inline bool in_event_loop() const {
 			return std::this_thread::get_id() == m_tid;
 		}
 
@@ -95,18 +127,16 @@ namespace wawo { namespace net {
 			m_tm->stop(t);
 		}
 
-		void init() {
+		virtual void init() {
 			m_tid = std::this_thread::get_id();
 			m_tq_standby = wawo::make_shared<TASK_Q>();
 			m_tq = wawo::make_shared<TASK_Q>();
-
 			m_tm = wawo::make_shared<timer_manager>(false);
 		}
 
-		void deinit() {
+		virtual void deinit() {
 			WAWO_ASSERT(m_tq->empty());
 			WAWO_ASSERT(m_tq_standby->empty());
-
 			m_tm = NULL;
 		}
 

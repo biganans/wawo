@@ -194,7 +194,7 @@ namespace wawo { namespace net {
 
 	class socket_base
 	{
-	private:
+	protected:
 		socket_mode m_sm; //
 		s_family	m_family;
 		s_type m_type;
@@ -257,7 +257,7 @@ namespace wawo { namespace net {
 		inline bool is_wcp() const { return m_protocol == P_WCP; }
 		inline bool is_icmp() const { return m_protocol == P_ICMP; }
 
-		inline bool is_data_socket() const { return m_sm != SM_LISTENER; }
+//		inline bool is_data_socket() const { return m_sm != SM_LISTENER; }
 		inline bool is_listener() const { return m_sm == SM_LISTENER; }
 
 		inline int const& fd() const { return m_fd; }

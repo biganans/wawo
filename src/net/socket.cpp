@@ -12,13 +12,20 @@ namespace wawo { namespace net {
 #ifdef _DEBUG
 		::memset( m_trb, 'i', buffer_cfg().rcv_size );
 #endif
+
+#ifdef WAWO_ENABLE_IOCP
+		iocp_init();
+#endif
 	}
 
 	void socket::_deinit() {
-		WAWO_ASSERT( m_state == S_CLOSED) ;
-
+		WAWO_ASSERT( m_state == S_CLOSED);
 		::free( m_trb );
 		m_trb = NULL;
+
+#ifdef WAWO_ENABLE_IOCP
+		iocp_deinit();
+#endif
 	}
 
 	int socket::open() {
@@ -51,7 +58,7 @@ namespace wawo { namespace net {
 	}
 
 	int socket::bind(wawo::net::address const& addr) {
-		WAWO_ASSERT(event_poller()->in_poller());
+		WAWO_ASSERT(event_poller()->in_event_loop());
 		WAWO_ASSERT(m_state == S_OPENED);
 		int rt = socket_base::bind(addr);
 		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
@@ -61,7 +68,7 @@ namespace wawo { namespace net {
 	}
 
 	int socket::listen( int const& backlog ) {
-		WAWO_ASSERT(event_poller()->in_poller());
+		WAWO_ASSERT(event_poller()->in_event_loop());
 
 		WAWO_ASSERT(m_state == S_BINDED);
 		WAWO_ASSERT(fd() > 0);
@@ -80,7 +87,7 @@ namespace wawo { namespace net {
 	}
 
 	WWRP<wawo::net::channel_future> socket::_listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise, int const& backlog ) {
-		if (!event_poller()->in_poller()) {
+		if (!event_poller()->in_event_loop()) {
 			WWRP<socket> _this(this);
 			event_poller()->execute([_this, addr, fn_accepted, backlog, ch_promise]() ->void {
 				_this->_listen_on(addr, fn_accepted, ch_promise, backlog);
@@ -106,6 +113,10 @@ namespace wawo { namespace net {
 		rt = socket::listen(backlog);
 		ch_promise->set_success(rt);
 
+#ifdef WAWO_ENABLE_IOCP
+		begin_listen();
+#endif
+
 		if (rt == wawo::OK) {
 			fn_io_event _fn_accept = std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1);
 			fn_io_event_error _fn_err = std::bind(&socket::__cb_async_error, WWRP<socket>(this), std::placeholders::_1, std::placeholders::_2);
@@ -122,7 +133,7 @@ namespace wawo { namespace net {
 	}
 
 	WWRP<channel_future> socket::_dial(address const& addr, fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise) {
-		if (!event_poller()->in_poller()) {
+		if (!event_poller()->in_event_loop()) {
 			WWRP<socket> _this(this);
 			event_poller()->execute([_this, initializer, addr, ch_promise]() ->void {
 				_this->_dial(addr, initializer, ch_promise);
