@@ -87,7 +87,7 @@ namespace wawo { namespace net { namespace impl {
 					WAWO_ASSERT(ctx->ref_so != NULL);
 					ctx->ref_so->iocp_accepted(so);
 					so->iocp_accept_done();
-					so->iocp_reset_accept_ctx();
+					so->iocp_reset_ctx(IOCP_OVERLAPPED_CTX_ACCEPT);
 				}
 				break;
 				case IOE_READ:
@@ -143,8 +143,8 @@ namespace wawo { namespace net { namespace impl {
 						err(openrt, fnctx);
 						return;
 					}
-
-					WWSP<iocp_overlapped_ctx>& ctx = _so->iocp_accept_ctx();
+					_so->iocp_init_ctx(IOCP_OVERLAPPED_CTX_ACCEPT);
+					WWSP<iocp_overlapped_ctx>& ctx = _so->iocp_ctx(IOCP_OVERLAPPED_CTX_ACCEPT);
 					ctx->ref_so = so;
 
 					BOOL acceptrt = lpfnAcceptEx(fd, _so->fd(),

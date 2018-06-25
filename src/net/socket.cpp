@@ -14,7 +14,7 @@ namespace wawo { namespace net {
 #endif
 
 #ifdef WAWO_ENABLE_IOCP
-		iocp_init();
+//		iocp_init();
 #endif
 	}
 
@@ -24,7 +24,7 @@ namespace wawo { namespace net {
 		m_trb = NULL;
 
 #ifdef WAWO_ENABLE_IOCP
-		iocp_deinit();
+//		iocp_deinit();
 #endif
 	}
 
