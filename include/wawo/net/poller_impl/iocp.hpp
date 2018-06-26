@@ -38,7 +38,7 @@ namespace wawo { namespace net { namespace impl {
 		void interrupt_wait() {
 			WAWO_ASSERT(m_handle != NULL);
 			BOOL postrt = PostQueuedCompletionStatus(m_handle, -1,(DWORD) NULL,0 );
-			if (postrt == 0) {
+			if (postrt == FALSE ) {
 				WAWO_ERR("PostQueuedCompletionStatus failed: %d", wawo::socket_get_last_errno());
 				return;
 			}
@@ -84,15 +84,24 @@ namespace wawo { namespace net { namespace impl {
 			switch (ctx->flag) {
 				case IOE_ACCEPT:
 				{
+					so->iocp_init_ctx(IOCP_OVERLAPPED_CTX_READ);
+					//bind cp
+					HANDLE new_so_cp = CreateIoCompletionPort((HANDLE)so->fd(), m_handle, (u_long)0, 0);
+					WAWO_ASSERT(new_so_cp == m_handle);
+
 					WAWO_ASSERT(ctx->ref_so != NULL);
 					ctx->ref_so->iocp_accepted(so);
+
 					so->iocp_accept_done();
 					so->iocp_reset_ctx(IOCP_OVERLAPPED_CTX_ACCEPT);
+					return;
 				}
 				break;
 				case IOE_READ:
 				{
-
+					WAWO_ASSERT(ctx->ref_so == NULL);
+					WAWO_ASSERT(ctx->so != NULL);
+					so->iocp_read_done(len);
 				}
 				break;
 				case IOE_WRITE:
@@ -157,6 +166,23 @@ namespace wawo { namespace net { namespace impl {
 						int ec = wawo::socket_get_last_errno();
 						if (ec != ERROR_IO_PENDING) {
 							_so->ch_close();
+							err(ec, fnctx);
+							return;
+						}
+					}
+				}
+				else {
+					//read begin
+					WAWO_ASSERT( so != NULL);
+					WWSP<iocp_overlapped_ctx> _ctx = so->iocp_ctx(IOCP_OVERLAPPED_CTX_READ);
+
+					DWORD flags = 0;
+					WSABUF wsabuf = { WAWO_IOCP_BUFFER_SIZE , _ctx->buf };
+					memset( &_ctx->_overlapped, 0, sizeof(_ctx->_overlapped) );
+					if (WSARecv(so->fd(), &wsabuf, 1, NULL, &flags, &_ctx->_overlapped, NULL) == SOCKET_ERROR) {
+						int ec = wawo::socket_get_last_errno();
+						if (ec != ERROR_IO_PENDING) {
+							so->iocp_reset_ctx(IOCP_OVERLAPPED_CTX_READ);
 							err(ec, fnctx);
 							return;
 						}

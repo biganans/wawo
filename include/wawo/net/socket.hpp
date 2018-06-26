@@ -217,8 +217,16 @@ namespace wawo { namespace net {
 			begin_read(WATCH_OPTION_INFINITE);
 		}
 
-		inline void iocp_read_done() {
-
+		inline void iocp_read_done(int const& len) {
+			if (len == 0) {
+				WAWO_ASSERT("TODO");
+				return;
+			}
+			WAWO_ASSERT(len > 0);
+			WWRP<wawo::packet> income = wawo::make_ref<wawo::packet>(len);
+			WAWO_ASSERT(m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_READ] != NULL);
+			income->write((byte_t*)m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_READ]->buf, len);
+			channel::ch_read(income);
 		}
 
 		inline void iocp_write_done() {
