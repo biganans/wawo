@@ -52,14 +52,22 @@ namespace wawo { namespace net {
 #ifdef WAWO_ENABLE_IOCP
 #define WAWO_IOCP_BUFFER_SIZE 1024*64
 	class socket;
+	enum iocp_action {
+		IOCP_ACTION_IDLE,
+		IOCP_ACTION_READ,
+		IOCP_ACTION_WRITE,
+		IOCP_ACTION_ACCEPT,
+		IOCP_ACTION_LISTEN,
+		IOCP_ACTION_CONNECT
+	};
+
 	struct iocp_overlapped_ctx {
 		WSAOVERLAPPED _overlapped;
 		WWRP<socket> so;
 		WWRP<socket> ref_so;
-		ioe_flag flag;
+		iocp_action action;
 		WSABUF wsabuf;
 		char buf[WAWO_IOCP_BUFFER_SIZE];
-		DWORD buflen;
 	};
 
 	enum iocp_overlapped_ctx_type {
@@ -146,11 +154,18 @@ namespace wawo { namespace net {
 		
 
 #ifdef WAWO_ENABLE_IOCP
-		//void iocp_init() {
-		//}
-		//void iocp_deinit() {
-		//	WAWO_ASSERT(!"TODO");
-		//}
+		void iocp_init() {
+			iocp_init_ctx(IOCP_OVERLAPPED_CTX_READ);
+			iocp_init_ctx(IOCP_OVERLAPPED_CTX_WRITE);
+		}
+		void iocp_deinit() {
+			iocp_reset_ctx(IOCP_OVERLAPPED_CTX_READ);
+			iocp_reset_ctx(IOCP_OVERLAPPED_CTX_WRITE);
+		}
+
+		void iocp_bind() {
+			event_poller()->watch(IOE_IOCP_BIND, fd(), NULL, NULL, WWRP<socket>(this));
+		}
 
 		inline void iocp_init_ctx(iocp_overlapped_ctx_type t) {
 			WAWO_ASSERT(m_iocp_overlapped_ctxs[t] == NULL);
@@ -158,32 +173,25 @@ namespace wawo { namespace net {
 			memset(&_ctx->_overlapped, 0, sizeof(WSAOVERLAPPED));
 			_ctx->so = WWRP<socket>(this);
 			_ctx->ref_so = NULL;
-			_ctx->buflen = 0;
 			memset(_ctx->buf, 0, WAWO_IOCP_BUFFER_SIZE);
-
+			_ctx->action = IOCP_ACTION_IDLE;
 			switch (t) {
 			case IOCP_OVERLAPPED_CTX_ACCEPT:
 				{
-					_ctx->flag = IOE_ACCEPT;
 				}
 				break;
 			case IOCP_OVERLAPPED_CTX_READ:
 				{
-					_ctx->flag = IOE_READ;
-					_ctx->buflen = 0;
 					memset(_ctx->buf, 0, WAWO_IOCP_BUFFER_SIZE);
 				}
 			break;
 			case IOCP_OVERLAPPED_CTX_WRITE:
 				{
-					_ctx->flag = IOE_WRITE;
-					_ctx->buflen = 0;
 					memset(_ctx->buf, 0, WAWO_IOCP_BUFFER_SIZE);
 				}
 			break;
 			case IOCP_OVERLAPPED_CTX_CONNECT:
 				{
-					_ctx->flag = IOE_CONNECT;
 				}
 			break;
 			}
@@ -227,10 +235,23 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_READ] != NULL);
 			income->write((byte_t*)m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_READ]->buf, len);
 			channel::ch_read(income);
+			end_read();
+			begin_read(WATCH_OPTION_INFINITE);
 		}
 
-		inline void iocp_write_done() {
-
+		inline void iocp_write_done(int const& len) {
+			WAWO_ASSERT(m_outbound_entry_q.size());
+			WAWO_ASSERT(len > 0);
+			WAWO_ASSERT(m_noutbound_bytes > 0);
+			socket_outbound_entry entry = m_outbound_entry_q.front();
+			WAWO_ASSERT(entry.data != NULL);
+			entry.data->skip(len);
+			m_noutbound_bytes -= len;
+			if (entry.data->len() == 0) {
+				entry.ch_promise->set_success(wawo::OK);
+				m_outbound_entry_q.pop();
+			}
+			ch_flush_impl();
 		}
 #endif
 
@@ -690,6 +711,14 @@ namespace wawo { namespace net {
 				return;
 			}
 
+#ifdef WAWO_ENABLE_IOCP
+			m_outbound_entry_q.push({
+				outlet,
+				ch_promise
+			});
+			m_noutbound_bytes += outlet->len();
+			ch_flush_impl();
+#else
 			WAWO_ASSERT((m_wflag&WATCH_WRITE) == 0);
 			int _errno;
 			u32_t sent = socket_base::send(outlet->begin(), outlet->len(), _errno);
@@ -714,10 +743,12 @@ namespace wawo { namespace net {
 
 			ch_close();
 			ch_promise->set_success(_errno);
+#endif
 		}
 
 		void ch_flush_impl()
 		{
+
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			int _errno = 0;
 			while (m_outbound_entry_q.size()) {
@@ -729,45 +760,73 @@ namespace wawo { namespace net {
 					continue;
 				}
 
-				u32_t sent = socket_base::send(entry.data->begin(), entry.data->len(), _errno);
-				WAWO_ASSERT(sent <= m_noutbound_bytes);
-				m_noutbound_bytes -= sent;
-				
-				if (sent == entry.data->len()) {
-					WAWO_ASSERT(_errno == wawo::OK);
-					entry.ch_promise->set_success(wawo::OK);
-					m_outbound_entry_q.pop();
-					continue;
+#ifdef WAWO_ENABLE_IOCP
+				WWRP<packet>& outlet = entry.data;
+				WWSP<iocp_overlapped_ctx>& wctx = m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_WRITE];
+				WAWO_ASSERT(wctx != NULL);
+				if (wctx->action == IOCP_ACTION_WRITE) {
+					return;
 				}
-				entry.data->skip(sent);
-				WAWO_ASSERT(entry.data->len());
-				WAWO_ASSERT(_errno != wawo::OK);
-				break;
+				wctx->action = IOCP_ACTION_WRITE;
+				memset(&wctx->_overlapped, 0, sizeof(wctx->_overlapped));
+				WSABUF wsabuf = { outlet->len(), (char*)outlet->begin() };
+				int wrt = ::WSASend(fd(), &wsabuf, 1, NULL, 0, &wctx->_overlapped, NULL);
+				if (wrt == SOCKET_ERROR) {
+					_errno = wawo::socket_get_last_errno();
+					if (_errno == WSA_IO_PENDING) {
+						_errno = wawo::OK;
+						goto _clean_outbound_entry_q;
+					}
+				}
 			}
-			if (_errno == wawo::OK) {
-				WAWO_ASSERT(m_outbound_entry_q.size() == 0);
-				if (m_wflag&WATCH_WRITE) {
-					end_write();
-					channel::ch_fire_write_unblock();
-				}
-			} else if (_errno == wawo::E_CHANNEL_WRITE_BLOCK ) {
-				if ((m_wflag&WATCH_WRITE) == 0) {
-					begin_write();
-					channel::ch_fire_write_block();
-				} else {
-					//clear old before setup
-					end_write();
-					begin_write();
-				}
-			} else {
-				while (m_outbound_entry_q.size()) {
-					socket_outbound_entry& entry = m_outbound_entry_q.front();
-					entry.ch_promise->set_success(_errno);
-					m_outbound_entry_q.pop();
-				}
-				ch_close();
+			return;
+#else
+			u32_t sent = socket_base::send(entry.data->begin(), entry.data->len(), _errno);
+			WAWO_ASSERT(sent <= m_noutbound_bytes);
+			m_noutbound_bytes -= sent;
+
+			if (sent == entry.data->len()) {
+				WAWO_ASSERT(_errno == wawo::OK);
+				entry.ch_promise->set_success(wawo::OK);
+				m_outbound_entry_q.pop();
+				continue;
 			}
+			entry.data->skip(sent);
+			WAWO_ASSERT(entry.data->len());
+			WAWO_ASSERT(_errno != wawo::OK);
+			break;
+
 		}
+		if (_errno == wawo::OK) {
+			WAWO_ASSERT(m_outbound_entry_q.size() == 0);
+			if (m_wflag&WATCH_WRITE) {
+				end_write();
+				channel::ch_fire_write_unblock();
+			}
+			return;
+		} else if (_errno == wawo::E_CHANNEL_WRITE_BLOCK ) {
+			if ((m_wflag&WATCH_WRITE) == 0) {
+				begin_write();
+				channel::ch_fire_write_block();
+			} else {
+				//clear old before setup
+				end_write();
+				begin_write();
+			}
+			return;
+		} else {
+			goto _clean_outbound_entry_q;
+		}
+#endif
+		_clean_outbound_entry_q:
+			while (m_outbound_entry_q.size()) {
+				socket_outbound_entry& entry = m_outbound_entry_q.front();
+				entry.ch_promise->set_success(_errno);
+				m_outbound_entry_q.pop();
+			}
+			ch_close();
+		}
+
 		void ch_shutdown_read_impl(WWRP<channel_promise> const& ch_promise)
 		{
 			WAWO_ASSERT(event_poller()->in_event_loop());

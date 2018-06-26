@@ -111,6 +111,7 @@ namespace wawo { namespace net { namespace impl {
 		}
 
 		void do_poll() {
+			wawo::this_thread::sleep(1000);
 			WAWO_ASSERT(m_wpHandle > 0);
 			wpoll_event wpEvents[1024];
 			int nEvents = wcp::instance()->wpoll_wait(m_wpHandle, wpEvents, 1024);

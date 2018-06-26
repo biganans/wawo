@@ -12,20 +12,12 @@ namespace wawo { namespace net {
 #ifdef _DEBUG
 		::memset( m_trb, 'i', buffer_cfg().rcv_size );
 #endif
-
-#ifdef WAWO_ENABLE_IOCP
-//		iocp_init();
-#endif
 	}
 
 	void socket::_deinit() {
 		WAWO_ASSERT( m_state == S_CLOSED);
 		::free( m_trb );
 		m_trb = NULL;
-
-#ifdef WAWO_ENABLE_IOCP
-//		iocp_deinit();
-#endif
 	}
 
 	int socket::open() {

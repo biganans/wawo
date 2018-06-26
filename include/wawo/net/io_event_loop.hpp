@@ -10,11 +10,12 @@ namespace wawo { namespace net {
 	enum ioe_flag {
 		IOE_READ = 1, //check read, sys io
 		IOE_WRITE = 1 << 1, //check write, sys io
-		IOE_LISTEN = 1 << 2,
-		IOE_CONNECT = 1<<3,
-		IOE_ACCEPT = 1<<4,
+		IOE_LISTEN = 1<<2,
+		IOE_ACCEPT = 1<<3,
+		IOE_CONNECT = 1<<4,
 		IOE_INFINITE_WATCH_READ = 1 << 5,
 		IOE_INFINITE_WATCH_WRITE = 1 << 6,
+		IOE_IOCP_BIND =1<<7
 	};
 
 	class io_event_loop :

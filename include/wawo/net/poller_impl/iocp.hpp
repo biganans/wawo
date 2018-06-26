@@ -81,32 +81,34 @@ namespace wawo { namespace net { namespace impl {
 			WWRP<socket> so = ctx->so;
 			WAWO_ASSERT(so != NULL);
 
-			switch (ctx->flag) {
-				case IOE_ACCEPT:
+			switch (ctx->action) {
+				case IOCP_ACTION_ACCEPT:
 				{
-					so->iocp_init_ctx(IOCP_OVERLAPPED_CTX_READ);
-					//bind cp
-					HANDLE new_so_cp = CreateIoCompletionPort((HANDLE)so->fd(), m_handle, (u_long)0, 0);
-					WAWO_ASSERT(new_so_cp == m_handle);
-
+					ctx->so->iocp_bind();
 					WAWO_ASSERT(ctx->ref_so != NULL);
 					ctx->ref_so->iocp_accepted(so);
+					ctx->ref_so->end_read();
+					ctx->ref_so->begin_read();
 
-					so->iocp_accept_done();
 					so->iocp_reset_ctx(IOCP_OVERLAPPED_CTX_ACCEPT);
+					so->iocp_accept_done();
 					return;
 				}
 				break;
-				case IOE_READ:
+				case IOCP_ACTION_READ:
 				{
 					WAWO_ASSERT(ctx->ref_so == NULL);
 					WAWO_ASSERT(ctx->so != NULL);
 					so->iocp_read_done(len);
 				}
 				break;
-				case IOE_WRITE:
+				case IOCP_ACTION_WRITE:
 				{
+					WAWO_ASSERT(ctx->ref_so == NULL);
+					WAWO_ASSERT(ctx->so != NULL);
+					ctx->action = IOCP_ACTION_IDLE;
 
+					so->iocp_write_done(len);
 				}
 				break;
 				default:
@@ -119,6 +121,13 @@ namespace wawo { namespace net { namespace impl {
 		void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn, fn_io_event_error const& err, WWRP<ref_base> const& fnctx ) {
 			WWRP<socket> so = wawo::dynamic_pointer_cast<socket>(fnctx);
 			WAWO_ASSERT(so != NULL);
+
+			if (flag&IOE_IOCP_BIND) {
+				so->iocp_init();
+				HANDLE new_so_cp = CreateIoCompletionPort((HANDLE)so->fd(), m_handle, (u_long)0, 0);
+				WAWO_ASSERT(new_so_cp == m_handle);
+				return;
+			}
 
 			if (flag&IOE_LISTEN) {
 				WAWO_ASSERT(so->is_listener());
@@ -155,6 +164,7 @@ namespace wawo { namespace net { namespace impl {
 					_so->iocp_init_ctx(IOCP_OVERLAPPED_CTX_ACCEPT);
 					WWSP<iocp_overlapped_ctx>& ctx = _so->iocp_ctx(IOCP_OVERLAPPED_CTX_ACCEPT);
 					ctx->ref_so = so;
+					ctx->action = IOCP_ACTION_ACCEPT;
 
 					BOOL acceptrt = lpfnAcceptEx(fd, _so->fd(),
 						ctx->buf, 0,
@@ -175,11 +185,11 @@ namespace wawo { namespace net { namespace impl {
 					//read begin
 					WAWO_ASSERT( so != NULL);
 					WWSP<iocp_overlapped_ctx> _ctx = so->iocp_ctx(IOCP_OVERLAPPED_CTX_READ);
-
+					_ctx->action = IOCP_ACTION_READ;
 					DWORD flags = 0;
 					WSABUF wsabuf = { WAWO_IOCP_BUFFER_SIZE , _ctx->buf };
 					memset( &_ctx->_overlapped, 0, sizeof(_ctx->_overlapped) );
-					if (WSARecv(so->fd(), &wsabuf, 1, NULL, &flags, &_ctx->_overlapped, NULL) == SOCKET_ERROR) {
+					if (::WSARecv(so->fd(), &wsabuf, 1, NULL, &flags, &_ctx->_overlapped, NULL) == SOCKET_ERROR) {
 						int ec = wawo::socket_get_last_errno();
 						if (ec != ERROR_IO_PENDING) {
 							so->iocp_reset_ctx(IOCP_OVERLAPPED_CTX_READ);
