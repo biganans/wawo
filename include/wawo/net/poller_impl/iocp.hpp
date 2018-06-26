@@ -62,7 +62,11 @@ namespace wawo { namespace net { namespace impl {
 				_after_wait();
 			}
 
-			if (!getOk) {
+			if (WAWO_UNLIKELY(!getOk)) {
+				int ec = wawo::socket_get_last_errno();
+				if (ec == 256) {
+					return;
+				}
 				WAWO_ERR("[iocp]GetQueuedCompletionStatus failed, %d", wawo::socket_get_last_errno());
 				return;
 			}
@@ -71,11 +75,12 @@ namespace wawo { namespace net { namespace impl {
 				WAWO_INFO("[iocp]GetQueuedCompletionStatus waken signal");
 				return;
 			}
+			WAWO_ASSERT(lpol != NULL);
 
-			if (lpol == NULL) {
-				WAWO_ERR("[iocp]GetQueuedCompletionStatus, HIT null ov");
-				return;
-			}
+			//if (lpol == NULL) {
+			//	WAWO_ERR("[iocp]GetQueuedCompletionStatus, HIT null ov");
+			//	return;
+			//}
 
 			iocp_overlapped_ctx* ctx = CONTAINING_RECORD(lpol, iocp_overlapped_ctx, _overlapped);
 			WWRP<socket> so = ctx->so;
@@ -123,6 +128,7 @@ namespace wawo { namespace net { namespace impl {
 			WAWO_ASSERT(so != NULL);
 
 			if (flag&IOE_IOCP_BIND) {
+				WAWO_DEBUG("[#%d][CreateIoCompletionPort] add", so->fd() );
 				so->iocp_init();
 				HANDLE new_so_cp = CreateIoCompletionPort((HANDLE)so->fd(), m_handle, (u_long)0, 0);
 				WAWO_ASSERT(new_so_cp == m_handle);

@@ -227,9 +227,10 @@ namespace wawo { namespace net {
 
 		inline void iocp_read_done(int const& len) {
 			if (len == 0) {
-				WAWO_ASSERT("TODO");
+				ch_shutdown_read();
 				return;
 			}
+
 			WAWO_ASSERT(len > 0);
 			WWRP<wawo::packet> income = wawo::make_ref<wawo::packet>(len);
 			WAWO_ASSERT(m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_READ] != NULL);
@@ -873,6 +874,10 @@ namespace wawo { namespace net {
 				channel::ch_close_promise()->set_success(rt);
 				channel::ch_fire_closed();
 				channel::ch_close_future()->reset();
+
+#ifdef WAWO_ENABLE_IOCP
+				iocp_deinit();
+#endif
 				return;
 			}
 
@@ -883,6 +888,10 @@ namespace wawo { namespace net {
 				channel::ch_close_promise()->set_success(rt);
 				channel::ch_fire_closed();
 				channel::ch_close_future()->reset();
+
+#ifdef WAWO_ENABLE_IOCP
+				iocp_deinit();
+#endif
 				return;
 			}
 
@@ -904,6 +913,11 @@ namespace wawo { namespace net {
 			channel::ch_close_promise()->set_success(rt);
 			channel::ch_fire_closed();
 			channel::ch_close_future()->reset();
+
+#ifdef WAWO_ENABLE_IOCP
+			iocp_deinit();
+#endif
+
 		}
 	};
 }}
