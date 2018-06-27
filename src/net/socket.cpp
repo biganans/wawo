@@ -105,13 +105,14 @@ namespace wawo { namespace net {
 		rt = socket::listen(backlog);
 		ch_promise->set_success(rt);
 
-#ifdef WAWO_ENABLE_IOCP
-		begin_listen();
-#endif
 
 		if (rt == wawo::OK) {
+#ifdef WAWO_ENABLE_IOCP
+			begin_accept();
+#else
 			fn_io_event _fn_accept = std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1);
 			begin_read(WATCH_OPTION_INFINITE, _fn_accept);
+#endif
 		}
 
 		m_fn_accepted = fn_accepted;

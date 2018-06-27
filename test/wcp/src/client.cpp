@@ -142,6 +142,7 @@ int main(int argc, char** argv) {
 		WAWO_ERR("dial %s failed", url.c_str());
 		return dial_future->get();
 	}
+
 	_app.run();
 
 	dial_future->channel()->ch_close();

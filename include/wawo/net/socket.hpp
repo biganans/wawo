@@ -49,39 +49,6 @@ namespace wawo { namespace net {
 	typedef std::function<void(WWRP<channel>const& ch)> fn_accepted_channel_initializer;
 	typedef std::function<void(WWRP<channel>const& ch)> fn_dial_channel_initializer;
 
-#ifdef WAWO_ENABLE_IOCP
-#define WAWO_IOCP_BUFFER_SIZE 1024*64
-	class socket;
-	enum iocp_action {
-		IOCP_ACTION_IDLE,
-		IOCP_ACTION_READ,
-		IOCP_ACTION_WRITE,
-		IOCP_ACTION_ACCEPT,
-		IOCP_ACTION_LISTEN,
-		IOCP_ACTION_CONNECT
-	};
-
-	struct iocp_overlapped_ctx {
-		WSAOVERLAPPED _overlapped;
-		WWRP<socket> so;
-		WWRP<socket> ref_so;
-		iocp_action action;
-		WSABUF wsabuf;
-		char buf[WAWO_IOCP_BUFFER_SIZE];
-		int len;
-		int ec;
-	};
-
-	enum iocp_overlapped_ctx_type {
-		IOCP_OVERLAPPED_CTX_ACCEPT = 0,
-		IOCP_OVERLAPPED_CTX_READ,
-		IOCP_OVERLAPPED_CTX_WRITE,
-		IOCP_OVERLAPPED_CTX_CONNECT,
-		IOCP_OVERLAPPED_CTX_MAX
-	};
-
-#endif
-
 	class socket:
 		public socket_base,
 		public channel
@@ -98,10 +65,6 @@ namespace wawo { namespace net {
 		fn_accepted_channel_initializer m_fn_accepted;
 		std::queue<socket_outbound_entry> m_outbound_entry_q;
 		u32_t m_noutbound_bytes;
-
-#ifdef WAWO_ENABLE_IOCP
-		WWSP<iocp_overlapped_ctx> m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_MAX];
-#endif
 
 		void _init();
 		void _deinit();
@@ -156,116 +119,7 @@ namespace wawo { namespace net {
 		
 
 #ifdef WAWO_ENABLE_IOCP
-		void iocp_init() {
-			iocp_make_ctx(IOCP_OVERLAPPED_CTX_READ);
-			iocp_make_ctx(IOCP_OVERLAPPED_CTX_WRITE);
-		}
-		void iocp_deinit() {
-			iocp_unmake_ctx(IOCP_OVERLAPPED_CTX_READ);
-			iocp_unmake_ctx(IOCP_OVERLAPPED_CTX_WRITE);
-		}
 
-		void iocp_bind() {
-			event_poller()->watch(IOE_IOCP_BIND, fd(), NULL, NULL, WWRP<socket>(this));
-		}
-
-		inline void iocp_make_ctx(iocp_overlapped_ctx_type t) {
-			WAWO_ASSERT(m_iocp_overlapped_ctxs[t] == NULL);
-			WWSP<iocp_overlapped_ctx> _ctx = wawo::make_shared<iocp_overlapped_ctx>();
-			memset(&_ctx->_overlapped, 0, sizeof(WSAOVERLAPPED));
-			_ctx->so = WWRP<socket>(this);
-			_ctx->ref_so = NULL;
-			_ctx->action = IOCP_ACTION_IDLE;
-			_ctx->len = 0;
-			_ctx->ec = 0;
-			_ctx->wsabuf = { WAWO_IOCP_BUFFER_SIZE, (char*)&_ctx->buf };
-			m_iocp_overlapped_ctxs[t] = _ctx;
-		}
-		inline void iocp_unmake_ctx(iocp_overlapped_ctx_type t) {
-			//m_iocp_overlapped_ctxs[t]->so = NULL;
-			//m_iocp_overlapped_ctxs[t]->ref_so = NULL;
-			m_iocp_overlapped_ctxs[t] = NULL;
-		}
-
-		inline WWSP<iocp_overlapped_ctx>& iocp_ctx(iocp_overlapped_ctx_type t) {
-			WAWO_ASSERT(m_iocp_overlapped_ctxs[t] != NULL);
-			return m_iocp_overlapped_ctxs[t];
-		}
-
-		inline void iocp_reset_ctx(iocp_overlapped_ctx_type t) {
-			WWSP<iocp_overlapped_ctx>& _ctx = m_iocp_overlapped_ctxs[t];
-			WAWO_ASSERT(_ctx != NULL);
-			memset(&_ctx->_overlapped, 0, sizeof(WSAOVERLAPPED));
-			_ctx->len = 0;
-			_ctx->ec = 0;
-		}
-
-		inline void iocp_accepted(WWRP<channel> const& ch) {
-			WAWO_ASSERT(m_fn_accepted != nullptr);
-			m_fn_accepted(ch);
-		}
-
-		inline void iocp_accept_done() {
-			WAWO_ASSERT(m_state == S_OPENED );
-			m_sm = SM_PASSIVE;
-			m_state = S_CONNECTED; //compatible for __cb_async_connected
-			int rt = turnon_nonblocking();
-			WAWO_ASSERT(rt == wawo::OK);
-
-			channel::ch_fire_connected();
-			iocp_bind();
-			begin_read(WATCH_OPTION_INFINITE);
-		}
-
-		inline void iocp_read_done() {
-			WWSP<iocp_overlapped_ctx>& ctx = m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_READ];
-			WAWO_ASSERT(ctx != NULL);
-
-			if (ctx->ec != 0) {
-				if (ctx->ec == ERROR_NETNAME_DELETED) {
-					DWORD dwTrans = 0;
-					DWORD dwFlags = 0;
-					if (FALSE == ::WSAGetOverlappedResult(fd(), &ctx->_overlapped, &dwTrans, FALSE, &dwFlags)) {
-						ctx->ec = ::WSAGetLastError();
-						WAWO_DEBUG("[#%d]dwTrans: %d, dwFlags: %d, update ec: %d", fd(), dwTrans, dwFlags, ctx->ec );
-					}
-				}
-				WAWO_ASSERT(ctx->len == 0);
-				ch_errno(ctx->ec);
-				ch_close();
-				return;
-			}
-
-			if (ctx->len == 0) {
-				ch_shutdown_read();
-				return;
-			}
-
-			WAWO_ASSERT(ctx->len>0);
-			WWRP<wawo::packet> income = wawo::make_ref<wawo::packet>(ctx->len);
-			WAWO_ASSERT(m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_READ] != NULL);
-			income->write((byte_t*)m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_READ]->buf, ctx->len);
-			channel::ch_read(income);
-			end_read();
-			begin_read(WATCH_OPTION_INFINITE);
-		}
-
-		inline void iocp_write_done() {
-			WWSP<iocp_overlapped_ctx>& ctx = m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_WRITE];
-
-			WAWO_ASSERT(m_outbound_entry_q.size());
-			WAWO_ASSERT(ctx->len > 0);
-			WAWO_ASSERT(m_noutbound_bytes > 0);
-			socket_outbound_entry entry = m_outbound_entry_q.front();
-			WAWO_ASSERT(entry.data != NULL);
-			entry.data->skip(ctx->len);
-			m_noutbound_bytes -= ctx->len;
-			if (entry.data->len() == 0) {
-				entry.ch_promise->set_success(wawo::OK);
-				m_outbound_entry_q.pop();
-			}
-			ch_flush_impl();
-		}
 #endif
 
 		int open();
@@ -563,17 +417,17 @@ namespace wawo { namespace net {
 		}
 
 #ifdef WAWO_ENABLE_IOCP
-		inline void begin_listen() {
+		inline void begin_accept() {
 			if (!event_poller()->in_event_loop()) {
 				WWRP<socket> _so(this);
 				event_poller()->execute([_so]()->void {
-					_so->begin_connect();
+					_so->begin_accept();
 				});
 				return;
 			}
 
 			WAWO_ASSERT(is_listener());
-			event_poller()->watch(IOE_LISTEN, fd(), NULL );
+			event_poller()->watch(IOE_ACCEPT, fd(), NULL );
 		}
 #endif
 		inline void begin_connect( fn_io_event const& fn_connected = NULL ) {
@@ -709,12 +563,14 @@ namespace wawo { namespace net {
 			}
 
 #ifdef WAWO_ENABLE_IOCP
+			/*
 			m_outbound_entry_q.push({
 				outlet,
 				ch_promise
 			});
 			m_noutbound_bytes += outlet->len();
 			ch_flush_impl();
+			*/
 #else
 			WAWO_ASSERT((m_wflag&WATCH_WRITE) == 0);
 			int _errno;
@@ -758,6 +614,7 @@ namespace wawo { namespace net {
 				}
 
 #ifdef WAWO_ENABLE_IOCP
+				/*
 				WWRP<packet>& outlet = entry.data;
 				WWSP<iocp_overlapped_ctx>& wctx = m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_WRITE];
 				WAWO_ASSERT(wctx != NULL);
@@ -774,8 +631,9 @@ namespace wawo { namespace net {
 						_errno = wawo::OK;
 						goto _clean_outbound_entry_q;
 					}
-				}
+				}*/
 			}
+			
 			return;
 #else
 			u32_t sent = socket_base::send(entry.data->begin(), entry.data->len(), _errno);
@@ -871,9 +729,6 @@ namespace wawo { namespace net {
 				channel::ch_fire_closed();
 				channel::ch_close_future()->reset();
 
-#ifdef WAWO_ENABLE_IOCP
-				iocp_deinit();
-#endif
 				return;
 			}
 
@@ -885,9 +740,6 @@ namespace wawo { namespace net {
 				channel::ch_fire_closed();
 				channel::ch_close_future()->reset();
 
-#ifdef WAWO_ENABLE_IOCP
-				iocp_deinit();
-#endif
 				return;
 			}
 
@@ -909,10 +761,6 @@ namespace wawo { namespace net {
 			channel::ch_close_promise()->set_success(rt);
 			channel::ch_fire_closed();
 			channel::ch_close_future()->reset();
-
-#ifdef WAWO_ENABLE_IOCP
-			iocp_deinit();
-#endif
 		}
 	};
 }}

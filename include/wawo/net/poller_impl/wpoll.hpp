@@ -53,7 +53,7 @@ namespace wawo { namespace net { namespace impl {
 			if (it == m_ctxs.end()) {
 				WWRP<poller_ctx> _ctx = wawo::make_ref<poller_ctx>();
 				_ctx->fd = fd;
-				_ctx->poll_type = T_WPOLL;
+//				_ctx->poll_type = T_WPOLL;
 				_ctx->flag = 0;
 
 				ctx = _ctx;
