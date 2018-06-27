@@ -136,6 +136,7 @@ namespace wawo { namespace net { namespace impl {
 						WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
 						fd_added_count = 0;
 						m_ctxs_to_check[idx]->max_fd_v = 0;
+						continue;
 					}
 
 					FD_SET((ctx->fd), &m_ctxs_to_check[idx]->fds_r);
@@ -147,12 +148,13 @@ namespace wawo { namespace net { namespace impl {
 					++fd_added_count;
 				}
 
-				if(ctx->flag&IOE_WRITE && ctx->fn[IOE_SLOT_WRITE].fn != NULL ) {
+				if(ctx->flag&IOE_WRITE && ctx->fn[IOE_SLOT_WRITE] != NULL ) {
 					if (fd_added_count == WAWO_SELECT_BUCKET_ITEM_COUNT) {
 						++idx;
 						WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
 						fd_added_count = 0;
 						m_ctxs_to_check[idx]->max_fd_v = 0;
+						continue;
 					}
 
 					FD_SET((ctx->fd), &m_ctxs_to_check[idx]->fds_w);
@@ -163,14 +165,14 @@ namespace wawo { namespace net { namespace impl {
 					}
 
 					++fd_added_count;
-				}
-				
-				if (ctx->flag&IOE_WRITE && ctx->fn[IOE_SLOT_WRITE].fn != NULL) {
+
+					//for ex
 					if (fd_added_count == WAWO_SELECT_BUCKET_ITEM_COUNT) {
 						++idx;
 						WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
 						fd_added_count = 0;
 						m_ctxs_to_check[idx]->max_fd_v = 0;
+						continue;
 					}
 
 					FD_SET((ctx->fd), &m_ctxs_to_check[idx]->fds_ex);
@@ -181,7 +183,7 @@ namespace wawo { namespace net { namespace impl {
 					}
 					++fd_added_count;
 				}
-
+				
 				++it;
 			}
 
@@ -246,7 +248,7 @@ namespace wawo { namespace net { namespace impl {
 				if( FD_ISSET( fd, &fds_r ) ) {
 					FD_CLR(fd, &fds_r);
 					--ready_c ;
-					fn_io_event _fn = ctx->fn[IOE_SLOT_READ].fn;
+					fn_io_event _fn = ctx->fn[IOE_SLOT_READ];
 					if ( WAWO_UNLIKELY(ctx->flag&IOE_INFINITE_WATCH_READ) == 0) {
 						unwatch(IOE_READ, ctx->fd);
 					}
@@ -257,8 +259,7 @@ namespace wawo { namespace net { namespace impl {
 				if( FD_ISSET( fd, &fds_w ) ) {
 					FD_CLR(fd, &fds_w);
 					--ready_c;
-					fn_io_event _fn = ctx->fn[IOE_SLOT_WRITE].fn;
-//					WWRP<ref_base> fnctx = ctx->fn[IOE_SLOT_WRITE].fnctx;
+					fn_io_event _fn = ctx->fn[IOE_SLOT_WRITE];
 					if ( WAWO_LIKELY(ctx->flag&IOE_INFINITE_WATCH_WRITE) == 0) {
 						unwatch(IOE_WRITE, ctx->fd);
 					}
@@ -277,7 +278,7 @@ namespace wawo { namespace net { namespace impl {
 					if (getrt == -1) {
 						ec = wawo::socket_get_last_errno();
 					}
-					fn_io_event _fn = ctx->fn[IOE_SLOT_WRITE].fn;
+					fn_io_event _fn = ctx->fn[IOE_SLOT_WRITE];
 
 					ec = WAWO_NEGATIVE(ec);
 					WAWO_ASSERT(ec != wawo::OK);

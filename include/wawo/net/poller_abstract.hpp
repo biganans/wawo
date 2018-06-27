@@ -35,21 +35,17 @@ namespace wawo { namespace net {
 	struct poller_ctx :
 		public wawo::ref_base
 	{
-		struct _fn_info {
-			fn_io_event fn;
-		};
-
 		int fd;
+		fn_io_event fn[IOE_SLOT_MAX];
 		u8_t flag;
 		u8_t poll_type;
-		_fn_info fn[IOE_SLOT_MAX];
 
 		poller_ctx() :
 			fd(-2),
 			flag(0)
 		{
 			for (u8_t i = 0; i < IOE_SLOT_MAX; ++i) {
-				fn[i].fn = NULL;
+				fn[i] = nullptr;
 			}
 		}
 	};
@@ -60,7 +56,6 @@ namespace wawo { namespace net {
 	class poller_abstract:
 		public io_event_loop
 	{
-
 	protected:
 		poller_ctx_map m_ctxs;
 	public:
@@ -86,9 +81,9 @@ namespace wawo { namespace net {
 				}
 
 				TRACE_IOE("[io_event_loop][#%d]watch IOE_READ", ctx->fd);
-				WAWO_ASSERT(ctx->fn[IOE_SLOT_READ].fn == NULL);
+				WAWO_ASSERT(ctx->fn[IOE_SLOT_READ] == NULL);
 
-				ctx->fn[IOE_SLOT_READ].fn = fn;
+				ctx->fn[IOE_SLOT_READ] = fn;
 			}
 
 			if (flag&IOE_WRITE) {
@@ -97,9 +92,9 @@ namespace wawo { namespace net {
 					ctx->flag |= IOE_INFINITE_WATCH_WRITE;
 				}
 				TRACE_IOE("[io_event_loop][#%d]watch IOE_WRITE", ctx->fd);
-				WAWO_ASSERT(ctx->fn[IOE_SLOT_WRITE].fn == NULL);
+				WAWO_ASSERT(ctx->fn[IOE_SLOT_WRITE] == NULL);
 
-				ctx->fn[IOE_SLOT_WRITE].fn = fn;
+				ctx->fn[IOE_SLOT_WRITE] = fn;
 			}
 		}
 
@@ -111,13 +106,13 @@ namespace wawo { namespace net {
 				TRACE_IOE("[io_event_loop][#%d]unwatch IOE_READ", ctx->fd);
 				ctx->flag &= ~(IOE_READ|IOE_INFINITE_WATCH_READ);
 
-				ctx->fn[IOE_SLOT_READ].fn = NULL;
+				ctx->fn[IOE_SLOT_READ] = NULL;
 			}
 
 			if ((flag&IOE_WRITE) && (ctx->flag)&flag) {
 				TRACE_IOE("[io_event_loop][#%d]unwatch IOE_WRITE", ctx->fd);
 				ctx->flag &= ~(IOE_WRITE|IOE_INFINITE_WATCH_WRITE);
-				ctx->fn[IOE_SLOT_WRITE].fn = NULL;
+				ctx->fn[IOE_SLOT_WRITE] = NULL;
 			}
 		}
 
@@ -128,18 +123,11 @@ namespace wawo { namespace net {
 				++it;
 
 				if (ctx->fd > 0) {
-					//LAST TRY
-					WAWO_ASSERT(!"TODO");
-					//if (ctx->fn[IOE_SLOT_READ].fn != NULL) {
-					//	ctx->fn[IOE_SLOT_READ].fn(ctx->fn[IOE_SLOT_READ].fnctx);
-					//}
-
-					if (ctx->fn[IOE_SLOT_READ].fn != NULL) {
-						ctx->fn[IOE_SLOT_READ].fn({ AIO_READ,wawo::E_OBSERVER_EXIT,0 });
+					if (ctx->fn[IOE_SLOT_READ] != NULL) {
+						ctx->fn[IOE_SLOT_READ]({ AIO_READ,wawo::E_OBSERVER_EXIT,0 });
 					}
-
-					if (ctx->fn[IOE_SLOT_WRITE].fn != NULL) {
-						ctx->fn[IOE_SLOT_WRITE].fn({ AIO_WRITE,wawo::E_OBSERVER_EXIT,0 });
+					if (ctx->fn[IOE_SLOT_WRITE] != NULL) {
+						ctx->fn[IOE_SLOT_WRITE]({ AIO_WRITE,wawo::E_OBSERVER_EXIT,0 });
 					}
 				}
 			}
