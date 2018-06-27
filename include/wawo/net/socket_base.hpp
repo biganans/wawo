@@ -6,6 +6,7 @@
 #include <wawo/log/logger_manager.h>
 
 #include <wawo/net/address.hpp>
+#include <wawo/net/socket_api.hpp>
 
 //#define WAWO_ENABLE_TRACE_SOCKET
 #ifdef WAWO_ENABLE_TRACE_SOCKET
@@ -14,34 +15,6 @@
 	#define WAWO_TRACE_SOCKET(...)
 #endif
 
-#ifdef WAWO_ENABLE_TRACE_SOCKET_INOUT
-	#define WAWO_TRACE_SOCKET_INOUT WAWO_INFO
-#else
-	#define WAWO_TRACE_SOCKET_INOUT(...)
-#endif
-
-#ifndef EWOULDBLOCK
-#define EWOULDBLOCK WSAEWOULDBLOCK
-#endif
-
-#ifndef WSAEWOULDBLOCK
-#define WSAEWOULDBLOCK EWOULDBLOCK
-#endif
-
-#ifndef EAGAIN //EAGAIN IS NOT ALWAYS THE SAME AS EWOULDBLOCK
-#define EAGAIN EWOULDBLOCK
-#endif
-
-#ifndef EISCONN
-#define EISCONN WSAEISCONN
-#endif
-
-#ifndef ENOTINITIALISED
-#define ENOTINITIALISED WSANOTINITIALISED
-#endif
-
-#define IS_ERRNO_EQUAL_WOULDBLOCK(_errno) ((_errno==EAGAIN)||(_errno==EWOULDBLOCK)||(_errno==WSAEWOULDBLOCK))
-#define IS_ERRNO_EQUAL_CONNECTING(_errno) ((_errno==EINPROGRESS)||(_errno==WSAEWOULDBLOCK))
 
 #define WAWO_MAX_ACCEPTS_ONE_TIME 128
 
@@ -85,20 +58,7 @@ namespace wawo { namespace net {
 		#error
 	#endif
 
-	typedef int (*fn_socket)(int const& family, int const& socket_type, int const& protocol);
-	typedef int (*fn_connect)(int const& fd, const struct sockaddr* addr, socklen_t const& length);
-	typedef int (*fn_bind)(int const& fd, const struct sockaddr* addr, socklen_t const& length);
-	typedef int (*fn_shutdown)(int const& fd, int const& flag);
-	typedef int (*fn_close)(int const& fd);
-	typedef int (*fn_listen)(int const& fd, int const& backlog);
-	typedef int (*fn_accept)(int const& fd, struct sockaddr* addr, socklen_t* addrlen);
-	typedef int(*fn_getsockopt)(int const& fd, int const& level, int const& option_name, void* value, socklen_t* option_len);
-	typedef int(*fn_setsockopt)(int const& fd, int const& level, int const& option_name, void const* optval, socklen_t const& option_len);
-	typedef int(*fn_getsockname)(int const& fd, struct sockaddr* addr, socklen_t* addrlen);
-	typedef u32_t (*fn_send)(int const& fd, byte_t const* const buffer, u32_t const& length, int& ec_o, int const& flag);
-	typedef u32_t (*fn_recv)(int const&fd, byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag);
-	typedef u32_t (*fn_sendto)(int const& fd, wawo::byte_t const* const buff, wawo::u32_t const& length, const wawo::net::address& addr, int& ec_o, int const& flag);
-	typedef u32_t (*fn_recvfrom)(int const& fd, byte_t* const buff_o, wawo::u32_t const& size, address& addr_o, int& ec_o, int const& flag );
+
 }}
 
 namespace wawo { namespace net {
@@ -208,22 +168,22 @@ namespace wawo { namespace net {
 		int m_fd;
 		socket_buffer_cfg m_sbc; //socket buffer setting
 
-		fn_socket m_fn_socket;
-		fn_connect m_fn_connect;
-		fn_bind m_fn_bind;
-		fn_shutdown m_fn_shutdown;
-		fn_close m_fn_close;
-		fn_listen m_fn_listen;
-		fn_accept m_fn_accept;
-		fn_send m_fn_send;
-		fn_recv m_fn_recv;
-		fn_sendto m_fn_sendto;
-		fn_recvfrom m_fn_recvfrom;
+		socket_api::fn_socket m_fn_socket;
+		socket_api::fn_connect m_fn_connect;
+		socket_api::fn_bind m_fn_bind;
+		socket_api::fn_shutdown m_fn_shutdown;
+		socket_api::fn_close m_fn_close;
+		socket_api::fn_listen m_fn_listen;
+		socket_api::fn_accept m_fn_accept;
+		socket_api::fn_send m_fn_send;
+		socket_api::fn_recv m_fn_recv;
+		socket_api::fn_sendto m_fn_sendto;
+		socket_api::fn_recvfrom m_fn_recvfrom;
 
-		fn_getsockopt m_fn_getsockopt;
-		fn_setsockopt m_fn_setsockopt;
+		socket_api::fn_getsockopt m_fn_getsockopt;
+		socket_api::fn_setsockopt m_fn_setsockopt;
 
-		fn_getsockname m_fn_getsockname;
+		socket_api::fn_getsockname m_fn_getsockname;
 
 	private:
 		void _socket_fn_init();

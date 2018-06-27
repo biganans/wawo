@@ -68,6 +68,8 @@ namespace wawo { namespace net {
 		iocp_action action;
 		WSABUF wsabuf;
 		char buf[WAWO_IOCP_BUFFER_SIZE];
+		int len;
+		int ec;
 	};
 
 	enum iocp_overlapped_ctx_type {
@@ -155,47 +157,34 @@ namespace wawo { namespace net {
 
 #ifdef WAWO_ENABLE_IOCP
 		void iocp_init() {
-			iocp_init_ctx(IOCP_OVERLAPPED_CTX_READ);
-			iocp_init_ctx(IOCP_OVERLAPPED_CTX_WRITE);
+			iocp_make_ctx(IOCP_OVERLAPPED_CTX_READ);
+			iocp_make_ctx(IOCP_OVERLAPPED_CTX_WRITE);
 		}
 		void iocp_deinit() {
-			iocp_reset_ctx(IOCP_OVERLAPPED_CTX_READ);
-			iocp_reset_ctx(IOCP_OVERLAPPED_CTX_WRITE);
+			iocp_unmake_ctx(IOCP_OVERLAPPED_CTX_READ);
+			iocp_unmake_ctx(IOCP_OVERLAPPED_CTX_WRITE);
 		}
 
 		void iocp_bind() {
 			event_poller()->watch(IOE_IOCP_BIND, fd(), NULL, NULL, WWRP<socket>(this));
 		}
 
-		inline void iocp_init_ctx(iocp_overlapped_ctx_type t) {
+		inline void iocp_make_ctx(iocp_overlapped_ctx_type t) {
 			WAWO_ASSERT(m_iocp_overlapped_ctxs[t] == NULL);
 			WWSP<iocp_overlapped_ctx> _ctx = wawo::make_shared<iocp_overlapped_ctx>();
 			memset(&_ctx->_overlapped, 0, sizeof(WSAOVERLAPPED));
 			_ctx->so = WWRP<socket>(this);
 			_ctx->ref_so = NULL;
-			memset(_ctx->buf, 0, WAWO_IOCP_BUFFER_SIZE);
 			_ctx->action = IOCP_ACTION_IDLE;
-			switch (t) {
-			case IOCP_OVERLAPPED_CTX_ACCEPT:
-				{
-				}
-				break;
-			case IOCP_OVERLAPPED_CTX_READ:
-				{
-					memset(_ctx->buf, 0, WAWO_IOCP_BUFFER_SIZE);
-				}
-			break;
-			case IOCP_OVERLAPPED_CTX_WRITE:
-				{
-					memset(_ctx->buf, 0, WAWO_IOCP_BUFFER_SIZE);
-				}
-			break;
-			case IOCP_OVERLAPPED_CTX_CONNECT:
-				{
-				}
-			break;
-			}
+			_ctx->len = 0;
+			_ctx->ec = 0;
+			_ctx->wsabuf = { WAWO_IOCP_BUFFER_SIZE, (char*)&_ctx->buf };
 			m_iocp_overlapped_ctxs[t] = _ctx;
+		}
+		inline void iocp_unmake_ctx(iocp_overlapped_ctx_type t) {
+			//m_iocp_overlapped_ctxs[t]->so = NULL;
+			//m_iocp_overlapped_ctxs[t]->ref_so = NULL;
+			m_iocp_overlapped_ctxs[t] = NULL;
 		}
 
 		inline WWSP<iocp_overlapped_ctx>& iocp_ctx(iocp_overlapped_ctx_type t) {
@@ -204,9 +193,11 @@ namespace wawo { namespace net {
 		}
 
 		inline void iocp_reset_ctx(iocp_overlapped_ctx_type t) {
-			m_iocp_overlapped_ctxs[t]->so = NULL;
-			m_iocp_overlapped_ctxs[t]->ref_so = NULL;
-			m_iocp_overlapped_ctxs[t] = NULL;
+			WWSP<iocp_overlapped_ctx>& _ctx = m_iocp_overlapped_ctxs[t];
+			WAWO_ASSERT(_ctx != NULL);
+			memset(&_ctx->_overlapped, 0, sizeof(WSAOVERLAPPED));
+			_ctx->len = 0;
+			_ctx->ec = 0;
 		}
 
 		inline void iocp_accepted(WWRP<channel> const& ch) {
@@ -222,32 +213,53 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(rt == wawo::OK);
 
 			channel::ch_fire_connected();
+			iocp_bind();
 			begin_read(WATCH_OPTION_INFINITE);
 		}
 
-		inline void iocp_read_done(int const& len) {
-			if (len == 0) {
+		inline void iocp_read_done() {
+			WWSP<iocp_overlapped_ctx>& ctx = m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_READ];
+			WAWO_ASSERT(ctx != NULL);
+
+			if (ctx->ec != 0) {
+				if (ctx->ec == ERROR_NETNAME_DELETED) {
+					DWORD dwTrans = 0;
+					DWORD dwFlags = 0;
+					if (FALSE == ::WSAGetOverlappedResult(fd(), &ctx->_overlapped, &dwTrans, FALSE, &dwFlags)) {
+						ctx->ec = ::WSAGetLastError();
+						WAWO_DEBUG("[#%d]dwTrans: %d, dwFlags: %d, update ec: %d", fd(), dwTrans, dwFlags, ctx->ec );
+					}
+				}
+				WAWO_ASSERT(ctx->len == 0);
+				ch_errno(ctx->ec);
+				ch_close();
+				return;
+			}
+
+			if (ctx->len == 0) {
 				ch_shutdown_read();
 				return;
 			}
 
-			WAWO_ASSERT(len > 0);
-			WWRP<wawo::packet> income = wawo::make_ref<wawo::packet>(len);
+			WAWO_ASSERT(ctx->len>0);
+			WWRP<wawo::packet> income = wawo::make_ref<wawo::packet>(ctx->len);
 			WAWO_ASSERT(m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_READ] != NULL);
-			income->write((byte_t*)m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_READ]->buf, len);
+			income->write((byte_t*)m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_READ]->buf, ctx->len);
 			channel::ch_read(income);
 			end_read();
 			begin_read(WATCH_OPTION_INFINITE);
 		}
 
-		inline void iocp_write_done(int const& len) {
+		inline void iocp_write_done() {
+			WWSP<iocp_overlapped_ctx>& ctx = m_iocp_overlapped_ctxs[IOCP_OVERLAPPED_CTX_WRITE];
+
 			WAWO_ASSERT(m_outbound_entry_q.size());
-			WAWO_ASSERT(len > 0);
+			WAWO_ASSERT(ctx->len > 0);
 			WAWO_ASSERT(m_noutbound_bytes > 0);
 			socket_outbound_entry entry = m_outbound_entry_q.front();
 			WAWO_ASSERT(entry.data != NULL);
-			entry.data->skip(len);
-			m_noutbound_bytes -= len;
+			entry.data->skip(ctx->len);
+			m_noutbound_bytes -= ctx->len;
 			if (entry.data->len() == 0) {
 				entry.ch_promise->set_success(wawo::OK);
 				m_outbound_entry_q.pop();
@@ -381,8 +393,8 @@ namespace wawo { namespace net {
 			return rt;
 		}
 
-		inline void __cb_async_connected(WWRP<ref_base> const& fnctx ) {
-			(void) fnctx;
+		inline void __cb_async_connected(async_io_result const& r) {
+			(void)r;
 			WAWO_ASSERT(is_nonblocking());
 			WAWO_ASSERT(m_state == S_CONNECTING);
 			m_state = S_CONNECTED;
@@ -391,19 +403,18 @@ namespace wawo { namespace net {
 			begin_read(WATCH_OPTION_INFINITE);
 		}
 
-		inline void __cb_async_connect_error( int const& ec, WWRP<ref_base> const& fnctx) {
-			(void)fnctx;
+		inline void __cb_async_connect_error(async_io_result const& r) {
 			WAWO_ASSERT(is_nonblocking());
 			WAWO_ASSERT(m_state == S_CONNECTING);
 			socket::end_connect();
 
-			ch_errno(ec);
+			ch_errno(r.v.code);
 			ch_fire_error();
 			ch_close();
 		}
 
-		void __cb_async_accept(WWRP<ref_base> const& fnctx) {
-			(void)fnctx;
+		void __cb_async_accept( async_io_result const& r ) {
+			(void)r;
 			WAWO_ASSERT(m_fn_accepted != NULL);
 			int ec;
 			do {
@@ -437,8 +448,8 @@ namespace wawo { namespace net {
 				ch_close();
 			}
 		}
-		void __cb_async_read(WWRP<ref_base> const& fnctx) {
-			(void)fnctx;
+		void __cb_async_read(async_io_result const& r) {
+			(void)r;
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			WAWO_ASSERT(!is_listener());
 			WAWO_ASSERT(is_nonblocking());
@@ -474,23 +485,20 @@ namespace wawo { namespace net {
 				default:
 				{
 					WAWO_TRACE_SOCKET("[socket][%s]async read, pump error: %d, close", info().to_lencstr().cstr, ec);
-					WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
 					ch_errno(ec);
-					ch_close(ch_promise);
+					ch_close();
 				}
 			}
 		}
 
-		void __cb_async_flush(WWRP<ref_base> const& fnctx) {
-			(void)fnctx;
+		void __cb_async_flush(async_io_result const& r) {
+			(void)r;
 			socket::ch_flush_impl();
 		}
 
-		void __cb_async_error(int const& code,WWRP<ref_base> const& fnctx) {
-			(void)fnctx;
-			WAWO_WARN("[socket][%s]socket error: %d, close", info().to_lencstr().cstr, code);
-			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
-			ch_close(ch_promise);
+		void __cb_async_error(async_io_result const& r) {
+			WAWO_WARN("[socket][%s]socket error: %d, close", info().to_lencstr().cstr, r.v.code);
+			ch_close();
 		}
 
 		inline void __rdwr_check() {
@@ -554,6 +562,7 @@ namespace wawo { namespace net {
 			}
 		}
 
+#ifdef WAWO_ENABLE_IOCP
 		inline void begin_listen() {
 			if (!event_poller()->in_event_loop()) {
 				WWRP<socket> _so(this);
@@ -564,10 +573,10 @@ namespace wawo { namespace net {
 			}
 
 			WAWO_ASSERT(is_listener());
-			event_poller()->watch(IOE_LISTEN, fd(), NULL, NULL, WWRP<socket>(this) );
+			event_poller()->watch(IOE_LISTEN, fd(), NULL );
 		}
-
-		inline void begin_connect( fn_io_event const& fn_connected = NULL, fn_io_event_error const& fn_err = NULL ) {
+#endif
+		inline void begin_connect( fn_io_event const& fn_connected = NULL ) {
 			if (!event_poller()->in_event_loop()) {
 				WWRP<socket> _so(this);
 				event_poller()->execute([_so]()->void {
@@ -585,21 +594,17 @@ namespace wawo { namespace net {
 			TRACE_IOE("[socket][%s][begin_connect]watch IOE_WRITE", info().to_lencstr().cstr );
 
 			fn_io_event _fn_io= fn_connected;
-			fn_io_event_error _fn_err = fn_err;
 			if (_fn_io == NULL) {
 				_fn_io = std::bind(&socket::__cb_async_connected, WWRP<socket>(this), std::placeholders::_1);
 			}
-			if (_fn_err == NULL) {
-				_fn_err = std::bind(&socket::__cb_async_connect_error, WWRP<socket>(this), std::placeholders::_1, std::placeholders::_2);
-			}
-			event_poller()->watch( IOE_WRITE, fd(), _fn_io, _fn_err);
+			event_poller()->watch( IOE_WRITE, fd(), _fn_io);
 		}
 
 		inline void end_connect() {
 			end_write();
 		}
 
-		inline void begin_read(u8_t const& async_flag = WATCH_OPTION_INFINITE, fn_io_event const& fn_read = NULL, fn_io_event_error const& fn_err = NULL) {
+		inline void begin_read(u8_t const& async_flag = WATCH_OPTION_INFINITE, fn_io_event const& fn_read = NULL) {
 			WAWO_ASSERT(is_nonblocking());
 			if (!event_poller()->in_event_loop()) {
 				WWRP<socket> _so(this);
@@ -611,8 +616,8 @@ namespace wawo { namespace net {
 
 			if (m_rflag&SHUTDOWN_RD) {
 				TRACE_IOE("[socket][%s][begin_read]cancel for rd shutdowned already", info().to_lencstr().cstr );
-				if (fn_err != NULL) {
-					fn_err(wawo::E_CHANNEL_RD_SHUTDOWN_ALREADY, NULL);
+				if (fn_read != NULL) {
+					fn_read({AIO_READ, wawo::E_CHANNEL_RD_SHUTDOWN_ALREADY , 0});
 				}
 				return;
 			}
@@ -622,12 +627,8 @@ namespace wawo { namespace net {
 				return;
 			}
 			fn_io_event _fn_io = fn_read;
-			fn_io_event_error _fn_err = fn_err;
 			if (_fn_io == NULL) {
 				_fn_io = std::bind(&socket::__cb_async_read, WWRP<socket>(this), std::placeholders::_1);
-			}
-			if (_fn_err == NULL) {
-				_fn_err = std::bind(&socket::__cb_async_error, WWRP<socket>(this), std::placeholders::_1, std::placeholders::_2);
 			}
 			m_rflag |= (WATCH_READ | async_flag);
 			TRACE_IOE("[socket][%s][begin_read]watch IOE_READ", info().to_lencstr().cstr );
@@ -636,14 +637,13 @@ namespace wawo { namespace net {
 			if (async_flag&WATCH_OPTION_INFINITE) {
 				flag |= IOE_INFINITE_WATCH_READ;
 			}
-			event_poller()->watch(flag, fd(), _fn_io, _fn_err, WWRP<socket>(this));
+			event_poller()->watch(flag, fd(), _fn_io);
 		}
 
-		inline void begin_write(u8_t const& async_flag = 0, fn_io_event const& fn_write = NULL, fn_io_event_error const& fn_err = NULL ) {
+		inline void begin_write(u8_t const& async_flag = 0, fn_io_event const& fn_write = NULL ) {
 			WAWO_ASSERT(m_state == S_CONNECTED || m_state == S_CONNECTING);
 			WAWO_ASSERT(is_nonblocking());
 
-			WAWO_ASSERT(is_nonblocking());
 			if (!event_poller()->in_event_loop()) {
 				WWRP<socket> _so(this);
 				event_poller()->execute([_so]()->void {
@@ -654,8 +654,8 @@ namespace wawo { namespace net {
 
 			if (m_wflag&SHUTDOWN_WR) {
 				TRACE_IOE("[socket][%s][begin_write]cancel for wr shutdowned already", info().to_lencstr().cstr );
-				if (fn_err != NULL) {
-					fn_err(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY, NULL);
+				if (fn_write != NULL) {
+					fn_write({ AIO_WRITE,wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY,0 });
 				}
 				return;
 			}
@@ -666,12 +666,8 @@ namespace wawo { namespace net {
 			}
 
 			fn_io_event _fn_io = fn_write;
-			fn_io_event_error _fn_err = fn_err;
 			if (_fn_io == NULL) {
 				_fn_io = std::bind(&socket::__cb_async_flush, WWRP<socket>(this), std::placeholders::_1);
-			}
-			if (_fn_err == NULL) {
-				_fn_err = std::bind(&socket::__cb_async_error, WWRP<socket>(this), std::placeholders::_1, std::placeholders::_2);
 			}
 
 			m_wflag |= (WATCH_WRITE | async_flag);
@@ -682,7 +678,7 @@ namespace wawo { namespace net {
 				flag |= IOE_INFINITE_WATCH_WRITE;
 			}
 
-			event_poller()->watch(flag,fd(), _fn_io, _fn_err, WWRP<socket>(this));
+			event_poller()->watch(flag,fd(), _fn_io );
 		}
 
 		inline int ch_id() const { return fd(); }
@@ -917,7 +913,6 @@ namespace wawo { namespace net {
 #ifdef WAWO_ENABLE_IOCP
 			iocp_deinit();
 #endif
-
 		}
 	};
 }}

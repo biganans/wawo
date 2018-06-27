@@ -37,13 +37,12 @@ namespace wawo { namespace net { namespace impl {
 			poller_abstract::deinit();
 		}
 
-		virtual void do_watch(u8_t const& flag, int const& fd,fn_io_event const& fn,fn_io_event_error const& err, WWRP<ref_base> const& fnctx ) {
+		virtual void do_watch(u8_t const& flag, int const& fd,fn_io_event const& fn ) {
 
 			WAWO_ASSERT(flag>0);
 			WAWO_ASSERT(fd>0);
 			WAWO_ASSERT(m_wpHandle > 0);
 			WAWO_ASSERT(fn != NULL);
-			WAWO_ASSERT(err != NULL);
 
 			WAWO_ASSERT(flag&(IOE_READ | IOE_WRITE));
 
@@ -74,7 +73,7 @@ namespace wawo { namespace net { namespace impl {
 			}
 
 			WAWO_ASSERT( (ctx->flag&flag) == 0);
-			ctx_update_for_watch(ctx, flag, fd, fn, err,fnctx );
+			ctx_update_for_watch(ctx, flag, fd, fn );
 			if (_to_add) {
 				m_ctxs.insert({fd, ctx});
 			}

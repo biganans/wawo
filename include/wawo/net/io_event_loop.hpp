@@ -38,11 +38,11 @@ namespace wawo { namespace net {
 		}
 
 	public:
-		inline void watch(u8_t const& flag, int const& fd, fn_io_event const& fn, fn_io_event_error const& err, WWRP<ref_base> const& fnctx = NULL) {
+		inline void watch(u8_t const& flag, int const& fd, fn_io_event const& fn) {
 			WAWO_ASSERT(fd > 0);
 			WWRP<io_event_loop> loop(this);
-			execute([loop, flag, fd, fn, err, fnctx]() -> void {
-				loop->do_watch(flag, fd, fn, err, fnctx);
+			execute([loop, flag, fd, fn]() -> void {
+				loop->do_watch(flag, fd, fn);
 			});
 		}
 		inline void unwatch(u8_t const& flag, int const& fd) {
@@ -61,7 +61,7 @@ namespace wawo { namespace net {
 		}
 	public:
 		virtual void do_poll() = 0;
-		virtual void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn, fn_io_event_error const& err, WWRP<ref_base> const& fnctx) = 0;
+		virtual void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn) = 0;
 		virtual void do_unwatch(u8_t const& flag, int const& fd) = 0;
 	};
 

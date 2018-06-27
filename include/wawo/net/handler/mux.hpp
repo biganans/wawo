@@ -417,7 +417,7 @@ end_write_frame:
 			*/
 		}
 
-		void begin_read(u8_t const& async_flag = 0, WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_read = NULL, fn_io_event_error const& fn_err = NULL) {
+		void begin_read(u8_t const& async_flag = 0, WWRP<ref_base> const& cookie = NULL, fn_io_event const& fn_read = NULL) {
 			lock_guard<spin_mutex> lg_r(m_rmutex);
 			WAWO_ASSERT( !(m_rflag&STREAM_READ_CHOKED) == 0);
 			m_rflag &= ~STREAM_READ_CHOKED;
@@ -425,7 +425,6 @@ end_write_frame:
 			(void)async_flag;
 			(void)cookie;
 			(void)fn_read;
-			(void)fn_err;
 		}
 
 		void end_read() {

@@ -29,7 +29,7 @@ namespace wawo { namespace net { namespace impl {
 			WAWO_ASSERT( m_epfd == -1 );
 		}
 
-		void watch( u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn, fn_io_event_error const& err ) {
+		void watch( u8_t const& flag, int const& fd, WWRP<ref_base> const& cookie, fn_io_event const& fn ) {
 
 			WAWO_ASSERT(fd > 0);
 			WAWO_ASSERT(cookie != NULL);
