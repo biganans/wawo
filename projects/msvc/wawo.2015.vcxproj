@@ -231,6 +231,7 @@
     <ClInclude Include="..\..\include\wawo\net\protocol\http.hpp" />
     <ClInclude Include="..\..\include\wawo\net\protocol\icmp.hpp" />
     <ClInclude Include="..\..\include\wawo\net\socket.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\socket_api.hpp" />
     <ClInclude Include="..\..\include\wawo\net\socket_base.hpp" />
     <ClInclude Include="..\..\include\wawo\net\channel_handler.hpp" />
     <ClInclude Include="..\..\include\wawo\net\channel_invoker.hpp" />

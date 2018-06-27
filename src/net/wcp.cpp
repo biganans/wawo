@@ -1259,13 +1259,7 @@ _begin_send:
 				WAWO_ASSERT(op.wcb != NULL);
 
 				fn_io_event read = std::bind(&WCB::pump_packs, op.wcb);
-				WWRP<WCB> __wcb_for_lambda = op.wcb;
-				fn_io_event_error err = [__wcb_for_lambda](int const& err, WWRP<ref_base> const& ctx) ->void {
-					WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", __wcb_for_lambda->so->info().to_lencstr().cstr, err);
-					__wcb_for_lambda->so->ch_close();
-				};
-
-				op.wcb->so->begin_read(WATCH_OPTION_INFINITE, read, err);
+				op.wcb->so->begin_read(WATCH_OPTION_INFINITE, read);
 			}
 			break;
 			case OP_NONE:
@@ -1355,11 +1349,7 @@ _begin_send:
 		}
 
 		fn_io_event read = std::bind(&WCB::pump_packs, wcb);
-		fn_io_event_error err = [wcb](int const& err, WWRP<ref_base> const& ctx) ->void {
-			WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", wcb->so->info().to_lencstr().cstr, err);
-			wcb->so->ch_close();
-		};
-		wcb->so->begin_read(WATCH_OPTION_INFINITE, read,err);
+		wcb->so->begin_read(WATCH_OPTION_INFINITE, read);
 
 		return wcb->connect(wawo::net::address(*((sockaddr_in*)addr)));
 	}
@@ -1417,11 +1407,7 @@ _begin_send:
 		m_wcb_map.insert(WCBPair(fd, wcb));
 
 		fn_io_event read = std::bind(&WCB::pump_packs, wcb);
-		fn_io_event_error err = [wcb](int const& err, WWRP<ref_base> const& ctx) ->void {
-			WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", wcb->so->info().to_lencstr().cstr, err);
-			wcb->so->ch_close();
-		};
-		wcb->so->begin_read(WATCH_OPTION_INFINITE, read, err);
+		wcb->so->begin_read(WATCH_OPTION_INFINITE, read);
 
 		return wawo::OK;
 	}

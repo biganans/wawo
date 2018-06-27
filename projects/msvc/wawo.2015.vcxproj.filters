@@ -467,5 +467,8 @@
     <ClInclude Include="..\..\include\wawo\net\poller_impl\iocp.hpp">
       <Filter>Header Files\wawo\net\poller_impl</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\wawo\net\socket_api.hpp">
+      <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

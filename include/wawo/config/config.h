@@ -99,7 +99,7 @@
 #endif
 
 #if WAWO_ISWIN
-	#define WAWO_ENABLE_IOCP
+	//#define WAWO_ENABLE_IOCP
 #elif WAWO_ISGNU
 	#define WAWO_ENABLE_EPOLL
 #endif
@@ -109,7 +109,7 @@
 #define WAWO_DEFAULT_KEEPALIVE_PROBES	10
 
 //default on
-#define WAWO_ENABLE_WCP
+//#define WAWO_ENABLE_WCP
 #ifdef WAWO_ENABLE_WCP
 	#define WAWO_DEFAULT_WCP_OBSERVER_COUNT 1
 #else

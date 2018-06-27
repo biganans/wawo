@@ -7,9 +7,12 @@
 #include <wawo/net/poller_impl/select.hpp>
 #endif
 
+#ifdef WAWO_ENABLE_WCP
 #include <wawo/net/poller_impl/wpoll.hpp>
-#include <wawo/net/io_event_loop.hpp>
 #include <wawo/net/wcp.hpp>
+#endif
+
+#include <wawo/net/io_event_loop.hpp>
 
 namespace wawo { namespace net {
 
@@ -40,12 +43,14 @@ namespace wawo { namespace net {
 			}
 			break;
 #endif
+#ifdef WAWO_ENABLE_WCP
 			case T_WPOLL:
 			{
 				rt = wawo::make_ref<impl::wpoll>();
 				WAWO_ALLOC_CHECK(rt, sizeof(impl::wpoll));
 			}
 			break;
+#endif
 			default:
 			{
 				WAWO_THROW("invalid poll type");
@@ -75,6 +80,7 @@ namespace wawo { namespace net {
 				m_pollers.push_back(o);
 			}
 
+#ifdef WAWO_ENABLE_WCP
 			wpoller_count = WAWO_MIN(wpoller_count, 4);
 			wpoller_count = WAWO_MAX(wpoller_count, 1);
 
@@ -88,21 +94,27 @@ namespace wawo { namespace net {
 				WAWO_ASSERT(rt == wawo::OK);
 				m_wpoll_pollers.push_back(o);
 			}
+#endif
 		}
 		WWRP<io_event_loop> io_event_loop_group::next(bool const& return_wpoller) {
+#ifdef WAWO_ENABLE_WCP
 			if (return_wpoller) {
 				int i = m_curr_wpoll.load() % m_wpoll_pollers.size();
 				wawo::atomic_increment(&m_curr_wpoll);
 				return m_wpoll_pollers[i% m_wpoll_pollers.size()];
 			}
 			else {
+#endif
 				int i = m_curr_sys.load() % m_pollers.size();
 				wawo::atomic_increment(&m_curr_sys);
 				return m_pollers[i% m_pollers.size()];
+#ifdef WAWO_ENABLE_WCP
 			}
+#endif
 		}
 
 		void io_event_loop_group::deinit() {
+#ifdef WAWO_ENABLE_WCP
 			if (m_wpoll_pollers.size()) {
 				wcp::instance()->stop();
 				std::for_each(m_wpoll_pollers.begin(), m_wpoll_pollers.end(), [](WWRP<io_event_loop> const& o) {
@@ -110,7 +122,7 @@ namespace wawo { namespace net {
 				});
 				m_wpoll_pollers.clear();
 			}
-
+#endif
 			std::for_each(m_pollers.begin(), m_pollers.end(), [](WWRP<io_event_loop> const& o) {
 				o->stop();
 			});
