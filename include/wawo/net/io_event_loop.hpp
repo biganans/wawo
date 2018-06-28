@@ -9,12 +9,13 @@ namespace wawo { namespace net {
 
 	enum ioe_flag {
 		IOE_READ = 1, //check read, sys io
-		IOE_WRITE = 1 << 1, //check write, sys io
+		IOE_WRITE = 1<<1, //check write, sys io
 		IOE_ACCEPT = 1<<2,
 		IOE_CONNECT = 1<<3,
 		IOE_INFINITE_WATCH_READ = 1 << 4,
 		IOE_INFINITE_WATCH_WRITE = 1 << 5,
-		IOE_IOCP_BIND =1<<6
+		IOE_IOCP_BIND =1<<6,
+		IOE_IOCP_WSASEND=1<<7
 	};
 
 	class io_event_loop :
@@ -52,6 +53,15 @@ namespace wawo { namespace net {
 			});
 		}
 
+#ifdef WAWO_ENABLE_IOCP
+		inline void WSASend(int const& fd, fn_io_event_wsa_send const& fn_wsasend, fn_io_event const& fn) {
+			WAWO_ASSERT(fd > 0);
+			WWRP<io_event_loop> loop(this);
+			execute([loop, fd, fn_wsasend, fn]() -> void {
+				loop->do_WSASend(fd,fn_wsasend,fn);
+			});
+		}
+#endif
 		virtual void init() {
 			io_event_executor::init();
 		}
@@ -62,6 +72,10 @@ namespace wawo { namespace net {
 		virtual void do_poll() = 0;
 		virtual void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn) = 0;
 		virtual void do_unwatch(u8_t const& flag, int const& fd) = 0;
+
+#ifdef WAWO_ENABLE_IOCP
+		virtual void do_WSASend( int const& fd, fn_io_event_wsa_send const& fn_wsasend, fn_io_event const& fn) = 0;
+#endif
 	};
 
 	typedef std::vector<WWRP<io_event_loop>> io_event_loop_vector;

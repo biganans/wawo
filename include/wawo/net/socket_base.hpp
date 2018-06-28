@@ -15,9 +15,6 @@
 	#define WAWO_TRACE_SOCKET(...)
 #endif
 
-
-#define WAWO_MAX_ACCEPTS_ONE_TIME 128
-
 #ifndef IPTOS_TOS_MASK
 #define IPTOS_TOS_MASK		0x1E
 #endif

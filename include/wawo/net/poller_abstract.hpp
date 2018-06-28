@@ -38,7 +38,6 @@ namespace wawo { namespace net {
 		int fd;
 		fn_io_event fn[IOE_SLOT_MAX];
 		u8_t flag;
-//		u8_t poll_type;
 
 		poller_ctx() :
 			fd(-2),

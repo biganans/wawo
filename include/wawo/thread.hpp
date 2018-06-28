@@ -213,7 +213,7 @@ _VARIADIC_EXPAND_0X(_THREAD_CONS, , , , )
 				WAWO_DELETE(_THH_);
 				int _eno = wawo::get_last_errno();
 				WAWO_ERR("[thread]new std::thread(&thread::__RUN_PROXY__, _THH_) failed: %d", _eno);
-				return WAWO_NEGATIVE(_eno);
+				return (_eno);
 			}
 			WAWO_RETURN_V_IF_MATCH(wawo::E_MEMORY_ALLOC_FAILED, (_THH_ == NULL));
 			m_handler = _THH_;

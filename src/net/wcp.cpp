@@ -1310,7 +1310,7 @@ _begin_send:
 
 		WWRP<wawo::net::socket> udpsocket = wawo::make_ref<wawo::net::socket>(F_AF_INET, T_DGRAM, P_UDP);
 		int openrt = udpsocket->open();
-		WAWO_RETURN_V_IF_NOT_MATCH( WAWO_NEGATIVE(socket_get_last_errno()) , openrt == wawo::OK);
+		WAWO_RETURN_V_IF_NOT_MATCH( socket_get_last_errno() , openrt == wawo::OK);
 
 		WWRP<WCB> wcb = wawo::make_ref<WCB>();
 		wcb->init();
@@ -1371,7 +1371,7 @@ _begin_send:
 		wcb->local_addr = wawo::net::address(*((sockaddr_in*)addr));
 		int bindrt = wcb->so->bind( wcb->local_addr );
 		if (bindrt != wawo::OK) {
-			wcb->wcb_errno = WAWO_NEGATIVE(wawo::socket_get_last_errno());
+			wcb->wcb_errno = (wawo::socket_get_last_errno());
 			return wcb->wcb_errno;
 		}
 

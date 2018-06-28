@@ -75,15 +75,15 @@ namespace wawo { namespace net {
 			}); \
 		} \
 
-			CH_FIRE_ACTION_IMPL_0(connected)
-			CH_FIRE_ACTION_IMPL_0(error)
-			CH_FIRE_ACTION_IMPL_0(read_shutdowned)
-			CH_FIRE_ACTION_IMPL_0(write_shutdowned)
+		CH_FIRE_ACTION_IMPL_0(connected)
+		CH_FIRE_ACTION_IMPL_0(error)
+		CH_FIRE_ACTION_IMPL_0(read_shutdowned)
+		CH_FIRE_ACTION_IMPL_0(write_shutdowned)
 
-			CH_FIRE_ACTION_IMPL_0(write_block)
-			CH_FIRE_ACTION_IMPL_0(write_unblock)
+		CH_FIRE_ACTION_IMPL_0(write_block)
+		CH_FIRE_ACTION_IMPL_0(write_unblock)
 
-			inline void ch_fire_opened() {
+		inline void ch_fire_opened() {
 			WAWO_ASSERT(m_io_event_loop != NULL);
 			m_pipeline = wawo::make_ref<channel_pipeline>(WWRP<channel>(this));
 			m_pipeline->init();

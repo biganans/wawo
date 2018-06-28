@@ -279,8 +279,6 @@ namespace wawo { namespace net { namespace impl {
 						ec = wawo::socket_get_last_errno();
 					}
 					fn_io_event _fn = ctx->fn[IOE_SLOT_WRITE];
-
-					ec = WAWO_NEGATIVE(ec);
 					WAWO_ASSERT(ec != wawo::OK);
 
 					unwatch(IOE_READ, ctx->fd);

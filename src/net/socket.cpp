@@ -105,14 +105,9 @@ namespace wawo { namespace net {
 		rt = socket::listen(backlog);
 		ch_promise->set_success(rt);
 
-
-		if (rt == wawo::OK) {
-#ifdef WAWO_ENABLE_IOCP
+		if (WAWO_LIKELY(rt == wawo::OK)) {
+			begin_bind();
 			begin_accept();
-#else
-			fn_io_event _fn_accept = std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1);
-			begin_read(WATCH_OPTION_INFINITE, _fn_accept);
-#endif
 		}
 
 		m_fn_accepted = fn_accepted;
@@ -165,49 +160,35 @@ namespace wawo { namespace net {
 		}
 	}
 
-	u32_t socket::accept( WWRP<socket> sockets[], u32_t const& size, int& ec_o ) {
+	int socket::accept( std::vector<WWRP<socket>>& accepted) {
 		if( m_state != S_LISTEN ) {
-			ec_o = wawo::E_INVALID_STATE;
-			return 0 ;
+			return wawo::E_INVALID_STATE;
 		}
 
-		ec_o = wawo::OK;
-		u32_t count = 0;
-
+		int ec = wawo::OK;
 		do {
 			address addr;
-			int fd = socket_base::accept(addr);
+			int newfd = socket_base::accept(addr);
 
-			if( fd<0 ) {
-				if ( WAWO_ABS(fd) == EINTR ) continue;
-				if( !IS_ERRNO_EQUAL_WOULDBLOCK(WAWO_ABS(fd)) ) {
-					ec_o = fd;
+			if(newfd<0 ) {
+				if ( WAWO_ABS(newfd) == EINTR ) continue;
+				if( !IS_ERRNO_EQUAL_WOULDBLOCK(WAWO_ABS(newfd)) ) {
+					ec = newfd;
 				}
 				break;
 			}
 
-			WWRP<socket> so = wawo::make_ref<socket>(fd, addr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
-
-			int fire_open_ok = true;
 			try {
-				so->ch_fire_opened();
+				WWRP<socket> so = wawo::make_ref<socket>(newfd, addr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
+				accepted.push_back(so);
 			} catch (...) {
-				fire_open_ok = false;
+				WAWO_ERR("[#%d]accept new fd failed: %d", fd(), wawo::get_last_errno());
+				WAWO_CLOSE_SOCKET(newfd);
 			}
-			if (fire_open_ok) {
-				sockets[count++] = so;
-			} else {
-				so->close();
-			}
-		} while( count<size );
+		} while( true );
 
-		if( count == size ) {
-			ec_o=wawo::E_TRY_AGAIN;
-		}
-
-		return count ;
+		return ec ;
 	}
-
 }} //end of ns
 
 #ifdef WAWO_PLATFORM_WIN

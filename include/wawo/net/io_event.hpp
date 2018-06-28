@@ -34,6 +34,10 @@ namespace wawo { namespace net {
 	*/
 
 	typedef std::function<void(async_io_result const& r)> fn_io_event;
+
+#ifdef WAWO_ENABLE_IOCP
+	typedef std::function<int(void* ol)> fn_io_event_wsa_send;
+#endif
 }}
 
 #endif

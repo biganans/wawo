@@ -206,7 +206,7 @@ namespace wawo { namespace net {
 #endif
 			rt = set_snd_buffer_size(m_sbc.snd_size);
 			if (rt != wawo::OK) {
-				WAWO_ERR("[socket][%s]socket::set_snd_buffer_size(%d) failed", info().to_lencstr().cstr, m_sbc.snd_size, WAWO_NEGATIVE(socket_get_last_errno()));
+				WAWO_ERR("[socket][%s]socket::set_snd_buffer_size(%d) failed", info().to_lencstr().cstr, m_sbc.snd_size, socket_get_last_errno());
 				return rt;
 			}
 #ifdef _DEBUG
@@ -220,7 +220,7 @@ namespace wawo { namespace net {
 #endif
 			rt = set_rcv_buffer_size(m_sbc.rcv_size);
 			if (rt != wawo::OK) {
-				WAWO_ERR("[socket][%s]socket::set_rcv_buffer_size(%d) failed", info().to_lencstr().cstr , m_sbc.rcv_size, WAWO_NEGATIVE(socket_get_last_errno()));
+				WAWO_ERR("[socket][%s]socket::set_rcv_buffer_size(%d) failed", info().to_lencstr().cstr , m_sbc.rcv_size, socket_get_last_errno());
 				return rt;
 			}
 #ifdef _DEBUG
@@ -237,7 +237,7 @@ namespace wawo { namespace net {
 			if (close_rt == 0) {
 				WAWO_TRACE_SOCKET("[socket][%s]socket close", info().to_lencstr().cstr );
 			} else {
-				WAWO_WARN("[socket][%s]socket close, close_rt: %d, close_ec: %d", info().to_lencstr().cstr , close_rt, WAWO_NEGATIVE(socket_get_last_errno()));
+				WAWO_WARN("[socket][%s]socket close, close_rt: %d, close_ec: %d", info().to_lencstr().cstr , close_rt, socket_get_last_errno());
 			}
 			return close_rt;
 		}

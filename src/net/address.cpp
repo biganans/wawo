@@ -149,7 +149,7 @@ namespace wawo { namespace net {
 		struct in_addr inaddr;
 		int rval = inet_pton( AF_INET, ipaddr, &inaddr );
 		if (rval == 0) return wawo::E_INVALID_DATA;
-		if (rval == -1) { return WAWO_NEGATIVE(wawo::socket_get_last_errno()); }
+		if (rval == -1) { return (wawo::socket_get_last_errno()); }
 		ip = (inaddr.s_addr);
 		return wawo::OK;
 	}

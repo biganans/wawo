@@ -13,9 +13,10 @@
 namespace wawo {
 	inline int get_last_errno() {
 #ifdef WAWO_PLATFORM_GNU
-		return errno;
+		return WAWO_NEGATIVE(errno);
 #elif defined(WAWO_PLATFORM_WIN)
-		return ::GetLastError();
+		int ec = (::GetLastError());
+		return WAWO_NEGATIVE(ec);
 #else
 		#error
 #endif
@@ -34,9 +35,10 @@ namespace wawo {
 	//remark: WSAGetLastError() == GetLastError(), but there is no gurantee for future change.
 	inline int socket_get_last_errno() {
 #ifdef WAWO_PLATFORM_GNU
-		return errno;
+		return WAWO_NEGATIVE(errno);
 #elif defined(WAWO_PLATFORM_WIN)
-		return ::WSAGetLastError();
+		int ec=(::WSAGetLastError());
+		return WAWO_NEGATIVE(ec);
 #else
 		#error
 #endif

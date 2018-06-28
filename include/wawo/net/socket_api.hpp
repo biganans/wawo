@@ -9,28 +9,28 @@
 #define WAWO_ENABLE_TRACE_SOCKET_API(...)
 #endif
 
-#ifndef EWOULDBLOCK
-#define EWOULDBLOCK WSAEWOULDBLOCK
-#endif
+//#ifndef EWOULDBLOCK
+//#define EWOULDBLOCK WSAEWOULDBLOCK
+//#endif
 
-#ifndef WSAEWOULDBLOCK
-#define WSAEWOULDBLOCK EWOULDBLOCK
-#endif
+//#ifndef WSAEWOULDBLOCK
+//#define WSAEWOULDBLOCK EWOULDBLOCK
+//#endif
 
-#ifndef EAGAIN //EAGAIN IS NOT ALWAYS THE SAME AS EWOULDBLOCK
-#define EAGAIN EWOULDBLOCK
-#endif
+//#ifndef EAGAIN //EAGAIN IS NOT ALWAYS THE SAME AS EWOULDBLOCK
+//#define EAGAIN EWOULDBLOCK
+//#endif
 
-#ifndef EISCONN
-#define EISCONN WSAEISCONN
-#endif
+//#ifndef EISCONN
+//#define EISCONN WSAEISCONN
+//#endif
 
-#ifndef ENOTINITIALISED
-#define ENOTINITIALISED WSANOTINITIALISED
-#endif
+//#ifndef ENOTINITIALISED
+//#define ENOTINITIALISED WSANOTINITIALISED
+//#endif
 
-#define IS_ERRNO_EQUAL_WOULDBLOCK(_errno) ((_errno==EAGAIN)||(_errno==EWOULDBLOCK)||(_errno==WSAEWOULDBLOCK))
-#define IS_ERRNO_EQUAL_CONNECTING(_errno) ((_errno==EINPROGRESS)||(_errno==WSAEWOULDBLOCK))
+#define IS_ERRNO_EQUAL_WOULDBLOCK(_errno) ((_errno==wawo::E_EAGAIN)||(_errno==wawo::E_EWOULDBLOCK)||(_errno==wawo::E_WSAEWOULDBLOCK))
+#define IS_ERRNO_EQUAL_CONNECTING(_errno) ((_errno==wawo::E_EINPROGRESS)||(_errno==wawo::E_WSAEWOULDBLOCK))
 
 namespace wawo { namespace net { namespace socket_api {
 	typedef int(*fn_socket)(int const& family, int const& socket_type, int const& protocol);
@@ -52,61 +52,61 @@ namespace wawo { namespace net { namespace socket_api {
 		inline int socket(int const& family, int const& socket_type, int const& protocol) {
 			int rt = ::socket(family, socket_type, protocol);
 			WAWO_RETURN_V_IF_MATCH(rt, rt > 0);
-			return WAWO_NEGATIVE(socket_get_last_errno());
+			return socket_get_last_errno();
 		}
 
 		inline int connect(int const& fd, const struct sockaddr* addr, socklen_t const& length) {
 			int rt = ::connect(fd, addr, length);
 			WAWO_RETURN_V_IF_MATCH(0, rt == 0);
-			return WAWO_NEGATIVE(socket_get_last_errno());
+			return socket_get_last_errno();
 		}
 
 		inline int bind(int const& fd, const struct sockaddr* addr, socklen_t const& length) {
 			int rt = ::bind(fd, addr, length);
 			WAWO_RETURN_V_IF_MATCH(0, rt == 0);
-			return WAWO_NEGATIVE(socket_get_last_errno());
+			return socket_get_last_errno();
 		}
 
 		inline int shutdown(int const& fd, int const& flag) {
 			int rt = ::shutdown(fd, flag);
 			WAWO_RETURN_V_IF_MATCH(0, rt == 0);
-			return WAWO_NEGATIVE(socket_get_last_errno());
+			return socket_get_last_errno();
 		}
 
 		inline int close(int const& fd) {
 			int rt = WAWO_CLOSE_SOCKET(fd);
 			WAWO_RETURN_V_IF_MATCH(0, rt == 0);
-			return WAWO_NEGATIVE(socket_get_last_errno());
+			return socket_get_last_errno();
 		}
 
 		inline int listen(int const& fd, int const& backlog) {
 			int rt = ::listen(fd, backlog);
 			WAWO_RETURN_V_IF_MATCH(0, rt == 0);
-			return WAWO_NEGATIVE(socket_get_last_errno());
+			return socket_get_last_errno();
 		}
 
 		inline int accept(int const& fd, struct sockaddr* addr, socklen_t* addrlen) {
 			int accepted_fd = ::accept(fd, addr, addrlen);
 			WAWO_RETURN_V_IF_MATCH(accepted_fd, (accepted_fd > 0));
-			return WAWO_NEGATIVE(socket_get_last_errno());
+			return socket_get_last_errno();
 		}
 
 		inline int getsockopt(int const& fd, int const& level, int const& option_name, void* value, socklen_t* option_len) {
 			int rt = ::getsockopt(fd, level, option_name, (char*)value, option_len);
 			WAWO_RETURN_V_IF_MATCH(0, rt == 0);
-			return WAWO_NEGATIVE(socket_get_last_errno());
+			return socket_get_last_errno();
 		}
 
 		inline int setsockopt(int const& fd, int const& level, int const& option_name, void const* value, socklen_t const& option_len) {
 			int rt = ::setsockopt(fd, level, option_name, (char*)value, option_len);
 			WAWO_RETURN_V_IF_MATCH(0, rt == 0);
-			return WAWO_NEGATIVE(socket_get_last_errno());
+			return socket_get_last_errno();
 		}
 
 		inline int getsockname(int const& fd, struct sockaddr* addr, socklen_t* addrlen) {
 			int rt = ::getsockname(fd, addr, addrlen);
 			WAWO_RETURN_V_IF_MATCH(0, rt == 0);
-			return WAWO_NEGATIVE(socket_get_last_errno());
+			return socket_get_last_errno();
 		}
 
 		inline u32_t send(int const& fd, byte_t const* const buffer, u32_t const& len, int& ec_o, int const& flag) {
@@ -133,12 +133,12 @@ namespace wawo { namespace net { namespace socket_api {
 						ec_o = wawo::E_CHANNEL_WRITE_BLOCK;
 						//WAWO_TRACE_SOCKET("[wawo::net::send][#%d]send blocked, error code: <%d>", fd, ec);
 					}
-					else if (ec == EINTR) {
+					else if ((ec) == wawo::E_EINTR) {
 						continue;
 					}
 					else {
 						WAWO_ERR("[wawo::net::send][#%d]send failed, error code: <%d>", fd, ec);
-						ec_o = WAWO_NEGATIVE(ec);
+						ec_o = (ec);
 					}
 					break;
 				}
@@ -172,12 +172,12 @@ namespace wawo { namespace net { namespace socket_api {
 						//WAWO_TRACE_SOCKET("[wawo::net::recv][#%d]recv blocked, block code: <%d>", fd, ec);
 						ec_o = wawo::E_CHANNEL_READ_BLOCK;
 					}
-					else if (ec == EINTR) {
+					else if (ec == wawo::E_EINTR) {
 						continue;
 					}
 					else {
 						WAWO_ASSERT(ec != wawo::OK);
-						ec_o = WAWO_NEGATIVE(ec);
+						ec_o = ec;
 						WAWO_ERR("[wawo::net::recv][#%d]recv error, errno: %d", fd, ec);
 					}
 					break;
@@ -220,7 +220,7 @@ namespace wawo { namespace net { namespace socket_api {
 					ec_o = wawo::E_CHANNEL_WRITE_BLOCK;
 					//WAWO_TRACE_SOCKET("[wawo::net::sendto][#%d]send blocked, error code: <%d>, no retry", fd, send_ec);
 				}
-				else if (send_ec == EINTR) {
+				else if (send_ec == wawo::E_EINTR) {
 					continue;
 				}
 				else {
@@ -256,7 +256,7 @@ namespace wawo { namespace net { namespace socket_api {
 				if (IS_ERRNO_EQUAL_WOULDBLOCK(_ern)) {
 					ec_o = E_CHANNEL_READ_BLOCK;
 				}
-				else if (_ern == EINTR) {
+				else if (_ern == wawo::E_EINTR) {
 					continue;
 				}
 				else {
@@ -278,7 +278,7 @@ namespace wawo { namespace net { namespace socket_api {
 		inline int socket(int const& family, int const& socket_type, int const& protocol) {
 			int rt = ::WSASocketW(family, socket_type, protocol, NULL, 0, WSA_FLAG_OVERLAPPED);
 			WAWO_RETURN_V_IF_MATCH(rt, rt > 0);
-			return WAWO_NEGATIVE(socket_get_last_errno());
+			return socket_get_last_errno();
 		}
 	}
 #endif
