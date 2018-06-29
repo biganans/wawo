@@ -25,7 +25,7 @@ namespace wawo {
 
 
 	const int OK = 0;
-
+	const int E_SOCKET_ERROR					= -1;
 	const int E_EPERM							= -1; //operation not permitted
 	const int E_ENOENT							= -2; //no such file or directory
 	const int E_ESRCH							= -3; //no such process
@@ -154,7 +154,8 @@ namespace wawo {
 	const int E_EMEDIUMTYPE						= -124; //Wrong medium type
 
 	const int E_WAIT_TIMEOUT					= -258; 
-	const int E_ERROR_IO_PENDING				= -997; 
+	const int E_ERROR_IO_PENDING				= -997;
+	const int E_ERROR_CONNECTION_ABORTED		= -1236;
 
 // 1---19999; reserved for system call error code (windows)
 	const int E_WSAEINTR						= -10004; // A blocking operation was interrupted by a call to WSACancelBlockingCall.

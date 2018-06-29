@@ -30,6 +30,8 @@ namespace wawo { namespace net {
 		WATCH_WRITE = 1 << 3,
 
 		WATCH_OPTION_INFINITE = 1 << 4,
+		WRITING = 1<<5,
+		CLOSE_AFTER_WRITE_DONE =1<<6
 	};
 
 	enum socket_state {
@@ -39,6 +41,7 @@ namespace wawo { namespace net {
 		S_LISTEN,
 		S_CONNECTING,// for async connect
 		S_CONNECTED,
+		
 	};
 
 	struct socket_outbound_entry {
@@ -341,7 +344,7 @@ namespace wawo { namespace net {
 				m_fn_accepted(accepted[i]);
 				accepted[i]->ch_fire_connected();
 #ifdef WAWO_ENABLE_IOCP
-				accepted[i]->begin_bind();
+				accepted[i]->__IOCP_init();
 #endif
 				accepted[i]->begin_read(WATCH_OPTION_INFINITE);
 			}
@@ -362,6 +365,7 @@ namespace wawo { namespace net {
 				WWRP<packet> income = wawo::make_ref<packet>(ec);
 				income->write((byte_t*) r.buf, r.v.len );
 				channel::ch_read(income);
+				ec = wawo::OK;
 			} else if (ec == 0) {
 				ec = wawo::E_SOCKET_GRACE_CLOSE;
 			} else {
@@ -465,15 +469,26 @@ namespace wawo { namespace net {
 		}
 
 #ifdef WAWO_ENABLE_IOCP
-		inline void begin_bind() {
+		inline void __IOCP_init() {
 			if (!event_poller()->in_event_loop()) {
 				WWRP<socket> _so(this);
 				event_poller()->execute([_so]()->void {
-					_so->begin_bind();
+					_so->__IOCP_init();
 				});
 				return;
 			}
-			event_poller()->watch(IOE_IOCP_BIND, fd(), std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1));
+			event_poller()->watch(IOE_IOCP_INIT, fd(), std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1));
+		}
+
+		inline void __IOCP_deinit() {
+			if (!event_poller()->in_event_loop()) {
+				WWRP<socket> _so(this);
+				event_poller()->execute([_so]()->void {
+					_so->__IOCP_deinit();
+				});
+				return;
+			}
+			event_poller()->watch(IOE_IOCP_DEINIT, fd(), NULL);
 		}
 
 		//non null, send
@@ -492,7 +507,7 @@ namespace wawo { namespace net {
 
 		inline int __WSASend() {
 			WAWO_ASSERT(m_ol_write != NULL );
-			WAWO_ASSERT(m_outbound_entry_q.size() > 0);
+			//WAWO_ASSERT(m_outbound_entry_q.size() > 0);
 			while (m_outbound_entry_q.size()) {
 				WAWO_ASSERT(m_noutbound_bytes > 0);
 				socket_outbound_entry& entry = m_outbound_entry_q.front();
@@ -501,6 +516,9 @@ namespace wawo { namespace net {
 					m_outbound_entry_q.pop();
 					continue;
 				}
+				if (m_wflag&WRITING) { return wawo::E_EALREADY; }
+				m_wflag |= WRITING;
+
 				WWRP<packet>& outlet = entry.data;
 				::memset(m_ol_write, 0, sizeof(*m_ol_write));
 				WSABUF wsabuf = { outlet->len(), (char*)outlet->begin() };
@@ -520,7 +538,7 @@ namespace wawo { namespace net {
 			int const& len = r.v.len;
 			WAWO_ASSERT(m_outbound_entry_q.size());
 			WAWO_ASSERT(len > 0);
-
+			m_wflag &= ~WRITING;
 			WAWO_ASSERT(m_noutbound_bytes > 0);
 			socket_outbound_entry entry = m_outbound_entry_q.front();
 			WAWO_ASSERT(entry.data != NULL);
@@ -530,6 +548,10 @@ namespace wawo { namespace net {
 				entry.ch_promise->set_success(wawo::OK);
 				m_outbound_entry_q.pop();
 			}
+			if ((m_noutbound_bytes==0) && m_wflag&CLOSE_AFTER_WRITE_DONE) {
+				ch_close();
+				return;
+			}
 			ch_flush_impl();
 		}
 
@@ -537,7 +559,7 @@ namespace wawo { namespace net {
 			if (!event_poller()->in_event_loop()) {
 				WWRP<socket> _so(this);
 				event_poller()->execute([_so]()->void {
-					_so->begin_bind();
+					_so->begin_WSASend();
 				});
 				return;
 			}
@@ -736,7 +758,11 @@ namespace wawo { namespace net {
 			if (m_ol_write == 0) {
 				begin_WSASend();
 			} else {
-				__WSASend();
+				int rt = __WSASend();
+				if (rt != wawo::OK) {
+					ch_errno(rt);
+					ch_close();
+				}
 			}
 			return;
 #else
@@ -826,10 +852,21 @@ namespace wawo { namespace net {
 				return;
 			}
 
-			if (!(m_wflag&SHUTDOWN_WR) && !is_listener() && m_state == S_CONNECTED ) {
+#ifdef WAWO_ENABLE_IOCP
+			if (m_wflag&WRITING) {
+				WAWO_ASSERT(!is_listener());
+				m_wflag |= CLOSE_AFTER_WRITE_DONE;
+				if (!(m_rflag&SHUTDOWN_RD)) {
+					ch_shutdown_read();
+				}
+				return;
+			}
+			__IOCP_deinit();
+#else
+			if (!(m_wflag&SHUTDOWN_WR) && !is_listener() && m_state == S_CONNECTED) {
 				ch_flush_impl();
 			}
-
+#endif
 			int rt = socket_base::close();
 			if (is_listener()) {
 				end_read();
@@ -865,7 +902,6 @@ namespace wawo { namespace net {
 			}
 
 			if (!(m_wflag&SHUTDOWN_WR)) {
-				ch_flush_impl();
 				m_wflag |= SHUTDOWN_WR;
 				end_write();
 			}

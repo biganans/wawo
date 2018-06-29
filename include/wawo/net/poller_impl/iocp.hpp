@@ -4,7 +4,6 @@
 #include <wawo/core.hpp>
 #include <wawo/net/poller_abstract.hpp>
 
-#include <wawo/net/socket.hpp>
 #include <mswsock.h>
 
 namespace wawo { namespace net { namespace impl {
@@ -16,11 +15,17 @@ namespace wawo { namespace net { namespace impl {
 #define WAWO_IOCP_BUFFER_SIZE 1024*64
 		class socket;
 		enum iocp_action {
-			IDLE,
-			READ,
+			READ = 0,
 			WRITE,
 			ACCEPT,
-			CONNECT
+			CONNECT,
+			MAX
+		};
+
+		enum action_status {
+			IDLE,
+			IN_OPERATION,
+			BLOCKED,
 		};
 
 		enum iocp_action_flag {
@@ -30,30 +35,25 @@ namespace wawo { namespace net { namespace impl {
 			F_CONNECT	= 0x08
 		};
 
-		enum iocp_overlapped_ctx_type {
-			IOCP_OVERLAPPED_CTX_ACCEPT = 0,
-			IOCP_OVERLAPPED_CTX_READ,
-			IOCP_OVERLAPPED_CTX_WRITE,
-			IOCP_OVERLAPPED_CTX_CONNECT,
-			IOCP_OVERLAPPED_CTX_MAX
-		};
-
-		struct iocp_overlapped_ctx {
+		struct iocp_overlapped_ctx:
+			public ref_base
+		{
 			WSAOVERLAPPED overlapped;
 			int fd;
 			int parent_fd;
-			iocp_action action;
+			int action:24;
+			int action_status:8;
+			fn_io_event fn;
 			WSABUF wsabuf;
 			char buf[WAWO_IOCP_BUFFER_SIZE];
-			fn_io_event fn;
 		};
 
-		inline WWSP<iocp_overlapped_ctx> iocp_make_ctx() {
-			WWSP<iocp_overlapped_ctx> ctx = wawo::make_shared<iocp_overlapped_ctx>();
-			memset(&ctx->overlapped, 0, sizeof(WSAOVERLAPPED));
+		inline WWRP<iocp_overlapped_ctx> iocp_make_ctx() {
+			WWRP<iocp_overlapped_ctx> ctx = wawo::make_ref<iocp_overlapped_ctx>();
+			::memset(&ctx->overlapped, 0, sizeof(WSAOVERLAPPED));
 			ctx->fd = -1;
 			ctx->parent_fd = -1;
-			ctx->action = IDLE;
+			ctx->action = -1;
 			ctx->wsabuf = { WAWO_IOCP_BUFFER_SIZE, (char*)&ctx->buf };
 			return ctx;
 		}
@@ -61,18 +61,18 @@ namespace wawo { namespace net { namespace impl {
 		struct iocp_ctxs {
 			int fd;
 			int flag;
-			WWSP<iocp_overlapped_ctx> ol_ctxs[IOCP_OVERLAPPED_CTX_MAX];
+			WWRP<iocp_overlapped_ctx> ol_ctxs[iocp_action::MAX];
 		};
 
-		inline void iocp_reset_ctx(WWSP<iocp_overlapped_ctx> const& ctx) {
+		inline void iocp_reset_ctx(WWRP<iocp_overlapped_ctx> const& ctx) {
 			WAWO_ASSERT(ctx != NULL);
-			memset(&ctx->overlapped, 0, sizeof(WSAOVERLAPPED));
+			::memset(&ctx->overlapped, 0, sizeof(ctx->overlapped));
 		}
 
-		inline void iocp_reset_accept_ctx(WWSP<iocp_overlapped_ctx> const& ctx) {
+		inline void iocp_reset_accept_ctx(WWRP<iocp_overlapped_ctx> const& ctx) {
 			WAWO_ASSERT(ctx != NULL);
-			memset(&ctx->overlapped, 0, sizeof(WSAOVERLAPPED));
-			ctx->fd = 0;
+			::memset(&ctx->overlapped, 0, sizeof(ctx->overlapped));
+			ctx->fd = -1;
 		}
 
 		typedef std::map<int, WWSP<iocp_ctxs>> iocp_ctxs_map;
@@ -136,21 +136,31 @@ namespace wawo { namespace net { namespace impl {
 					WAWO_DEBUG("[iocp]GetQueuedCompletionStatus return: %d", ec );
 					return;
 				}
+				if (ec == wawo::E_ERROR_CONNECTION_ABORTED) {
+					WAWO_DEBUG("[iocp]GetQueuedCompletionStatus return: %d", ec);
+					return;
+				}
+				//did not dequeue a completion packet from the completion port
+				if (lpol == NULL) { 
+					WAWO_DEBUG("[iocp]GetQueuedCompletionStatus return: %d, no packet dequeue", ec);
+					return;
+				}
+
 				WAWO_ASSERT(len == 0);
 				WAWO_ASSERT(ec != 0);
-
 				WAWO_INFO("[iocp]GetQueuedCompletionStatus failed, %d", wawo::socket_get_last_errno());
-			}
-			if (len == -1) {
-				WAWO_INFO("[iocp]GetQueuedCompletionStatus waken signal");
-				return;
-			}
-			WAWO_ASSERT(lpol != NULL);
 
-			iocp_overlapped_ctx* ctx = CONTAINING_RECORD(lpol, iocp_overlapped_ctx, overlapped);
+			} else {
+				if (len == -1) {
+					WAWO_INFO("[iocp]GetQueuedCompletionStatus waken signal");
+					return;
+				}
+				WAWO_ASSERT(lpol != NULL);
+			}
+			WWRP<iocp_overlapped_ctx> ctx(CONTAINING_RECORD(lpol, iocp_overlapped_ctx, overlapped));
 			WAWO_ASSERT(ctx != NULL);
 
-			if (ec == wawo::E_ERROR_NETNAME_DELETED) {
+			if ( WAWO_UNLIKELY(ec == wawo::E_ERROR_NETNAME_DELETED)) {
 				DWORD dwTrans = 0;
 				DWORD dwFlags = 0;
 				if (FALSE == ::WSAGetOverlappedResult(ctx->fd, &ctx->overlapped, &dwTrans, FALSE, &dwFlags)) {
@@ -166,21 +176,24 @@ namespace wawo { namespace net { namespace impl {
 					WAWO_ASSERT(ctx->parent_fd > 0);
 					WAWO_ASSERT(ctx->fn != nullptr);
 					int rt = ::setsockopt(ctx->fd, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&ctx->parent_fd, sizeof(ctx->parent_fd));
-					int newfd = ctx->fd;
-					do_watch(IOE_ACCEPT, ctx->parent_fd, ctx->fn);
 					if (WAWO_LIKELY(rt == 0)) {
-						ctx->fn({ AIO_ACCEPT, newfd, NULL });
+						ctx->fn({ AIO_ACCEPT, ctx->fd, NULL });
 					} else {
-						WAWO_CLOSE_SOCKET(newfd);
+						WAWO_CLOSE_SOCKET(ctx->fd);
+					}
+					if (ctx->action_status != BLOCKED) {
+						do_watch(IOE_ACCEPT, ctx->parent_fd, ctx->fn);
 					}
 				}
 				break;
 				case READ:
 				{
-					do_watch(IOE_READ, ctx->fd, ctx->fn);
 					WAWO_ASSERT(ctx->fd > 0);
 					WAWO_ASSERT(ctx->parent_fd == -1);
 					ctx->fn({AIO_READ, ec==0?(int)len:ec, ctx->wsabuf.buf });
+					if (ctx->action_status != BLOCKED) {
+						do_watch(IOE_READ, ctx->fd, ctx->fn);
+					}
 				}
 				break;
 				case WRITE:
@@ -199,36 +212,59 @@ namespace wawo { namespace net { namespace impl {
 		}
 
 		void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn) {
-			WAWO_ASSERT(fn != nullptr);
 
-			WWSP<iocp_ctxs> _iocp_ctxs;
-			iocp_ctxs_map::iterator it = m_ctxs.find(fd);
-			if (it == m_ctxs.end()) {
-				_iocp_ctxs = wawo::make_shared<iocp_ctxs>();
-				_iocp_ctxs->fd = fd;
-				_iocp_ctxs->flag = 0;
-				m_ctxs.insert({ fd, _iocp_ctxs });
-			} else {
-				_iocp_ctxs = it->second;
-			}
-
-			if (flag&IOE_IOCP_BIND) {
+			if (flag&IOE_IOCP_INIT) {
 				WAWO_DEBUG("[#%d][CreateIoCompletionPort] add", fd );
 				WAWO_ASSERT(m_handle != NULL);
 				HANDLE bindcp = ::CreateIoCompletionPort((HANDLE)fd, m_handle, (u_long)0, 0);
 				WAWO_ASSERT(bindcp == m_handle);
+
+				WWSP<iocp_ctxs> _iocp_ctxs;
+				iocp_ctxs_map::iterator it = m_ctxs.find(fd);
+				WAWO_ASSERT(it == m_ctxs.end());
+				_iocp_ctxs = wawo::make_shared<iocp_ctxs>();
+				_iocp_ctxs->fd = fd;
+				_iocp_ctxs->flag = 0;
+
+				_iocp_ctxs->ol_ctxs[ACCEPT] = iocp_make_ctx();
+				_iocp_ctxs->ol_ctxs[ACCEPT]->action = ACCEPT;
+				_iocp_ctxs->ol_ctxs[ACCEPT]->fd = fd;
+				_iocp_ctxs->ol_ctxs[ACCEPT]->action_status = IDLE;
+
+				_iocp_ctxs->ol_ctxs[READ] = iocp_make_ctx();
+				_iocp_ctxs->ol_ctxs[READ]->action = READ;
+				_iocp_ctxs->ol_ctxs[READ]->fd = fd;
+				_iocp_ctxs->ol_ctxs[READ]->action_status = IDLE;
+
+				_iocp_ctxs->ol_ctxs[WRITE] = iocp_make_ctx();
+				_iocp_ctxs->ol_ctxs[WRITE]->action = WRITE;
+				_iocp_ctxs->ol_ctxs[WRITE]->fd = fd;
+				_iocp_ctxs->ol_ctxs[WRITE]->action_status = IDLE;
+
+				m_ctxs.insert({ fd, _iocp_ctxs });
 				return;
 			}
 
+			if (flag&IOE_IOCP_DEINIT) {
+				iocp_ctxs_map::iterator it = m_ctxs.find(fd);
+				WAWO_ASSERT(it != m_ctxs.end());
+				m_ctxs.erase(it);
+				return;
+			}
+
+			WAWO_ASSERT(fn != nullptr);
+			iocp_ctxs_map::iterator it = m_ctxs.find(fd);
+			if (it == m_ctxs.end()) {
+				return;
+			}
+			WWSP<iocp_ctxs> _iocp_ctxs = it->second;
+
 			if (flag&IOE_ACCEPT) {
-				if (_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_ACCEPT] == NULL ) {
-					_iocp_ctxs->flag |= F_ACCEPT;
-					_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_ACCEPT] = iocp_make_ctx();
-					_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_ACCEPT]->action = ACCEPT;
-				} else {
-					iocp_reset_accept_ctx( _iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_ACCEPT] );
-				}
-				_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_ACCEPT]->fn = fn;
+				WAWO_ASSERT(_iocp_ctxs->ol_ctxs[ACCEPT] != NULL);
+				WWRP<iocp_overlapped_ctx>& ctx = _iocp_ctxs->ol_ctxs[ACCEPT];
+				_iocp_ctxs->flag |= F_ACCEPT;
+				iocp_reset_accept_ctx(ctx);
+				ctx->fn = fn;
 
 				//listen
 				LPFN_ACCEPTEX lpfnAcceptEx = NULL;
@@ -263,7 +299,6 @@ namespace wawo { namespace net { namespace impl {
 					return;
 				}
 
-				WWSP<iocp_overlapped_ctx>& ctx = _iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_ACCEPT];
 				ctx->fd = newfd;
 				ctx->parent_fd = fd;
 
@@ -276,32 +311,33 @@ namespace wawo { namespace net { namespace impl {
 					int ec = wawo::socket_get_last_errno();
 					if ( ec != wawo::E_ERROR_IO_PENDING) {
 						WAWO_CLOSE_SOCKET(newfd);
+						ctx->fd = -1;
 						fn({AIO_ACCEPT, ec, NULL});
+						return;
 					}
 				}
+				ctx->action_status = IN_OPERATION;
 				return;
 			}
 
 			if (flag&IOE_READ) {
-				if (_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_READ] == NULL) {
-					_iocp_ctxs->flag |= F_READ;
-					_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_READ] = iocp_make_ctx();
-					_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_READ]->action = READ;
-					_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_READ]->fd = fd;
-				} else {
-					iocp_reset_ctx(_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_READ]);
-				}
-				_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_READ]->fn = fn;
+				WWRP<iocp_overlapped_ctx>& ctx = _iocp_ctxs->ol_ctxs[READ];
+				WAWO_ASSERT(ctx != NULL);
+
+				_iocp_ctxs->flag |= F_READ;
+				iocp_reset_ctx(ctx);
+				ctx->fn = fn;
 
 				//read begin
-				WWSP<iocp_overlapped_ctx>& _ctx = _iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_READ];
 				static DWORD flags = 0;
-				if (::WSARecv(fd, &_ctx->wsabuf, 1, NULL, &flags, &_ctx->overlapped, NULL) == SOCKET_ERROR) {
+				if (::WSARecv(fd, &ctx->wsabuf, 1, NULL, &flags, &ctx->overlapped, NULL) == SOCKET_ERROR) {
 					int ec = wawo::socket_get_last_errno();
 					if (ec != wawo::E_ERROR_IO_PENDING) {
 						fn({AIO_READ, ec, NULL});
+						return;
 					}
 				}
+				ctx->action_status = IN_OPERATION;
 			}
 		}
 
@@ -311,31 +347,19 @@ namespace wawo { namespace net { namespace impl {
 		}
 
 		void do_WSASend(int const& fd, fn_io_event_wsa_send const& fn_wsasend, fn_io_event const& fn) {
-			WWSP<iocp_ctxs> _iocp_ctxs;
 			iocp_ctxs_map::iterator it = m_ctxs.find(fd);
-			if (it == m_ctxs.end()) {
-				_iocp_ctxs = wawo::make_shared<iocp_ctxs>();
-				_iocp_ctxs->fd = fd;
-				_iocp_ctxs->flag = 0;
-				m_ctxs.insert({ fd, _iocp_ctxs });
-			}
-			else {
-				_iocp_ctxs = it->second;
-			}
+			WAWO_ASSERT(it != m_ctxs.end());
+			WWSP<iocp_ctxs> _iocp_ctxs = it->second;
+			
 			WAWO_ASSERT(_iocp_ctxs != NULL);
+			WWRP<iocp_overlapped_ctx>& ctx = _iocp_ctxs->ol_ctxs[WRITE];
 
-			if (_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_WRITE] == NULL) {
-				_iocp_ctxs->flag |= F_WRITE;
-				_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_WRITE] = iocp_make_ctx();
-				_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_WRITE]->action = WRITE;
-				_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_WRITE]->fd = fd;
-			}
-			else {
-				iocp_reset_ctx(_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_WRITE]);
-			}
-			_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_WRITE]->fn = fn;
+			WAWO_ASSERT(ctx != NULL);
+			_iocp_ctxs->flag |= F_WRITE;
+			iocp_reset_ctx(ctx);
+			ctx->fn = fn;
 
-			int wsasndrt = fn_wsasend((void*)&_iocp_ctxs->ol_ctxs[IOCP_OVERLAPPED_CTX_WRITE]->overlapped);
+			int wsasndrt = fn_wsasend((void*)&ctx->overlapped);
 			if (wsasndrt != wawo::OK) {
 				fn({AIO_WRITE, wsasndrt});
 			}

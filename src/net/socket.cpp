@@ -106,7 +106,7 @@ namespace wawo { namespace net {
 		ch_promise->set_success(rt);
 
 		if (WAWO_LIKELY(rt == wawo::OK)) {
-			begin_bind();
+			__IOCP_init();
 			begin_accept();
 		}
 
