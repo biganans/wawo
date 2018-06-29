@@ -141,9 +141,9 @@ namespace wawo { namespace net {
 			io_event_loop::deinit();
 		}
 	public:
-		virtual void do_poll() = 0;
-		virtual void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn) = 0;
-		virtual void do_unwatch(u8_t const& flag, int const& fd) = 0;
+		//virtual void do_poll() = 0;
+		//virtual void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn) = 0;
+		//virtual void do_unwatch(u8_t const& flag, int const& fd) = 0;
 	};
 }}
 #endif //

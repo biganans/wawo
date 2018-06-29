@@ -54,11 +54,11 @@ namespace wawo { namespace net {
 		}
 
 #ifdef WAWO_ENABLE_IOCP
-		inline void WSASend(int const& fd, fn_io_event_wsa_send const& fn_wsasend, fn_io_event const& fn) {
+		inline void IOCP_overlapped_call(u8_t const& flag, int const& fd, fn_overlapped_io_event const& fn_overlapped, fn_io_event const& fn) {
 			WAWO_ASSERT(fd > 0);
 			WWRP<io_event_loop> loop(this);
-			execute([loop, fd, fn_wsasend, fn]() -> void {
-				loop->do_WSASend(fd,fn_wsasend,fn);
+			execute([loop, flag, fd, fn_overlapped, fn]() -> void {
+				loop->do_IOCP_overlapped_call(flag,fd, fn_overlapped,fn);
 			});
 		}
 #endif
@@ -74,7 +74,7 @@ namespace wawo { namespace net {
 		virtual void do_unwatch(u8_t const& flag, int const& fd) = 0;
 
 #ifdef WAWO_ENABLE_IOCP
-		virtual void do_WSASend( int const& fd, fn_io_event_wsa_send const& fn_wsasend, fn_io_event const& fn) = 0;
+		virtual void do_IOCP_overlapped_call( u8_t const& flag, int const& fd, fn_overlapped_io_event const& fn_overlapped, fn_io_event const& fn) = 0;
 #endif
 	};
 

@@ -239,6 +239,11 @@ namespace wawo { namespace net { namespace impl {
 				_iocp_ctxs->ol_ctxs[ACCEPT]->fd = fd;
 				_iocp_ctxs->ol_ctxs[ACCEPT]->action_status = IDLE;
 
+				_iocp_ctxs->ol_ctxs[CONNECT] = iocp_make_ctx();
+				_iocp_ctxs->ol_ctxs[CONNECT]->action = CONNECT;
+				_iocp_ctxs->ol_ctxs[CONNECT]->fd = fd;
+				_iocp_ctxs->ol_ctxs[CONNECT]->action_status = IDLE;
+
 				m_ctxs.insert({ fd, _iocp_ctxs });
 				return;
 			}
@@ -344,22 +349,41 @@ namespace wawo { namespace net { namespace impl {
 		
 		}
 
-		void do_WSASend(int const& fd, fn_io_event_wsa_send const& fn_wsasend, fn_io_event const& fn) {
+		void do_IOCP_overlapped_call(u8_t const& flag, int const& fd, fn_overlapped_io_event const& fn_overlapped, fn_io_event const& fn) {
 			iocp_ctxs_map::iterator it = m_ctxs.find(fd);
 			WAWO_ASSERT(it != m_ctxs.end());
 			WWSP<iocp_ctxs> _iocp_ctxs = it->second;
 			
 			WAWO_ASSERT(_iocp_ctxs != NULL);
-			WWRP<iocp_overlapped_ctx>& ctx = _iocp_ctxs->ol_ctxs[WRITE];
+			
+			if (flag&IOE_WRITE) {
+				WWRP<iocp_overlapped_ctx>& ctx = _iocp_ctxs->ol_ctxs[WRITE];
 
-			WAWO_ASSERT(ctx != NULL);
-			_iocp_ctxs->flag |= F_WRITE;
-			iocp_reset_ctx(ctx);
-			ctx->fn = fn;
+				WAWO_ASSERT(ctx != NULL);
+				_iocp_ctxs->flag |= F_WRITE;
+				iocp_reset_ctx(ctx);
+				ctx->fn = fn;
 
-			int wsasndrt = fn_wsasend((void*)&ctx->overlapped);
-			if (wsasndrt != wawo::OK) {
-				fn({AIO_WRITE, wsasndrt});
+				int wsasndrt = fn_overlapped((void*)&ctx->overlapped);
+				if (wsasndrt != wawo::OK) {
+					fn({ AIO_WRITE, wsasndrt, NULL });
+				}
+				return;
+			}
+
+			if (flag&IOE_CONNECT) {
+				WWRP<iocp_overlapped_ctx>& ctx = _iocp_ctxs->ol_ctxs[CONNECT];
+
+				WAWO_ASSERT(ctx != NULL);
+				_iocp_ctxs->flag |= F_CONNECT;
+				iocp_reset_ctx(ctx);
+				ctx->fn = fn;
+
+				int wsasndrt = fn_overlapped((void*)&ctx->overlapped);
+				if (wsasndrt != wawo::OK) {
+					fn({ AIO_CONNECT, wsasndrt, NULL });
+				}
+				return;
 			}
 		}
 	};

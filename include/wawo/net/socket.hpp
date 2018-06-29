@@ -40,8 +40,7 @@ namespace wawo { namespace net {
 		S_BINDED,
 		S_LISTEN,
 		S_CONNECTING,// for async connect
-		S_CONNECTED,
-		
+		S_CONNECTED
 	};
 
 	struct socket_outbound_entry {
@@ -464,25 +463,15 @@ namespace wawo { namespace net {
 
 #ifdef WAWO_ENABLE_IOCP
 		inline void __IOCP_init() {
-			//if (!event_poller()->in_event_loop()) {
-			//	WWRP<socket> _so(this);
-			//	event_poller()->execute([_so]()->void {
-			//		_so->__IOCP_init();
-			//	});
-			//	return;
-			//}
 			event_poller()->watch(IOE_IOCP_INIT, fd(), std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1));
 		}
 
 		inline void __IOCP_deinit() {
-			//if (!event_poller()->in_event_loop()) {
-			//	WWRP<socket> _so(this);
-			//	event_poller()->execute([_so]()->void {
-			//		_so->__IOCP_deinit();
-			//	});
-			//	return;
-			//}
 			event_poller()->watch(IOE_IOCP_DEINIT, fd(), NULL);
+		}
+
+		inline void __WSAConnectEx(void* ol_) {
+
 		}
 
 		//non null, send
@@ -557,14 +546,7 @@ namespace wawo { namespace net {
 		}
 
 		inline void begin_WSASend() {
-			//if (!event_poller()->in_event_loop()) {
-			//	WWRP<socket> _so(this);
-			//	event_poller()->execute([_so]()->void {
-			//		_so->begin_WSASend();
-			//	});
-			//	return;
-			//}
-			event_poller()->WSASend( fd(), std::bind(&socket::__WSASendWithOL, WWRP<socket>(this), std::placeholders::_1),
+			event_poller()->IOCP_overlapped_call( IOE_WRITE, fd(), std::bind(&socket::__WSASendWithOL, WWRP<socket>(this), std::placeholders::_1),
 				std::bind(&socket::__WSASent, WWRP<socket>(this), std::placeholders::_1));
 		}
 #endif
