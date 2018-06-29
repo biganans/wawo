@@ -50,7 +50,7 @@ namespace wawo { namespace net { namespace impl {
 
 		inline WWRP<iocp_overlapped_ctx> iocp_make_ctx() {
 			WWRP<iocp_overlapped_ctx> ctx = wawo::make_ref<iocp_overlapped_ctx>();
-			::memset(&ctx->overlapped, 0, sizeof(WSAOVERLAPPED));
+			::memset(&ctx->overlapped, 0, sizeof(ctx->overlapped));
 			ctx->fd = -1;
 			ctx->parent_fd = -1;
 			ctx->action = -1;
@@ -90,7 +90,7 @@ namespace wawo { namespace net { namespace impl {
 			poller_abstract::init();
 
 			WAWO_ASSERT(m_handle == NULL);
-			m_handle = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (u_long) 0, 0);
+			m_handle = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (u_long) 0, 1);
 			WAWO_ALLOC_CHECK(m_handle, sizeof(m_handle));
 		}
 
@@ -132,19 +132,18 @@ namespace wawo { namespace net { namespace impl {
 			
 			if (WAWO_UNLIKELY(getOk==0)) {
 				ec = wawo::socket_get_last_errno();
-				if (ec == wawo::E_WAIT_TIMEOUT ) {
+				if (ec == wawo::E_WAIT_TIMEOUT ||
+					ec == wawo::E_ERROR_CONNECTION_ABORTED
+					) {
 					WAWO_DEBUG("[iocp]GetQueuedCompletionStatus return: %d", ec );
-					return;
-				}
-				if (ec == wawo::E_ERROR_CONNECTION_ABORTED) {
-					WAWO_DEBUG("[iocp]GetQueuedCompletionStatus return: %d", ec);
 					return;
 				}
 				//did not dequeue a completion packet from the completion port
 				if (lpol == NULL) { 
-					WAWO_DEBUG("[iocp]GetQueuedCompletionStatus return: %d, no packet dequeue", ec);
+					WAWO_DEBUG("[iocp]GetQueuedCompletionStatus return: %d, no packet dequeue", ec );
 					return;
 				}
+				WWRP<iocp_overlapped_ctx> _ctx(CONTAINING_RECORD(lpol, iocp_overlapped_ctx, overlapped));
 
 				WAWO_ASSERT(len == 0);
 				WAWO_ASSERT(ec != 0);
@@ -164,7 +163,7 @@ namespace wawo { namespace net { namespace impl {
 				DWORD dwTrans = 0;
 				DWORD dwFlags = 0;
 				if (FALSE == ::WSAGetOverlappedResult(ctx->fd, &ctx->overlapped, &dwTrans, FALSE, &dwFlags)) {
-					ec = ::WSAGetLastError();
+					ec = wawo::socket_get_last_errno();
 					WAWO_DEBUG("[#%d]dwTrans: %d, dwFlags: %d, update ec: %d", ctx->fd, dwTrans, dwFlags, ec);
 				}
 			}
@@ -214,22 +213,16 @@ namespace wawo { namespace net { namespace impl {
 		void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn) {
 
 			if (flag&IOE_IOCP_INIT) {
-				WAWO_DEBUG("[#%d][CreateIoCompletionPort] add", fd );
+				WAWO_DEBUG("[#%d][CreateIoCompletionPort]init", fd );
 				WAWO_ASSERT(m_handle != NULL);
 				HANDLE bindcp = ::CreateIoCompletionPort((HANDLE)fd, m_handle, (u_long)0, 0);
 				WAWO_ASSERT(bindcp == m_handle);
 
-				WWSP<iocp_ctxs> _iocp_ctxs;
 				iocp_ctxs_map::iterator it = m_ctxs.find(fd);
 				WAWO_ASSERT(it == m_ctxs.end());
-				_iocp_ctxs = wawo::make_shared<iocp_ctxs>();
+				WWSP<iocp_ctxs> _iocp_ctxs = wawo::make_shared<iocp_ctxs>();
 				_iocp_ctxs->fd = fd;
 				_iocp_ctxs->flag = 0;
-
-				_iocp_ctxs->ol_ctxs[ACCEPT] = iocp_make_ctx();
-				_iocp_ctxs->ol_ctxs[ACCEPT]->action = ACCEPT;
-				_iocp_ctxs->ol_ctxs[ACCEPT]->fd = fd;
-				_iocp_ctxs->ol_ctxs[ACCEPT]->action_status = IDLE;
 
 				_iocp_ctxs->ol_ctxs[READ] = iocp_make_ctx();
 				_iocp_ctxs->ol_ctxs[READ]->action = READ;
@@ -241,6 +234,11 @@ namespace wawo { namespace net { namespace impl {
 				_iocp_ctxs->ol_ctxs[WRITE]->fd = fd;
 				_iocp_ctxs->ol_ctxs[WRITE]->action_status = IDLE;
 
+				_iocp_ctxs->ol_ctxs[ACCEPT] = iocp_make_ctx();
+				_iocp_ctxs->ol_ctxs[ACCEPT]->action = ACCEPT;
+				_iocp_ctxs->ol_ctxs[ACCEPT]->fd = fd;
+				_iocp_ctxs->ol_ctxs[ACCEPT]->action_status = IDLE;
+
 				m_ctxs.insert({ fd, _iocp_ctxs });
 				return;
 			}
@@ -249,6 +247,7 @@ namespace wawo { namespace net { namespace impl {
 				iocp_ctxs_map::iterator it = m_ctxs.find(fd);
 				WAWO_ASSERT(it != m_ctxs.end());
 				m_ctxs.erase(it);
+				WAWO_DEBUG("[#%d][CreateIoCompletionPort]deinit", fd);
 				return;
 			}
 
@@ -266,7 +265,6 @@ namespace wawo { namespace net { namespace impl {
 				iocp_reset_accept_ctx(ctx);
 				ctx->fn = fn;
 
-				//listen
 				LPFN_ACCEPTEX lpfnAcceptEx = NULL;
 				GUID GuidAcceptEx = WSAID_ACCEPTEX;
 				DWORD dwbytes;
@@ -298,7 +296,7 @@ namespace wawo { namespace net { namespace impl {
 					fn({ AIO_ACCEPT, wawo::socket_get_last_errno(), NULL });
 					return;
 				}
-
+				//WAWO_INFO("[iocp]creating new fd: %d", newfd);
 				ctx->fd = newfd;
 				ctx->parent_fd = fd;
 

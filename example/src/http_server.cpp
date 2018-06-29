@@ -32,10 +32,10 @@ public:
 		resp->encode(outp);
 
 		WWRP<wawo::net::channel_future> f_write = ctx->write(outp);
-		f_write->add_listener([](WWRP<wawo::net::channel_future> const& f) {
-			WAWO_ASSERT(f->get() == wawo::OK);
+		//f_write->add_listener([](WWRP<wawo::net::channel_future> const& f) {
+		//	WAWO_ASSERT(f->get() == wawo::OK);
 			//WAWO_INFO("write rt: %d", f->get());
-		});
+		//});
 //		f_write->wait();
 
 		if (close_after_write) {

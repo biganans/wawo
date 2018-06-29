@@ -316,7 +316,6 @@ namespace wawo { namespace net {
 					WAWO_CLOSE_SOCKET(r.v.fd);
 				}
 				ec = wawo::OK;
-				begin_accept();
 			}
 #else
 			int ec = accept(accepted);
@@ -390,7 +389,7 @@ namespace wawo { namespace net {
 				break;
 				default:
 				{
-					WAWO_TRACE_SOCKET("[socket][%s]async read, pump error: %d, close", info().to_lencstr().cstr, ec);
+					WAWO_TRACE_SOCKET("[socket][%s]async read, error: %d, close", info().to_lencstr().cstr, ec);
 					ch_errno(ec);
 					ch_close();
 				}
@@ -400,11 +399,6 @@ namespace wawo { namespace net {
 		void __cb_async_flush(async_io_result const& r) {
 			(void)r;
 			socket::ch_flush_impl();
-		}
-
-		void __cb_async_error(async_io_result const& r) {
-			WAWO_WARN("[socket][%s]socket error: %d, close", info().to_lencstr().cstr, r.v.code);
-			ch_close();
 		}
 
 		inline void __rdwr_check() {
@@ -470,24 +464,24 @@ namespace wawo { namespace net {
 
 #ifdef WAWO_ENABLE_IOCP
 		inline void __IOCP_init() {
-			if (!event_poller()->in_event_loop()) {
-				WWRP<socket> _so(this);
-				event_poller()->execute([_so]()->void {
-					_so->__IOCP_init();
-				});
-				return;
-			}
+			//if (!event_poller()->in_event_loop()) {
+			//	WWRP<socket> _so(this);
+			//	event_poller()->execute([_so]()->void {
+			//		_so->__IOCP_init();
+			//	});
+			//	return;
+			//}
 			event_poller()->watch(IOE_IOCP_INIT, fd(), std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1));
 		}
 
 		inline void __IOCP_deinit() {
-			if (!event_poller()->in_event_loop()) {
-				WWRP<socket> _so(this);
-				event_poller()->execute([_so]()->void {
-					_so->__IOCP_deinit();
-				});
-				return;
-			}
+			//if (!event_poller()->in_event_loop()) {
+			//	WWRP<socket> _so(this);
+			//	event_poller()->execute([_so]()->void {
+			//		_so->__IOCP_deinit();
+			//	});
+			//	return;
+			//}
 			event_poller()->watch(IOE_IOCP_DEINIT, fd(), NULL);
 		}
 
@@ -506,8 +500,8 @@ namespace wawo { namespace net {
 		}
 
 		inline int __WSASend() {
+			WAWO_ASSERT(event_poller()->in_event_loop());
 			WAWO_ASSERT(m_ol_write != NULL );
-			//WAWO_ASSERT(m_outbound_entry_q.size() > 0);
 			while (m_outbound_entry_q.size()) {
 				WAWO_ASSERT(m_noutbound_bytes > 0);
 				socket_outbound_entry& entry = m_outbound_entry_q.front();
@@ -517,18 +511,20 @@ namespace wawo { namespace net {
 					continue;
 				}
 				if (m_wflag&WRITING) { return wawo::E_EALREADY; }
-				m_wflag |= WRITING;
-
 				WWRP<packet>& outlet = entry.data;
 				::memset(m_ol_write, 0, sizeof(*m_ol_write));
 				WSABUF wsabuf = { outlet->len(), (char*)outlet->begin() };
 				int wrt = ::WSASend(fd(), &wsabuf, 1, NULL, 0, m_ol_write, NULL);
 				if (wrt == SOCKET_ERROR) {
 					wrt = wawo::socket_get_last_errno();
-					if (wrt == wawo::E_ERROR_IO_PENDING) {
-						wrt = wawo::OK;
+					if (wrt != wawo::E_ERROR_IO_PENDING) {
+						WAWO_DEBUG("[#%d]socket __WSASend failed", fd(), wrt);
+						//ch_errno(wrt);
+						//ch_close();
+						return wrt;
 					}
 				}
+				m_wflag |= WRITING;
 				return wrt;
 			}
 			return wawo::OK;
@@ -536,9 +532,14 @@ namespace wawo { namespace net {
 
 		inline void __WSASent(async_io_result const& r) {
 			int const& len = r.v.len;
-			WAWO_ASSERT(m_outbound_entry_q.size());
-			WAWO_ASSERT(len > 0);
 			m_wflag &= ~WRITING;
+
+			if (len<0) {
+				ch_close();
+				return;
+			}
+
+			WAWO_ASSERT(m_outbound_entry_q.size());
 			WAWO_ASSERT(m_noutbound_bytes > 0);
 			socket_outbound_entry entry = m_outbound_entry_q.front();
 			WAWO_ASSERT(entry.data != NULL);
@@ -556,13 +557,13 @@ namespace wawo { namespace net {
 		}
 
 		inline void begin_WSASend() {
-			if (!event_poller()->in_event_loop()) {
-				WWRP<socket> _so(this);
-				event_poller()->execute([_so]()->void {
-					_so->begin_WSASend();
-				});
-				return;
-			}
+			//if (!event_poller()->in_event_loop()) {
+			//	WWRP<socket> _so(this);
+			//	event_poller()->execute([_so]()->void {
+			//		_so->begin_WSASend();
+			//	});
+			//	return;
+			//}
 			event_poller()->WSASend( fd(), std::bind(&socket::__WSASendWithOL, WWRP<socket>(this), std::placeholders::_1),
 				std::bind(&socket::__WSASent, WWRP<socket>(this), std::placeholders::_1));
 		}

@@ -8,7 +8,7 @@
 #include <wawo/net/address.hpp>
 #include <wawo/net/socket_api.hpp>
 
-#define WAWO_ENABLE_TRACE_SOCKET
+//#define WAWO_ENABLE_TRACE_SOCKET
 #ifdef WAWO_ENABLE_TRACE_SOCKET
 	#define WAWO_TRACE_SOCKET WAWO_INFO
 #else

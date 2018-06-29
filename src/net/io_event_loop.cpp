@@ -67,11 +67,8 @@ namespace wawo { namespace net {
 		io_event_loop_group::~io_event_loop_group() {}
 
 		void io_event_loop_group::init(int wpoller_count) {
-			int i = std::thread::hardware_concurrency();
-			int sys_i = i - wpoller_count;
-			if (sys_i <= 0) {
-				sys_i = 1;
-			}
+			int sys_i = std::thread::hardware_concurrency();
+			sys_i = 1;
 
 			while (sys_i-- > 0) {
 				WWRP<io_event_loop> o = make_poller_by_type(get_poll_type());
