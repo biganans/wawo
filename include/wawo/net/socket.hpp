@@ -288,7 +288,6 @@ namespace wawo { namespace net {
 				begin_read(WATCH_OPTION_INFINITE);
 			} else {
 				ch_errno(r.v.code);
-//				ch_fire_error();
 				ch_close();
 			}
 		}
@@ -580,6 +579,7 @@ namespace wawo { namespace net {
 					}
 				}
 				m_wflag |= WRITING;
+				return wawo::OK;
 			}
 			return wawo::OK;
 		}

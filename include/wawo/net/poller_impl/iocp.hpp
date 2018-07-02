@@ -208,13 +208,14 @@ namespace wawo { namespace net { namespace impl {
 					WAWO_ASSERT(ctx->parent_fd == -1);
 					DWORD dwTrans = 0;
 					DWORD dwFlags = 0;
-
-					int rt = ::setsockopt(ctx->fd, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT,NULL, 0);
-
 					BOOL ok = GetOverlappedResult((HANDLE)ctx->fd, &ctx->overlapped, &dwTrans, TRUE);
-
 					if (FALSE == ::WSAGetOverlappedResult(ctx->fd, &ctx->overlapped, &dwTrans, FALSE, &dwFlags)) {
-						int ec = wawo::socket_get_last_errno();
+						ec = wawo::socket_get_last_errno();
+					} else {
+						ec = ::setsockopt(ctx->fd, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
+						if (ec == SOCKET_ERROR) {
+							ec = wawo::socket_get_last_errno();
+						}
 					}
 
 					ctx->fn({ AIO_CONNECT, ec == 0 ? (int)len : ec, NULL });
