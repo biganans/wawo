@@ -273,21 +273,25 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_state == S_CONNECTING);
 			socket::end_connect();
 
+			int code = r.v.code;
+			if (code == wawo::OK && local_addr() == remote_addr()) {
+				code = wawo::E_WSAEADDRNOTAVAIL;
+			}
+
 			WAWO_ASSERT(m_dial_promise != NULL);
 			WWRP<channel_promise> _ch_p = m_dial_promise;
-
 			m_dial_promise = NULL;
 			try {
-				_ch_p->set_success(r.v.code);
+				_ch_p->set_success(code);
 			} catch (...) {
 			}
 
-			if ( WAWO_LIKELY(r.v.code == wawo::OK)) {
+			if ( WAWO_LIKELY(code == wawo::OK)) {
 				m_state = S_CONNECTED;
 				channel::ch_fire_connected();
 				begin_read(WATCH_OPTION_INFINITE);
 			} else {
-				ch_errno(r.v.code);
+				ch_errno(code);
 				ch_close();
 			}
 		}
