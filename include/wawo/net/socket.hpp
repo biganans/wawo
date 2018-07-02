@@ -16,6 +16,10 @@
 
 #include <wawo/net/io_event.hpp>
 
+#ifdef WAWO_ENABLE_IOCP
+	#include <mswsock.h>
+#endif
+
 #define WAWO_MAX_ASYNC_WRITE_PERIOD	(90000L) //90 seconds
 
 namespace wawo { namespace net {
@@ -65,6 +69,9 @@ namespace wawo { namespace net {
 		u64_t m_async_wt;
 		
 		fn_accepted_channel_initializer m_fn_accepted;
+		WWRP<channel_promise> m_dial_promise;
+		WWRP<packet> m_dial_packet;
+
 		std::queue<socket_outbound_entry> m_outbound_entry_q;
 		u32_t m_noutbound_bytes;
 
@@ -159,7 +166,7 @@ namespace wawo { namespace net {
 		int accept(std::vector<WWRP<socket>>& accepted);
 		int connect(address const& addr);
 
-		static WWRP<channel_future> dial(std::string const& addrurl, fn_dial_channel_initializer const& initializer) {
+		static WWRP<channel_future> dial(std::string const& addrurl, fn_dial_channel_initializer const& initializer ) {
 			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(nullptr);
 			socketaddr addr;
 			int rt = _parse_socketaddr_from_url(addrurl, addr);
@@ -169,15 +176,14 @@ namespace wawo { namespace net {
 			}
 
 			WWRP<socket> so = wawo::make_ref<socket>(addr.so_family, addr.so_type, addr.so_protocol);
-			WWRP<channel_future> dial_future = so->_dial(addr.so_address, initializer);
-			rt = dial_future->get();
-			WAWO_RETURN_V_IF_MATCH(dial_future, rt == wawo::OK);
+			WWRP<channel_future> dial_future = so->_dial(addr.so_address, initializer );
 
-			//clean res in case of failure
-			so->ch_close();
-
-			ch_promise->set_success(rt);
-			return ch_promise;
+			dial_future->add_listener([](WWRP<channel_future> f) {
+				if (f->get() != wawo::OK) {
+					f->channel()->ch_close();
+				}
+			});
+			return dial_future;
 		}
 
 		/*
@@ -262,32 +268,37 @@ namespace wawo { namespace net {
 			return rt;
 		}
 
-		inline void __cb_async_connected(async_io_result const& r) {
-			(void)r;
-			WAWO_ASSERT(is_nonblocking());
-			WAWO_ASSERT(m_state == S_CONNECTING);
-			m_state = S_CONNECTED;
-			socket::end_connect();
-			channel::ch_fire_connected();
-			begin_read(WATCH_OPTION_INFINITE);
-		}
-
-		inline void __cb_async_connect_error(async_io_result const& r) {
+		inline void __cb_async_connect(async_io_result const& r) {
 			WAWO_ASSERT(is_nonblocking());
 			WAWO_ASSERT(m_state == S_CONNECTING);
 			socket::end_connect();
 
-			ch_errno(r.v.code);
-			ch_fire_error();
-			ch_close();
+			WAWO_ASSERT(m_dial_promise != NULL);
+			WWRP<channel_promise> _ch_p = m_dial_promise;
+
+			m_dial_promise = NULL;
+			try {
+				_ch_p->set_success(r.v.code);
+			} catch (...) {
+			}
+
+			if ( WAWO_LIKELY(r.v.code == wawo::OK)) {
+				m_state = S_CONNECTED;
+				channel::ch_fire_connected();
+				begin_read(WATCH_OPTION_INFINITE);
+			} else {
+				ch_errno(r.v.code);
+//				ch_fire_error();
+				ch_close();
+			}
 		}
 
 		void __cb_async_accept( async_io_result const& r ) {
-			WAWO_ASSERT(r.op == AIO_ACCEPT);
 			WAWO_ASSERT(m_fn_accepted != NULL);
 			std::vector<WWRP<socket>> accepted;
 
 #ifdef WAWO_ENABLE_IOCP
+			WAWO_ASSERT(r.op == AIO_ACCEPT);
 			int ec = r.v.code;
 			if (ec > 0) {
 				try {
@@ -470,13 +481,70 @@ namespace wawo { namespace net {
 			event_poller()->watch(IOE_IOCP_DEINIT, fd(), NULL);
 		}
 
-		inline void __WSAConnectEx(void* ol_) {
+		inline void __IOCP_CALL_ConnectEx(fn_io_event const& cb_connected = NULL) {
+			__IOCP_init();
+			fn_io_event _fn_io = cb_connected;
+			if (_fn_io == NULL) {
+				_fn_io = std::bind(&socket::__cb_async_connect, WWRP<socket>(this), std::placeholders::_1);
+			}
+			event_poller()->IOCP_overlapped_call(IOE_CONNECT, fd(), std::bind(&socket::__IOCP_CALL_IMPL_ConnectEx, WWRP<socket>(this), std::placeholders::_1), _fn_io);
+		}
 
+		inline int __IOCP_CALL_IMPL_ConnectEx(void* ol_) {
+			WAWO_ASSERT(ol_ != NULL);
+			WSAOVERLAPPED* ol = (WSAOVERLAPPED*)ol_;
+
+			
+			GUID guid = WSAID_CONNECTEX;
+			LPFN_CONNECTEX fn_connectEx;
+			DWORD dwBytes;
+
+			int loadrt = ::WSAIoctl(fd(), SIO_GET_EXTENSION_FUNCTION_POINTER,
+				&guid, sizeof(guid),
+				&fn_connectEx, sizeof(fn_connectEx),
+				&dwBytes, NULL, NULL);
+
+			WAWO_RETURN_V_IF_NOT_MATCH(loadrt, loadrt == 0);
+			WAWO_ASSERT(!m_addr.is_null());
+
+			short soFamily;
+			if (m_family == F_PF_INET) {
+				soFamily = PF_INET;
+			}
+			else if (m_family == F_AF_INET) {
+				soFamily = AF_INET;
+			}
+			else if (m_family == F_AF_UNIX) {
+				soFamily = AF_UNIX;
+			} else {
+				return wawo::E_SOCKET_INVALID_FAMILY;
+			}
+
+			sockaddr_in addr;
+			::memset(&addr, 0,sizeof(addr));
+
+			addr.sin_family = soFamily;
+			addr.sin_port = m_addr.nport();
+			addr.sin_addr.s_addr = m_addr.nip();
+			int socklen = sizeof(addr);
+
+			BOOL connrt = fn_connectEx(fd(),(SOCKADDR*)(&addr), socklen,NULL, 0, NULL, ol);
+			if (connrt == TRUE) {
+				WAWO_DEBUG("[#%d]connectex return ok immediately", fd() );
+			} else {
+				int ec = wawo::socket_get_last_errno();
+				if (ec != wawo::E_ERROR_IO_PENDING) {
+					WAWO_DEBUG("[#%d]socket __connectEx failed", fd(), connrt);
+					return ec;
+				}
+			}
+			
+			return wawo::OK;
 		}
 
 		//non null, send
 		//null clear
-		inline int __WSASendWithOL( void* ol_ ) {
+		inline int __IOCP_CALL_IMPL_WSASend( void* ol_ ) {
 			WSAOVERLAPPED* ol = (WSAOVERLAPPED*)ol_;
 			if (ol == 0) {
 				WAWO_ASSERT(m_ol_write == 0);
@@ -484,11 +552,11 @@ namespace wawo { namespace net {
 				return wawo::OK;
 			} else {
 				m_ol_write = ol;
-				return __WSASend();
+				return __IOCP_CALL_MY_WSASend();
 			}
 		}
 
-		inline int __WSASend() {
+		inline int __IOCP_CALL_MY_WSASend() {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			WAWO_ASSERT(m_ol_write != NULL );
 			while (m_outbound_entry_q.size()) {
@@ -508,18 +576,15 @@ namespace wawo { namespace net {
 					wrt = wawo::socket_get_last_errno();
 					if (wrt != wawo::E_ERROR_IO_PENDING) {
 						WAWO_DEBUG("[#%d]socket __WSASend failed", fd(), wrt);
-						//ch_errno(wrt);
-						//ch_close();
 						return wrt;
 					}
 				}
 				m_wflag |= WRITING;
-				return wrt;
 			}
 			return wawo::OK;
 		}
 
-		inline void __WSASent(async_io_result const& r) {
+		inline void __IOCP_CALL_CB_WSASend(async_io_result const& r) {
 			int const& len = r.v.len;
 			m_wflag &= ~WRITING;
 
@@ -545,9 +610,9 @@ namespace wawo { namespace net {
 			ch_flush_impl();
 		}
 
-		inline void begin_WSASend() {
-			event_poller()->IOCP_overlapped_call( IOE_WRITE, fd(), std::bind(&socket::__WSASendWithOL, WWRP<socket>(this), std::placeholders::_1),
-				std::bind(&socket::__WSASent, WWRP<socket>(this), std::placeholders::_1));
+		inline void __IOCP_CALL_WSASend() {
+			event_poller()->IOCP_overlapped_call( IOE_WRITE, fd(), std::bind(&socket::__IOCP_CALL_IMPL_WSASend, WWRP<socket>(this), std::placeholders::_1),
+				std::bind(&socket::__IOCP_CALL_CB_WSASend, WWRP<socket>(this), std::placeholders::_1));
 		}
 #endif
 
@@ -579,21 +644,25 @@ namespace wawo { namespace net {
 
 			WAWO_ASSERT(m_state == S_CONNECTED || m_state == S_CONNECTING);
 			WAWO_ASSERT(is_nonblocking());
+			fn_io_event _fn_io = fn_connected;
+			if (_fn_io == NULL) {
+				_fn_io = std::bind(&socket::__cb_async_connect, WWRP<socket>(this), std::placeholders::_1);
+			}
 
 			WAWO_ASSERT(!(m_wflag&SHUTDOWN_WR));
 			WAWO_ASSERT(!(m_wflag&WATCH_WRITE));
 			m_wflag |= WATCH_WRITE;
 			TRACE_IOE("[socket][%s][begin_connect]watch IOE_WRITE", info().to_lencstr().cstr );
 
-			fn_io_event _fn_io= fn_connected;
-			if (_fn_io == NULL) {
-				_fn_io = std::bind(&socket::__cb_async_connected, WWRP<socket>(this), std::placeholders::_1);
-			}
+
 			event_poller()->watch( IOE_WRITE, fd(), _fn_io);
 		}
 
 		inline void end_connect() {
+#ifdef WAWO_ENABLE_IOCP
+#else
 			end_write();
+#endif
 		}
 
 		inline void begin_read(u8_t const& async_flag = WATCH_OPTION_INFINITE, fn_io_event const& fn_read = NULL) {
@@ -739,9 +808,9 @@ namespace wawo { namespace net {
 		{
 #ifdef WAWO_ENABLE_IOCP
 			if (m_ol_write == 0) {
-				begin_WSASend();
+				__IOCP_CALL_WSASend();
 			} else {
-				int rt = __WSASend();
+				int rt = __IOCP_CALL_MY_WSASend();
 				if (rt != wawo::OK) {
 					ch_errno(rt);
 					ch_close();
@@ -834,6 +903,8 @@ namespace wawo { namespace net {
 				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY);
 				return;
 			}
+
+			WAWO_ASSERT(m_dial_promise == NULL);
 
 #ifdef WAWO_ENABLE_IOCP
 			if (m_wflag&WRITING) {

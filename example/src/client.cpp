@@ -65,8 +65,12 @@ int main( int argc, char** argv ) {
 	WWRP<wawo::net::channel_future> f = wawo::net::socket::dial(url, [url](WWRP<wawo::net::channel> const& ch) {
 		WWRP<wawo::net::channel_handler_abstract> hello = wawo::make_ref<hello_handler>(url, 2000);
 		ch->pipeline()->add_last(hello);
+		}
+	);
+	//WAWO_ASSERT(f->get() == wawo::OK);
+	f->add_listener([url](WWRP<wawo::net::channel_future> const& f) {
+		WAWO_INFO("connect rt: %d, address: %s", f->get(), url.c_str());
 	});
-	WAWO_ASSERT(f->get() == wawo::OK);
 
 	app.run();
 	f->channel()->ch_close_future()->wait();

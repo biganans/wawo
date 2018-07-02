@@ -40,9 +40,8 @@ namespace wawo { namespace net {
 			m_state = S_CONNECTED;
 			return wawo::OK;
 		}
-
 		WAWO_ASSERT(rt<0);
-		if (is_nonblocking() && (IS_ERRNO_EQUAL_CONNECTING(WAWO_ABS(rt)))) {
+		if (is_nonblocking() && (IS_ERRNO_EQUAL_CONNECTING(rt))) {
 			m_state = S_CONNECTING;
 			return wawo::E_SOCKET_CONNECTING;
 		}
@@ -106,7 +105,9 @@ namespace wawo { namespace net {
 		ch_promise->set_success(rt);
 
 		if (WAWO_LIKELY(rt == wawo::OK)) {
+#ifdef WAWO_ENABLE_IOCP
 			__IOCP_init();
+#endif
 			begin_accept();
 		}
 
@@ -122,7 +123,7 @@ namespace wawo { namespace net {
 	WWRP<channel_future> socket::_dial(address const& addr, fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise) {
 		if (!event_poller()->in_event_loop()) {
 			WWRP<socket> _this(this);
-			event_poller()->execute([_this, initializer, addr, ch_promise]() ->void {
+			event_poller()->execute([_this, addr, initializer, ch_promise]() ->void {
 				_this->_dial(addr, initializer, ch_promise);
 			});
 			return ch_promise;
@@ -145,16 +146,24 @@ namespace wawo { namespace net {
 		if (rt == wawo::OK) {
 			ch_promise->set_success(wawo::OK);
 			channel::ch_fire_connected();
+#ifdef WAWO_ENABLE_IOCP
+			__IOCP_init();
+#endif
+			begin_read(WATCH_OPTION_INFINITE);
 			return ch_promise;
 		} else if (rt == wawo::E_SOCKET_CONNECTING) {
+			m_dial_promise = ch_promise;
 			TRACE_IOE("[socket_base][%s][async_connect]watch(IOE_WRITE)", info().to_lencstr().cstr);
-			ch_promise->set_success(wawo::OK);
+#ifdef WAWO_ENABLE_IOCP
+			socket::__IOCP_CALL_ConnectEx();
+#else
 			socket::begin_connect();
+#endif
 			return ch_promise;
 		} else {
 			ch_promise->set_success(rt);
 			channel::ch_errno(rt);
-			channel::ch_fire_error();
+//			channel::ch_fire_error();
 			channel::ch_close();
 			return ch_promise;
 		}
@@ -171,8 +180,8 @@ namespace wawo { namespace net {
 			int newfd = socket_base::accept(addr);
 
 			if(newfd<0 ) {
-				if ( WAWO_ABS(newfd) == EINTR ) continue;
-				if( !IS_ERRNO_EQUAL_WOULDBLOCK(WAWO_ABS(newfd)) ) {
+				if ( newfd == wawo::E_EINTR ) continue;
+				if( !IS_ERRNO_EQUAL_WOULDBLOCK(newfd) ) {
 					ec = newfd;
 				}
 				break;

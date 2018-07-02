@@ -349,7 +349,27 @@ namespace wawo { namespace net {
 			int socklength = sizeof(addr_in);
 			m_addr = addr;
 
+#ifdef WAWO_ENABLE_IOCP
+			if (m_protocol == P_TCP) {
+				//connectex requires the socket to be initially bound
+				struct sockaddr_in addr;
+				::memset(&addr, 0, sizeof(addr));
+				addr.sin_family = soFamily;
+				addr.sin_addr.s_addr = INADDR_ANY;
+				addr.sin_port = 0;
+				int bindrt = ::bind( m_fd, (SOCKADDR*)&addr_in, sizeof(addr_in));
+				if (bindrt != wawo::OK ) {
+					bindrt = wawo::socket_get_last_errno();
+					WAWO_DEBUG("bind failed: %d\n", bindrt );
+					return bindrt;
+				}
+				return wawo::E_EINPROGRESS;
+			} else {
+				WAWO_ASSERT(!"TODO");
+			}
+#else
 			return m_fn_connect(m_fd, reinterpret_cast<sockaddr*>(&addr_in), socklength);
+#endif
 		}
 
 		int socket_base::turnoff_nodelay() {

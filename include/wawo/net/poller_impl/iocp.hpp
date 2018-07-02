@@ -202,12 +202,26 @@ namespace wawo { namespace net { namespace impl {
 					ctx->fn({ AIO_WRITE, ec == 0 ? (int)len : ec, NULL });
 				}
 				break;
+				case CONNECT:
+				{
+					WAWO_ASSERT(ctx->fd > 0);
+					WAWO_ASSERT(ctx->parent_fd == -1);
+					DWORD dwTrans = 0;
+					DWORD dwFlags = 0;
+					BOOL ok = GetOverlappedResult((HANDLE)ctx->fd, &ctx->overlapped, &dwTrans, TRUE);
+
+					if (FALSE == ::WSAGetOverlappedResult(ctx->fd, &ctx->overlapped, &dwTrans, FALSE, &dwFlags)) {
+						int ec = wawo::socket_get_last_errno();
+					}
+
+					ctx->fn({ AIO_CONNECT, ec == 0 ? (int)len : ec, NULL });
+				}
+				break;
 				default:
 				{
 					WAWO_THROW("unknown io event flag");
 				}
 			}
-			
 		}
 
 		void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn) {
@@ -379,11 +393,10 @@ namespace wawo { namespace net { namespace impl {
 				iocp_reset_ctx(ctx);
 				ctx->fn = fn;
 
-				int wsasndrt = fn_overlapped((void*)&ctx->overlapped);
-				if (wsasndrt != wawo::OK) {
-					fn({ AIO_CONNECT, wsasndrt, NULL });
+				int connexRt = fn_overlapped((void*)&ctx->overlapped);
+				if (connexRt != wawo::OK) {
+					fn({ AIO_CONNECT, connexRt, NULL });
 				}
-				return;
 			}
 		}
 	};

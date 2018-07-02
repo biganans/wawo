@@ -99,7 +99,7 @@
 #endif
 
 #if WAWO_ISWIN
-	#define WAWO_ENABLE_IOCP
+	//#define WAWO_ENABLE_IOCP
 #elif WAWO_ISGNU
 	#define WAWO_ENABLE_EPOLL
 #endif

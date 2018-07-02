@@ -342,7 +342,7 @@ namespace wawo { namespace net { namespace socket_api {
 				}
 				else {
 					WAWO_ASSERT(r < 0);
-					if (IS_ERRNO_EQUAL_WOULDBLOCK(WAWO_ABS(r))) {
+					if (IS_ERRNO_EQUAL_WOULDBLOCK(r)) {
 						ec_o = wawo::E_CHANNEL_WRITE_BLOCK;
 					}
 					else {
@@ -375,7 +375,7 @@ namespace wawo { namespace net { namespace socket_api {
 					break;
 				}
 				else {
-					if (IS_ERRNO_EQUAL_WOULDBLOCK(WAWO_ABS(r))) {
+					if (IS_ERRNO_EQUAL_WOULDBLOCK(r)) {
 						ec_o = wawo::E_CHANNEL_READ_BLOCK;
 					}
 					else if (WAWO_ABS(r) == EINTR) {
