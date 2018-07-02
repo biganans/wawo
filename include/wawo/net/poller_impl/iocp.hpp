@@ -208,6 +208,9 @@ namespace wawo { namespace net { namespace impl {
 					WAWO_ASSERT(ctx->parent_fd == -1);
 					DWORD dwTrans = 0;
 					DWORD dwFlags = 0;
+
+					int rt = ::setsockopt(ctx->fd, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT,NULL, 0);
+
 					BOOL ok = GetOverlappedResult((HANDLE)ctx->fd, &ctx->overlapped, &dwTrans, TRUE);
 
 					if (FALSE == ::WSAGetOverlappedResult(ctx->fd, &ctx->overlapped, &dwTrans, FALSE, &dwFlags)) {
