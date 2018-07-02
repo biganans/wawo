@@ -23,7 +23,6 @@
 #define WAWO_MAX_ASYNC_WRITE_PERIOD	(90000L) //90 seconds
 
 namespace wawo { namespace net {
-
 	enum socket_flag {
 		SHUTDOWN_NONE = 0,
 		SHUTDOWN_RD = 1,
@@ -496,18 +495,20 @@ namespace wawo { namespace net {
 		inline int __IOCP_CALL_IMPL_ConnectEx(void* ol_) {
 			WAWO_ASSERT(ol_ != NULL);
 			WSAOVERLAPPED* ol = (WSAOVERLAPPED*)ol_;
-
 			
-			GUID guid = WSAID_CONNECTEX;
-			LPFN_CONNECTEX fn_connectEx;
-			DWORD dwBytes;
+			static bool fn_loaded = false;
+			static GUID guid = WSAID_CONNECTEX;
+			static LPFN_CONNECTEX fn_connectEx = 0;
+			static DWORD dwBytes;
+			if (fn_loaded == false) {
+				int loadrt = ::WSAIoctl(fd(), SIO_GET_EXTENSION_FUNCTION_POINTER,
+					&guid, sizeof(guid),
+					&fn_connectEx, sizeof(fn_connectEx),
+					&dwBytes, NULL, NULL);
+				WAWO_RETURN_V_IF_NOT_MATCH(loadrt, loadrt == 0);
+			}
 
-			int loadrt = ::WSAIoctl(fd(), SIO_GET_EXTENSION_FUNCTION_POINTER,
-				&guid, sizeof(guid),
-				&fn_connectEx, sizeof(fn_connectEx),
-				&dwBytes, NULL, NULL);
-
-			WAWO_RETURN_V_IF_NOT_MATCH(loadrt, loadrt == 0);
+			WAWO_ASSERT(fn_connectEx != 0);
 			WAWO_ASSERT(!m_addr.is_null());
 
 			short soFamily;

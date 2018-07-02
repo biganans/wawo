@@ -202,17 +202,6 @@ namespace wawo { namespace net {
 
 #ifdef WAWO_PLATFORM_WIN
 namespace wawo { namespace net {
-	class WinsockInit : public wawo::singleton<WinsockInit> {
-	public:
-		WinsockInit() {
-			WSADATA wsaData;
-			int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
-			WAWO_CONDITION_CHECK(result == 0);
-		}
-		~WinsockInit() {
-			WSACleanup();
-		}
-	};
-	static WinsockInit const& __wawo_winsock_init__ = *(WinsockInit::instance());
+	static WinsockHelper const& __wawo_winsock_init__ = *(WinsockHelper::instance());
 }}
 #endif
