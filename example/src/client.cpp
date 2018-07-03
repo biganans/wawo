@@ -58,23 +58,32 @@ public:
 };
 
 
-int main( int argc, char** argv ) {
-	wawo::app app ;
-
-	std::string url = "tcp://127.0.0.1:22310";
+void dial(std::string const& url) {
 	WWRP<wawo::net::channel_future> f = wawo::net::socket::dial(url, [url](WWRP<wawo::net::channel> const& ch) {
 		WWRP<wawo::net::channel_handler_abstract> hello = wawo::make_ref<hello_handler>(url, 2000);
 		ch->pipeline()->add_last(hello);
-		}
-	);
+	});
+
 	//WAWO_ASSERT(f->get() == wawo::OK);
 	f->add_listener([url](WWRP<wawo::net::channel_future> const& f) {
 		WAWO_INFO("connect rt: %d, address: %s", f->get(), url.c_str());
+		if (f->get() != wawo::OK) {
+			TASK_SCHEDULER->schedule([url]() {
+				dial(url);
+			});
+		}
 	});
 
-	app.run();
-	f->channel()->ch_close_future()->wait();
-	WAWO_WARN("[main]socket server exit done ...");
+	if (f->get() == wawo::OK) {
+		f->channel()->ch_close_future()->wait();
+	}
+}
 
+
+int main(int argc, char** argv) {
+	wawo::app app ;
+	dial("tcp://127.0.0.1:22310");
+	app.run();
+	WAWO_WARN("[main]socket server exit done ...");
 	return wawo::OK;
 }

@@ -161,9 +161,7 @@ namespace wawo { namespace net { namespace impl {
 			
 			if (WAWO_UNLIKELY(getOk==0)) {
 				ec = wawo::socket_get_last_errno();
-				if (ec == wawo::E_WAIT_TIMEOUT ||
-					ec == wawo::E_ERROR_CONNECTION_ABORTED
-					) {
+				if (ec == wawo::E_WAIT_TIMEOUT) {
 					WAWO_DEBUG("[iocp]GetQueuedCompletionStatus return: %d", ec );
 					return;
 				}
@@ -187,7 +185,7 @@ namespace wawo { namespace net { namespace impl {
 			}
 			WWRP<iocp_overlapped_ctx> ctx(CONTAINING_RECORD(ol, iocp_overlapped_ctx, overlapped));
 			WAWO_ASSERT(ctx != NULL);
-
+			
 			if ( WAWO_UNLIKELY(ec == wawo::E_ERROR_NETNAME_DELETED)) {
 				DWORD dwTrans = 0;
 				DWORD dwFlags = 0;

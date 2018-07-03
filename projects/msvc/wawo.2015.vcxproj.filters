@@ -73,9 +73,6 @@
     <Filter Include="Header Files\wawo\context">
       <UniqueIdentifier>{ce876d99-e4b2-4f98-bff9-340bc06919d3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\src\context">
-      <UniqueIdentifier>{2bfb8462-d0b8-4865-a8d8-90298ffc3923}</UniqueIdentifier>
-    </Filter>
     <Filter Include="3rd\stack_walker">
       <UniqueIdentifier>{932e0e04-f05e-4085-a689-c60a1088183d}</UniqueIdentifier>
     </Filter>

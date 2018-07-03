@@ -28,7 +28,7 @@ namespace wawo {
 		typename std::remove_reference<_Callable>::type _callee;
 
 		template<class... Args>
-		void call(Args&&... args) {
+		inline void call(Args&&... args) {
 			_callee(std::forward<Args>(args)...);
 		}
 	public:
@@ -78,7 +78,7 @@ namespace wawo {
 		}
 
 		template<class _Callable>
-		int bind(int const& id, _Callable&& evt_callee ) {
+		inline int bind(int const& id, _Callable&& evt_callee ) {
 			static_assert(std::is_class<std::remove_reference<_Callable>>::value, "_Callable must be lambda or std::function type");
 			WWRP<event_handler_base> evt_handler = make_event_handler<_Callable>(std::forward<_Callable>(evt_callee));
 			_insert_into_map( id, evt_handler);
@@ -87,7 +87,7 @@ namespace wawo {
 
 		template<class _Callable_Hint, class _Callable
 			, class = typename std::enable_if<std::is_convertible<_Callable, _Callable_Hint>::value>::type>
-		int bind(int const& id, _Callable&& evt_callee) {
+		inline int bind(int const& id, _Callable&& evt_callee) {
 			static_assert(std::is_class<std::remove_reference<_Callable>>::value, "_Callable must be lambda or std::function type");
 			WWRP<event_handler_base> evt_handler = make_event_handler<_Callable_Hint>(std::forward<std::remove_reference<_Callable>::type>(evt_callee));
 			_insert_into_map(id, evt_handler);
@@ -95,7 +95,7 @@ namespace wawo {
 		}
 
 		template<class _Callable_Hint, class _Fx, class... _Args>
-		int bind(int const& id, _Fx&& _func, _Args&&... _args) {
+		inline int bind(int const& id, _Fx&& _func, _Args&&... _args) {
 			WWRP<event_handler_base> evt_handler = make_event_handler<_Callable_Hint>(std::bind(std::forward<_Fx>(_func), std::forward<_Args>(_args)...));
 			_insert_into_map(id, evt_handler);
 			return evt_handler->id;
