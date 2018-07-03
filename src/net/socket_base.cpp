@@ -306,17 +306,13 @@ namespace wawo { namespace net {
 		}
 
 		int socket_base::turnoff_nodelay() {
-			lock_guard<spin_mutex> _lg(m_option_mutex);
 			if (!(m_option & OPTION_NODELAY)) {
 				return wawo::OK;
 			}
-
 			return set_options((m_option & ~OPTION_NODELAY));
 		}
 
 		int socket_base::turnon_nodelay() {
-			lock_guard<spin_mutex> _lg(m_option_mutex);
-
 			if ((m_option & OPTION_NODELAY)) {
 				return wawo::OK;
 			}
@@ -325,7 +321,6 @@ namespace wawo { namespace net {
 		}
 
 		int socket_base::turnon_nonblocking() {
-			lock_guard<spin_mutex> _lg(m_option_mutex);
 			if ((m_option & OPTION_NON_BLOCKING)) {
 				return wawo::OK;
 			}
@@ -334,7 +329,6 @@ namespace wawo { namespace net {
 		}
 
 		int socket_base::turnoff_nonblocking() {
-			lock_guard<spin_mutex> _lg(m_option_mutex);
 			if (!(m_option & OPTION_NON_BLOCKING)) {
 				return true;
 			}

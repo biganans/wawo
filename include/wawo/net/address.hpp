@@ -17,7 +17,7 @@ namespace wawo { namespace net {
 		F_MAX
 	};
 
-	static int system_family[F_MAX] = {
+	static USHORT system_family[F_MAX] = {
 		PF_INET,
 		AF_INET,
 		AF_INET6,
@@ -25,7 +25,7 @@ namespace wawo { namespace net {
 		PF_UNIX,
 		AF_UNSPEC,
 		AF_NETBIOS,
-		-1
+		0
 	};
 
 	enum s_type {
@@ -44,7 +44,7 @@ namespace wawo { namespace net {
 		SOCK_RAW,
 		SOCK_RDM,
 		SOCK_SEQPACKET,
-		-1
+		0
 	};
 
 	enum s_protocol {
@@ -69,7 +69,7 @@ namespace wawo { namespace net {
 		IPPROTO_SCTP,
 		IPPROTO_RAW,
 		IPPROTO_UDP,
-		-1
+		0
 	};
 
 	extern const char* protocol_str[P_MAX];

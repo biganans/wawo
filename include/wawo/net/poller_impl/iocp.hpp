@@ -180,7 +180,7 @@ namespace wawo { namespace net { namespace impl {
 
 			} else {
 				if (len == -1) {
-					WAWO_INFO("[iocp]GetQueuedCompletionStatus waken signal");
+					WAWO_DEBUG("[iocp]GetQueuedCompletionStatus waken signal");
 					return;
 				}
 				WAWO_ASSERT(lpol != NULL);

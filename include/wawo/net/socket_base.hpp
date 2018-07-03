@@ -157,7 +157,7 @@ namespace wawo { namespace net {
 		s_type m_type;
 		s_protocol m_protocol;
 
-		spin_mutex m_option_mutex;
+//		spin_mutex m_option_mutex;
 		int m_option;
 		address m_addr;
 		address m_bind_addr;
