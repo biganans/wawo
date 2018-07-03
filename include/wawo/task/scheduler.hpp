@@ -14,6 +14,7 @@
 //#ifdef WAWO_PLATFORM_WIN
 //	#define WAWO_SCHEDULER_USE_SPIN
 //#endif
+//#define WAWO_ENABLE_SEQUENCIAL_RUNNER
 
 
 namespace wawo { namespace task {
@@ -41,11 +42,13 @@ namespace wawo { namespace task {
 		volatile int m_state;
 		u8_t m_tasks_runner_wait_count;
 		u8_t m_max_concurrency;
-		u8_t m_max_seq_concurrency;
-
 		priority_task_queue* m_tasks_assigning;
 		runner_pool* m_runner_pool;
+
+#ifdef WAWO_ENABLE_SEQUENCIAL_RUNNER
+		u8_t m_max_seq_concurrency;
 		sequencial_runner_pool* m_sequencial_runner_pool;
+#endif
 
 	public:
 		enum task_manager_state {
@@ -55,8 +58,10 @@ namespace wawo { namespace task {
 		};
 
 
-		scheduler(u8_t const& max_runner_count = static_cast<u8_t>(std::thread::hardware_concurrency()),
-			u8_t const& max_sequential_runner = static_cast<u8_t>(WAWO_MAX2(1, static_cast<int>(std::thread::hardware_concurrency() >> 2)))
+		scheduler(u8_t const& max_runner_count = static_cast<u8_t>(std::thread::hardware_concurrency())
+#ifdef WAWO_ENABLE_SEQUENCIAL_RUNNER
+			,u8_t const& max_sequential_runner = static_cast<u8_t>(WAWO_MAX2(1, static_cast<int>(std::thread::hardware_concurrency() >> 2)))
+#endif
 		);
 
 		~scheduler();
@@ -72,10 +77,12 @@ namespace wawo { namespace task {
 			schedule(wawo::make_ref<task>(task_fn_), priority);
 		}
 
+#ifdef WAWO_ENABLE_SEQUENCIAL_RUNNER
 		inline void schedule(WWRP<sequencial_task> const& ta) {
 			WAWO_ASSERT(m_state == S_RUN);
 			m_sequencial_runner_pool->assign_task(ta);
 		}
+#endif
 
 		void set_concurrency( u8_t const& max ) {
 			unique_lock<scheduler_mutext_t> _lg( m_mutex );
@@ -84,13 +91,14 @@ namespace wawo { namespace task {
 			m_max_concurrency = max;
 		}
 
+#ifdef WAWO_ENABLE_SEQUENCIAL_RUNNER
 		void set_seq_concurrency(u8_t const& max) {
 			unique_lock<scheduler_mutext_t> _lg(m_mutex);
 
 			WAWO_ASSERT(m_state != S_RUN);
 			m_max_seq_concurrency = max;
 		}
-
+#endif
 		inline u8_t const& get_max_task_runner() const {return m_runner_pool->get_max_task_runner();}
 
 		int start();
@@ -125,7 +133,11 @@ namespace wawo { namespace task {
 				}
 
 				if (runner_flag == 0) {
-					while (!m_runner_pool->test_waiting_step1() || !m_sequencial_runner_pool->test_waiting_step1()) {
+					while (!m_runner_pool->test_waiting_step1() 
+#ifdef WAWO_ENABLE_SEQUENCIAL_RUNNER
+						|| !m_sequencial_runner_pool->test_waiting_step1()
+#endif						
+						) {
 						wawo::this_thread::no_interrupt_yield(50);
 						self_flag = 0;
 						runner_flag = 0;
@@ -134,7 +146,11 @@ namespace wawo { namespace task {
 					runner_flag = 1;
 				}
 				else if (runner_flag == 1) {
-					while (!m_runner_pool->test_waiting_step2() || !m_sequencial_runner_pool->test_waiting_step2()) {
+					while (!m_runner_pool->test_waiting_step2() 
+#ifdef WAWO_ENABLE_SEQUENCIAL_RUNNER
+						|| !m_sequencial_runner_pool->test_waiting_step2()
+#endif
+						) {
 						wawo::this_thread::no_interrupt_yield(50);
 						self_flag = 0;
 						runner_flag = 0;

@@ -10,19 +10,24 @@
 #define WAWO_TASK_VECTOR_INIT_SIZE 4096
 //#define WAWO_TASK_VECTOR_MONITOR_SIZE 128
 
-
 namespace wawo { namespace task {
 
 	//std::atomic<u64_t> task_abstract::s_auto_increment_id(0);
 
-	scheduler::scheduler( u8_t const& max_runner, u8_t const& max_sequential_runner) :
+	scheduler::scheduler( u8_t const& max_runner
+#ifdef WAWO_ENABLE_SEQUENCIAL_RUNNER
+		, u8_t const& max_sequential_runner
+#endif
+	):
 		m_mutex(),
 		m_condition(),
 		m_state( S_IDLE ),
 		m_max_concurrency(max_runner),
+		m_runner_pool(NULL)
+#ifdef WAWO_ENABLE_SEQUENCIAL_RUNNER
 		m_max_seq_concurrency(max_sequential_runner),
-		m_runner_pool(NULL),
-		m_sequencial_runner_pool(NULL)
+		,m_sequencial_runner_pool(NULL)
+#endif
 	{
 	}
 
@@ -77,23 +82,24 @@ namespace wawo { namespace task {
 		WAWO_ALLOC_CHECK( m_runner_pool, sizeof(runner_pool) ) ;
 		m_runner_pool->init(this);
 
+#ifdef WAWO_ENABLE_SEQUENCIAL_RUNNER
 		WAWO_ASSERT(m_max_seq_concurrency>0&& m_max_seq_concurrency<128);
 		m_sequencial_runner_pool = new sequencial_runner_pool(m_max_seq_concurrency);
 		WAWO_ALLOC_CHECK( m_sequencial_runner_pool, sizeof(sequencial_runner_pool) ) ;
 		m_sequencial_runner_pool->init();
+#endif
 	}
 
 	void scheduler::__on_stop() {
 		WAWO_ASSERT( m_state == S_EXIT );
-
 		WAWO_ASSERT( m_tasks_assigning->empty() );
 
 		m_runner_pool->deinit();
+#ifdef WAWO_ENABLE_SEQUENCIAL_RUNNER
 		m_sequencial_runner_pool->deinit();
-
+		WAWO_DELETE(m_sequencial_runner_pool);
+#endif
 		WAWO_DELETE( m_tasks_assigning );
-
 		WAWO_DELETE( m_runner_pool );
-		WAWO_DELETE( m_sequencial_runner_pool );
 	}
 }}//end of ns

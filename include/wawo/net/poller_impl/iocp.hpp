@@ -145,7 +145,7 @@ namespace wawo { namespace net { namespace impl {
 
 			WAWO_ASSERT(m_handle > 0);
 			DWORD len;
-			LPOVERLAPPED lpol;
+			LPOVERLAPPED ol;
 			int ii;
 			int ec = 0;
 
@@ -154,7 +154,7 @@ namespace wawo { namespace net { namespace impl {
 				dwWaitMill = INFINITE;
 			}
 			bool bLastWait = (dwWaitMill != 0);
-			BOOL getOk = ::GetQueuedCompletionStatus(m_handle, &len, (LPDWORD)&ii, (LPOVERLAPPED*)&lpol, dwWaitMill);
+			BOOL getOk = ::GetQueuedCompletionStatus(m_handle, &len, (LPDWORD)&ii, &ol, dwWaitMill);
 			if (bLastWait) {
 				_after_wait();
 			}
@@ -168,11 +168,11 @@ namespace wawo { namespace net { namespace impl {
 					return;
 				}
 				//did not dequeue a completion packet from the completion port
-				if (lpol == NULL) { 
+				if (ol == NULL) {
 					WAWO_DEBUG("[iocp]GetQueuedCompletionStatus return: %d, no packet dequeue", ec );
 					return;
 				}
-				WWRP<iocp_overlapped_ctx> _ctx(CONTAINING_RECORD(lpol, iocp_overlapped_ctx, overlapped));
+				//WWRP<iocp_overlapped_ctx> _ctx(CONTAINING_RECORD(ol, iocp_overlapped_ctx, overlapped));
 
 				WAWO_ASSERT(len == 0);
 				WAWO_ASSERT(ec != 0);
@@ -183,9 +183,9 @@ namespace wawo { namespace net { namespace impl {
 					WAWO_DEBUG("[iocp]GetQueuedCompletionStatus waken signal");
 					return;
 				}
-				WAWO_ASSERT(lpol != NULL);
+				WAWO_ASSERT(ol != NULL);
 			}
-			WWRP<iocp_overlapped_ctx> ctx(CONTAINING_RECORD(lpol, iocp_overlapped_ctx, overlapped));
+			WWRP<iocp_overlapped_ctx> ctx(CONTAINING_RECORD(ol, iocp_overlapped_ctx, overlapped));
 			WAWO_ASSERT(ctx != NULL);
 
 			if ( WAWO_UNLIKELY(ec == wawo::E_ERROR_NETNAME_DELETED)) {

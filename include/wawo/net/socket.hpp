@@ -65,7 +65,6 @@ namespace wawo { namespace net {
 		
 		fn_accepted_channel_initializer m_fn_accepted;
 		WWRP<channel_promise> m_dial_promise;
-		WWRP<packet> m_dial_packet;
 
 		std::queue<socket_outbound_entry> m_outbound_entry_q;
 		u32_t m_noutbound_bytes;
@@ -507,23 +506,10 @@ namespace wawo { namespace net {
 			WSAOVERLAPPED* ol = (WSAOVERLAPPED*)ol_;
 			WAWO_ASSERT(!m_addr.is_null());
 
-			short soFamily;
-			if (m_family == F_PF_INET) {
-				soFamily = PF_INET;
-			}
-			else if (m_family == F_AF_INET) {
-				soFamily = AF_INET;
-			}
-			else if (m_family == F_AF_UNIX) {
-				soFamily = AF_UNIX;
-			} else {
-				return wawo::E_SOCKET_INVALID_FAMILY;
-			}
-
 			sockaddr_in addr;
 			::memset(&addr, 0,sizeof(addr));
 
-			addr.sin_family = soFamily;
+			addr.sin_family = system_family[m_family];
 			addr.sin_port = m_addr.nport();
 			addr.sin_addr.s_addr = m_addr.nip();
 			int socklen = sizeof(addr);
@@ -928,6 +914,7 @@ namespace wawo { namespace net {
 				channel::ch_close_promise()->set_success(rt);
 				channel::ch_fire_closed();
 				channel::ch_close_future()->reset();
+				m_fn_accepted = NULL;
 				return;
 			}
 
