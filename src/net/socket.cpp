@@ -103,15 +103,16 @@ namespace wawo { namespace net {
 		}
 		rt = socket::listen(backlog);
 		ch_promise->set_success(rt);
+		m_fn_accepted = fn_accepted;
 
 		if (WAWO_LIKELY(rt == wawo::OK)) {
 #ifdef WAWO_ENABLE_IOCP
-			__IOCP_init();
-#endif
+			__IOCP_CALL_AcceptEx();
+#else
 			begin_accept();
+#endif
 		}
 
-		m_fn_accepted = fn_accepted;
 		return ch_promise;
 	}
 
@@ -163,7 +164,6 @@ namespace wawo { namespace net {
 		} else {
 			ch_promise->set_success(rt);
 			channel::ch_errno(rt);
-//			channel::ch_fire_error();
 			channel::ch_close();
 			return ch_promise;
 		}
@@ -199,9 +199,3 @@ namespace wawo { namespace net {
 		return ec ;
 	}
 }} //end of ns
-
-#ifdef WAWO_PLATFORM_WIN
-namespace wawo { namespace net {
-	static WinsockHelper const& __wawo_winsock_init__ = *(WinsockHelper::instance());
-}}
-#endif

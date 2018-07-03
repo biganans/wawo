@@ -4,8 +4,11 @@
 #include <wawo/mutex.hpp>
 #include <wawo/thread.hpp>
 
+#ifdef WAWO_PLATFORM_WIN
+	#include <wawo/net/winsock_helper.hpp>
+#endif
 /////////////////////////////////////////
-namespace __wawo__ {
+namespace wawo {
 
 	class __init__:
 		public wawo::singleton<__init__>
@@ -13,27 +16,14 @@ namespace __wawo__ {
 		DECLARE_SINGLETON_FRIEND(__init__);
 	protected:
 		__init__() {
-
-			/*
-			printf("sizeof(wawo::i8_t)=%d\n", sizeof(wawo::i8_t));
-			printf("sizeof(wawo::i16_t)=%d\n", sizeof(wawo::i16_t));
-			printf("sizeof(wawo::i32_t)=%d\n", sizeof(wawo::i32_t));
-			printf("sizeof(wawo::i64_t)=%d\n", sizeof(wawo::i64_t));
-
-			printf("sizeof(wawo::u8_t)=%d\n", sizeof(wawo::u8_t));
-			printf("sizeof(wawo::u16_t)=%d\n", sizeof(wawo::u16_t));
-			printf("sizeof(wawo::u32_t)=%d\n", sizeof(wawo::u32_t));
-			printf("sizeof(wawo::u64_t)=%d\n", sizeof(wawo::u64_t));
-			*/
-
-			WAWO_ASSERT(sizeof(wawo::i8_t) == 1);
-			WAWO_ASSERT(sizeof(wawo::u8_t) == 1);
-			WAWO_ASSERT(sizeof(wawo::i16_t) == 2);
-			WAWO_ASSERT(sizeof(wawo::u16_t) == 2);
-			WAWO_ASSERT(sizeof(wawo::i32_t) == 4);
-			WAWO_ASSERT(sizeof(wawo::u32_t) == 4);
-			WAWO_ASSERT(sizeof(wawo::i64_t) == 8);
-			WAWO_ASSERT(sizeof(wawo::u64_t) == 8);
+			static_assert(sizeof(wawo::i8_t) == 1, "assert sizeof(i8_t) failed");
+			static_assert(sizeof(wawo::u8_t) == 1, "assert sizeof(u8_t) failed");
+			static_assert(sizeof(wawo::i16_t) == 2, "assert sizeof(i16_t) failed");
+			static_assert(sizeof(wawo::u16_t) == 2, "assert sizeof(u16_t) failed");
+			static_assert(sizeof(wawo::i32_t) == 4, "assert sizeof(i32_t) failed");
+			static_assert(sizeof(wawo::u32_t) == 4, "assert sizeof(u32_t) failed");
+			static_assert(sizeof(wawo::i64_t) == 8, "assert sizeof(i64_t) failed");
+			static_assert(sizeof(wawo::u64_t) == 8, "assert sizeof(u64_t) failed");
 
 #if defined(_DEBUG_MUTEX) || defined(_DEBUG_SHARED_MUTEX)
 			//for mutex/lock deubg
@@ -43,6 +33,10 @@ namespace __wawo__ {
 #ifdef _DEBUG_THREAD_CREATE_JOIN
 			wawo::thread_debugger::instance()->init();
 #endif
+
+#ifdef WAWO_PLATFORM_WIN
+			wawo::net::winsock_helper::instance()->init();
+#endif
 		}
 		~__init__() {
 #ifdef _DEBUG_THREAD_CREATE_JOIN
@@ -51,6 +45,10 @@ namespace __wawo__ {
 			}
 			catch (...) {
 			}
+#endif
+
+#ifdef WAWO_PLATFORM_WIN
+			wawo::net::winsock_helper::instance()->deinit();
 #endif
 		}
 	};

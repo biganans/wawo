@@ -16,10 +16,6 @@
 
 #include <wawo/net/io_event.hpp>
 
-#ifdef WAWO_ENABLE_IOCP
-	#include <mswsock.h>
-#endif
-
 #define WAWO_MAX_ASYNC_WRITE_PERIOD	(90000L) //90 seconds
 
 namespace wawo { namespace net {
@@ -138,10 +134,6 @@ namespace wawo { namespace net {
 			_deinit();
 		}
 		
-
-#ifdef WAWO_ENABLE_IOCP
-
-#endif
 
 		int open();
 
@@ -483,6 +475,24 @@ namespace wawo { namespace net {
 			event_poller()->watch(IOE_IOCP_DEINIT, fd(), NULL);
 		}
 
+		inline void __IOCP_CALL_AcceptEx(fn_io_event const& cb_connected = NULL) {
+			__IOCP_init();
+			fn_io_event _fn_io = cb_connected;
+			if (_fn_io == NULL) {
+				_fn_io = std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1);
+			}
+			event_poller()->IOCP_overlapped_call(IOE_ACCEPT, fd(), std::bind(&socket::__IOCP_CALL_AcceptEx_IMPL, WWRP<socket>(this), std::placeholders::_1), _fn_io);
+		}
+
+		inline int __IOCP_CALL_AcceptEx_IMPL(void* ol_) {
+			(void)ol_;
+			return __IOCP_CALL_IMPL_WSASocket();
+		}
+
+		inline int __IOCP_CALL_IMPL_WSASocket() {
+			return ::WSASocketW( system_family[m_family], system_sock_type[m_type], system_protocol[m_protocol], NULL, 0, WSA_FLAG_OVERLAPPED);
+		}
+
 		inline void __IOCP_CALL_ConnectEx(fn_io_event const& cb_connected = NULL) {
 			__IOCP_init();
 			fn_io_event _fn_io = cb_connected;
@@ -495,20 +505,6 @@ namespace wawo { namespace net {
 		inline int __IOCP_CALL_IMPL_ConnectEx(void* ol_) {
 			WAWO_ASSERT(ol_ != NULL);
 			WSAOVERLAPPED* ol = (WSAOVERLAPPED*)ol_;
-			
-			static bool fn_loaded = false;
-			static GUID guid = WSAID_CONNECTEX;
-			static LPFN_CONNECTEX fn_connectEx = 0;
-			static DWORD dwBytes;
-			if (fn_loaded == false) {
-				int loadrt = ::WSAIoctl(fd(), SIO_GET_EXTENSION_FUNCTION_POINTER,
-					&guid, sizeof(guid),
-					&fn_connectEx, sizeof(fn_connectEx),
-					&dwBytes, NULL, NULL);
-				WAWO_RETURN_V_IF_NOT_MATCH(loadrt, loadrt == 0);
-			}
-
-			WAWO_ASSERT(fn_connectEx != 0);
 			WAWO_ASSERT(!m_addr.is_null());
 
 			short soFamily;
@@ -531,6 +527,8 @@ namespace wawo { namespace net {
 			addr.sin_port = m_addr.nport();
 			addr.sin_addr.s_addr = m_addr.nip();
 			int socklen = sizeof(addr);
+			LPFN_CONNECTEX fn_connectEx = (LPFN_CONNECTEX)winsock_helper::instance()->load_api_ex_address(API_CONNECT_EX);
+			WAWO_ASSERT(fn_connectEx != 0);
 
 			BOOL connrt = fn_connectEx(fd(),(SOCKADDR*)(&addr), socklen,NULL, 0, NULL, ol);
 			if (connrt == TRUE) {
@@ -631,11 +629,7 @@ namespace wawo { namespace net {
 			}
 
 			WAWO_ASSERT(is_listener());
-#ifdef WAWO_ENABLE_IOCP
-			event_poller()->watch(IOE_ACCEPT, fd(), std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1) );
-#else
 			event_poller()->watch(IOE_READ, fd(), std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1));
-#endif
 		}
 
 		inline void begin_connect( fn_io_event const& fn_connected = NULL ) {

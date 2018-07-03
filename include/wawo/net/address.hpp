@@ -6,27 +6,48 @@
 namespace wawo { namespace net {
 
 	enum s_family {
-		F_UNKNOWN,
 		F_PF_INET,
 		F_AF_INET,
 		F_AF_INET6,
 		F_AF_UNIX,
 		F_PF_UNIX,
 		F_AF_UNSPEC,
-		F_AF_NETBIOS
+		F_AF_NETBIOS,
+		F_UNKNOWN,
+		F_MAX
+	};
+
+	static int system_family[F_MAX] = {
+		PF_INET,
+		AF_INET,
+		AF_INET6,
+		AF_UNIX,
+		PF_UNIX,
+		AF_UNSPEC,
+		AF_NETBIOS,
+		-1
 	};
 
 	enum s_type {
-		T_UNKNOWN,
 		T_STREAM,
 		T_DGRAM,
 		T_RAW,
 		T_RDM,
-		T_SEQPACKET
+		T_SEQPACKET,
+		T_UNKNOWN,
+		T_MAX
+	};
+
+	static int system_sock_type[T_MAX] = {
+		SOCK_STREAM,
+		SOCK_DGRAM,
+		SOCK_RAW,
+		SOCK_RDM,
+		SOCK_SEQPACKET,
+		-1
 	};
 
 	enum s_protocol {
-		P_UNKNOWN,
 		P_TCP,
 		P_UDP,
 		P_ICMP,
@@ -35,7 +56,20 @@ namespace wawo { namespace net {
 		P_SCTP,
 		P_RAW,
 		P_WCP,
+		P_UNKNOWN,
 		P_MAX
+	};
+
+	static int system_protocol[P_MAX] = {
+		IPPROTO_TCP,
+		IPPROTO_UDP,
+		IPPROTO_ICMP,
+		IPPROTO_IGMP,
+		IPPROTO_L2TP,
+		IPPROTO_SCTP,
+		IPPROTO_RAW,
+		IPPROTO_UDP,
+		-1
 	};
 
 	extern const char* protocol_str[P_MAX];

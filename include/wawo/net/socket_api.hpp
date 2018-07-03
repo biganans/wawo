@@ -3,31 +3,15 @@
 
 #include <wawo/core.hpp>
 
+#ifdef WAWO_PLATFORM_WIN
+	#include <wawo/net/winsock_helper.hpp>
+#endif
+
 #ifdef WAWO_ENABLE_TRACE_SOCKET_API
 #define WAWO_ENABLE_TRACE_SOCKET_API WAWO_INFO
 #else
 #define WAWO_ENABLE_TRACE_SOCKET_API(...)
 #endif
-
-//#ifndef EWOULDBLOCK
-//#define EWOULDBLOCK WSAEWOULDBLOCK
-//#endif
-
-//#ifndef WSAEWOULDBLOCK
-//#define WSAEWOULDBLOCK EWOULDBLOCK
-//#endif
-
-//#ifndef EAGAIN //EAGAIN IS NOT ALWAYS THE SAME AS EWOULDBLOCK
-//#define EAGAIN EWOULDBLOCK
-//#endif
-
-//#ifndef EISCONN
-//#define EISCONN WSAEISCONN
-//#endif
-
-//#ifndef ENOTINITIALISED
-//#define ENOTINITIALISED WSANOTINITIALISED
-//#endif
 
 #define IS_ERRNO_EQUAL_WOULDBLOCK(_errno) ((_errno==wawo::E_EAGAIN)||(_errno==wawo::E_EWOULDBLOCK)||(_errno==wawo::E_WSAEWOULDBLOCK))
 #define IS_ERRNO_EQUAL_CONNECTING(_errno) ((_errno==wawo::E_EINPROGRESS)||(_errno==wawo::E_WSAEWOULDBLOCK))

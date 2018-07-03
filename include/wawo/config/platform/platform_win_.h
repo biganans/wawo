@@ -40,24 +40,4 @@ namespace wawo {
 	#define snprintf	sprintf_s
 #endif
 
-class WinsockHelper : public wawo::singleton<WinsockHelper> {
-	enum dynamic_loaded_fn {
-		F_ACCEPTEX,
-		F_CONNECTEX,
-		F_MAX
-	};
-	void* m_fn_address[F_MAX];
-public:
-	WinsockHelper() {
-		WSADATA wsaData;
-		int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
-		if (result == 0) {
-			throw 
-		}
-	}
-	~WinsockHelper() {
-		WSACleanup();
-	}
-};
-
 #endif

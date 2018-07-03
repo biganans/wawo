@@ -58,10 +58,12 @@ namespace wawo { namespace net {
 			m_fd(fd),
 			m_sbc(sbc)
 		{
+			WAWO_ASSERT(family < F_UNKNOWN);
+			WAWO_ASSERT(sockt < T_UNKNOWN);
+			WAWO_ASSERT(proto < P_UNKNOWN);
+
 			_socket_fn_init();
-
 			WAWO_ASSERT(fd > 0);
-
 			WAWO_ASSERT(m_sbc.rcv_size <= SOCK_RCV_MAX_SIZE && m_sbc.rcv_size >= SOCK_RCV_MIN_SIZE);
 			WAWO_ASSERT(m_sbc.snd_size <= SOCK_SND_MAX_SIZE && m_sbc.snd_size >= SOCK_SND_MIN_SIZE);
 
@@ -81,6 +83,10 @@ namespace wawo { namespace net {
 			m_fd(-1),
 			m_sbc(socket_buffer_cfgs[BT_MEDIUM])
 		{
+			WAWO_ASSERT(family < F_UNKNOWN);
+			WAWO_ASSERT(sockt < T_UNKNOWN);
+			WAWO_ASSERT(proto < P_UNKNOWN);
+
 			_socket_fn_init();
 
 			WAWO_ASSERT(m_sbc.rcv_size <= SOCK_RCV_MAX_SIZE && m_sbc.rcv_size >= SOCK_RCV_MIN_SIZE);
@@ -101,6 +107,10 @@ namespace wawo { namespace net {
 			m_fd(-1),
 			m_sbc(sbc)
 		{
+			WAWO_ASSERT(family < F_UNKNOWN);
+			WAWO_ASSERT(sockt < T_UNKNOWN);
+			WAWO_ASSERT(proto < P_UNKNOWN);
+
 			_socket_fn_init();
 			WAWO_ASSERT(m_sbc.rcv_size <= SOCK_RCV_MAX_SIZE && m_sbc.rcv_size >= SOCK_RCV_MIN_SIZE);
 			WAWO_ASSERT(m_sbc.snd_size <= SOCK_SND_MAX_SIZE && m_sbc.snd_size >= SOCK_SND_MIN_SIZE);
@@ -130,64 +140,14 @@ namespace wawo { namespace net {
 		int socket_base::open() {
 
 			WAWO_ASSERT(m_fd == -1);
-
-			int soFamily;
-			int soType;
-			int soProtocol;
-
-			if (m_family == F_PF_INET) {
-				soFamily = PF_INET;
-			}
-			else if (m_family == F_AF_INET) {
-				soFamily = AF_INET;
-			}
-			else if (m_family == F_AF_UNIX) {
-				soFamily = AF_UNIX;
-			}
-			else {
-				return wawo::E_SOCKET_INVALID_FAMILY;
-			}
-
-			if (m_type == T_STREAM) {
-				soType = SOCK_STREAM;
-			}
-			else if (m_type == T_DGRAM) {
-				soType = SOCK_DGRAM;
-			}
-			else if (m_type == T_RAW) {
-				soType = SOCK_RAW;
-			} else {
-				char message[128] = { 0 };
-				snprintf(message, 128, "unsupported socket type, %d", m_type);
-				WAWO_ASSERT(!"unsupported socket type", "type: %d", m_type);
-
-				return wawo::E_SOCKET_INVALID_TYPE;
-			}
-
-			if (m_protocol == P_TCP) {
-				soProtocol = IPPROTO_TCP;
-			} else if (m_protocol == P_UDP
-				|| m_protocol == P_WCP
-				) {
-				soProtocol = IPPROTO_UDP;
-			} else if (m_protocol == P_ICMP) {
-				soProtocol = IPPROTO_ICMP;
-			} else {
-				WAWO_ASSERT(!"unsupported ip protocol", "pro: %d", m_protocol);
-				return wawo::E_SOCKET_INVALID_TYPE;
-			}
-
-			int fd = m_fn_socket(soFamily, soType, soProtocol);
-			if (fd < 0) {
+			m_fd = m_fn_socket(system_family[m_family], system_sock_type[m_type], system_protocol[m_protocol]);
+			if (m_fd < 0) {
 				WAWO_ERR("[socket][%s]socket::socket() failed, %d", info().to_lencstr().cstr);
-				return fd;
+				return m_fd;
 			}
-			WAWO_ASSERT( fd>0 );
-
-			m_fd = fd;
+			WAWO_ASSERT(m_fd>0 );
 
 			WAWO_TRACE_SOCKET("[socket][%s]socket::socket() ok", info().to_lencstr().cstr );
-
 			int rt = set_options(m_option);
 
 			if (rt != wawo::OK) {
@@ -264,20 +224,6 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_sm == SM_NONE);
 			WAWO_ASSERT(m_bind_addr.is_null());
 
-			short soFamily;
-			if (m_family == F_PF_INET) {
-				soFamily = PF_INET;
-			}
-			else if (m_family == F_AF_INET) {
-				soFamily = AF_INET;
-			}
-			else if (m_family == F_AF_UNIX) {
-				soFamily = AF_UNIX;
-			}
-			else {
-				return wawo::E_SOCKET_INVALID_FAMILY;
-			}
-
 			if (m_protocol == wawo::net::P_WCP) {
 				int rt = reuse_addr();
 				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
@@ -287,7 +233,7 @@ namespace wawo { namespace net {
 			}
 
 			sockaddr_in addr_in;
-			addr_in.sin_family = soFamily;
+			addr_in.sin_family = system_family[m_family];
 			addr_in.sin_port = addr.nport();
 			addr_in.sin_addr.s_addr = addr.nip();
 
@@ -327,20 +273,6 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_sm == SM_NONE);
 			WAWO_ASSERT(m_addr.is_null());
 
-			short soFamily;
-			if (m_family == F_PF_INET) {
-				soFamily = PF_INET;
-			}
-			else if (m_family == F_AF_INET) {
-				soFamily = AF_INET;
-			}
-			else if (m_family == F_AF_UNIX) {
-				soFamily = AF_UNIX;
-			}
-			else {
-				return wawo::E_SOCKET_INVALID_FAMILY;
-			}
-
 			m_sm = SM_ACTIVE;
 			m_addr = addr;
 
@@ -349,7 +281,7 @@ namespace wawo { namespace net {
 				//connectex requires the socket to be initially bound
 				struct sockaddr_in addr_in;
 				::memset(&addr_in, 0, sizeof(addr_in));
-				addr_in.sin_family = soFamily;
+				addr_in.sin_family = system_family[m_family];
 				addr_in.sin_addr.s_addr = INADDR_ANY;
 				addr_in.sin_port = 0;
 				int bindrt = ::bind( m_fd, reinterpret_cast<sockaddr*>(&addr_in), sizeof(addr_in));
@@ -365,7 +297,7 @@ namespace wawo { namespace net {
 #else
 			sockaddr_in addr_in;
 			::memset(&addr_in, 0, sizeof(addr_in));
-			addr_in.sin_family = soFamily;
+			addr_in.sin_family = system_family[m_family];
 			addr_in.sin_port = addr.nport();
 			addr_in.sin_addr.s_addr = addr.nip();
 			int socklength = sizeof(addr_in);
@@ -375,7 +307,6 @@ namespace wawo { namespace net {
 
 		int socket_base::turnoff_nodelay() {
 			lock_guard<spin_mutex> _lg(m_option_mutex);
-
 			if (!(m_option & OPTION_NODELAY)) {
 				return wawo::OK;
 			}
@@ -395,11 +326,9 @@ namespace wawo { namespace net {
 
 		int socket_base::turnon_nonblocking() {
 			lock_guard<spin_mutex> _lg(m_option_mutex);
-
 			if ((m_option & OPTION_NON_BLOCKING)) {
 				return wawo::OK;
 			}
-
 			int op = set_options(m_option | OPTION_NON_BLOCKING);
 			return op;
 		}

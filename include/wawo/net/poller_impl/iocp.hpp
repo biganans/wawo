@@ -3,8 +3,7 @@
 
 #include <wawo/core.hpp>
 #include <wawo/net/poller_abstract.hpp>
-
-#include <mswsock.h>
+#include <wawo/net/winsock_helper.hpp>
 
 namespace wawo { namespace net { namespace impl {
 
@@ -40,9 +39,10 @@ namespace wawo { namespace net { namespace impl {
 		{
 			WSAOVERLAPPED overlapped;
 			int fd;
-			int parent_fd;
+			int accept_fd;
 			int action:24;
 			int action_status:8;
+			fn_overlapped_io_event fn_overlapped;
 			fn_io_event fn;
 			WSABUF wsabuf;
 			char buf[WAWO_IOCP_BUFFER_SIZE];
@@ -52,7 +52,7 @@ namespace wawo { namespace net { namespace impl {
 			WWRP<iocp_overlapped_ctx> ctx = wawo::make_ref<iocp_overlapped_ctx>();
 			::memset(&ctx->overlapped, 0, sizeof(ctx->overlapped));
 			ctx->fd = -1;
-			ctx->parent_fd = -1;
+			ctx->accept_fd = -1;
 			ctx->action = -1;
 			ctx->wsabuf = { WAWO_IOCP_BUFFER_SIZE, (char*)&ctx->buf };
 			return ctx;
@@ -111,6 +111,35 @@ namespace wawo { namespace net { namespace impl {
 			}
 		}
 
+		inline void _do_accept_ex(WWRP<iocp_overlapped_ctx>& ctx) {
+			WAWO_ASSERT(ctx != NULL);
+
+			//WAWO_INFO("[iocp]creating new fd: %d", newfd);
+			int newfd = ctx->fn_overlapped((void*)&ctx->overlapped);
+			if (newfd == -1) {
+				ctx->fn({ AIO_ACCEPT, wawo::socket_get_last_errno(), NULL });
+				return;
+			}
+			ctx->accept_fd = newfd;
+
+			LPFN_ACCEPTEX lpfnAcceptEx = (LPFN_ACCEPTEX)winsock_helper::instance()->load_api_ex_address(API_ACCEPT_EX);
+			WAWO_ASSERT(lpfnAcceptEx != 0);
+			BOOL acceptrt = lpfnAcceptEx(ctx->fd, newfd, ctx->buf, 0,
+				sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16,
+				NULL, &(ctx->overlapped));
+
+			if (!acceptrt)
+			{
+				int ec = wawo::socket_get_last_errno();
+				if (ec != wawo::E_ERROR_IO_PENDING) {
+					WAWO_CLOSE_SOCKET(newfd);
+					ctx->accept_fd = -1;
+					ctx->fn({ AIO_ACCEPT, ec, NULL });
+					return;
+				}
+			}
+			ctx->action_status = IN_OPERATION;
+		}
 	public:
 		void do_poll() {
 
@@ -172,23 +201,23 @@ namespace wawo { namespace net { namespace impl {
 				case ACCEPT:
 				{
 					WAWO_ASSERT(ctx->fd > 0);
-					WAWO_ASSERT(ctx->parent_fd > 0);
+					WAWO_ASSERT(ctx->accept_fd > 0);
 					WAWO_ASSERT(ctx->fn != nullptr);
-					int rt = ::setsockopt(ctx->fd, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&ctx->parent_fd, sizeof(ctx->parent_fd));
+					int rt = ::setsockopt(ctx->accept_fd, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&ctx->fd, sizeof(ctx->fd));
 					if (WAWO_LIKELY(rt == 0)) {
-						ctx->fn({ AIO_ACCEPT, ctx->fd, NULL });
+						ctx->fn({ AIO_ACCEPT, ctx->accept_fd, NULL });
 					} else {
-						WAWO_CLOSE_SOCKET(ctx->fd);
+						WAWO_CLOSE_SOCKET(ctx->accept_fd);
 					}
 					if (ctx->action_status != BLOCKED) {
-						do_watch(IOE_ACCEPT, ctx->parent_fd, ctx->fn);
+						_do_accept_ex(ctx);
 					}
 				}
 				break;
 				case READ:
 				{
 					WAWO_ASSERT(ctx->fd > 0);
-					WAWO_ASSERT(ctx->parent_fd == -1);
+					WAWO_ASSERT(ctx->accept_fd == -1);
 					ctx->fn({AIO_READ, ec==0?(int)len:ec, ctx->wsabuf.buf });
 					if (ctx->action_status != BLOCKED) {
 						do_watch(IOE_READ, ctx->fd, ctx->fn);
@@ -198,14 +227,14 @@ namespace wawo { namespace net { namespace impl {
 				case WRITE:
 				{
 					WAWO_ASSERT(ctx->fd > 0);
-					WAWO_ASSERT(ctx->parent_fd == -1);
+					WAWO_ASSERT(ctx->accept_fd == -1);
 					ctx->fn({ AIO_WRITE, ec == 0 ? (int)len : ec, NULL });
 				}
 				break;
 				case CONNECT:
 				{
 					WAWO_ASSERT(ctx->fd > 0);
-					WAWO_ASSERT(ctx->parent_fd == -1);
+					WAWO_ASSERT(ctx->accept_fd == -1);
 					DWORD dwTrans = 0;
 					DWORD dwFlags = 0;
 					BOOL ok = ::GetOverlappedResult((HANDLE)ctx->fd, &ctx->overlapped, &dwTrans, TRUE);
@@ -281,66 +310,6 @@ namespace wawo { namespace net { namespace impl {
 			}
 			WWSP<iocp_ctxs> _iocp_ctxs = it->second;
 
-			if (flag&IOE_ACCEPT) {
-				WAWO_ASSERT(_iocp_ctxs->ol_ctxs[ACCEPT] != NULL);
-				WWRP<iocp_overlapped_ctx>& ctx = _iocp_ctxs->ol_ctxs[ACCEPT];
-				_iocp_ctxs->flag |= F_ACCEPT;
-				iocp_reset_accept_ctx(ctx);
-				ctx->fn = fn;
-
-				LPFN_ACCEPTEX lpfnAcceptEx = NULL;
-				GUID GuidAcceptEx = WSAID_ACCEPTEX;
-				DWORD dwbytes;
-
-				int iResult = ::WSAIoctl(fd, SIO_GET_EXTENSION_FUNCTION_POINTER,
-					&GuidAcceptEx, sizeof(GuidAcceptEx),
-					&lpfnAcceptEx, sizeof(lpfnAcceptEx),
-					&dwbytes, NULL, NULL);
-
-				if (iResult == SOCKET_ERROR) {
-					fn({ AIO_ACCEPT, wawo::socket_get_last_errno(), NULL });
-					return;
-				}
-
-				WSAPROTOCOL_INFO proto_info;
-				int info_size = sizeof(proto_info);
-				int ret = ::getsockopt(fd, SOL_SOCKET, SO_PROTOCOL_INFOA, (char *)&proto_info, &info_size);
-				if (ret == SOCKET_ERROR) {
-					fn({ AIO_ACCEPT, wawo::socket_get_last_errno(), NULL });
-					return;
-				}
-
-				int so_family = proto_info.iAddressFamily;
-				int so_type = proto_info.iSocketType;
-				int so_proto = proto_info.iProtocol;
-
-				int newfd = ::WSASocketW(so_family, so_type, so_proto,NULL, 0, WSA_FLAG_OVERLAPPED);
-				if (newfd == -1) {
-					fn({ AIO_ACCEPT, wawo::socket_get_last_errno(), NULL });
-					return;
-				}
-				//WAWO_INFO("[iocp]creating new fd: %d", newfd);
-				ctx->fd = newfd;
-				ctx->parent_fd = fd;
-
-				BOOL acceptrt = lpfnAcceptEx(fd, newfd, ctx->buf, 0,
-					sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16,
-					NULL, &(ctx->overlapped));
-
-				if (!acceptrt)
-				{
-					int ec = wawo::socket_get_last_errno();
-					if ( ec != wawo::E_ERROR_IO_PENDING) {
-						WAWO_CLOSE_SOCKET(newfd);
-						ctx->fd = -1;
-						fn({AIO_ACCEPT, ec, NULL});
-						return;
-					}
-				}
-				ctx->action_status = IN_OPERATION;
-				return;
-			}
-
 			if (flag&IOE_READ) {
 				WWRP<iocp_overlapped_ctx>& ctx = _iocp_ctxs->ol_ctxs[READ];
 				WAWO_ASSERT(ctx != NULL);
@@ -364,7 +333,6 @@ namespace wawo { namespace net { namespace impl {
 
 		void do_unwatch(u8_t const& flag, int const& fd)
 		{
-		
 		}
 
 		void do_IOCP_overlapped_call(u8_t const& flag, int const& fd, fn_overlapped_io_event const& fn_overlapped, fn_io_event const& fn) {
@@ -386,6 +354,18 @@ namespace wawo { namespace net { namespace impl {
 				if (wsasndrt != wawo::OK) {
 					fn({ AIO_WRITE, wsasndrt, NULL });
 				}
+				return;
+			}
+
+			if (flag&IOE_ACCEPT) {
+				WWRP<iocp_overlapped_ctx>& ctx = _iocp_ctxs->ol_ctxs[ACCEPT];
+				WAWO_ASSERT(ctx != NULL);
+				_iocp_ctxs->flag |= F_ACCEPT;
+				iocp_reset_ctx(ctx);
+				ctx->fn = fn;
+				ctx->fn_overlapped = fn_overlapped;
+				ctx->fd = fd;
+				_do_accept_ex(ctx);
 				return;
 			}
 

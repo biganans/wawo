@@ -237,6 +237,7 @@
     <ClInclude Include="..\..\include\wawo\net\channel_invoker.hpp" />
     <ClInclude Include="..\..\include\wawo\net\channel_pipeline.hpp" />
     <ClInclude Include="..\..\include\wawo\net\wcp.hpp" />
+    <ClInclude Include="..\..\include\wawo\net\winsock_helper.hpp" />
     <ClInclude Include="..\..\include\wawo\packet.hpp" />
     <ClInclude Include="..\..\include\wawo\ringbuffer.hpp" />
     <ClInclude Include="..\..\include\wawo\security\cipher_abstract.hpp" />

@@ -9,10 +9,8 @@ namespace wawo {
 
 	template <class T>
 	class singleton {
-
 	public:
 		inline static T* instance() {
-
 			T* ins = s_instance.load(std::memory_order_acquire);
 			if ( WAWO_LIKELY(NULL != ins)) {
 				return ins;
@@ -26,8 +24,7 @@ namespace wawo {
 					ins = new T();
 					singleton<T>::schedule_for_destroy(singleton<T>::destroy_instance);
 					s_instance.store(ins, std::memory_order_release);
-				}
-				catch (...) {
+				} catch (...) {
 					//issue might be
 					delete ins;
 					WAWO_THROW("new T() | schedule_for_destroy failed!!!");
