@@ -556,6 +556,7 @@ namespace wawo { namespace net {
 			m_flag &= ~F_WRITING;
 
 			if (len<0) {
+				WAWO_DEBUG("[#%d][socket][iocp]WSASend failed: %d", fd(), len);
 				ch_close();
 				return;
 			}
@@ -570,8 +571,14 @@ namespace wawo { namespace net {
 				entry.ch_promise->set_success(wawo::OK);
 				m_outbound_entry_q.pop();
 			}
-			if ((m_noutbound_bytes==0) && m_flag&F_CLOSE_AFTER_WRITE_DONE) {
-				ch_close();
+			if (m_noutbound_bytes==0) {
+				if (WAWO_UNLIKELY(m_flag&F_WRITE_BLOCKED)) {
+					m_flag &= ~F_WRITE_BLOCKED;
+					channel::ch_fire_write_unblock();
+				}
+				if (m_flag&F_CLOSE_AFTER_WRITE_DONE) {
+					ch_close();
+				}
 				return;
 			}
 			ch_flush_impl();
@@ -716,8 +723,20 @@ namespace wawo { namespace net {
 				ch_promise->set_success(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
 				return;
 			}
-			if (m_noutbound_bytes + outlet->len() > buffer_cfg().snd_size ) {
+
+#ifdef WAWO_ENABLE_IOCP
+			if ((m_flag&F_WRITE_BLOCKED)) {
 				ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
+				return;
+			}
+#endif
+
+			if (m_noutbound_bytes + outlet->len()>buffer_cfg().snd_size ) {
+				ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
+#ifdef WAWO_ENABLE_IOCP
+				m_flag |= F_WRITE_BLOCKED;
+				channel::ch_fire_write_block();
+#endif
 				return;
 			}
 			m_outbound_entry_q.push({
@@ -774,14 +793,14 @@ namespace wawo { namespace net {
 				WAWO_ASSERT(m_outbound_entry_q.size() == 0);
 				if (m_flag&F_WATCH_WRITE) {
 					end_write();
-					m_wflag &= ~WRITE_BLOCKED;
+					m_flag &= ~F_WRITE_BLOCKED;
 					channel::ch_fire_write_unblock();
 				}
 				return;
 			} else if (_errno == wawo::E_CHANNEL_WRITE_BLOCK ) {
 				if ((m_flag&F_WATCH_WRITE) == 0) {
 					begin_write();
-					m_wflag |= WRITE_BLOCKED;
+					m_flag |= F_WRITE_BLOCKED;
 					channel::ch_fire_write_block();
 				} else {
 					//@TODO clear old before setup, this is just a quick fix
@@ -801,9 +820,9 @@ namespace wawo { namespace net {
 				ch_promise->set_success(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
 				return;
 			}
+			end_read();
 			m_flag |= F_SHUTDOWN_RD;
 			int rt = socket_base::shutdown(SHUT_RD);
-			end_read();
 			channel::ch_fire_read_shutdowned();
 			__rdwr_check();
 			ch_promise->set_success(rt);
@@ -816,9 +835,9 @@ namespace wawo { namespace net {
 				return;
 			}
 			ch_flush_impl();
+			end_write();
 			m_flag |= F_SHUTDOWN_WR;
 			int rt = socket_base::shutdown(SHUT_WR);
-			end_write();
 			channel::ch_fire_write_shutdowned();
 			__rdwr_check();
 			ch_promise->set_success(rt);

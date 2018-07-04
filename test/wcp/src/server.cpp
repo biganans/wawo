@@ -62,7 +62,7 @@ namespace wcp_test {
 					wawo::task::fn_task_void lambda = [sender_broker, ctx]() -> void {
 						sender_broker->begin_send(ctx);
 					};
-					WAWO_SCHEDULER->schedule(lambda);
+					WW_SCHEDULER->schedule(lambda);
 				}
 #endif
 			}
@@ -93,16 +93,12 @@ namespace wcp_test {
 
 				WWRP<wawo::net::channel_future> f_write = ctx->write(outp_CONTENT);
 				f_write->add_listener([](WWRP < wawo::net::channel_future> const& ch) {
-					
-				//go func();
-				
 				});
-
-
 
 				if (f_write->get() == wawo::OK) {
 					s_total += to_sent;
 				}
+
 				else if (f_write->get() == wawo::E_CHANNEL_WRITE_BLOCK) {
 					break;
 				}
@@ -193,7 +189,7 @@ namespace wcp_test {
 						};
 
 						ctx->ch->set_ctx(sender_broker);
-						WAWO_SCHEDULER->schedule(lambda);
+						WW_SCHEDULER->schedule(lambda);
 					}
 					break;
 					}
@@ -228,7 +224,6 @@ int main(int argc, char** argv) {
 	wawo::app _app;
 
 	WWRP<wcp_test::StreamNode> streamnode = wawo::make_ref<wcp_test::StreamNode>();
-
 	int rt = streamnode->start();
 	WAWO_ASSERT(rt == wawo::OK);
 

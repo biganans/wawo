@@ -167,5 +167,5 @@ namespace wawo { namespace task {
 	};
 }}
 
-#define TASK_SCHEDULER (wawo::task::scheduler::instance())
+#define WW_SCHEDULER (wawo::task::scheduler::instance())
 #endif

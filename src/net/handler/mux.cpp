@@ -95,10 +95,4 @@ namespace wawo { namespace net { namespace handler {
 		m_ch_ctx = NULL;
 	}
 
-	void mux::error(WWRP<channel_handler_context> const& ctx) {
-		m_ch_ctx = ctx;
-		invoke<fn_mux_evt_t>(E_MUX_CH_ERROR, WWRP<mux>(this));
-		ctx->fire_error();
-	}
-
 }}}

@@ -7,7 +7,6 @@ namespace wawo { namespace net {
 
 	VOID_FIRE_HANDLER_DEFAULT_IMPL_0(connected, channel_activity_handler_abstract)
 	VOID_FIRE_HANDLER_DEFAULT_IMPL_0(closed, channel_activity_handler_abstract)
-	VOID_FIRE_HANDLER_DEFAULT_IMPL_0(error, channel_activity_handler_abstract)
 	VOID_FIRE_HANDLER_DEFAULT_IMPL_0(read_shutdowned, channel_activity_handler_abstract)
 	VOID_FIRE_HANDLER_DEFAULT_IMPL_0(write_shutdowned, channel_activity_handler_abstract)
 	VOID_FIRE_HANDLER_DEFAULT_IMPL_0(write_block, channel_activity_handler_abstract)
@@ -42,11 +41,7 @@ namespace wawo { namespace net {
 		(void)ctx;
 	}
 	void channel_handler_tail::closed(WWRP<channel_handler_context > const& ctx) {
-		WAWO_DEBUG("[#%d]channel closed, no action", ctx->ch->ch_id());
-		(void)ctx;
-	}
-	void channel_handler_tail::error(WWRP<channel_handler_context> const& ctx) {
-		WAWO_DEBUG("[#%d]channel error, no action", ctx->ch->ch_id());
+		WAWO_DEBUG("[#%d][tail]channel closed, no action", ctx->ch->ch_id());
 		(void)ctx;
 	}
 	void channel_handler_tail::read_shutdowned(WWRP<channel_handler_context> const& ctx) {

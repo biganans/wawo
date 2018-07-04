@@ -23,7 +23,6 @@ namespace wawo { namespace net {
 	public:
 		virtual void connected(WWRP<channel_handler_context> const& ctx) ;
 		virtual void closed(WWRP<channel_handler_context > const& ctx);
-		virtual void error(WWRP<channel_handler_context> const& ctx);
 		virtual void read_shutdowned(WWRP<channel_handler_context> const& ctx);
 		virtual void write_shutdowned(WWRP<channel_handler_context> const& ctx);
 		virtual void write_block(WWRP<channel_handler_context> const& ctx);
@@ -81,7 +80,6 @@ namespace wawo { namespace net {
 	{
 		void connected(WWRP<channel_handler_context> const& ctx);
 		void closed(WWRP<channel_handler_context > const& ctx);
-		void error(WWRP<channel_handler_context> const& ctx);
 		void read_shutdowned(WWRP<channel_handler_context> const& ctx);
 		void write_shutdowned(WWRP<channel_handler_context> const& ctx);
 		void write_block(WWRP<channel_handler_context> const& ctx);

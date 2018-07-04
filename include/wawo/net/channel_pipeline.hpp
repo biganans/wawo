@@ -107,7 +107,6 @@ namespace wawo { namespace net {
 	protected:
 		PIPELINE_VOID_FIRE_VOID(connected)
 		PIPELINE_VOID_FIRE_VOID(closed)
-		PIPELINE_VOID_FIRE_VOID(error)
 		PIPELINE_VOID_FIRE_VOID(read_shutdowned)
 		PIPELINE_VOID_FIRE_VOID(write_shutdowned)
 		PIPELINE_VOID_FIRE_VOID(write_block)

@@ -14,7 +14,6 @@ namespace wawo { namespace net {
 	public:
 		virtual void fire_connected() = 0;
 		virtual void fire_closed() = 0 ;
-		virtual void fire_error() = 0 ;
 		virtual void fire_read_shutdowned() = 0;
 		virtual void fire_write_shutdowned() = 0;
 		virtual void fire_write_block() = 0;

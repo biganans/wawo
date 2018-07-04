@@ -174,7 +174,6 @@ namespace wawo { namespace net {
 
 		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, connected, CH_ACTIVITY, channel_activity_handler_abstract)
 		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, closed, CH_ACTIVITY, channel_activity_handler_abstract)
-		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, error, CH_ACTIVITY, channel_activity_handler_abstract)
 		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, read_shutdowned, CH_ACTIVITY, channel_activity_handler_abstract)
 		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, write_shutdowned, CH_ACTIVITY, channel_activity_handler_abstract)
 		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, write_block, CH_ACTIVITY, channel_activity_handler_abstract)

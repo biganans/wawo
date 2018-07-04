@@ -72,16 +72,16 @@ namespace wawo {
 
 		void init_net( u8_t const& c ) {
 			if (c != 0) {
-				TASK_SCHEDULER->set_concurrency(c);
+				WW_SCHEDULER->set_concurrency(c);
 			}
 
-			TASK_SCHEDULER->start();
+			WW_SCHEDULER->start();
 			wawo::net::io_event_loop_group::instance()->init(WAWO_DEFAULT_WCP_OBSERVER_COUNT);
 		}
 
 		void deinit_net() {
 			wawo::net::io_event_loop_group::instance()->deinit();
-			TASK_SCHEDULER->stop();
+			WW_SCHEDULER->stop();
 		}
 
 		void raise_signal( int signo ) {
