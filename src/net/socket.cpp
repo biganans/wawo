@@ -21,7 +21,7 @@ namespace wawo { namespace net {
 	}
 
 	int socket::open() {
-		WAWO_ASSERT(m_state == S_CLOSED);
+		WAWO_ASSERT(m_state==S_CLOSED);
 		int rt = socket_base::open();
 		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 		channel::ch_fire_opened();
@@ -30,7 +30,7 @@ namespace wawo { namespace net {
 	}
 
 	int socket::connect(address const& addr) {
-		if (!(m_state == S_OPENED || m_state == S_BINDED)) {
+		if (!(m_state==S_OPENED || m_state==S_BINDED)) {
 			return wawo::E_INVALID_STATE;
 		}
 		int rt= socket_base::connect(addr);
@@ -148,7 +148,7 @@ namespace wawo { namespace net {
 #ifdef WAWO_ENABLE_IOCP
 			__IOCP_init();
 #endif
-			begin_read(WATCH_OPTION_INFINITE);
+			begin_read(F_WATCH_OPTION_INFINITE);
 			return ch_promise;
 		} else if (rt == wawo::E_SOCKET_CONNECTING) {
 			m_dial_promise = ch_promise;

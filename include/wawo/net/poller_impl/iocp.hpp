@@ -104,7 +104,7 @@ namespace wawo { namespace net { namespace impl {
 
 		void interrupt_wait() {
 			WAWO_ASSERT(m_handle != NULL);
-			BOOL postrt = ::PostQueuedCompletionStatus(m_handle, -1,(DWORD)NULL,0 );
+			BOOL postrt = ::PostQueuedCompletionStatus(m_handle, (DWORD)-1,NULL,0 );
 			if (postrt == FALSE ) {
 				WAWO_ERR("PostQueuedCompletionStatus failed: %d", wawo::socket_get_last_errno());
 				return;

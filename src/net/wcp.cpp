@@ -1259,7 +1259,7 @@ _begin_send:
 				WAWO_ASSERT(op.wcb != NULL);
 
 				fn_io_event read = std::bind(&WCB::pump_packs, op.wcb);
-				op.wcb->so->begin_read(WATCH_OPTION_INFINITE, read);
+				op.wcb->so->begin_read(F_WATCH_OPTION_INFINITE, read);
 			}
 			break;
 			case OP_NONE:
@@ -1349,7 +1349,7 @@ _begin_send:
 		}
 
 		fn_io_event read = std::bind(&WCB::pump_packs, wcb);
-		wcb->so->begin_read(WATCH_OPTION_INFINITE, read);
+		wcb->so->begin_read(F_WATCH_OPTION_INFINITE, read);
 
 		return wcb->connect(wawo::net::address(*((sockaddr_in*)addr)));
 	}
@@ -1407,7 +1407,7 @@ _begin_send:
 		m_wcb_map.insert(WCBPair(fd, wcb));
 
 		fn_io_event read = std::bind(&WCB::pump_packs, wcb);
-		wcb->so->begin_read(WATCH_OPTION_INFINITE, read);
+		wcb->so->begin_read(F_WATCH_OPTION_INFINITE, read);
 
 		return wawo::OK;
 	}
