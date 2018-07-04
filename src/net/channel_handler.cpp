@@ -37,7 +37,7 @@ namespace wawo { namespace net {
 	}
 
 	void channel_handler_tail::connected(WWRP<channel_handler_context> const& ctx) {
-		WAWO_DEBUG("[#%d]channel connected, no action", ctx->ch->ch_id() );
+		WAWO_DEBUG("[#%d][tail]channel connected, no action", ctx->ch->ch_id() );
 		(void)ctx;
 	}
 	void channel_handler_tail::closed(WWRP<channel_handler_context > const& ctx) {
@@ -45,23 +45,23 @@ namespace wawo { namespace net {
 		(void)ctx;
 	}
 	void channel_handler_tail::read_shutdowned(WWRP<channel_handler_context> const& ctx) {
-		WAWO_DEBUG("[#%d]channel read_shutdowned, no action", ctx->ch->ch_id());
+		WAWO_DEBUG("[#%d][tail]channel read_shutdowned, no action", ctx->ch->ch_id());
 		(void)ctx;
 	}
 	void channel_handler_tail::write_shutdowned(WWRP<channel_handler_context> const& ctx) {
-		WAWO_DEBUG("[#%d]channel write_shutdowned, no action", ctx->ch->ch_id());
+		WAWO_DEBUG("[#%d][tail]channel write_shutdowned, no action", ctx->ch->ch_id());
 		(void)ctx;
 	}
 	void channel_handler_tail::write_block(WWRP<channel_handler_context> const& ctx) {
-		WAWO_DEBUG("[#%d]channel write_block, no action", ctx->ch->ch_id());
+		WAWO_DEBUG("[#%d][tail]channel write_block, no action", ctx->ch->ch_id());
 		(void)ctx;
 	}
 	void channel_handler_tail::write_unblock(WWRP<channel_handler_context> const& ctx) {
-		WAWO_DEBUG("[#%d]channel write_unblock, no action", ctx->ch->ch_id());
+		WAWO_DEBUG("[#%d][tail]channel write_unblock, no action", ctx->ch->ch_id());
 		(void)ctx;
 	}
 	void channel_handler_tail::read(WWRP<channel_handler_context> const& ctx, WWRP<packet> const& income) {
-		WAWO_ERR("we reach the end of the pipeline , please check your pipeline configure");
+		WAWO_ERR("[#%d][tail]we reach the end of the pipeline , please check your pipeline configure", ctx->ch->ch_id() );
 		(void)ctx;
 		(void)income;
 	}
