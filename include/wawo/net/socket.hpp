@@ -280,28 +280,35 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(r.op == AIO_ACCEPT);
 			int ec = r.v.code;
 			if (ec > 0) {
+				struct sockaddr_in addr_in;
+				char ipstr[INET6_ADDRSTRLEN] = {0};
+
+				socklen_t addr_len = sizeof(addr_in);
+				int rt = ::getpeername(r.v.fd, (struct sockaddr*)&addr_in, &addr_len);
+				if (rt == -1) {
+					WAWO_ERR("[#%d]getpeername failed: %d, close socket", r.v.fd, wawo::get_last_errno() );
+					WAWO_CLOSE_SOCKET(r.v.fd);
+					return;
+				}
+
+				WAWO_ASSERT(addr_in.sin_family == system_family[m_family]);
+				struct sockaddr_in *s = (struct sockaddr_in *)&addr_in;
+				unsigned short port = ::ntohs(s->sin_port);
+				::inet_ntop(system_family[m_family], &s->sin_addr, ipstr, sizeof ipstr);
+
+				address addr(ipstr, port);
 				try {
-					struct sockaddr_in addr_in;
-					char ipstr[INET6_ADDRSTRLEN] = {0};
-
-					socklen_t addr_len = sizeof(addr_in);
-					int rt = ::getpeername(r.v.fd, (struct sockaddr*)&addr_in, &addr_len);
-					if (rt == -1) {
-						WAWO_ERR("[#%d]getpeername failed: %d, close socket", r.v.fd, wawo::get_last_errno() );
-						WAWO_CLOSE_SOCKET(r.v.fd);
-						return;
-					}
-
-					WAWO_ASSERT(addr_in.sin_family == AF_INET);
-					struct sockaddr_in *s = (struct sockaddr_in *)&addr_in;
-					unsigned short port = ::ntohs(s->sin_port);
-					::inet_ntop(AF_INET, &s->sin_addr, ipstr, sizeof ipstr);
-
-					address addr(ipstr, port);
 					WWRP<socket> so = wawo::make_ref<socket>(r.v.fd, addr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
 					accepted.push_back(so);
+				} catch (std::exception& e) {
+					WAWO_ERR("[#%d]accept new fd exception, e: %s", fd(), e.what());
+					WAWO_CLOSE_SOCKET(r.v.fd);
+				} catch (wawo::exception& e) {
+					WAWO_ERR("[#%d]accept new fd exception: [%d]%s\n%s(%d) %s\n%s", fd(),
+						e.code, e.message, e.file, e.line, e.func, e.callstack);
+					WAWO_CLOSE_SOCKET(r.v.fd);
 				} catch (...) {
-					WAWO_ERR("[#%d]accept new fd failed: %d", fd(), wawo::get_last_errno());
+					WAWO_ERR("[#%d]accept new fd exception, e: %d", fd(),wawo::socket_get_last_errno());
 					WAWO_CLOSE_SOCKET(r.v.fd);
 				}
 				ec = wawo::OK;
@@ -556,8 +563,9 @@ namespace wawo { namespace net {
 			m_flag &= ~F_WRITING;
 
 			if (len<0) {
-				WAWO_DEBUG("[#%d][socket][iocp]WSASend failed: %d", fd(), len);
+				ch_errno(len);
 				ch_close();
+				WAWO_DEBUG("[#%d][socket][iocp]WSASend failed: %d", fd(), len);
 				return;
 			}
 
@@ -846,7 +854,7 @@ namespace wawo { namespace net {
 		void ch_close_impl(WWRP<channel_promise> const& ch_promise)
 		{
 			WAWO_ASSERT(event_poller()->in_event_loop());
-			if (m_flag==S_CLOSED) {
+			if (m_state==S_CLOSED) {
 				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY);
 				return;
 			}

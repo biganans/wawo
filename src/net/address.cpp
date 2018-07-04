@@ -110,7 +110,7 @@ namespace wawo { namespace net {
 				break;
 			default:
 				{
-					info.so_family = F_UNKNOWN;
+					info.so_family = F_AF_UNSPEC;
 					//WAWO_ASSERT( !"to impl" );
 				}
 				break;

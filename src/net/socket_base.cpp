@@ -58,7 +58,7 @@ namespace wawo { namespace net {
 
 			m_sbc(sbc)
 		{
-			WAWO_ASSERT(family < F_UNKNOWN);
+			WAWO_ASSERT(family < F_AF_UNSPEC);
 			WAWO_ASSERT(sockt < T_UNKNOWN);
 			WAWO_ASSERT(proto < P_UNKNOWN);
 
@@ -83,7 +83,7 @@ namespace wawo { namespace net {
 
 			m_sbc(socket_buffer_cfgs[BT_MEDIUM])
 		{
-			WAWO_ASSERT(family < F_UNKNOWN);
+			WAWO_ASSERT(family < F_AF_UNSPEC);
 			WAWO_ASSERT(sockt < T_UNKNOWN);
 			WAWO_ASSERT(proto < P_UNKNOWN);
 
@@ -107,7 +107,7 @@ namespace wawo { namespace net {
 
 			m_sbc(sbc)
 		{
-			WAWO_ASSERT(family < F_UNKNOWN);
+			WAWO_ASSERT(family < F_AF_UNSPEC);
 			WAWO_ASSERT(sockt < T_UNKNOWN);
 			WAWO_ASSERT(proto < P_UNKNOWN);
 

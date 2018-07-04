@@ -11,9 +11,8 @@ namespace wawo { namespace net {
 		F_AF_INET6,
 		F_AF_UNIX,
 		F_PF_UNIX,
-		F_AF_UNSPEC,
 		F_AF_NETBIOS,
-		F_UNKNOWN,
+		F_AF_UNSPEC,
 		F_MAX
 	};
 
@@ -23,9 +22,8 @@ namespace wawo { namespace net {
 		AF_INET6,
 		AF_UNIX,
 		PF_UNIX,
-		AF_UNSPEC,
 		AF_NETBIOS,
-		0
+		AF_UNSPEC
 	};
 
 	enum s_type {
@@ -167,7 +165,7 @@ namespace wawo { namespace net {
 	struct socketaddr {
 
 		socketaddr() :
-			so_family(F_UNKNOWN),
+			so_family(F_AF_UNSPEC),
 			so_type(T_UNKNOWN),
 			so_protocol(P_UNKNOWN),
 			so_address(0)
