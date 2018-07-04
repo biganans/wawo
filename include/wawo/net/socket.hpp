@@ -16,8 +16,6 @@
 
 #include <wawo/net/io_event.hpp>
 
-#define WAWO_MAX_ASYNC_WRITE_PERIOD	(90000L) //90 seconds
-
 namespace wawo { namespace net {
 	enum socket_flag {
 		SHUTDOWN_NONE = 0,
@@ -60,9 +58,6 @@ namespace wawo { namespace net {
 
 		byte_t* m_trb; //tmp read buffer
 
-		u64_t m_delay_wp;
-		u64_t m_async_wt;
-		
 		fn_accepted_channel_initializer m_fn_accepted;
 		WWRP<channel_promise> m_dial_promise;
 
@@ -83,8 +78,6 @@ namespace wawo { namespace net {
 			m_rflag(0),
 			m_wflag(0),
 			m_trb(NULL),
-			m_delay_wp(WAWO_MAX_ASYNC_WRITE_PERIOD),
-			m_async_wt(0),
 			m_noutbound_bytes(0)
 #ifdef WAWO_ENABLE_IOCP
 			,m_ol_write(0)
@@ -101,8 +94,6 @@ namespace wawo { namespace net {
 			m_rflag(0),
 			m_wflag(0),
 			m_trb(NULL),
-			m_delay_wp(WAWO_MAX_ASYNC_WRITE_PERIOD),
-			m_async_wt(0),
 			m_noutbound_bytes(0)
 #ifdef WAWO_ENABLE_IOCP
 			, m_ol_write(0)
@@ -118,8 +109,6 @@ namespace wawo { namespace net {
 			m_rflag(0),
 			m_wflag(0),
 			m_trb(NULL),
-			m_delay_wp(WAWO_MAX_ASYNC_WRITE_PERIOD),
-			m_async_wt(0),
 			m_noutbound_bytes(0)
 #ifdef WAWO_ENABLE_IOCP
 			, m_ol_write(0)
