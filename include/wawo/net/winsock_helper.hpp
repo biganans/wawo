@@ -10,6 +10,7 @@ namespace wawo { namespace net {
 	enum winsock_api_ex {
 		API_CONNECT_EX = 0,
 		API_ACCEPT_EX,
+		API_GET_ACCEPT_EX_SOCKADDRS,
 		API_MAX
 	};
 	
@@ -40,6 +41,7 @@ namespace wawo { namespace net {
 			}
 			WAWO_ASSERT(fn_connectEx != 0);
 			m_api_address[API_CONNECT_EX] = (void*)fn_connectEx;
+
 			guid = WSAID_ACCEPTEX;
 			LPFN_ACCEPTEX fn_acceptEx;
 			loadrt = ::WSAIoctl(fd, SIO_GET_EXTENSION_FUNCTION_POINTER,
@@ -52,6 +54,19 @@ namespace wawo { namespace net {
 			}
 			WAWO_ASSERT(fn_acceptEx != 0);
 			m_api_address[API_ACCEPT_EX] = (void*)fn_acceptEx;
+
+			guid = WSAID_GETACCEPTEXSOCKADDRS;
+			LPFN_GETACCEPTEXSOCKADDRS fn_getacceptexsockaddrs;
+			loadrt = ::WSAIoctl(fd, SIO_GET_EXTENSION_FUNCTION_POINTER,
+				&guid, sizeof(guid),
+				&fn_getacceptexsockaddrs, sizeof(fn_getacceptexsockaddrs),
+				&dwBytes, NULL, NULL);
+
+			if (loadrt != 0) {
+				WAWO_THROW("load address: WSAID_GETACCEPTEXSOCKADDRS failed");
+			}
+			WAWO_ASSERT(fn_getacceptexsockaddrs != 0);
+			m_api_address[API_GET_ACCEPT_EX_SOCKADDRS] = (void*)fn_getacceptexsockaddrs;
 
 			WAWO_CLOSE_SOCKET(fd);
 		}

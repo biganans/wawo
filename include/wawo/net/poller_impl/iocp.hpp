@@ -203,6 +203,9 @@ namespace wawo { namespace net { namespace impl {
 					WAWO_ASSERT(ctx->fn != nullptr);
 					int rt = ::setsockopt(ctx->accept_fd, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&ctx->fd, sizeof(ctx->fd));
 					if (WAWO_LIKELY(rt == 0)) {
+
+
+
 						ctx->fn({ AIO_ACCEPT, ctx->accept_fd, NULL });
 					} else {
 						WAWO_CLOSE_SOCKET(ctx->accept_fd);
