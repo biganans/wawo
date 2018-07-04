@@ -152,17 +152,16 @@ namespace wawo { namespace net {
 	class socket_base
 	{
 	protected:
+		int m_fd;
 		socket_mode m_sm; //
 		s_family	m_family;
 		s_type m_type;
 		s_protocol m_protocol;
 
-//		spin_mutex m_option_mutex;
 		int m_option;
 		address m_addr;
 		address m_bind_addr;
 
-		int m_fd;
 		socket_buffer_cfg m_sbc; //socket buffer setting
 
 		socket_api::fn_socket m_fn_socket;

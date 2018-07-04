@@ -46,6 +46,7 @@ namespace wawo { namespace net {
 	}
 
 		socket_base::socket_base(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
+			m_fd(fd),
 			m_sm(sm),
 			m_family(family),
 			m_type(sockt),
@@ -55,7 +56,6 @@ namespace wawo { namespace net {
 			m_addr(addr),
 			m_bind_addr(),
 
-			m_fd(fd),
 			m_sbc(sbc)
 		{
 			WAWO_ASSERT(family < F_UNKNOWN);
@@ -71,6 +71,7 @@ namespace wawo { namespace net {
 		}
 
 		socket_base::socket_base(s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
+			m_fd(-1),
 			m_sm(SM_NONE),
 
 			m_family(family),
@@ -80,7 +81,6 @@ namespace wawo { namespace net {
 			m_addr(),
 			m_bind_addr(),
 
-			m_fd(-1),
 			m_sbc(socket_buffer_cfgs[BT_MEDIUM])
 		{
 			WAWO_ASSERT(family < F_UNKNOWN);
@@ -95,6 +95,7 @@ namespace wawo { namespace net {
 		}
 
 		socket_base::socket_base(socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
+			m_fd(-1),
 			m_sm(SM_NONE),
 
 			m_family(family),
@@ -104,7 +105,6 @@ namespace wawo { namespace net {
 			m_addr(),
 			m_bind_addr(),
 
-			m_fd(-1),
 			m_sbc(sbc)
 		{
 			WAWO_ASSERT(family < F_UNKNOWN);
@@ -775,7 +775,7 @@ namespace wawo { namespace net {
 			ec_o = wawo::OK;
 			//WAWO_ASSERT(!"TOCHECK FOR WCP");
 			/*
-			if (m_rflag&SHUTDOWN_RD) {
+			if (m_flag&SHUTDOWN_RD) {
 				ec_o = wawo::E_SOCKET_RD_SHUTDOWN_ALREADY;
 				return 0;
 			}

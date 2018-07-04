@@ -26,8 +26,6 @@ namespace wawo { namespace net {
 		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 		channel::ch_fire_opened();
 		m_state = S_OPENED;
-		m_rflag = 0;
-		m_wflag = 0;
 		return rt;
 	}
 
