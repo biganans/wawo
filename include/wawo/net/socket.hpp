@@ -563,7 +563,9 @@ namespace wawo { namespace net {
 					m_outbound_entry_q.pop();
 					continue;
 				}
-				if (m_flag&F_WRITING) { return wawo::E_EALREADY; }
+				if (m_flag&F_WRITING) { 
+					return wawo::E_EALREADY;
+				}
 				WWRP<packet>& outlet = entry.data;
 				::memset(m_ol_write, 0, sizeof(*m_ol_write));
 				WSABUF wsabuf = { outlet->len(), (char*)outlet->begin() };
@@ -832,7 +834,8 @@ namespace wawo { namespace net {
 				if ((m_flag&F_WATCH_WRITE) == 0) {
 					begin_write();
 					m_flag |= F_WRITE_BLOCKED;
-					channel::ch_fire_write_block();
+					//we'll trigger this event in the next write call,if our buffer can not hold the outp pack len
+					//channel::ch_fire_write_block();
 				} else {
 					//@TODO clear old before setup, this is just a quick fix
 					end_write();

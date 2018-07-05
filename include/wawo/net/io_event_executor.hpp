@@ -96,6 +96,7 @@ namespace wawo { namespace net {
 				m_wait_t = W_NOWAIT;
 			}
 		}
+
 		//0,	NO WAIT
 		//-1,	INFINITE WAIT
 		//>0,	WAIT MICROSECOND

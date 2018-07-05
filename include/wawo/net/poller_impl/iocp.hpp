@@ -96,6 +96,7 @@ namespace wawo { namespace net { namespace impl {
 
 		void deinit() {
 			WAWO_ASSERT(m_handle != NULL);
+			interrupt_wait();
 			::CloseHandle(m_handle);
 			m_handle = NULL;
 
@@ -104,7 +105,7 @@ namespace wawo { namespace net { namespace impl {
 
 		void interrupt_wait() {
 			WAWO_ASSERT(m_handle != NULL);
-			BOOL postrt = ::PostQueuedCompletionStatus(m_handle, (DWORD)-1,NULL,0 );
+			BOOL postrt = ::PostQueuedCompletionStatus(m_handle, (DWORD)-17,NULL,0 );
 			if (postrt == FALSE ) {
 				WAWO_ERR("PostQueuedCompletionStatus failed: %d", wawo::socket_get_last_errno());
 				return;
@@ -174,7 +175,8 @@ namespace wawo { namespace net { namespace impl {
 				WAWO_ASSERT(ec != 0);
 				WAWO_INFO("[iocp]GetQueuedCompletionStatus failed, %d", wawo::socket_get_last_errno());
 			}
-			if (len == -1) {
+			if (len == -17) {
+				WAWO_ASSERT(ol == NULL);
 				WAWO_DEBUG("[iocp]GetQueuedCompletionStatus waken signal");
 				return;
 			}
@@ -218,13 +220,16 @@ namespace wawo { namespace net { namespace impl {
 					WAWO_ASSERT(ctx->accept_fd > 0);
 					WAWO_ASSERT(ctx->fn != nullptr);
 
-					int rt = ::setsockopt(ctx->accept_fd, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&ctx->fd, sizeof(ctx->fd));
-					if (WAWO_LIKELY(rt == 0)) {
-						ctx->fn({ AIO_ACCEPT, ctx->accept_fd, ctx->wsabuf.buf });
+					if (ec == wawo::OK) {
+						ec = ::setsockopt(ctx->accept_fd, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&ctx->fd, sizeof(ctx->fd));
 					}
-					else {
+
+					if (WAWO_LIKELY(ec == 0)) {
+						ctx->fn({ AIO_ACCEPT, ctx->accept_fd, ctx->wsabuf.buf });
+					} else {
 						WAWO_CLOSE_SOCKET(ctx->accept_fd);
 					}
+
 					if (ctx->action_status != BLOCKED) {
 						_do_accept_ex(ctx);
 					}
@@ -236,15 +241,12 @@ namespace wawo { namespace net { namespace impl {
 					WAWO_ASSERT(ctx->accept_fd == -1);
 					DWORD dwTrans = 0;
 					DWORD dwFlags = 0;
-					if (FALSE == ::WSAGetOverlappedResult(ctx->fd, &ctx->overlapped, &dwTrans, FALSE, &dwFlags)) {
-						ec = wawo::socket_get_last_errno();
-					} else {
+					if (ec == wawo::OK) {
 						ec = ::setsockopt(ctx->fd, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
 						if (ec == SOCKET_ERROR) {
 							ec = wawo::socket_get_last_errno();
 						}
 					}
-
 					ctx->fn({ AIO_CONNECT, ec == 0 ? (int)len : ec, NULL });
 				}
 				break;

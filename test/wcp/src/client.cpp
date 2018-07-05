@@ -52,7 +52,9 @@ public:
 		outp->write<wawo::u8_t>(wcp_test::C_TRANSFER_FILE);
 
 		WWRP < wawo::net::channel_future> f_write = ctx->write(outp);
-		WAWO_ASSERT(f_write->get() == wawo::OK);
+		f_write->add_listener([](WWRP<wawo::net::channel_future> const& f) {
+			WAWO_ASSERT(f->get() == wawo::OK);
+		});
 		transfer_state = wcp_test::C_RECEIVE_HEADER;
 	}
 
@@ -71,7 +73,9 @@ _CHECK:
 				outp->write<wawo::u8_t>(wcp_test::C_TRANSFER_FILE);
 
 				WWRP<wawo::net::channel_future> f_write = ctx->write(outp);
-				WAWO_ASSERT(f_write->get() == wawo::OK);
+				f_write->add_listener([](WWRP<wawo::net::channel_future> const& f) {
+					WAWO_ASSERT(f->get() == wawo::OK);
+				});
 				transfer_state = wcp_test::C_RECEIVE_HEADER;
 				goto _CHECK;
 			}

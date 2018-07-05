@@ -9,13 +9,15 @@ namespace wcp_test {
 	{
 		enum broker_state {
 			S_SEND_BEGIN,
-			S_SEND_HEADER,
+			S_HEADER_SENT,
+			S_HEADER_SEND_DONE,
 			S_SEND_CONTENT,
 			S_SEND_END
 		};
 
 		wawo::spin_mutex m_mutex;
 
+		wawo::u32_t s_blocked_at;
 		wawo::u32_t s_total;
 		wawo::byte_t* file_content;
 		wawo::u32_t file_len;
@@ -23,6 +25,7 @@ namespace wcp_test {
 		wawo::u32_t test_times;
 		wawo::u32_t now_times;
 
+		bool blocked;
 		int state;
 
 		void on_block(WWRP<wawo::net::channel_handler_context> const& ctx) {
@@ -32,7 +35,8 @@ namespace wcp_test {
 
 		void on_unblock(WWRP<wawo::net::channel_handler_context> const& ctx) {
 			WAWO_INFO("[wcp_test][%d]wr_unblock, begin async read", ctx->ch->ch_id() );
-//			begin_send(ctx);
+			blocked = false;
+			begin_send(ctx);
 			ctx->ch->begin_read();
 		}
 
@@ -40,14 +44,14 @@ namespace wcp_test {
 			wawo::lock_guard<wawo::spin_mutex> lg(m_mutex);
 
 			if (state == S_SEND_BEGIN) {
-				state = S_SEND_HEADER;
-			}
-
-			while (state == S_SEND_HEADER) {
 				_begin_send_header(ctx);
 			}
+			while (state != S_HEADER_SEND_DONE) {
+				wawo::this_thread::usleep(1);
+			}
 
-			WAWO_ASSERT(state == S_SEND_CONTENT);
+			WAWO_ASSERT(state == S_HEADER_SEND_DONE);
+			state = S_SEND_CONTENT;
 			_begin_send_content(ctx);
 
 			if (state == S_SEND_END) {
@@ -73,39 +77,46 @@ namespace wcp_test {
 			outp_BEGIN->write<wawo::u8_t>(wcp_test::C_TRANSFER_FILE_HEADER);
 			outp_BEGIN->write<wawo::u32_t>(file_len);
 			WWRP<wawo::net::channel_future> f_write = ctx->write(outp_BEGIN);
-			if(f_write->get() == wawo::OK) {
-				state = S_SEND_CONTENT;
-			}
+			state = S_HEADER_SENT;
+			f_write->add_listener([ b=WWRP<async_send_broker>(this) ](WWRP<wawo::net::channel_future> const& f) {
+				if (f->get() == wawo::OK) {
+					WAWO_ASSERT(b->state == S_HEADER_SENT);
+					b->state = S_HEADER_SEND_DONE;
+				}
+			});
 		}
 
 		void _begin_send_content(WWRP<wawo::net::channel_handler_context> const& ctx) {
+			WAWO_ASSERT(state == S_SEND_CONTENT);
 			do {
 				wawo::u32_t to_sent = 0;
 				if ((file_len - s_total) <= one_time_bytes) {
 					to_sent = (file_len - s_total);
-				}
-				else {
+				} else {
 					to_sent = one_time_bytes;
 				}
 
 				WWRP<wawo::packet> outp_CONTENT = wawo::make_ref<wawo::packet>();
 				outp_CONTENT->write(file_content + s_total, to_sent);
+				s_total += to_sent;
 
 				WWRP<wawo::net::channel_future> f_write = ctx->write(outp_CONTENT);
-				f_write->add_listener([](WWRP < wawo::net::channel_future> const& ch) {
+				f_write->add_listener([b=WWRP<async_send_broker>(this),t=s_total-to_sent](WWRP < wawo::net::channel_future> const& f) {
+					if (f->get() == wawo::OK) {
+					} else if (f->get() == wawo::E_CHANNEL_WRITE_BLOCK) {
+						//WE'LL GET A WRITE_BLOCK notification, then pause read
+						//rewind s_total
+						b->s_total = t;
+						if (t < b->s_total) {
+							b->s_total = t;
+						}
+						b->blocked = true;
+					}
+					else {
+						WAWO_ASSERT("write failed");
+					}
 				});
-
-				if (f_write->get() == wawo::OK) {
-					s_total += to_sent;
-				}
-
-				else if (f_write->get() == wawo::E_CHANNEL_WRITE_BLOCK) {
-					break;
-				}
-				else {
-					break;
-				}
-			} while (s_total < file_len);
+			} while ((s_total < file_len) && !blocked);
 
 			if (s_total == file_len) {
 				state = S_SEND_END;
@@ -183,6 +194,7 @@ namespace wcp_test {
 						sender_broker->file_len = m_file_len;
 						sender_broker->test_times = -1;
 						sender_broker->state = async_send_broker::S_SEND_BEGIN;
+						sender_broker->blocked = false;
 
 						wawo::task::fn_task_void lambda = [sender_broker, ctx]() -> void {
 							sender_broker->begin_send(ctx);
@@ -199,12 +211,7 @@ namespace wcp_test {
 		}
 
 		void connected(WWRP<wawo::net::channel_handler_context> const& ctx ) {
-			/*
-			wawo::lock_guard < wawo::spin_mutex > _lg(msg_queue_mutex);
-			WWRP<wawo::packet> income = wawo::make_ref<wawo::packet>();
-			income->write<wawo::u8_t>(wcp_test::C_TRANSFER_FILE);
-			msg_queue.push({ ctx,income });
-			*/
+			(void)ctx;
 		}
 
 		void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income) {
