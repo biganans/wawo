@@ -201,12 +201,25 @@ namespace wawo { namespace net { namespace impl {
 					WAWO_ASSERT(ctx->fd > 0);
 					WAWO_ASSERT(ctx->accept_fd > 0);
 					WAWO_ASSERT(ctx->fn != nullptr);
+					
 					int rt = ::setsockopt(ctx->accept_fd, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&ctx->fd, sizeof(ctx->fd));
 					if (WAWO_LIKELY(rt == 0)) {
+						/*
+						async_io_result r{ AIO_ACCEPT, ctx->accept_fd, ctx->wsabuf.buf };
 
+						SOCKADDR_IN* raddr_in = NULL;
+						SOCKADDR_IN* laddr_in = NULL;
+						int raddr_in_len = sizeof(SOCKADDR_IN);
+						int laddr_in_len = sizeof(SOCKADDR_IN);
 
-
-						ctx->fn({ AIO_ACCEPT, ctx->accept_fd, NULL });
+						LPFN_GETACCEPTEXSOCKADDRS fn_getacceptexsockaddrs = (LPFN_GETACCEPTEXSOCKADDRS)winsock_helper::instance()->load_api_ex_address(API_GET_ACCEPT_EX_SOCKADDRS);
+						WAWO_ASSERT(fn_getacceptexsockaddrs != 0);
+						fn_getacceptexsockaddrs(r.buf, 0,
+							sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16,
+							(LPSOCKADDR*)&laddr_in, &laddr_in_len,
+							(LPSOCKADDR*)&raddr_in, &raddr_in_len);
+						*/
+						ctx->fn({ AIO_ACCEPT, ctx->accept_fd, ctx->wsabuf.buf });
 					} else {
 						WAWO_CLOSE_SOCKET(ctx->accept_fd);
 					}

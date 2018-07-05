@@ -13,8 +13,13 @@
 #include <wawo/net/socket_base.hpp>
 #include <wawo/net/channel.hpp>
 #include <wawo/net/channel_future.hpp>
-
 #include <wawo/net/io_event.hpp>
+
+#ifdef WAWO_PLATFORM_WIN
+	#define DEFAULT_LISTEN_BACKLOG SOMAXCONN
+#else
+	#define DEFAULT_LISTEN_BACKLOG 128
+#endif
 
 namespace wawo { namespace net {
 	enum socket_flag {
@@ -137,7 +142,7 @@ namespace wawo { namespace net {
 		inline int turnoff_nodelay() { return socket_base::turnoff_nodelay(); }
 
 		int bind(address const& addr);
-		int listen(int const& backlog = 128);
+		int listen(int const& backlog = DEFAULT_LISTEN_BACKLOG);
 
 		int accept(std::vector<WWRP<socket>>& accepted);
 		int connect(address const& addr);
@@ -280,25 +285,43 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(r.op == AIO_ACCEPT);
 			int ec = r.v.code;
 			if (ec > 0) {
-				struct sockaddr_in addr_in;
-				char ipstr[INET6_ADDRSTRLEN] = {0};
 
+				SOCKADDR_IN* raddr_in = NULL;
+				SOCKADDR_IN* laddr_in = NULL;
+				int raddr_in_len = sizeof(SOCKADDR_IN);
+				int laddr_in_len = sizeof(SOCKADDR_IN);
+
+				LPFN_GETACCEPTEXSOCKADDRS fn_getacceptexsockaddrs = (LPFN_GETACCEPTEXSOCKADDRS)winsock_helper::instance()->load_api_ex_address(API_GET_ACCEPT_EX_SOCKADDRS);
+				WAWO_ASSERT(fn_getacceptexsockaddrs != 0);
+				fn_getacceptexsockaddrs(r.buf, 0,
+					sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16,
+					(LPSOCKADDR*)&laddr_in, &laddr_in_len,
+					(LPSOCKADDR*)&raddr_in, &raddr_in_len);
+
+				address raddr(*raddr_in);
+				address laddr(*laddr_in);
+
+				WAWO_ASSERT(laddr.port() == m_laddr.port());
+				WAWO_ASSERT(raddr_in->sin_family == system_family[m_family]);
+				/*
+				 * @note , if the connection closed/reset by remote side before accept, we may get zero remote addr
+				sockaddr_in addr_in;
+				char ipstr[INET6_ADDRSTRLEN] = { 0 };
 				socklen_t addr_len = sizeof(addr_in);
 				int rt = ::getpeername(r.v.fd, (struct sockaddr*)&addr_in, &addr_len);
 				if (rt == -1) {
-					WAWO_ERR("[#%d]getpeername failed: %d, close socket", r.v.fd, wawo::get_last_errno() );
+					WAWO_ERR("[#%d]getpeername failed: %d, close socket", r.v.fd, wawo::get_last_errno());
 					WAWO_CLOSE_SOCKET(r.v.fd);
 					return;
 				}
-
 				WAWO_ASSERT(addr_in.sin_family == system_family[m_family]);
 				struct sockaddr_in *s = (struct sockaddr_in *)&addr_in;
 				unsigned short port = ::ntohs(s->sin_port);
-				::inet_ntop(system_family[m_family], &s->sin_addr, ipstr, sizeof ipstr);
-
-				address addr(ipstr, port);
+				::inet_ntop(system_family[m_family], &s->sin_addr, ipstr, sizeof(ipstr));				
+				address _raddr(ipstr, port);
+				*/
 				try {
-					WWRP<socket> so = wawo::make_ref<socket>(r.v.fd, addr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
+					WWRP<socket> so = wawo::make_ref<socket>(r.v.fd, raddr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
 					accepted.push_back(so);
 				} catch (std::exception& e) {
 					WAWO_ERR("[#%d]accept new fd exception, e: %s", fd(), e.what());
@@ -489,14 +512,14 @@ namespace wawo { namespace net {
 		inline int __IOCP_CALL_IMPL_ConnectEx(void* ol_) {
 			WAWO_ASSERT(ol_ != NULL);
 			WSAOVERLAPPED* ol = (WSAOVERLAPPED*)ol_;
-			WAWO_ASSERT(!m_addr.is_null());
+			WAWO_ASSERT(!m_raddr.is_null());
 
 			sockaddr_in addr;
 			::memset(&addr, 0,sizeof(addr));
 
 			addr.sin_family = system_family[m_family];
-			addr.sin_port = m_addr.nport();
-			addr.sin_addr.s_addr = m_addr.nip();
+			addr.sin_port = m_raddr.nport();
+			addr.sin_addr.s_addr = m_raddr.nip();
 			int socklen = sizeof(addr);
 			LPFN_CONNECTEX fn_connectEx = (LPFN_CONNECTEX)winsock_helper::instance()->load_api_ex_address(API_CONNECT_EX);
 			WAWO_ASSERT(fn_connectEx != 0);

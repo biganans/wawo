@@ -159,8 +159,8 @@ namespace wawo { namespace net {
 		s_protocol m_protocol;
 
 		int m_option;
-		address m_addr;
-		address m_bind_addr;
+		address m_raddr;
+		address m_laddr;
 
 		socket_buffer_cfg m_sbc; //socket buffer setting
 
@@ -217,7 +217,7 @@ namespace wawo { namespace net {
 		inline bool is_listener() const { return m_sm == SM_LISTENER; }
 
 		inline int const& fd() const { return m_fd; }
-		inline address const& remote_addr() const { return m_addr; }
+		inline address const& remote_addr() const { return m_raddr; }
 		address local_addr() const;
 
 		inline socketinfo info() const {

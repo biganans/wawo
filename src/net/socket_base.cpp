@@ -53,8 +53,8 @@ namespace wawo { namespace net {
 			m_protocol(proto),
 			m_option(opt),
 
-			m_addr(addr),
-			m_bind_addr(),
+			m_raddr(addr),
+			m_laddr(),
 
 			m_sbc(sbc)
 		{
@@ -78,8 +78,8 @@ namespace wawo { namespace net {
 			m_type(sockt),
 			m_protocol(proto),
 			m_option(opt),
-			m_addr(),
-			m_bind_addr(),
+			m_raddr(),
+			m_laddr(),
 
 			m_sbc(socket_buffer_cfgs[BT_MEDIUM])
 		{
@@ -102,8 +102,8 @@ namespace wawo { namespace net {
 			m_type(sockt),
 			m_protocol(proto),
 			m_option(opt),
-			m_addr(),
-			m_bind_addr(),
+			m_raddr(),
+			m_laddr(),
 
 			m_sbc(sbc)
 		{
@@ -123,7 +123,7 @@ namespace wawo { namespace net {
 
 		address socket_base::local_addr() const {
 			if (is_listener()) {
-				return m_bind_addr;
+				return m_laddr;
 			}
 
 			struct sockaddr_in addr_in;
@@ -222,7 +222,7 @@ namespace wawo { namespace net {
 		int socket_base::bind(const address& addr) {
 
 			WAWO_ASSERT(m_sm == SM_NONE);
-			WAWO_ASSERT(m_bind_addr.is_null());
+			WAWO_ASSERT(m_laddr.is_null());
 
 			if (m_protocol == wawo::net::P_WCP) {
 				int rt = reuse_addr();
@@ -237,7 +237,7 @@ namespace wawo { namespace net {
 			addr_in.sin_port = addr.nport();
 			addr_in.sin_addr.s_addr = addr.nip();
 
-			m_bind_addr = addr;
+			m_laddr = addr;
 			return m_fn_bind(m_fd , reinterpret_cast<sockaddr*>(&addr_in), sizeof(addr_in));
 		}
 
@@ -271,10 +271,10 @@ namespace wawo { namespace net {
 	
 		int socket_base::connect(wawo::net::address const& addr ) {
 			WAWO_ASSERT(m_sm == SM_NONE);
-			WAWO_ASSERT(m_addr.is_null());
+			WAWO_ASSERT(m_raddr.is_null());
 
 			m_sm = SM_ACTIVE;
-			m_addr = addr;
+			m_raddr = addr;
 
 #ifdef WAWO_ENABLE_IOCP
 			if (m_protocol == P_TCP) {
@@ -763,7 +763,7 @@ namespace wawo { namespace net {
 			//if (m_state == S_CONNECTED) {
 			//	(void)addr;
 #ifdef _DEBUG
-			//	WAWO_ASSERT( addr == m_addr );
+			//	WAWO_ASSERT( addr == m_raddr );
 #endif
 			//	return m_fn_send(m_fd, buffer, len, ec_o, flag);
 			//}
@@ -782,20 +782,20 @@ namespace wawo { namespace net {
 
 			if (m_state == S_CONNECTED) {
 #ifdef _DEBUG
-				WAWO_ASSERT(!m_addr.is_null());
+				WAWO_ASSERT(!m_raddr.is_null());
 #endif
-				addr_o = m_addr;
+				addr_o = m_raddr;
 				return m_fn_recv(m_fd, buffer_o, size, ec_o, 0);
 			}
 			*/
 			return m_fn_recvfrom(m_fd, buffer_o, size, addr_o, ec_o,0);
 		}
 
-		u32_t socket_base::send(byte_t const* const buffer, u32_t const& length, int& ec_o, int const& flag) {
+		u32_t socket_base::send(byte_t const* const buffer, u32_t const& len, int& ec_o, int const& flag) {
 			WAWO_ASSERT(buffer != NULL);
-			WAWO_ASSERT(length > 0);
+			WAWO_ASSERT(len > 0);
 
-			return m_fn_send(m_fd, buffer, length, ec_o, flag);
+			return m_fn_send(m_fd, buffer, len, ec_o, flag);
 		}
 
 		u32_t socket_base::recv(byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag) {
