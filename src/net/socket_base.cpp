@@ -67,7 +67,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_sbc.rcv_size <= SOCK_RCV_MAX_SIZE && m_sbc.rcv_size >= SOCK_RCV_MIN_SIZE);
 			WAWO_ASSERT(m_sbc.snd_size <= SOCK_SND_MAX_SIZE && m_sbc.snd_size >= SOCK_SND_MIN_SIZE);
 
-			WAWO_TRACE_SOCKET("[socket][%s]socket::socket(), address: %p", info().to_lencstr().cstr, this);
+			WAWO_TRACE_SOCKET("[socket_base][%s]socket::socket(), address: %p", info().to_lencstr().cstr, this);
 		}
 
 		socket_base::socket_base(s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
@@ -91,7 +91,7 @@ namespace wawo { namespace net {
 
 			WAWO_ASSERT(m_sbc.rcv_size <= SOCK_RCV_MAX_SIZE && m_sbc.rcv_size >= SOCK_RCV_MIN_SIZE);
 			WAWO_ASSERT(m_sbc.snd_size <= SOCK_SND_MAX_SIZE && m_sbc.snd_size >= SOCK_SND_MIN_SIZE);
-			WAWO_TRACE_SOCKET("[socket][%s]socket::socket(), dummy socket, address: %p", info().to_lencstr().cstr, this);
+			WAWO_TRACE_SOCKET("[socket_base][%s]socket::socket(), dummy socket, address: %p", info().to_lencstr().cstr, this);
 		}
 
 		socket_base::socket_base(socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
@@ -114,11 +114,11 @@ namespace wawo { namespace net {
 			_socket_fn_init();
 			WAWO_ASSERT(m_sbc.rcv_size <= SOCK_RCV_MAX_SIZE && m_sbc.rcv_size >= SOCK_RCV_MIN_SIZE);
 			WAWO_ASSERT(m_sbc.snd_size <= SOCK_SND_MAX_SIZE && m_sbc.snd_size >= SOCK_SND_MIN_SIZE);
-			WAWO_TRACE_SOCKET("[socket][%s]socket::socket(), dummy socket, address: %p", info().to_lencstr().cstr , this);
+			WAWO_TRACE_SOCKET("[socket_base][%s]socket::socket(), dummy socket, address: %p", info().to_lencstr().cstr , this);
 		}
 
 		socket_base::~socket_base() {
-			WAWO_TRACE_SOCKET("[socket][%s]socket::~socket(),address: %p", info().to_lencstr().cstr, this);
+			WAWO_TRACE_SOCKET("[socket_base][%s]socket::~socket(),address: %p", info().to_lencstr().cstr, this);
 		}
 
 		address socket_base::local_addr() const {
@@ -142,16 +142,16 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_fd == -1);
 			m_fd = m_fn_socket(system_family[m_family], system_sock_type[m_type], system_protocol[m_protocol]);
 			if (m_fd < 0) {
-				WAWO_ERR("[socket][%s]socket::socket() failed, %d", info().to_lencstr().cstr);
+				WAWO_ERR("[socket_base][%s]socket::socket() failed, %d", info().to_lencstr().cstr);
 				return m_fd;
 			}
 			WAWO_ASSERT(m_fd>0 );
 
-			WAWO_TRACE_SOCKET("[socket][%s]socket::socket() ok", info().to_lencstr().cstr );
+			WAWO_TRACE_SOCKET("[socket_base][%s]socket::socket() ok", info().to_lencstr().cstr );
 			int rt = set_options(m_option);
 
 			if (rt != wawo::OK) {
-				WAWO_ERR("[socket][%s]socket::_set_options() failed", info().to_lencstr().cstr );
+				WAWO_ERR("[socket_base][%s]socket::_set_options() failed", info().to_lencstr().cstr );
 				return rt;
 			}
 
@@ -162,30 +162,30 @@ namespace wawo { namespace net {
 #ifdef _DEBUG
 			u32_t tmp_size;
 			get_snd_buffer_size(tmp_size);
-			WAWO_TRACE_SOCKET("[socket][%s]current snd buffer size: %d", info().to_lencstr().cstr, tmp_size);
+			WAWO_TRACE_SOCKET("[socket_base][%s]current snd buffer size: %d", info().to_lencstr().cstr, tmp_size);
 #endif
 			rt = set_snd_buffer_size(m_sbc.snd_size);
 			if (rt != wawo::OK) {
-				WAWO_ERR("[socket][%s]socket::set_snd_buffer_size(%d) failed", info().to_lencstr().cstr, m_sbc.snd_size, socket_get_last_errno());
+				WAWO_ERR("[socket_base][%s]socket::set_snd_buffer_size(%d) failed", info().to_lencstr().cstr, m_sbc.snd_size, socket_get_last_errno());
 				return rt;
 			}
 #ifdef _DEBUG
 			get_snd_buffer_size(tmp_size);
-			WAWO_TRACE_SOCKET("[socket][%s]current snd buffer size: %d", info().to_lencstr().cstr, tmp_size);
+			WAWO_TRACE_SOCKET("[socket_base][%s]current snd buffer size: %d", info().to_lencstr().cstr, tmp_size);
 #endif
 
 #ifdef _DEBUG
 			get_rcv_buffer_size(tmp_size);
-			WAWO_TRACE_SOCKET("[socket][%s]current rcv buffer size: %d", info().to_lencstr().cstr, tmp_size);
+			WAWO_TRACE_SOCKET("[socket_base][%s]current rcv buffer size: %d", info().to_lencstr().cstr, tmp_size);
 #endif
 			rt = set_rcv_buffer_size(m_sbc.rcv_size);
 			if (rt != wawo::OK) {
-				WAWO_ERR("[socket][%s]socket::set_rcv_buffer_size(%d) failed", info().to_lencstr().cstr , m_sbc.rcv_size, socket_get_last_errno());
+				WAWO_ERR("[socket_base][%s]socket::set_rcv_buffer_size(%d) failed", info().to_lencstr().cstr , m_sbc.rcv_size, socket_get_last_errno());
 				return rt;
 			}
 #ifdef _DEBUG
 			get_rcv_buffer_size(tmp_size);
-			WAWO_TRACE_SOCKET("[socket][%s]current rcv buffer size: %d", info().to_lencstr().cstr, tmp_size);
+			WAWO_TRACE_SOCKET("[socket_base][%s]current rcv buffer size: %d", info().to_lencstr().cstr, tmp_size);
 #endif
 			return wawo::OK;
 		}
@@ -195,9 +195,9 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(close_rt == wawo::OK);
 
 			if (close_rt == 0) {
-				WAWO_TRACE_SOCKET("[socket][%s]socket close", info().to_lencstr().cstr );
+				WAWO_TRACE_SOCKET("[socket_base][%s]socket close", info().to_lencstr().cstr );
 			} else {
-				WAWO_WARN("[socket][%s]socket close, close_rt: %d, close_ec: %d", info().to_lencstr().cstr , close_rt, socket_get_last_errno());
+				WAWO_WARN("[socket_base][%s]socket close, close_rt: %d, close_ec: %d", info().to_lencstr().cstr , close_rt, socket_get_last_errno());
 			}
 			return close_rt;
 		}
@@ -212,9 +212,9 @@ namespace wawo { namespace net {
 			};
 
 			int shutrt = m_fn_shutdown(m_fd, flag);
-			WAWO_TRACE_SOCKET("[socket][%s]shutdown(%s)", info().to_lencstr().cstr, shutdown_flag_str[flag]);
+			WAWO_TRACE_SOCKET("[socket_base][%s]shutdown(%s)", info().to_lencstr().cstr, shutdown_flag_str[flag]);
 			if(shutrt != 0) {
-				WAWO_WARN("[socket][%s]shutdown(%s), shut_rt: %d", info().to_lencstr().cstr, shutdown_flag_str[flag], shutrt);
+				WAWO_WARN("[socket_base][%s]shutdown(%s), shut_rt: %d", info().to_lencstr().cstr, shutdown_flag_str[flag], shutrt);
 			}
 			return shutrt;
 		}
@@ -344,7 +344,7 @@ namespace wawo { namespace net {
 				return wawo::OK;
 			}
 
-			WAWO_ERR("[socket][%s]setsockopt(SO_SNDBUF) == %d failed, error code: %d", info().to_lencstr().cstr , size, rt); \
+			WAWO_ERR("[socket_base][%s]setsockopt(SO_SNDBUF) == %d failed, error code: %d", info().to_lencstr().cstr , size, rt); \
 			return rt;
 		}
 
@@ -360,7 +360,7 @@ namespace wawo { namespace net {
 				return wawo::OK;
 			}
 
-			WAWO_ERR("[socket][%s]getsockopt(SO_SNDBUF) failed, error code: %d", info().to_lencstr().cstr, rt);
+			WAWO_ERR("[socket_base][%s]getsockopt(SO_SNDBUF) failed, error code: %d", info().to_lencstr().cstr, rt);
 			return rt;
 		}
 
@@ -407,7 +407,7 @@ namespace wawo { namespace net {
 				return wawo::OK;
 			}
 
-			WAWO_ERR("[socket][%s]setsockopt(SO_RCVBUF) == %d failed, error code: %d", info().to_lencstr().cstr, size, rt);
+			WAWO_ERR("[socket_base][%s]setsockopt(SO_RCVBUF) == %d failed, error code: %d", info().to_lencstr().cstr, size, rt);
 			return rt;
 		}
 
@@ -423,7 +423,7 @@ namespace wawo { namespace net {
 				return wawo::OK;
 			}
 
-			WAWO_ERR("[socket][%s]getsockopt(SO_RCVBUF) failed, error code: %d", info().to_lencstr().cstr , rt);
+			WAWO_ERR("[socket_base][%s]getsockopt(SO_RCVBUF) failed, error code: %d", info().to_lencstr().cstr , rt);
 			return rt;
 		}
 
@@ -456,7 +456,7 @@ namespace wawo { namespace net {
 		int socket_base::set_options(int const& options) {
 
 			if (m_fd<0) {
-				WAWO_WARN("[socket][%s]socket set options failed, invalid state", info().to_lencstr().cstr );
+				WAWO_WARN("[socket_base][%s]socket set options failed, invalid state", info().to_lencstr().cstr );
 				return wawo::E_INVALID_STATE;
 			}
 
@@ -482,7 +482,7 @@ namespace wawo { namespace net {
 						}
 					}
 					else {
-						WAWO_ERR("[socket][%s]socket set socket::OPTION_BROADCAST failed, errno: %d", info().to_lencstr().cstr, ret );
+						WAWO_ERR("[socket_base][%s]socket set socket::OPTION_BROADCAST failed, errno: %d", info().to_lencstr().cstr, ret );
 						return ret;
 					}
 				}
@@ -506,7 +506,7 @@ namespace wawo { namespace net {
 						}
 					}
 					else {
-						WAWO_ERR("[socket][%s]socket set socket::OPTION_REUSEADDR failed, errno: %d", info().to_lencstr().cstr, ret );
+						WAWO_ERR("[socket_base][%s]socket set socket::OPTION_REUSEADDR failed, errno: %d", info().to_lencstr().cstr, ret );
 						return ret;
 					}
 				}
@@ -532,7 +532,7 @@ namespace wawo { namespace net {
 						}
 					}
 					else {
-						WAWO_ERR("[socket][%s]socket set socket::OPTION_REUSEPORT failed, errno: %d", info().to_lencstr().cstr, ret);
+						WAWO_ERR("[socket_base][%s]socket set socket::OPTION_REUSEPORT failed, errno: %d", info().to_lencstr().cstr, ret);
 						return ret;
 					}
 				}
@@ -595,7 +595,7 @@ namespace wawo { namespace net {
 					}
 				}
 				else {
-					WAWO_ERR("[socket][%s]socket set socket::OPTION_NON_BLOCKING failed, errno: %d", info().to_lencstr().cstr, ret );
+					WAWO_ERR("[socket_base][%s]socket set socket::OPTION_NON_BLOCKING failed, errno: %d", info().to_lencstr().cstr, ret );
 					return ret;
 				}
 			}
@@ -618,7 +618,7 @@ namespace wawo { namespace net {
 						}
 					}
 					else {
-						WAWO_ERR("[socket][%s]socket set socket::OPTION_NODELAY failed, errno: %d", info().to_lencstr().cstr, ret );
+						WAWO_ERR("[socket_base][%s]socket set socket::OPTION_NODELAY failed, errno: %d", info().to_lencstr().cstr, ret );
 						return ret;
 					}
 				}

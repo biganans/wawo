@@ -42,18 +42,13 @@ public:
 		WAWO_ASSERT(f->get() == wawo::OK );
 	}
 	*/
-	void connected( WWRP<wawo::net::channel_handler_context> const& ctx ) {
+	void connected(WWRP<wawo::net::channel_handler_context> const& ctx) {
 		services::HelloProcessor::SendHello(ctx);
 
 		++m_curr_peer_count;
 		if (m_curr_peer_count < m_max_concurrency) {
 			//async_spawn();
 		}
-	}
-
-	void error(WWRP<wawo::net::channel_handler_context> const& ctx) {
-		//async_spawn();
-		ctx->fire_error();
 	}
 };
 
@@ -68,7 +63,7 @@ void dial(std::string const& url) {
 	f->add_listener([url](WWRP<wawo::net::channel_future> const& f) {
 		WAWO_INFO("connect rt: %d, address: %s", f->get(), url.c_str());
 		if (f->get() != wawo::OK) {
-			TASK_SCHEDULER->schedule([url]() {
+			WW_SCHEDULER->schedule([url]() {
 				dial(url);
 			});
 		}

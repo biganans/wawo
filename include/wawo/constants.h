@@ -153,7 +153,8 @@ namespace wawo {
 	const int E_ENOMEDIUM						= -123; //No medium found
 	const int E_EMEDIUMTYPE						= -124; //Wrong medium type
 
-	const int E_WAIT_TIMEOUT					= -258; 
+	const int E_WAIT_TIMEOUT					= -258;
+	const int E_ERROR_ABANDONED_WAIT_0			= -735;
 	const int E_ERROR_IO_PENDING				= -997;
 	const int E_ERROR_CONNECTION_ABORTED		= -1236;
 

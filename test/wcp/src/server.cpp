@@ -167,8 +167,8 @@ namespace wcp_test {
 					income_queue in = msg_queue.front();
 					msg_queue.pop();
 
-					WWRP < wawo::net::channel_handler_context > ctx = in.ctx;
-					WWRP < wawo::packet > inpack = in.income;
+					WWRP <wawo::net::channel_handler_context > ctx = in.ctx;
+					WWRP <wawo::packet> inpack = in.income;
 
 					WAWO_ASSERT(inpack->len());
 
@@ -196,6 +196,15 @@ namespace wcp_test {
 				}
 			}
 			wawo::this_thread::usleep(100);
+		}
+
+		void connected(WWRP<wawo::net::channel_handler_context> const& ctx ) {
+			/*
+			wawo::lock_guard < wawo::spin_mutex > _lg(msg_queue_mutex);
+			WWRP<wawo::packet> income = wawo::make_ref<wawo::packet>();
+			income->write<wawo::u8_t>(wcp_test::C_TRANSFER_FILE);
+			msg_queue.push({ ctx,income });
+			*/
 		}
 
 		void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income) {

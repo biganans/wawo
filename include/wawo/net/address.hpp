@@ -58,6 +58,18 @@ namespace wawo { namespace net {
 		P_MAX
 	};
 
+	static char* protocol_str[P_MAX] = {
+		"TCP",
+		"UDP",
+		"ICMP",
+		"IGMP",
+		"L2TP",
+		"SCTP",
+		"RAW",
+		"wcp",
+		"UNKNOWN"
+	};
+
 	static int system_protocol[P_MAX] = {
 		IPPROTO_TCP,
 		IPPROTO_UDP,
@@ -70,7 +82,7 @@ namespace wawo { namespace net {
 		0
 	};
 
-	extern const char* protocol_str[P_MAX];
+	//extern const char* protocol_str[P_MAX];
 
 	namespace ipv4 {
 		//network bytes sequence

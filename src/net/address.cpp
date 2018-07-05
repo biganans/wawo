@@ -4,19 +4,6 @@
 namespace wawo { namespace net {
 
 
-	const char* protocol_str[P_MAX] = {
-		"UNKNOWN",
-		"TCP",
-		"UDP",
-		"ICMP",
-		"IGMP",
-		"L2TP",
-		"SCTP",
-		"RAW",
-		"wcp"
-	};
-
-
 	/**
 	 * @param hostname, domain name of the host, example: www.google.com
 	 * @param servicename, ftp, http, etc..
