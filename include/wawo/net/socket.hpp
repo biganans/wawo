@@ -555,6 +555,7 @@ namespace wawo { namespace net {
 		inline int __IOCP_CALL_MY_WSASend() {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			WAWO_ASSERT(m_ol_write != NULL );
+			WAWO_ASSERT(!(m_flag&F_WRITING));
 			while (m_outbound_entry_q.size()) {
 				WAWO_ASSERT(m_noutbound_bytes > 0);
 				socket_outbound_entry& entry = m_outbound_entry_q.front();
@@ -562,9 +563,6 @@ namespace wawo { namespace net {
 					m_noutbound_bytes -= entry.data->len();
 					m_outbound_entry_q.pop();
 					continue;
-				}
-				if (m_flag&F_WRITING) { 
-					return wawo::E_EALREADY;
 				}
 				WWRP<packet>& outlet = entry.data;
 				::memset(m_ol_write, 0, sizeof(*m_ol_write));
@@ -777,6 +775,9 @@ namespace wawo { namespace net {
 				ch_promise
 			});
 			m_noutbound_bytes += outlet->len();
+			if (m_flag&F_WRITING) {
+				return;
+			}
 			ch_flush_impl();
 		}
 
@@ -868,6 +869,8 @@ namespace wawo { namespace net {
 				ch_promise->set_success(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
 				return;
 			}
+			WAWO_ASSERT(!(m_flag&F_WRITING));
+
 			ch_flush_impl();
 			end_write();
 			m_flag |= F_SHUTDOWN_WR;
