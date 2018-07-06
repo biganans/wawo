@@ -34,7 +34,7 @@ namespace wawo { namespace net {
 		F_WATCH_OPTION_INFINITE = 1 << 4,
 		F_WRITING = 1<<5,
 		F_WRITE_BLOCKED = 1<<6,
-		F_CLOSE_AFTER_WRITE_DONE =1<<7
+		F_SHUTDOWN_WRITE_AFTER_WRITE_DONE =1<<7
 	};
 
 	enum socket_state {
@@ -594,9 +594,9 @@ namespace wawo { namespace net {
 					m_flag &= ~F_WRITE_BLOCKED;
 					channel::ch_fire_write_unblock();
 				}
-				if (m_flag&F_CLOSE_AFTER_WRITE_DONE) {
-					m_flag &= ~F_CLOSE_AFTER_WRITE_DONE;
-					ch_close();
+				if (m_flag&F_SHUTDOWN_WRITE_AFTER_WRITE_DONE) {
+					m_flag &= ~F_SHUTDOWN_WRITE_AFTER_WRITE_DONE;
+					ch_shutdown_write();
 				}
 				return;
 			}
@@ -741,8 +741,8 @@ namespace wawo { namespace net {
 				return;
 			}
 
-			if ((m_flag&F_CLOSE_AFTER_WRITE_DONE)) {
-				ch_promise->set_success(wawo::E_CHANNEL_CLOSING);
+			if ((m_flag&F_SHUTDOWN_WRITE_AFTER_WRITE_DONE)) {
+				ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWNING);
 				return;
 			}
 
@@ -863,8 +863,13 @@ namespace wawo { namespace net {
 				ch_promise->set_success(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
 				return;
 			}
-			WAWO_ASSERT(!(m_flag&F_WRITING));
-
+#ifdef WAWO_ENABLE_IOCP
+			if((m_flag&F_WRITING)) {
+				m_flag |= F_SHUTDOWN_WRITE_AFTER_WRITE_DONE;
+				ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWNING);
+				return;
+			}
+#endif
 			ch_flush_impl();
 			end_write();
 			m_flag |= F_SHUTDOWN_WR;
@@ -887,21 +892,20 @@ namespace wawo { namespace net {
 #ifdef WAWO_ENABLE_IOCP
 			if (m_flag&F_WRITING) {
 				WAWO_ASSERT(!is_listener());
-				m_flag |= F_CLOSE_AFTER_WRITE_DONE;
+				m_flag |= F_SHUTDOWN_WRITE_AFTER_WRITE_DONE;
 				if (!(m_flag&F_SHUTDOWN_RD)) {
 					ch_shutdown_read();
 				}
 				return;
 			}
-			__IOCP_deinit();
 #else
 			if (!(m_wflag&F_SHUTDOWN_WR) && !is_listener() && m_state == S_CONNECTED) {
 				ch_flush_impl();
 			}
 #endif
-			int rt = socket_base::close();
 			if (is_listener()) {
 				end_read();
+				int rt = socket_base::close();
 				m_state = S_CLOSED;
 				ch_promise->set_success(rt);
 				channel::ch_close_promise()->set_success(rt);
@@ -912,21 +916,20 @@ namespace wawo { namespace net {
 			}
 
 			if (m_state != S_CONNECTED) {
+				end_write();//for connect action
+				int rt = socket_base::close();
 				m_state = S_CLOSED;
 				ch_promise->set_success(rt);
 				channel::ch_close_promise()->set_success(rt);
 				channel::ch_fire_closed();
 				channel::ch_close_future()->reset();
+
+#ifdef WAWO_ENABLE_IOCP
+				__IOCP_deinit();
+#endif
 				return;
 			}
-
 			m_state = S_CLOSED;
-			while (m_outbound_entry_q.size()) {
-				socket_outbound_entry& entry = m_outbound_entry_q.front();
-				entry.ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY);
-				m_outbound_entry_q.pop();
-			}
-
 			if (!(m_flag&F_SHUTDOWN_RD)) {
 				ch_shutdown_read();
 			}
@@ -934,12 +937,21 @@ namespace wawo { namespace net {
 			if (!(m_flag&F_SHUTDOWN_WR)) {
 				ch_shutdown_write();
 			}
+			while (m_outbound_entry_q.size()) {
+				socket_outbound_entry& entry = m_outbound_entry_q.front();
+				entry.ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY);
+				m_outbound_entry_q.pop();
+			}
 
+			int rt = socket_base::close();
 			ch_promise->set_success(rt);
-
 			channel::ch_close_promise()->set_success(rt);
 			channel::ch_fire_closed();
 			channel::ch_close_future()->reset();
+
+#ifdef WAWO_ENABLE_IOCP
+			__IOCP_deinit();
+#endif
 		}
 	};
 }}
