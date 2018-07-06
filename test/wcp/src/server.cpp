@@ -97,13 +97,13 @@ namespace wcp_test {
 
 			WWRP<wawo::packet> outp_CONTENT = wawo::make_ref<wawo::packet>();
 			outp_CONTENT->write(file_content + s_total, to_sent);
-			s_total += to_sent;
 
 			WWRP<wawo::net::channel_future> f_write = ctx->write(outp_CONTENT);
-			f_write->add_listener([B=WWRP<async_send_broker>(this),ctx](WWRP < wawo::net::channel_future> const& f) {
+			f_write->add_listener([B=WWRP<async_send_broker>(this),ctx, to_sent](WWRP < wawo::net::channel_future> const& f) {
 				if (f->get() == wawo::OK) {
 					wawo::lock_guard<wawo::spin_mutex> lg(B->m_mutex);
 					WAWO_ASSERT(B->state == S_SEND_CONTENT);
+					B->s_total += to_sent;
 
 					if (B->s_total == B->file_len) {
 #if FAST_TRANSFER
