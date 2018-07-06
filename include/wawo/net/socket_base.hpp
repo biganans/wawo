@@ -8,7 +8,7 @@
 #include <wawo/net/address.hpp>
 #include <wawo/net/socket_api.hpp>
 
-#define WAWO_ENABLE_TRACE_SOCKET
+//#define WAWO_ENABLE_TRACE_SOCKET
 #ifdef WAWO_ENABLE_TRACE_SOCKET
 	#define WAWO_TRACE_SOCKET WAWO_INFO
 #else
@@ -213,7 +213,6 @@ namespace wawo { namespace net {
 		inline bool is_wcp() const { return m_protocol == P_WCP; }
 		inline bool is_icmp() const { return m_protocol == P_ICMP; }
 
-//		inline bool is_data_socket() const { return m_sm != SM_LISTENER; }
 		inline bool is_listener() const { return m_sm == SM_LISTENER; }
 
 		inline int const& fd() const { return m_fd; }

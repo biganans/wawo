@@ -205,7 +205,7 @@ namespace wcp_test {
 					{
 						WWRP<async_send_broker> B = wawo::make_ref<async_send_broker>();
 						B->s_total = 0;
-						B->one_time_bytes = 1 * 1024 * 8 - 1; //cmd+content
+						B->one_time_bytes = 1 * 1024 * 32 - 1; //cmd+content
 						B->file_content = m_file_content;
 						B->file_len = m_file_len;
 						B->test_times = -1;
@@ -223,7 +223,7 @@ namespace wcp_test {
 					}
 				}
 			}
-			wawo::this_thread::usleep(100);
+			wawo::this_thread::usleep(200);
 		}
 
 		void connected(WWRP<wawo::net::channel_handler_context> const& ctx ) {

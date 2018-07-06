@@ -303,23 +303,7 @@ namespace wawo { namespace net {
 
 				WAWO_ASSERT(laddr.port() == m_laddr.port());
 				WAWO_ASSERT(raddr_in->sin_family == system_family[m_family]);
-				/*
-				 * @note , if the connection closed/reset by remote side before accept, we may get zero remote addr
-				sockaddr_in addr_in;
-				char ipstr[INET6_ADDRSTRLEN] = { 0 };
-				socklen_t addr_len = sizeof(addr_in);
-				int rt = ::getpeername(r.v.fd, (struct sockaddr*)&addr_in, &addr_len);
-				if (rt == -1) {
-					WAWO_ERR("[#%d]getpeername failed: %d, close socket", r.v.fd, wawo::get_last_errno());
-					WAWO_CLOSE_SOCKET(r.v.fd);
-					return;
-				}
-				WAWO_ASSERT(addr_in.sin_family == system_family[m_family]);
-				struct sockaddr_in *s = (struct sockaddr_in *)&addr_in;
-				unsigned short port = ::ntohs(s->sin_port);
-				::inet_ntop(system_family[m_family], &s->sin_addr, ipstr, sizeof(ipstr));				
-				address _raddr(ipstr, port);
-				*/
+
 				try {
 					WWRP<socket> so = wawo::make_ref<socket>(r.v.fd, raddr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
 					accepted.push_back(so);

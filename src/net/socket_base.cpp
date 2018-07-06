@@ -91,7 +91,7 @@ namespace wawo { namespace net {
 
 			WAWO_ASSERT(m_sbc.rcv_size <= SOCK_RCV_MAX_SIZE && m_sbc.rcv_size >= SOCK_RCV_MIN_SIZE);
 			WAWO_ASSERT(m_sbc.snd_size <= SOCK_SND_MAX_SIZE && m_sbc.snd_size >= SOCK_SND_MIN_SIZE);
-			WAWO_TRACE_SOCKET("[socket_base][%s]socket::socket(), dummy socket, address: %p", info().to_stdstring().c_str(), this);
+			WAWO_TRACE_SOCKET("[socket_base][%s]socket_base::socket_base(), dummy socket, address: %p", info().to_stdstring().c_str(), this);
 		}
 
 		socket_base::socket_base(socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
@@ -114,11 +114,11 @@ namespace wawo { namespace net {
 			_socket_fn_init();
 			WAWO_ASSERT(m_sbc.rcv_size <= SOCK_RCV_MAX_SIZE && m_sbc.rcv_size >= SOCK_RCV_MIN_SIZE);
 			WAWO_ASSERT(m_sbc.snd_size <= SOCK_SND_MAX_SIZE && m_sbc.snd_size >= SOCK_SND_MIN_SIZE);
-			WAWO_TRACE_SOCKET("[socket_base][%s]socket::socket(), dummy socket, address: %p", info().to_stdstring().c_str() , this);
+			WAWO_TRACE_SOCKET("[socket_base][%s]socket_base::socket_base(), dummy socket, address: %p", info().to_stdstring().c_str() , this);
 		}
 
 		socket_base::~socket_base() {
-			WAWO_TRACE_SOCKET("[socket_base][%s]socket::~socket(),address: %p", info().to_stdstring().c_str(), this);
+			WAWO_TRACE_SOCKET("[socket_base][%s]socket_base::~socket_base(),address: %p", info().to_stdstring().c_str(), this);
 		}
 
 		address socket_base::local_addr() const {
