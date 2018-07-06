@@ -76,7 +76,6 @@ namespace wawo { namespace net {
 		} \
 
 		CH_FIRE_ACTION_IMPL_0(connected)
-//		CH_FIRE_ACTION_IMPL_0(error)
 		CH_FIRE_ACTION_IMPL_0(read_shutdowned)
 		CH_FIRE_ACTION_IMPL_0(write_shutdowned)
 

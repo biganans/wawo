@@ -67,7 +67,7 @@ namespace wawo { namespace net {
 		WWRP<WCB> wcb = wawo::static_pointer_cast<WCB>(cookie_);
 		WAWO_ASSERT(wcb->so != NULL);
 		wcb->so->close();
-		WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", wcb->so->info().to_lencstr().cstr, code );
+		WAWO_ERR("[wcp][wcb][%s]wcb_socket_error: %d", wcb->so->info().to_stdstring().c_str(), code );
 	}
 	*/
 

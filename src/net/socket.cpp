@@ -52,7 +52,7 @@ namespace wawo { namespace net {
 		int rt = socket_base::bind(addr);
 		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 		m_state = S_BINDED;
-		WAWO_TRACE_SOCKET("[socket][%s]socket bind ok", info().to_lencstr().cstr );
+		WAWO_TRACE_SOCKET("[socket][%s]socket bind ok", info().to_stdstring().c_str() );
 		return wawo::OK;
 	}
 
@@ -66,7 +66,7 @@ namespace wawo { namespace net {
 		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 
 		m_state = S_LISTEN;
-		WAWO_TRACE_SOCKET("[socket][%s]socket listen success", info().to_lencstr().cstr);
+		WAWO_TRACE_SOCKET("[socket][%s]socket listen success", info().to_stdstring().c_str());
 		return wawo::OK;
 	}
 
@@ -152,7 +152,7 @@ namespace wawo { namespace net {
 			return ch_promise;
 		} else if (rt == wawo::E_SOCKET_CONNECTING) {
 			m_dial_promise = ch_promise;
-			TRACE_IOE("[socket_base][%s][async_connect]watch(IOE_WRITE)", info().to_lencstr().cstr);
+			TRACE_IOE("[socket_base][%s][async_connect]watch(IOE_WRITE)", info().to_stdstring().c_str());
 #ifdef WAWO_ENABLE_IOCP
 			socket::__IOCP_CALL_ConnectEx();
 #else

@@ -347,14 +347,14 @@ namespace wawo { namespace net {
 
 				int nonblocking = so->turnon_nonblocking();
 				if (nonblocking != wawo::OK) {
-					WAWO_ERR("[node_abstract][%s]turn on nonblocking failed: %d", so->info().to_lencstr().cstr, nonblocking);
+					WAWO_ERR("[node_abstract][%s]turn on nonblocking failed: %d", so->info().to_stdstring().c_str(), nonblocking);
 					accepted[i]->close();
 					continue;
 				}
 
 				int setdefaultkal = so->set_keep_alive_vals(default_keep_alive_vals);
 				if (setdefaultkal != wawo::OK) {
-					WAWO_ERR("[node_abstract][%s]set_keep_alive_vals failed: %d", so->info().to_lencstr().cstr, setdefaultkal);
+					WAWO_ERR("[node_abstract][%s]set_keep_alive_vals failed: %d", so->info().to_stdstring().c_str(), setdefaultkal);
 					accepted[i]->close();
 					continue;
 				}
@@ -387,7 +387,7 @@ namespace wawo { namespace net {
 			} else if (ec == 0) {
 				ec = wawo::E_SOCKET_GRACE_CLOSE;
 			} else {
-				WAWO_TRACE_SOCKET("[socket][%s]WSARead error: %d", info().to_lencstr().cstr, ec);
+				WAWO_TRACE_SOCKET("[socket][%s]WSARead error: %d", info().to_stdstring().c_str(), ec);
 			}
 #else
 			int ec = _receive_packets();
@@ -408,7 +408,7 @@ namespace wawo { namespace net {
 				break;
 				default:
 				{
-					WAWO_TRACE_SOCKET("[socket][%s]async read, error: %d, close", info().to_lencstr().cstr, ec);
+					WAWO_TRACE_SOCKET("[socket][%s]async read, error: %d, close", info().to_stdstring().c_str(), ec);
 					ch_errno(ec);
 					ch_close();
 				}
@@ -468,7 +468,7 @@ namespace wawo { namespace net {
 
 			if ((m_flag&F_WATCH_WRITE) && is_nonblocking()) {
 				m_flag &= ~(F_WATCH_WRITE | F_WATCH_OPTION_INFINITE);
-				TRACE_IOE("[socket][%s][end_write]unwatch IOE_WRITE", info().to_lencstr().cstr );
+				TRACE_IOE("[socket][%s][end_write]unwatch IOE_WRITE", info().to_stdstring().c_str() );
 				event_poller()->unwatch(IOE_WRITE, fd());
 			}
 		}
@@ -555,6 +555,9 @@ namespace wawo { namespace net {
 		inline int __IOCP_CALL_MY_WSASend() {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			WAWO_ASSERT(m_ol_write != NULL );
+			//if (m_flag&F_WRITING) {
+			//	return wawo::E_EALREADY;
+			//}
 			WAWO_ASSERT(!(m_flag&F_WRITING));
 			while (m_outbound_entry_q.size()) {
 				WAWO_ASSERT(m_noutbound_bytes > 0);
@@ -608,6 +611,7 @@ namespace wawo { namespace net {
 					channel::ch_fire_write_unblock();
 				}
 				if (m_flag&F_CLOSE_AFTER_WRITE_DONE) {
+					m_flag &= ~F_CLOSE_AFTER_WRITE_DONE;
 					ch_close();
 				}
 				return;
@@ -653,9 +657,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(!(m_flag&F_SHUTDOWN_WR));
 			WAWO_ASSERT(!(m_flag&F_WATCH_WRITE));
 			m_flag |= F_WATCH_WRITE;
-			TRACE_IOE("[socket][%s][begin_connect]watch IOE_WRITE", info().to_lencstr().cstr );
-
-
+			TRACE_IOE("[socket][%s][begin_connect]watch IOE_WRITE", info().to_stdstring().c_str() );
 			event_poller()->watch( IOE_WRITE, fd(), _fn_io);
 		}
 
@@ -677,7 +679,7 @@ namespace wawo { namespace net {
 			}
 
 			if (m_flag&F_SHUTDOWN_RD) {
-				TRACE_IOE("[socket][%s][begin_read]cancel for rd shutdowned already", info().to_lencstr().cstr );
+				TRACE_IOE("[socket][%s][begin_read]cancel for rd shutdowned already", info().to_stdstring().c_str() );
 				if (fn_read != NULL) {
 					fn_read({AIO_READ, wawo::E_CHANNEL_RD_SHUTDOWN_ALREADY , 0});
 				}
@@ -685,7 +687,7 @@ namespace wawo { namespace net {
 			}
 
 			if (m_flag&F_WATCH_READ) {
-				TRACE_IOE("[socket][%s][begin_read]ignore for watch already", info().to_lencstr().cstr );
+				TRACE_IOE("[socket][%s][begin_read]ignore for watch already", info().to_stdstring().c_str() );
 				return;
 			}
 			fn_io_event _fn_io = fn_read;
@@ -693,7 +695,7 @@ namespace wawo { namespace net {
 				_fn_io = std::bind(&socket::__cb_async_read, WWRP<socket>(this), std::placeholders::_1);
 			}
 			m_flag |= (F_WATCH_READ | async_flag);
-			TRACE_IOE("[socket][%s][begin_read]watch IOE_READ", info().to_lencstr().cstr );
+			TRACE_IOE("[socket][%s][begin_read]watch IOE_READ", info().to_stdstring().c_str() );
 
 			u8_t flag = IOE_READ;
 			if (async_flag&F_WATCH_OPTION_INFINITE) {
@@ -715,7 +717,7 @@ namespace wawo { namespace net {
 			}
 
 			if (m_flag&F_SHUTDOWN_WR) {
-				TRACE_IOE("[socket][%s][begin_write]cancel for wr shutdowned already", info().to_lencstr().cstr );
+				TRACE_IOE("[socket][%s][begin_write]cancel for wr shutdowned already", info().to_stdstring().c_str() );
 				if (fn_write != NULL) {
 					fn_write({ AIO_WRITE,wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY,0 });
 				}
@@ -723,7 +725,7 @@ namespace wawo { namespace net {
 			}
 
 			if (m_flag&F_WATCH_WRITE) {
-				TRACE_IOE("[socket][%s][begin_write]ignore for write watch already", info().to_lencstr().cstr );
+				TRACE_IOE("[socket][%s][begin_write]ignore for write watch already", info().to_stdstring().c_str() );
 				return;
 			}
 
@@ -733,7 +735,7 @@ namespace wawo { namespace net {
 			}
 
 			m_flag |= (F_WATCH_WRITE | async_flag);
-			TRACE_IOE("[socket][%s][begin_write]watch IOE_WRITE", info().to_lencstr().cstr );
+			TRACE_IOE("[socket][%s][begin_write]watch IOE_WRITE", info().to_stdstring().c_str() );
 
 			u8_t flag = IOE_WRITE;
 			if (async_flag&F_WATCH_OPTION_INFINITE) {
@@ -752,6 +754,11 @@ namespace wawo { namespace net {
 			}
 			if ((m_flag&F_SHUTDOWN_WR) != 0) {
 				ch_promise->set_success(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
+				return;
+			}
+
+			if ((m_flag&F_CLOSE_AFTER_WRITE_DONE)) {
+				ch_promise->set_success(wawo::E_CHANNEL_CLOSING);
 				return;
 			}
 
@@ -775,9 +782,12 @@ namespace wawo { namespace net {
 				ch_promise
 			});
 			m_noutbound_bytes += outlet->len();
+
+#ifdef WAWO_ENABLE_IOCP
 			if (m_flag&F_WRITING) {
 				return;
 			}
+#endif
 			ch_flush_impl();
 		}
 
@@ -934,14 +944,11 @@ namespace wawo { namespace net {
 			}
 
 			if (!(m_flag&F_SHUTDOWN_RD)) {
-				m_flag |= F_SHUTDOWN_RD;
-				channel::ch_fire_read_shutdowned();
-				end_read();
+				ch_shutdown_read();
 			}
 
 			if (!(m_flag&F_SHUTDOWN_WR)) {
-				m_flag |= F_SHUTDOWN_WR;
-				end_write();
+				ch_shutdown_write();
 			}
 
 			ch_promise->set_success(rt);

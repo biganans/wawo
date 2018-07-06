@@ -142,10 +142,10 @@ namespace wawo { namespace net {
 		address laddr;
 		address raddr;
 
-		len_cstr to_lencstr() const {
+		std::string to_stdstring() const {
 			char _buf[1024] = { 0 };
-			int nbytes = snprintf(_buf, 1024, "#%d:L:%s-R:%s:%s", fd, laddr.info().cstr, raddr.info().cstr, protocol_str[p] );
-			return wawo::len_cstr(_buf, nbytes);
+			int nbytes = snprintf(_buf, 1024, "#%d:%s:L:%s-R:%s", fd, protocol_str[p], laddr.info().cstr, raddr.info().cstr );
+			return std::string(_buf, nbytes);
 		}
 	};
 

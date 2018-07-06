@@ -9,8 +9,6 @@ namespace wcp_test {
 	{
 		enum broker_state {
 			S_SEND_BEGIN,
-			S_HEADER_SENT,
-			S_HEADER_SEND_DONE,
 			S_SEND_CONTENT,
 			S_SEND_END
 		};
@@ -35,8 +33,15 @@ namespace wcp_test {
 
 		void on_unblock(WWRP<wawo::net::channel_handler_context> const& ctx) {
 			WAWO_INFO("[wcp_test][%d]wr_unblock, begin async read", ctx->ch->ch_id() );
+			WAWO_ASSERT(blocked == true);
 			blocked = false;
-			begin_send(ctx);
+
+			WWRP<async_send_broker> B(this);
+			wawo::task::fn_task_void L = [B, ctx]() -> void {
+				B->state == S_SEND_BEGIN;
+				B->begin_send(ctx);
+			};
+			WW_SCHEDULER->schedule(L);
 			ctx->ch->begin_read();
 		}
 
@@ -45,82 +50,93 @@ namespace wcp_test {
 
 			if (state == S_SEND_BEGIN) {
 				_begin_send_header(ctx);
-			}
-			while (state != S_HEADER_SEND_DONE) {
-				wawo::this_thread::usleep(1);
+				return;
 			}
 
-			WAWO_ASSERT(state == S_HEADER_SEND_DONE);
-			state = S_SEND_CONTENT;
-			_begin_send_content(ctx);
-
-			if (state == S_SEND_END) {
-
-#if FAST_TRANSFER
-				++ now_times;
-				s_total = 0;
-				state = S_SEND_BEGIN;
-
-				if ((now_times < test_times) ) {
-					WWRP<async_send_broker> sender_broker = WWRP<async_send_broker>(this);
-					wawo::task::fn_task_void lambda = [sender_broker, ctx]() -> void {
-						sender_broker->begin_send(ctx);
-					};
-					WW_SCHEDULER->schedule(lambda);
-				}
-#endif
+			if (state == S_SEND_CONTENT) {
+				_begin_send_content(ctx);
 			}
 		}
 
 		void _begin_send_header(WWRP<wawo::net::channel_handler_context> const& ctx) {
+
 			WWRP<wawo::packet> outp_BEGIN = wawo::make_ref<wawo::packet>();
 			outp_BEGIN->write<wawo::u8_t>(wcp_test::C_TRANSFER_FILE_HEADER);
 			outp_BEGIN->write<wawo::u32_t>(file_len);
 			WWRP<wawo::net::channel_future> f_write = ctx->write(outp_BEGIN);
-			state = S_HEADER_SENT;
-			f_write->add_listener([ b=WWRP<async_send_broker>(this) ](WWRP<wawo::net::channel_future> const& f) {
+			WAWO_ASSERT(state == S_SEND_BEGIN);
+
+			f_write->add_listener([ B=WWRP<async_send_broker>(this),ctx](WWRP<wawo::net::channel_future> const& f) {
 				if (f->get() == wawo::OK) {
-					WAWO_ASSERT(b->state == S_HEADER_SENT);
-					b->state = S_HEADER_SEND_DONE;
+					wawo::lock_guard<wawo::spin_mutex> lg(B->m_mutex);
+					B->state = S_SEND_CONTENT;
+					wawo::task::fn_task_void L = [B, ctx]() -> void {
+						B->_begin_send_content(ctx);
+					};
+					WW_SCHEDULER->schedule(L);
+				}
+				else {
+					wawo::lock_guard<wawo::spin_mutex> lg(B->m_mutex);
+					B->state = S_SEND_BEGIN;
+					wawo::task::fn_task_void L = [B, ctx]() -> void {
+						B->_begin_send_header(ctx);
+					};
+					WW_SCHEDULER->schedule(L);
 				}
 			});
 		}
 
 		void _begin_send_content(WWRP<wawo::net::channel_handler_context> const& ctx) {
 			WAWO_ASSERT(state == S_SEND_CONTENT);
-			do {
-				wawo::u32_t to_sent = 0;
-				if ((file_len - s_total) <= one_time_bytes) {
-					to_sent = (file_len - s_total);
-				} else {
-					to_sent = one_time_bytes;
-				}
-
-				WWRP<wawo::packet> outp_CONTENT = wawo::make_ref<wawo::packet>();
-				outp_CONTENT->write(file_content + s_total, to_sent);
-				s_total += to_sent;
-
-				WWRP<wawo::net::channel_future> f_write = ctx->write(outp_CONTENT);
-				f_write->add_listener([b=WWRP<async_send_broker>(this),t=s_total-to_sent](WWRP < wawo::net::channel_future> const& f) {
-					if (f->get() == wawo::OK) {
-					} else if (f->get() == wawo::E_CHANNEL_WRITE_BLOCK) {
-						//WE'LL GET A WRITE_BLOCK notification, then pause read
-						//rewind s_total
-						b->s_total = t;
-						if (t < b->s_total) {
-							b->s_total = t;
-						}
-						b->blocked = true;
-					}
-					else {
-						WAWO_ASSERT("write failed");
-					}
-				});
-			} while ((s_total < file_len) && !blocked);
-
-			if (s_total == file_len) {
-				state = S_SEND_END;
+			wawo::u32_t to_sent = 0;
+			if ((file_len - s_total) <= one_time_bytes) {
+				to_sent = (file_len - s_total);
+			} else {
+				to_sent = one_time_bytes;
 			}
+
+			WWRP<wawo::packet> outp_CONTENT = wawo::make_ref<wawo::packet>();
+			outp_CONTENT->write(file_content + s_total, to_sent);
+			s_total += to_sent;
+
+			WWRP<wawo::net::channel_future> f_write = ctx->write(outp_CONTENT);
+			f_write->add_listener([B=WWRP<async_send_broker>(this),ctx](WWRP < wawo::net::channel_future> const& f) {
+				if (f->get() == wawo::OK) {
+					wawo::lock_guard<wawo::spin_mutex> lg(B->m_mutex);
+					WAWO_ASSERT(B->state == S_SEND_CONTENT);
+
+					if (B->s_total == B->file_len) {
+#if FAST_TRANSFER
+						if (B->now_times < B->test_times) {
+							++B->now_times;
+							B->s_total = 0;
+							B->state = S_SEND_BEGIN;
+							wawo::task::fn_task_void L = [B, ctx]() -> void {
+								B->state == S_SEND_BEGIN;
+								B->_begin_send_header(ctx);
+							};
+							WW_SCHEDULER->schedule(L);
+						}
+						else {
+							WAWO_ASSERT("TEST FINISHED");
+						}
+#endif
+					} else {
+						wawo::task::fn_task_void L = [B, ctx]() -> void {
+							B->_begin_send_content(ctx);
+						};
+						WW_SCHEDULER->schedule(L);
+					}
+
+				} else if (f->get() == wawo::E_CHANNEL_WRITE_BLOCK) {
+					//WE'LL GET A WRITE_BLOCK notification, then pause read
+					//rewind s_total
+					B->blocked = true;
+				}
+				else {
+					WAWO_ASSERT("write failed");
+				}
+			});
 		}
 	};
 
@@ -187,21 +203,21 @@ namespace wcp_test {
 					switch (cmd) {
 					case wcp_test::C_TRANSFER_FILE:
 					{
-						WWRP<async_send_broker> sender_broker = wawo::make_ref<async_send_broker>();
-						sender_broker->s_total = 0;
-						sender_broker->one_time_bytes = 1 * 1024 * 8 - 1; //cmd+content
-						sender_broker->file_content = m_file_content;
-						sender_broker->file_len = m_file_len;
-						sender_broker->test_times = -1;
-						sender_broker->state = async_send_broker::S_SEND_BEGIN;
-						sender_broker->blocked = false;
+						WWRP<async_send_broker> B = wawo::make_ref<async_send_broker>();
+						B->s_total = 0;
+						B->one_time_bytes = 1 * 1024 * 8 - 1; //cmd+content
+						B->file_content = m_file_content;
+						B->file_len = m_file_len;
+						B->test_times = -1;
+						B->state = async_send_broker::S_SEND_BEGIN;
+						B->blocked = false;
 
-						wawo::task::fn_task_void lambda = [sender_broker, ctx]() -> void {
-							sender_broker->begin_send(ctx);
+						wawo::task::fn_task_void L = [B, ctx]() -> void {
+							B->_begin_send_header(ctx);
 						};
 
-						ctx->ch->set_ctx(sender_broker);
-						WW_SCHEDULER->schedule(lambda);
+						ctx->ch->set_ctx(B);
+						WW_SCHEDULER->schedule(L);
 					}
 					break;
 					}
