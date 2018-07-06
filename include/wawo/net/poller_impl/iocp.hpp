@@ -23,9 +23,9 @@ namespace wawo { namespace net { namespace impl {
 		};
 
 		enum action_status {
-			IDLE,
-			IN_OPERATION,
-			BLOCKED,
+			AS_NORMAL,
+			AS_BLOCKED,
+			AS_ERROR
 		};
 
 		enum iocp_action_flag {
@@ -49,7 +49,7 @@ namespace wawo { namespace net { namespace impl {
 			char buf[WAWO_IOCP_BUFFER_SIZE];
 		};
 
-		inline WWRP<iocp_overlapped_ctx> iocp_make_ctx() {
+		inline static WWRP<iocp_overlapped_ctx> iocp_make_ctx() {
 			WWRP<iocp_overlapped_ctx> ctx = wawo::make_ref<iocp_overlapped_ctx>();
 			::memset(&ctx->overlapped, 0, sizeof(ctx->overlapped));
 			ctx->fd = -1;
@@ -65,12 +65,12 @@ namespace wawo { namespace net { namespace impl {
 			WWRP<iocp_overlapped_ctx> ol_ctxs[iocp_action::MAX];
 		};
 
-		inline void iocp_reset_ctx(WWRP<iocp_overlapped_ctx> const& ctx) {
+		inline static void iocp_reset_ctx(WWRP<iocp_overlapped_ctx> const& ctx) {
 			WAWO_ASSERT(ctx != NULL);
 			::memset(&ctx->overlapped, 0, sizeof(ctx->overlapped));
 		}
 
-		inline void iocp_reset_accept_ctx(WWRP<iocp_overlapped_ctx> const& ctx) {
+		inline static void iocp_reset_accept_ctx(WWRP<iocp_overlapped_ctx> const& ctx) {
 			WAWO_ASSERT(ctx != NULL);
 			::memset(&ctx->overlapped, 0, sizeof(ctx->overlapped));
 			ctx->fd = -1;
@@ -81,28 +81,7 @@ namespace wawo { namespace net { namespace impl {
 
 		HANDLE m_handle;
 		iocp_ctxs_map m_ctxs;
-	public:
-		iocp():
-			poller_abstract(),
-			m_handle(NULL)
-		{}
 
-		void init() {
-			poller_abstract::init();
-
-			WAWO_ASSERT(m_handle == NULL);
-			m_handle = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (u_long) 0, 1);
-			WAWO_ALLOC_CHECK(m_handle, sizeof(m_handle));
-		}
-
-		void deinit() {
-			WAWO_ASSERT(m_handle != NULL);
-			interrupt_wait();
-			::CloseHandle(m_handle);
-			m_handle = NULL;
-
-			poller_abstract::deinit();
-		}
 
 		void interrupt_wait() {
 			WAWO_ASSERT(m_handle != NULL);
@@ -113,7 +92,7 @@ namespace wawo { namespace net { namespace impl {
 			}
 		}
 
-		inline void _do_accept_ex(WWRP<iocp_overlapped_ctx>& ctx) {
+		inline static void _do_accept_ex(WWRP<iocp_overlapped_ctx>& ctx) {
 			WAWO_ASSERT(ctx != NULL);
 
 			int newfd = ctx->fn_overlapped((void*)&ctx->overlapped);
@@ -139,7 +118,20 @@ namespace wawo { namespace net { namespace impl {
 					return;
 				}
 			}
-			ctx->action_status = IN_OPERATION;
+			ctx->action_status = AS_NORMAL;
+		}
+
+		inline static void _do_read(WWRP<iocp_overlapped_ctx>& ctx) {
+			iocp_reset_ctx(ctx);
+			static DWORD flags = 0;
+			if (::WSARecv(ctx->fd, &ctx->wsabuf, 1, NULL, &flags, &ctx->overlapped, NULL) == SOCKET_ERROR) {
+				int ec = wawo::socket_get_last_errno();
+				if (ec != wawo::E_ERROR_IO_PENDING) {
+					ctx->action_status = AS_ERROR;
+					ctx->fn({ AIO_READ, ec, NULL });
+					return;
+				}
+			}
 		}
 
 		inline void _handle_iocp_event(LPOVERLAPPED& ol, DWORD& dwTrans, int& ec) {
@@ -151,8 +143,8 @@ namespace wawo { namespace net { namespace impl {
 				WAWO_ASSERT(ctx->fd > 0);
 				WAWO_ASSERT(ctx->accept_fd == -1);
 				ctx->fn({ AIO_READ, ec == 0 ? (int)dwTrans : ec, ctx->wsabuf.buf });
-				if (ctx->action_status != BLOCKED) {
-					do_watch(IOE_READ, ctx->fd, ctx->fn);
+				if (ctx->action_status == AS_NORMAL ) {
+					_do_read(ctx);
 				}
 			}
 			break;
@@ -180,7 +172,7 @@ namespace wawo { namespace net { namespace impl {
 					WAWO_CLOSE_SOCKET(ctx->accept_fd);
 				}
 
-				if (ctx->action_status != BLOCKED) {
+				if (ctx->action_status == AS_NORMAL) {
 					_do_accept_ex(ctx);
 				}
 			}
@@ -205,6 +197,27 @@ namespace wawo { namespace net { namespace impl {
 			}
 		}
 	public:
+			iocp() :
+				poller_abstract(),
+				m_handle(NULL)
+			{}
+
+			void init() {
+				poller_abstract::init();
+
+				WAWO_ASSERT(m_handle == NULL);
+				m_handle = ::CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, (u_long)0, 1);
+				WAWO_ALLOC_CHECK(m_handle, sizeof(m_handle));
+			}
+
+			void deinit() {
+				WAWO_ASSERT(m_handle != NULL);
+				interrupt_wait();
+				::CloseHandle(m_handle);
+				m_handle = NULL;
+
+				poller_abstract::deinit();
+			}
 		void do_poll() {
 			WAWO_ASSERT(m_handle > 0);
 			int ec = 0;
@@ -344,36 +357,35 @@ namespace wawo { namespace net { namespace impl {
 				return;
 			}
 
-			WAWO_ASSERT(fn != nullptr);
 			iocp_ctxs_map::iterator it = m_ctxs.find(fd);
 			if (it == m_ctxs.end()) {
 				return;
 			}
+			WAWO_ASSERT(fn != nullptr);
 			WWSP<iocp_ctxs> _iocp_ctxs = it->second;
 
 			if (flag&IOE_READ) {
+				_iocp_ctxs->flag |= F_READ;
 				WWRP<iocp_overlapped_ctx>& ctx = _iocp_ctxs->ol_ctxs[READ];
 				WAWO_ASSERT(ctx != NULL);
-
-				_iocp_ctxs->flag |= F_READ;
-				iocp_reset_ctx(ctx);
 				ctx->fn = fn;
-
-				//read begin
-				static DWORD flags = 0;
-				if (::WSARecv(fd, &ctx->wsabuf, 1, NULL, &flags, &ctx->overlapped, NULL) == SOCKET_ERROR) {
-					int ec = wawo::socket_get_last_errno();
-					if (ec != wawo::E_ERROR_IO_PENDING) {
-						fn({AIO_READ, ec, NULL});
-						return;
-					}
-				}
-				ctx->action_status = IN_OPERATION;
+				ctx->action_status = AS_NORMAL;
+				_do_read(ctx);
 			}
 		}
 
 		void do_unwatch(u8_t const& flag, int const& fd)
 		{
+			iocp_ctxs_map::iterator it = m_ctxs.find(fd);
+			if (it == m_ctxs.end()) {
+				return;
+			}
+			WWSP<iocp_ctxs> _iocp_ctxs = it->second;
+			WAWO_ASSERT(_iocp_ctxs != NULL);
+			if (flag&IOE_READ) {
+				_iocp_ctxs->flag &= ~F_READ;
+				_iocp_ctxs->ol_ctxs[READ]->action_status = AS_BLOCKED;
+			}
 		}
 
 		void do_IOCP_overlapped_call(u8_t const& flag, int const& fd, fn_overlapped_io_event const& fn_overlapped, fn_io_event const& fn) {
