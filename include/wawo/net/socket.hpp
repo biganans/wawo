@@ -301,22 +301,29 @@ namespace wawo { namespace net {
 				address raddr(*raddr_in);
 				address laddr(*laddr_in);
 
-				WAWO_ASSERT(laddr.port() == m_laddr.port());
-				WAWO_ASSERT(raddr_in->sin_family == system_family[m_family]);
+				if (raddr_in == laddr_in) {
+					WAWO_CLOSE_SOCKET(r.v.fd);
+				} else {
+					WAWO_ASSERT(laddr.port() == m_laddr.port());
+					WAWO_ASSERT(raddr_in->sin_family == system_family[m_family]);
 
-				try {
-					WWRP<socket> so = wawo::make_ref<socket>(r.v.fd, raddr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
-					accepted.push_back(so);
-				} catch (std::exception& e) {
-					WAWO_ERR("[#%d]accept new fd exception, e: %s", fd(), e.what());
-					WAWO_CLOSE_SOCKET(r.v.fd);
-				} catch (wawo::exception& e) {
-					WAWO_ERR("[#%d]accept new fd exception: [%d]%s\n%s(%d) %s\n%s", fd(),
-						e.code, e.message, e.file, e.line, e.func, e.callstack);
-					WAWO_CLOSE_SOCKET(r.v.fd);
-				} catch (...) {
-					WAWO_ERR("[#%d]accept new fd exception, e: %d", fd(),wawo::socket_get_last_errno());
-					WAWO_CLOSE_SOCKET(r.v.fd);
+					try {
+						WWRP<socket> so = wawo::make_ref<socket>(r.v.fd, raddr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
+						accepted.push_back(so);
+					}
+					catch (std::exception& e) {
+						WAWO_ERR("[#%d]accept new fd exception, e: %s", fd(), e.what());
+						WAWO_CLOSE_SOCKET(r.v.fd);
+					}
+					catch (wawo::exception& e) {
+						WAWO_ERR("[#%d]accept new fd exception: [%d]%s\n%s(%d) %s\n%s", fd(),
+							e.code, e.message, e.file, e.line, e.func, e.callstack);
+						WAWO_CLOSE_SOCKET(r.v.fd);
+					}
+					catch (...) {
+						WAWO_ERR("[#%d]accept new fd exception, e: %d", fd(), wawo::socket_get_last_errno());
+						WAWO_CLOSE_SOCKET(r.v.fd);
+					}
 				}
 				ec = wawo::OK;
 			}

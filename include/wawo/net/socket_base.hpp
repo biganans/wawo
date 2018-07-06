@@ -217,7 +217,20 @@ namespace wawo { namespace net {
 
 		inline int const& fd() const { return m_fd; }
 		inline address const& remote_addr() const { return m_raddr; }
-		address local_addr() const;
+		inline address const& local_addr() const { return m_laddr; }
+		
+		int load_local_addr() {
+			if (!m_laddr.is_null()) return wawo::OK;
+			struct sockaddr_in addr_in;
+			socklen_t addr_in_length = sizeof(addr_in);
+			int rt = m_fn_getsockname(m_fd, (struct sockaddr*) &addr_in, &addr_in_length);
+			if (rt == wawo::OK) {
+				WAWO_ASSERT(addr_in.sin_family == AF_INET);
+				m_laddr = address(addr_in);
+				return wawo::OK;
+			}
+			return wawo::socket_get_last_errno();
+		}
 
 		inline socketinfo info() const {
 			return socketinfo{ m_fd,m_family,m_type,m_protocol,local_addr(), remote_addr() };

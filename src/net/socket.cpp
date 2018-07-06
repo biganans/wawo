@@ -176,7 +176,6 @@ namespace wawo { namespace net {
 		do {
 			address addr;
 			int newfd = socket_base::accept(addr);
-
 			if(newfd<0 ) {
 				if ( newfd == wawo::E_EINTR ) continue;
 				if( !IS_ERRNO_EQUAL_WOULDBLOCK(newfd) ) {
@@ -187,7 +186,11 @@ namespace wawo { namespace net {
 
 			try {
 				WWRP<socket> so = wawo::make_ref<socket>(newfd, addr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
-				accepted.push_back(so);
+				if ( so->load_local_addr() != wawo::OK || so->remote_addr() == so->local_addr()) {
+					so->ch_close();
+				} else {
+					accepted.push_back(so);
+				}
 			} catch (...) {
 				WAWO_ERR("[#%d]accept new fd exception: %d", fd(), wawo::get_last_errno());
 				WAWO_CLOSE_SOCKET(newfd);

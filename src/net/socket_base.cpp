@@ -121,22 +121,6 @@ namespace wawo { namespace net {
 			WAWO_TRACE_SOCKET("[socket_base][%s]socket_base::~socket_base(),address: %p", info().to_stdstring().c_str(), this);
 		}
 
-		address socket_base::local_addr() const {
-			if (is_listener()) {
-				return m_laddr;
-			}
-
-			struct sockaddr_in addr_in;
-			socklen_t addr_in_length = sizeof(addr_in);
-
-			int rt = m_fn_getsockname(m_fd, (struct sockaddr*) &addr_in, &addr_in_length);
-			if (rt == wawo::OK) {
-				WAWO_ASSERT(addr_in.sin_family == AF_INET);
-				return address(addr_in);
-			}
-			return address();
-		}
-
 		int socket_base::open() {
 
 			WAWO_ASSERT(m_fd == -1);
