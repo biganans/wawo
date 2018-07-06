@@ -118,7 +118,6 @@ namespace wawo { namespace net { namespace impl {
 					return;
 				}
 			}
-			ctx->action_status = AS_NORMAL;
 		}
 
 		inline static void _do_read(WWRP<iocp_overlapped_ctx>& ctx) {
@@ -328,22 +327,22 @@ namespace wawo { namespace net { namespace impl {
 				_iocp_ctxs->ol_ctxs[READ] = iocp_make_ctx();
 				_iocp_ctxs->ol_ctxs[READ]->action = READ;
 				_iocp_ctxs->ol_ctxs[READ]->fd = fd;
-				_iocp_ctxs->ol_ctxs[READ]->action_status = IDLE;
+				_iocp_ctxs->ol_ctxs[READ]->action_status = AS_NORMAL;
 
 				_iocp_ctxs->ol_ctxs[WRITE] = iocp_make_ctx();
 				_iocp_ctxs->ol_ctxs[WRITE]->action = WRITE;
 				_iocp_ctxs->ol_ctxs[WRITE]->fd = fd;
-				_iocp_ctxs->ol_ctxs[WRITE]->action_status = IDLE;
+				_iocp_ctxs->ol_ctxs[WRITE]->action_status = AS_NORMAL;
 
 				_iocp_ctxs->ol_ctxs[ACCEPT] = iocp_make_ctx();
 				_iocp_ctxs->ol_ctxs[ACCEPT]->action = ACCEPT;
 				_iocp_ctxs->ol_ctxs[ACCEPT]->fd = fd;
-				_iocp_ctxs->ol_ctxs[ACCEPT]->action_status = IDLE;
+				_iocp_ctxs->ol_ctxs[ACCEPT]->action_status = AS_NORMAL;
 
 				_iocp_ctxs->ol_ctxs[CONNECT] = iocp_make_ctx();
 				_iocp_ctxs->ol_ctxs[CONNECT]->action = CONNECT;
 				_iocp_ctxs->ol_ctxs[CONNECT]->fd = fd;
-				_iocp_ctxs->ol_ctxs[CONNECT]->action_status = IDLE;
+				_iocp_ctxs->ol_ctxs[CONNECT]->action_status = AS_NORMAL;
 
 				m_ctxs.insert({ fd, _iocp_ctxs });
 				return;
@@ -369,7 +368,6 @@ namespace wawo { namespace net { namespace impl {
 				WWRP<iocp_overlapped_ctx>& ctx = _iocp_ctxs->ol_ctxs[READ];
 				WAWO_ASSERT(ctx != NULL);
 				ctx->fn = fn;
-				ctx->action_status = AS_NORMAL;
 				_do_read(ctx);
 			}
 		}
