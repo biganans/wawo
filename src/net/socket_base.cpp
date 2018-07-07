@@ -45,7 +45,7 @@ namespace wawo { namespace net {
 #endif
 	}
 
-		socket_base::socket_base(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
+		socket_base::socket_base(int const& fd, address const& laddr, address const& raddr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
 			m_fd(fd),
 			m_sm(sm),
 			m_family(family),
@@ -53,8 +53,8 @@ namespace wawo { namespace net {
 			m_protocol(proto),
 			m_option(opt),
 
-			m_raddr(addr),
-			m_laddr(),
+			m_laddr(laddr),
+			m_raddr(raddr),
 
 			m_sbc(sbc)
 		{
@@ -67,7 +67,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_sbc.rcv_size <= SOCK_RCV_MAX_SIZE && m_sbc.rcv_size >= SOCK_RCV_MIN_SIZE);
 			WAWO_ASSERT(m_sbc.snd_size <= SOCK_SND_MAX_SIZE && m_sbc.snd_size >= SOCK_SND_MIN_SIZE);
 
-			WAWO_TRACE_SOCKET("[socket_base][%s]socket::socket(), address: %p", info().to_stdstring().c_str(), this);
+			WAWO_TRACE_SOCKET("[socket_base][%s]socket_base::socket_base(), new connected address: %p", info().to_stdstring().c_str(), this);
 		}
 
 		socket_base::socket_base(s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
@@ -78,8 +78,8 @@ namespace wawo { namespace net {
 			m_type(sockt),
 			m_protocol(proto),
 			m_option(opt),
-			m_raddr(),
 			m_laddr(),
+			m_raddr(),
 
 			m_sbc(socket_buffer_cfgs[BT_MEDIUM])
 		{
@@ -102,8 +102,8 @@ namespace wawo { namespace net {
 			m_type(sockt),
 			m_protocol(proto),
 			m_option(opt),
-			m_raddr(),
 			m_laddr(),
+			m_raddr(),
 
 			m_sbc(sbc)
 		{
@@ -246,7 +246,7 @@ namespace wawo { namespace net {
 			socklen_t addrlen = sizeof(addrin);
 
 			int fd = m_fn_accept(m_fd, reinterpret_cast<sockaddr*>(&addrin), &addrlen);
-			WAWO_RETURN_V_IF_NOT_MATCH(fd, fd < 0);
+			WAWO_RETURN_V_IF_NOT_MATCH(fd, fd > 0);
 
 			addr.setnip(addrin.sin_addr.s_addr);
 			addr.setnport(addrin.sin_port);
@@ -785,7 +785,6 @@ namespace wawo { namespace net {
 		u32_t socket_base::recv(byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag) {
 			WAWO_ASSERT(buffer_o != NULL);
 			WAWO_ASSERT(size > 0);
-
 			return m_fn_recv(m_fd, buffer_o, size, ec_o, flag);
 		}
 }}

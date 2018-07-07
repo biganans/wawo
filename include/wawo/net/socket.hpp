@@ -76,8 +76,8 @@ namespace wawo { namespace net {
 		void _deinit();
 
 	public:
-		explicit socket(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc ,s_family const& family , s_type const& sockt, s_protocol const& proto, option const& opt = OPTION_NONE ):
-			socket_base(fd,addr,sm,sbc,family, sockt,proto,opt),
+		explicit socket(int const& fd, address const& laddr, address const& raddr, socket_mode const& sm, socket_buffer_cfg const& sbc ,s_family const& family , s_type const& sockt, s_protocol const& proto, option const& opt = OPTION_NONE ):
+			socket_base(fd,laddr,raddr,sm,sbc,family, sockt,proto,opt),
 			channel(wawo::net::io_event_loop_group::instance()->next(proto == P_WCP)),
 			m_flag(0),
 			m_state(S_CONNECTED),
@@ -308,7 +308,7 @@ namespace wawo { namespace net {
 					WAWO_ASSERT(raddr_in->sin_family == system_family[m_family]);
 
 					try {
-						WWRP<socket> so = wawo::make_ref<socket>(r.v.fd, raddr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
+						WWRP<socket> so = wawo::make_ref<socket>(r.v.fd,laddr, raddr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
 						accepted.push_back(so);
 					}
 					catch (std::exception& e) {
@@ -340,14 +340,14 @@ namespace wawo { namespace net {
 				int nonblocking = so->turnon_nonblocking();
 				if (nonblocking != wawo::OK) {
 					WAWO_ERR("[node_abstract][%s]turn on nonblocking failed: %d", so->info().to_stdstring().c_str(), nonblocking);
-					accepted[i]->close();
+					accepted[i]->ch_close();
 					continue;
 				}
 
 				int setdefaultkal = so->set_keep_alive_vals(default_keep_alive_vals);
 				if (setdefaultkal != wawo::OK) {
 					WAWO_ERR("[node_abstract][%s]set_keep_alive_vals failed: %d", so->info().to_stdstring().c_str(), setdefaultkal);
-					accepted[i]->close();
+					accepted[i]->ch_close();
 					continue;
 				}
 
@@ -382,7 +382,16 @@ namespace wawo { namespace net {
 				WAWO_TRACE_SOCKET("[socket][%s]WSARead error: %d", info().to_stdstring().c_str(), ec);
 			}
 #else
-			int ec = _receive_packets();
+			int ec = wawo::OK;
+			do {
+				if (WAWO_UNLIKELY(m_flag&F_SHUTDOWN_RD)) { return; }
+				u32_t nbytes = socket_base::recv(m_trb, buffer_cfg().rcv_size, ec);
+				if (nbytes>0) {
+					WWRP<packet> p = wawo::make_ref<packet>(nbytes);
+					p->write(m_trb, nbytes);
+					channel::ch_read(p);
+				}
+			} while (ec == wawo::OK);
 #endif
 			switch (ec) {
 				case wawo::OK:
@@ -392,10 +401,6 @@ namespace wawo { namespace net {
 				case wawo::E_SOCKET_GRACE_CLOSE:
 				{
 					ch_shutdown_read();
-				}
-				break;
-				case wawo::E_CHANNEL_RD_SHUTDOWN_ALREADY:
-				{
 				}
 				break;
 				default:
@@ -419,19 +424,6 @@ namespace wawo { namespace net {
 			}
 		}
 
-		inline int _receive_packets() {
-			int ec;
-			do {
-				u32_t nbytes = socket_base::recv(m_trb, buffer_cfg().rcv_size, ec);
-				if (nbytes>0) {
-					WWRP<packet> p = wawo::make_ref<packet>(nbytes);
-					p->write(m_trb, nbytes);
-					channel::ch_read(p);
-				}
-			} while (ec == wawo::OK);
-			return ec;
-		}
-
 	public:
 		inline void end_read() {
 			if (!event_poller()->in_event_loop()) {
@@ -444,7 +436,7 @@ namespace wawo { namespace net {
 
 			if ((m_flag&F_WATCH_READ) && is_nonblocking()) {
 				m_flag &= ~(F_WATCH_READ | F_WATCH_OPTION_INFINITE);
-				TRACE_IOE("[socket][%s][end_read]unwatch IOE_READ", info().to_lencstr()().cstr);
+				TRACE_IOE("[socket][%s][end_read]unwatch IOE_READ", info().to_stdstring().c_str());
 				event_poller()->unwatch(IOE_READ, fd() );
 			}
 		}

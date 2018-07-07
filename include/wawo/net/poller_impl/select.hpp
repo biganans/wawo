@@ -138,6 +138,7 @@ namespace wawo { namespace net { namespace impl {
 						continue;
 					}
 
+					//TRACE_IOE("[select]check read evt for: %d", ctx->fd );
 					FD_SET((ctx->fd), &m_ctxs_to_check[idx]->fds_r);
 					m_ctxs_to_check[idx]->ctxs[m_ctxs_to_check[idx]->count++] = ctx;
 
@@ -251,8 +252,8 @@ namespace wawo { namespace net { namespace impl {
 					if ( WAWO_UNLIKELY(ctx->flag&IOE_INFINITE_WATCH_READ) == 0) {
 						unwatch(IOE_READ, ctx->fd);
 					}
-					async_io_result r = {AIO_READ, 0,0 };
-					_fn(r);
+					//TRACE_IOE("[select]start read for: %d", ctx->fd);
+					_fn({ AIO_READ, 0,0 });
 				}
 
 				if( FD_ISSET( fd, &fds_w ) ) {
@@ -262,8 +263,7 @@ namespace wawo { namespace net { namespace impl {
 					if ( WAWO_LIKELY(ctx->flag&IOE_INFINITE_WATCH_WRITE) == 0) {
 						unwatch(IOE_WRITE, ctx->fd);
 					}
-					async_io_result r = { AIO_WRITE, 0,0 };
-					_fn(r);
+					_fn({ AIO_WRITE, 0,0 });
 				}
 
 				if( FD_ISSET(fd, &fds_ex) ) {
@@ -282,10 +282,9 @@ namespace wawo { namespace net { namespace impl {
 
 					unwatch(IOE_READ, ctx->fd);
 					unwatch(IOE_WRITE, ctx->fd);//only trigger once
-					async_io_result r = { AIO_WRITE, ec,0 };
 
 					WAWO_ASSERT(_fn != NULL);
-					_fn(r);
+					_fn({ AIO_WRITE, ec,0 });
 				}
 			}
 		}

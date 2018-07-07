@@ -154,13 +154,13 @@ namespace wawo { namespace net {
 	protected:
 		int m_fd;
 		socket_mode m_sm; //
-		s_family	m_family;
+		s_family m_family;
 		s_type m_type;
 		s_protocol m_protocol;
 
 		int m_option;
-		address m_raddr;
 		address m_laddr;
+		address m_raddr;
 
 		socket_buffer_cfg m_sbc; //socket buffer setting
 
@@ -195,7 +195,7 @@ namespace wawo { namespace net {
 		int connect(address const& addr);
 
 	public:
-		explicit socket_base(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt = OPTION_NONE); //by pass a connected socket fd
+		explicit socket_base(int const& fd, address const& laddr, address const& raddr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt = OPTION_NONE); //by pass a connected socket fd
 		explicit socket_base(s_family const& family, s_type const& type, s_protocol const& protocol, option const& opt = OPTION_NONE);
 		explicit socket_base(socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& option = OPTION_NONE); //init a empty socket object
 
