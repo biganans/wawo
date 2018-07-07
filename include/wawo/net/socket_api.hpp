@@ -111,21 +111,20 @@ namespace wawo { namespace net { namespace socket_api {
 					}
 				}
 				else {
-
 					WAWO_ASSERT(r == -1);
 					int ec = socket_get_last_errno();
-					if (IS_ERRNO_EQUAL_WOULDBLOCK(ec)) {
+					if (WAWO_LIKELY(IS_ERRNO_EQUAL_WOULDBLOCK(ec))) {
 						ec_o = wawo::E_CHANNEL_WRITE_BLOCK;
-						//WAWO_TRACE_SOCKET("[wawo::net::send][#%d]send blocked, error code: <%d>", fd, ec);
+						break;
 					}
-					else if ((ec) == wawo::E_EINTR) {
+					else if (WAWO_UNLIKELY(ec == wawo::E_EINTR)) {
 						continue;
 					}
 					else {
 						WAWO_ERR("[wawo::net::send][#%d]send failed, error code: <%d>", fd, ec);
-						ec_o = (ec);
+						ec_o = ec;
+						break;
 					}
-					break;
 				}
 			} while (true);
 
@@ -137,11 +136,11 @@ namespace wawo { namespace net { namespace socket_api {
 			WAWO_ASSERT(buffer_o != NULL);
 			WAWO_ASSERT(size > 0);
 
-			u32_t r_total = 0;
+			u32_t R = 0;
 			do {
-				int r = ::recv(fd, reinterpret_cast<char*>(buffer_o) + r_total, size - r_total, flag);
+				int r = ::recv(fd, reinterpret_cast<char*>(buffer_o) + R, size - R, flag);
 				if (WAWO_LIKELY(r>0)) {
-					r_total += r;
+					R += r;
 					ec_o = wawo::OK;
 					break;
 				}
@@ -153,24 +152,25 @@ namespace wawo { namespace net { namespace socket_api {
 				else {
 					WAWO_ASSERT(r == -1);
 					int ec = socket_get_last_errno();
-					if (IS_ERRNO_EQUAL_WOULDBLOCK(ec)) {
-						//WAWO_TRACE_SOCKET("[wawo::net::recv][#%d]recv blocked, block code: <%d>", fd, ec);
+					if (WAWO_LIKELY(IS_ERRNO_EQUAL_WOULDBLOCK(ec))) {
 						ec_o = wawo::E_CHANNEL_READ_BLOCK;
+						break;
 					}
-					else if (ec == wawo::E_EINTR) {
+					else if (WAWO_UNLIKELY(ec == wawo::E_EINTR)) {
 						continue;
 					}
 					else {
 						WAWO_ASSERT(ec != wawo::OK);
 						ec_o = ec;
 						WAWO_ERR("[wawo::net::recv][#%d]recv error, errno: %d", fd, ec);
+						break;
 					}
-					break;
 				}
 			} while (true);
 
-			WAWO_TRACE_SOCKET_API("[wawo::net::recv][#%d]recv bytes, %d", fd, r_total);
-			return r_total;
+			WAWO_TRACE_SOCKET_API("[wawo::net::recv][#%d]recv bytes, %d", fd, R);
+			WAWO_ASSERT(R <= size);
+			return R;
 		}
 
 		inline u32_t sendto(int const& fd, wawo::byte_t const* const buff, wawo::u32_t const& len, const wawo::net::address& addr, int& ec_o, int const& flag) {

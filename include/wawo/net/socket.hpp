@@ -732,6 +732,9 @@ namespace wawo { namespace net {
 		inline int ch_id() const { return fd(); }
 		void ch_write_impl(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise)
 		{
+			WAWO_ASSERT(outlet->len() > 0);
+			WAWO_ASSERT(ch_promise != NULL);
+
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			if (ch_promise->is_cancelled()) {
 				return;

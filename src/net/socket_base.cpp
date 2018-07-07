@@ -126,7 +126,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_fd == -1);
 			m_fd = m_fn_socket(system_family[m_family], system_sock_type[m_type], system_protocol[m_protocol]);
 			if (m_fd < 0) {
-				WAWO_ERR("[socket_base][%s]socket::socket() failed, %d", info().to_stdstring().c_str());
+				WAWO_ERR("[socket_base][%s]socket::socket() failed, %d", info().to_stdstring().c_str(), wawo::socket_get_last_errno() );
 				return m_fd;
 			}
 			WAWO_ASSERT(m_fd>0 );
@@ -203,7 +203,7 @@ namespace wawo { namespace net {
 			return shutrt;
 		}
 
-		int socket_base::bind(const address& addr) {
+		int socket_base::bind(address const& addr) {
 
 			WAWO_ASSERT(m_sm == SM_NONE);
 			WAWO_ASSERT(m_laddr.is_null());
@@ -778,7 +778,6 @@ namespace wawo { namespace net {
 		u32_t socket_base::send(byte_t const* const buffer, u32_t const& len, int& ec_o, int const& flag) {
 			WAWO_ASSERT(buffer != NULL);
 			WAWO_ASSERT(len > 0);
-
 			return m_fn_send(m_fd, buffer, len, ec_o, flag);
 		}
 
