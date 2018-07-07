@@ -7,10 +7,11 @@
 	#include <wawo/net/winsock_helper.hpp>
 #endif
 
+//#define WAWO_ENABLE_TRACE_SOCKET_API
 #ifdef WAWO_ENABLE_TRACE_SOCKET_API
-#define WAWO_ENABLE_TRACE_SOCKET_API WAWO_INFO
+	#define WAWO_TRACE_SOCKET_API WAWO_INFO
 #else
-#define WAWO_ENABLE_TRACE_SOCKET_API(...)
+	#define WAWO_TRACE_SOCKET_API(...)
 #endif
 
 #define IS_ERRNO_EQUAL_WOULDBLOCK(_errno) ((_errno==wawo::E_EAGAIN)||(_errno==wawo::E_EWOULDBLOCK)||(_errno==wawo::E_WSAEWOULDBLOCK))
@@ -128,7 +129,7 @@ namespace wawo { namespace net { namespace socket_api {
 				}
 			} while (true);
 
-			WAWO_ENABLE_TRACE_SOCKET_API("[wawo::net::send][#%d]send, to send: %d, sent: %d, ec: %d", fd, len, sent_total, ec_o);
+			WAWO_TRACE_SOCKET_API("[wawo::net::send][#%d]send, to send: %d, sent: %d, ec: %d", fd, len, sent_total, ec_o);
 			return R;
 		}
 
@@ -145,7 +146,7 @@ namespace wawo { namespace net { namespace socket_api {
 					break;
 				}
 				else if (r == 0) {
-					WAWO_ENABLE_TRACE_SOCKET_API("[wawo::net::recv][#%d]socket closed by remote side gracefully[detected by recv]", fd);
+					WAWO_TRACE_SOCKET_API("[wawo::net::recv][#%d]socket closed by remote side gracefully[detected by recv]", fd);
 					ec_o = wawo::E_SOCKET_GRACE_CLOSE;
 					break;
 				}
@@ -168,7 +169,7 @@ namespace wawo { namespace net { namespace socket_api {
 				}
 			} while (true);
 
-			WAWO_ENABLE_TRACE_SOCKET_API("[wawo::net::recv][#%d]recv bytes, %d", fd, r_total);
+			WAWO_TRACE_SOCKET_API("[wawo::net::recv][#%d]recv bytes, %d", fd, r_total);
 			return r_total;
 		}
 
@@ -215,7 +216,7 @@ namespace wawo { namespace net { namespace socket_api {
 
 			} while (true);
 
-			WAWO_ENABLE_TRACE_SOCKET_API("[wawo::net::sendto][#%d]sendto() == %d", fd, sent_total);
+			WAWO_TRACE_SOCKET_API("[wawo::net::sendto][#%d]sendto() == %d", fd, sent_total);
 			return sent_total;
 		}
 
@@ -252,12 +253,12 @@ namespace wawo { namespace net { namespace socket_api {
 				break;
 			} while (true);
 
-			WAWO_ENABLE_TRACE_SOCKET_API("[wawo::net::recvfrom][#%d]recvfrom() == %d", fd, r_total);
+			WAWO_TRACE_SOCKET_API("[wawo::net::recvfrom][#%d]recvfrom() == %d", fd, r_total);
 			return r_total;
 		}
 	}
 
-#ifdef WAWO_ENABLE_IOCP
+#ifdef WAWO_IO_MODE_IOCP
 	namespace iocp {
 		inline int socket(int const& family, int const& socket_type, int const& protocol) {
 			int rt = ::WSASocketW(family, socket_type, protocol, NULL, 0, WSA_FLAG_OVERLAPPED);

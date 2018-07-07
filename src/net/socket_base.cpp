@@ -22,7 +22,7 @@ namespace wawo { namespace net {
 			m_fn_recvfrom = wawo::net::standard_socket::recvfrom;
 		} else {
 #endif
-#ifdef WAWO_ENABLE_IOCP
+#ifdef WAWO_IO_MODE_IOCP
 			m_fn_socket = wawo::net::socket_api::iocp::socket;
 #else
 			m_fn_socket = wawo::net::socket_api::standard::socket;
@@ -260,7 +260,7 @@ namespace wawo { namespace net {
 			m_sm = SM_ACTIVE;
 			m_raddr = addr;
 
-#ifdef WAWO_ENABLE_IOCP
+#ifdef WAWO_IO_MODE_IOCP
 			if (m_protocol == P_TCP) {
 				//connectex requires the socket to be initially bound
 				struct sockaddr_in addr_in;

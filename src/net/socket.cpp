@@ -104,7 +104,7 @@ namespace wawo { namespace net {
 		m_fn_accepted = fn_accepted;
 
 		if (WAWO_LIKELY(rt == wawo::OK)) {
-#ifdef WAWO_ENABLE_IOCP
+#ifdef WAWO_IO_MODE_IOCP
 			__IOCP_CALL_AcceptEx();
 #else
 			begin_accept();
@@ -145,7 +145,7 @@ namespace wawo { namespace net {
 		if (rt == wawo::OK) {
 			ch_promise->set_success(wawo::OK);
 			channel::ch_fire_connected();
-#ifdef WAWO_ENABLE_IOCP
+#ifdef WAWO_IO_MODE_IOCP
 			__IOCP_init();
 #endif
 			begin_read(F_WATCH_OPTION_INFINITE);
@@ -153,7 +153,7 @@ namespace wawo { namespace net {
 		} else if (rt == wawo::E_SOCKET_CONNECTING) {
 			m_dial_promise = ch_promise;
 			TRACE_IOE("[socket_base][%s][async_connect]watch(IOE_WRITE)", info().to_stdstring().c_str());
-#ifdef WAWO_ENABLE_IOCP
+#ifdef WAWO_IO_MODE_IOCP
 			socket::__IOCP_CALL_ConnectEx();
 #else
 			socket::begin_connect();

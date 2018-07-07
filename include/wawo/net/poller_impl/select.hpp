@@ -74,7 +74,6 @@ namespace wawo { namespace net { namespace impl {
 					TRACE_IOE("[io_event_loop][#%d]watch_ioe: make new, flag: %u", fd, flag );
 					WWRP<poller_ctx> _ctx = wawo::make_ref<poller_ctx>();
 					_ctx->fd = fd;
-//					_ctx->poll_type = T_SELECT;
 					_ctx->flag = 0;
 
 					m_ctxs.insert({fd,_ctx});

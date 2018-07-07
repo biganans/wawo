@@ -1,7 +1,7 @@
 #include <wawo/core.hpp>
 #ifdef WAWO_ENABLE_EPOLL
 #include <wawo/net/poller_impl/epoll.hpp>
-#elif defined(WAWO_ENABLE_IOCP)
+#elif defined(WAWO_IO_MODE_IOCP)
 #include <wawo/net/poller_impl/iocp.hpp>
 #else
 #include <wawo/net/poller_impl/select.hpp>
@@ -27,7 +27,7 @@ namespace wawo { namespace net {
 			}
 			break;
 
-#elif defined(WAWO_ENABLE_IOCP)
+#elif defined(WAWO_IO_MODE_IOCP)
 
 			case T_IOCP:
 			{
