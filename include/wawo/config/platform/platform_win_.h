@@ -1,11 +1,15 @@
 #ifndef _CONFIG_PLATFORM_WAWO_PLATFORM_WIN_H_
 #define _CONFIG_PLATFORM_WAWO_PLATFORM_WIN_H_
 
+//note
+//we can set this value very high to enable maxmium fd check for each select op
+//2024 has been tested on win10
+//if you add more fd to check sets, select will always return 10038
 #ifdef FD_SETSIZE //disable warning
 	#undef FD_SETSIZE
 #endif
-
 #define FD_SETSIZE 1024 //will only affact MODE_SELECT
+
 
 namespace wawo {
 	typedef int SOCKET ;
