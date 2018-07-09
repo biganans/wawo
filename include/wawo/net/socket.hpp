@@ -767,19 +767,15 @@ end_accept:
 				return;
 			}
 
-#ifdef WAWO_IO_MODE_IOCP
 			if ((m_flag&F_WRITE_BLOCKED)) {
 				ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
 				return;
 			}
-#endif
 
 			if (m_noutbound_bytes + outlet->len()>buffer_cfg().snd_size ) {
 				ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
-#ifdef WAWO_IO_MODE_IOCP
 				m_flag |= F_WRITE_BLOCKED;
 				channel::ch_fire_write_block();
-#endif
 				return;
 			}
 			m_outbound_entry_q.push({
@@ -811,7 +807,7 @@ end_accept:
 			}
 			return;
 #else
-			if (WAWO_UNLIKELY((m_flag&(F_SHUTDOWN_WR)) != 0)) { return; }
+			if (WAWO_UNLIKELY((m_flag&(F_SHUTDOWN_WR|F_WATCH_WRITE)) != 0)) { return; }
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			int _errno = 0;
 			while (m_outbound_entry_q.size()) {
@@ -840,7 +836,7 @@ end_accept:
 			}
 			if (_errno == wawo::OK) {
 				WAWO_ASSERT(m_outbound_entry_q.size() == 0);
-				if (m_flag&F_WATCH_WRITE) {
+				if (m_flag&F_WRITE_BLOCKED) {
 					end_write();
 					m_flag &= ~F_WRITE_BLOCKED;
 					channel::ch_fire_write_unblock();
@@ -848,10 +844,7 @@ end_accept:
 				return;
 			} else if (_errno == wawo::E_CHANNEL_WRITE_BLOCK ) {
 				if ((m_flag&F_WATCH_WRITE) == 0) {
-					begin_write();
-					m_flag |= F_WRITE_BLOCKED;
-					//we'll trigger this event in the next write call,if our buffer can not hold the outp pack len
-					//channel::ch_fire_write_block();
+					begin_write(IOE_INFINITE_WATCH_WRITE);
 				} else {
 					//@TODO clear old before setup, this is just a quick fix
 					end_write();
