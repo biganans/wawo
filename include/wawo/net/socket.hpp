@@ -149,15 +149,15 @@ namespace wawo { namespace net {
 
 		static WWRP<channel_future> dial(std::string const& addrurl, fn_dial_channel_initializer const& initializer ) {
 			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(nullptr);
-			socketaddr addr;
-			int rt = _parse_socketaddr_from_url(addrurl, addr);
+			socketaddr soaddr;
+			int rt = _parse_socketaddr_from_url(addrurl, soaddr);
 			if (rt != wawo::OK) {
 				ch_promise->set_success(rt);
 				return ch_promise;
 			}
 
-			WWRP<socket> so = wawo::make_ref<socket>(addr.so_family, addr.so_type, addr.so_protocol);
-			WWRP<channel_future> dial_future = so->_dial(addr.so_address, initializer );
+			WWRP<socket> so = wawo::make_ref<socket>(soaddr.so_address.family(), soaddr.so_type, soaddr.so_proto);
+			WWRP<channel_future> dial_future = so->_dial(soaddr.so_address, initializer );
 
 			dial_future->add_listener([](WWRP<channel_future> f) {
 				if (f->get() != wawo::OK) {
@@ -177,15 +177,15 @@ namespace wawo { namespace net {
 		static WWRP<channel_future> listen_on(std::string const& addrurl, fn_accepted_channel_initializer const& accepted) {
 
 			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(nullptr);
-			socketaddr addr;
-			int rt = _parse_socketaddr_from_url(addrurl, addr);
+			socketaddr soaddr;
+			int rt = _parse_socketaddr_from_url(addrurl, soaddr);
 			if (rt != wawo::OK) {
 				ch_promise->set_success(rt);
 				return ch_promise;
 			}
 
-			WWRP<socket> so = wawo::make_ref<socket>(addr.so_family, addr.so_type, addr.so_protocol);
-			WWRP<channel_future> listen_future = so->_listen_on(addr.so_address, accepted, 128);
+			WWRP<socket> so = wawo::make_ref<socket>(soaddr.so_address.family(), soaddr.so_type, soaddr.so_proto);
+			WWRP<channel_future> listen_future = so->_listen_on(soaddr.so_address, accepted, 128);
 			rt = listen_future->get();
 			WAWO_RETURN_V_IF_MATCH(listen_future, rt == wawo::OK);
 
@@ -198,7 +198,6 @@ namespace wawo { namespace net {
 
 	private:
 		//url example: tcp://0.0.0.0:80, udp://127.0.0.1:80, wcp://54.65.109.7:11211
-
 		static int _parse_socketaddr_from_url(std::string const& url, socketaddr& addr ) {
 			std::vector<std::string> _arr;
 
@@ -208,19 +207,16 @@ namespace wawo { namespace net {
 			}
 
 			if (_arr[0] == "tcp") {
-				addr.so_family = wawo::net::F_AF_INET;
 				addr.so_type = T_STREAM;
-				addr.so_protocol = P_TCP;
+				addr.so_proto = P_TCP;
 			}
 			else if (_arr[0] == "wcp") {
-				addr.so_family = wawo::net::F_AF_INET;
 				addr.so_type = T_DGRAM;
-				addr.so_protocol = P_WCP;
+				addr.so_proto = P_WCP;
 			}
 			else if (_arr[0] == "udp") {
-				addr.so_family = wawo::net::F_AF_INET;
-				addr.so_type = T_DGRAM;
-				addr.so_protocol = P_UDP;
+				addr.so_type = T_STREAM;
+				addr.so_proto = P_UDP;
 			}
 			else {
 				return wawo::E_SOCKET_INVALID_PROTOCOL;
@@ -230,10 +226,10 @@ namespace wawo { namespace net {
 				return wawo::E_SOCKET_INVALID_ADDRESS;
 			}
 			std::string ip = _arr[1].substr(2);
-			if (!is_ipv4_in_dotted_decimal_notation(ip.c_str())) {
+			if (!is_dotipv4_decimal_notation(ip.c_str())) {
 				return wawo::E_SOCKET_UNKNOWN_ADDRESS_FORMAT;
 			}
-			addr.so_address = address( ip.c_str(), wawo::to_u32(_arr[2].c_str()) & 0xFFFF);
+			addr.so_address = address( ip.c_str(), wawo::to_u32(_arr[2].c_str()) & 0xFFFF, wawo::net::F_AF_INET);
 			return wawo::OK;
 		}
 
@@ -305,7 +301,7 @@ namespace wawo { namespace net {
 					WAWO_CLOSE_SOCKET(r.v.fd);
 				} else {
 					WAWO_ASSERT(laddr.port() == m_laddr.port());
-					WAWO_ASSERT(raddr_in->sin_family == system_family[m_family]);
+					WAWO_ASSERT(raddr_in->sin_family == OS_DEF_family[m_family]);
 
 					try {
 						WWRP<socket> so = wawo::make_ref<socket>(r.v.fd, raddr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
@@ -488,7 +484,7 @@ namespace wawo { namespace net {
 		}
 
 		inline int __IOCP_CALL_IMPL_WSASocket() {
-			return ::WSASocketW( system_family[m_family], system_sock_type[m_type], system_protocol[m_protocol], NULL, 0, WSA_FLAG_OVERLAPPED);
+			return ::WSASocketW( OS_DEF_family[m_family], OS_DEF_sock_type[m_type], OS_DEF_protocol[m_protocol], NULL, 0, WSA_FLAG_OVERLAPPED);
 		}
 
 		inline void __IOCP_CALL_ConnectEx(fn_io_event const& cb_connected = NULL) {
@@ -508,9 +504,9 @@ namespace wawo { namespace net {
 			sockaddr_in addr;
 			::memset(&addr, 0,sizeof(addr));
 
-			addr.sin_family = system_family[m_family];
+			addr.sin_family = OS_DEF_family[m_family];
 			addr.sin_port = m_raddr.nport();
-			addr.sin_addr.s_addr = m_raddr.nip();
+			addr.sin_addr.s_addr = m_raddr.ipv4();
 			int socklen = sizeof(addr);
 			LPFN_CONNECTEX fn_connectEx = (LPFN_CONNECTEX)winsock_helper::instance()->load_api_ex_address(API_CONNECT_EX);
 			WAWO_ASSERT(fn_connectEx != 0);

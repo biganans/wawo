@@ -117,7 +117,7 @@ namespace wawo { namespace net { namespace protocol { namespace ipv4 {
 			icmp_pack->write<u16_t>(echo.seq);
 			icmp_pack->write<u64_t>(echo.ts);
 
-			wawo::net::address addr( ip, 0 );
+			wawo::net::address addr( ip, 0 , wawo::net::F_AF_INET);
 
 			int ec;
 			u32_t snd_c = m_so->sendto(icmp_pack->begin(), icmp_pack->len(), addr, ec);

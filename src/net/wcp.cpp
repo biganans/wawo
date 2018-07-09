@@ -1,3 +1,6 @@
+#include <wawo/core.hpp>
+
+#ifdef WAWO_ENABLE_WCP
 #include <wawo/net/socket.hpp>
 #include <wawo/net/wcp.hpp>
 
@@ -71,16 +74,16 @@ namespace wawo { namespace net {
 	}
 	*/
 
-	inline wawo::u32_t four_tuple_hash(wawo::net::address const& addr1, wawo::net::address const& addr2) {
-		return ((wawo::u32_t)(addr1.hip()) * 59) ^
-			((wawo::u32_t)(addr2.hip())) ^
-			((wawo::u32_t)(addr1.port()) << 16) ^
-			((wawo::u32_t)(addr2.port()))
+	inline wawo::u32_t four_tuple_hash(wawo::net::socketaddr const& addr1, wawo::net::socketaddr const& addr2) {
+		return ((wawo::u32_t)(addr1.so_address.ipv4()) * 59) ^
+			((wawo::u32_t)(addr2.so_address.ipv4())) ^
+			((wawo::u32_t)(addr1.so_address.port()) << 16) ^
+			((wawo::u32_t)(addr2.so_address.port()))
 			;
 	}
 
-	inline static int inject_to_address(WWRP<socket> const& so, WWSP<WCB_pack> const& opack, address const& to) {
-		WAWO_ASSERT(!to.is_null());
+	inline static int inject_to_address(WWRP<socket> const& so, WWSP<WCB_pack> const& opack, socketaddr const& to) {
+		WAWO_ASSERT(!to.so_address.is_null());
 		byte_t buffer[WCP_MTU];
 		u16_t len;
 		WCPPACK_TO_UDPMESSAGE(*opack, buffer, WCP_MTU, len);
@@ -93,11 +96,11 @@ namespace wawo { namespace net {
 #endif
 		WAWO_RETURN_V_IF_MATCH(ec, ((ec == wawo::OK) && (nbytes == len)) );
 		WAWO_WARN("[wcp]WCB::send_pack_to_address failed: %d, sent: %u, sendto: %s, seq: %u, flag: %u, ack: %u, wnd: %u",
-			ec, nbytes, to.info().cstr, opack->header.seq, opack->header.flag, opack->header.ack, opack->header.wnd);
+			ec, nbytes, to.so_address.info().c_str(), opack->header.seq, opack->header.flag, opack->header.ack, opack->header.wnd);
 		return ec;
 	}
 
-	inline static int reply_rst_to_address(WWRP<socket> const& so, u32_t const& seq, address const& to) {
+	inline static int reply_rst_to_address(WWRP<socket> const& so, u32_t const& seq, socketaddr const& to) {
 		WWSP<WCB_pack> rst = wawo::make_shared<WCB_pack>();
 		rst->header.seq = seq;
 		rst->header.flag = WCP_FLAG_RST;
@@ -403,7 +406,7 @@ namespace wawo { namespace net {
 					WAWO_ASSERT(WCPPACK_TEST_FLAG(*(inpack), WCP_FLAG_DAT));
 					WAWO_ASSERT(!WCPPACK_TEST_FLAG(*(inpack), (WCP_FLAG_SYN | WCP_FLAG_FIN)));
 
-					if (inpack->from != remote_addr) {
+					if (inpack->from.so_address != remote_addr) {
 						reply_rst_to_address(so, inpack->header.ack, inpack->from);
 
 						lock_guard<spin_mutex> lg_wcb(mutex);
@@ -451,7 +454,7 @@ namespace wawo { namespace net {
 					}
 					else if (state == WCB_SYN_SENT) {
 						//update remote
-						remote_addr = inpack->from;
+						remote_addr = inpack->from.so_address;
 						SYNACK();
 					}
 					else {
@@ -471,7 +474,7 @@ namespace wawo { namespace net {
 					case WCB_SYN_SENT:
 					{
 						WAWO_ASSERT( !remote_addr.is_null() );
-						WAWO_ASSERT( remote_addr == inpack->from );
+						WAWO_ASSERT( remote_addr == inpack->from.so_address );
 
 						int connrt = so->connect(remote_addr);
 						if (connrt == wawo::OK) {
@@ -728,10 +731,9 @@ namespace wawo { namespace net {
 	void WCB::check_send(u64_t const& now) {
 
 		if (s_flag&WRITE_SEND_ERROR) {
-			WAWO_WARN("[wcp][%u]WCB::check_send, send error already: %s", fd, remote_addr.info().cstr);
+			WAWO_WARN("[wcp][%u]WCB::check_send, send error already: %s", fd, remote_addr.info().c_str() );
 			return;
 		}
-
 
 		{
 			//update rwnd manually
@@ -2032,3 +2034,4 @@ _begin_send:
 
 	std::atomic<int> wcp::s_wpoll_auto_increament_id(1);
 }}
+#endif //WAWO_ENABLE_WCP

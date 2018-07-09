@@ -27,19 +27,19 @@ namespace wawo { namespace net {
 #else
 			m_fn_socket = wawo::net::socket_api::standard::socket;
 #endif
-			m_fn_connect = wawo::net::socket_api::standard::connect;
-			m_fn_bind = wawo::net::socket_api::standard::bind;
-			m_fn_shutdown = wawo::net::socket_api::standard::shutdown;
-			m_fn_close = wawo::net::socket_api::standard::close;
-			m_fn_listen = wawo::net::socket_api::standard::listen;
-			m_fn_accept = wawo::net::socket_api::standard::accept;
-			m_fn_getsockopt = wawo::net::socket_api::standard::getsockopt;
-			m_fn_setsockopt = wawo::net::socket_api::standard::setsockopt;
-			m_fn_getsockname = wawo::net::socket_api::standard::getsockname;
-			m_fn_send = wawo::net::socket_api::standard::send;
-			m_fn_recv = wawo::net::socket_api::standard::recv;
-			m_fn_sendto = wawo::net::socket_api::standard::sendto;
-			m_fn_recvfrom = wawo::net::socket_api::standard::recvfrom;
+			m_fn_connect = wawo::net::socket_api::posix::connect;
+			m_fn_bind = wawo::net::socket_api::posix::bind;
+			m_fn_shutdown = wawo::net::socket_api::posix::shutdown;
+			m_fn_close = wawo::net::socket_api::posix::close;
+			m_fn_listen = wawo::net::socket_api::posix::listen;
+			m_fn_accept = wawo::net::socket_api::posix::accept;
+			m_fn_getsockopt = wawo::net::socket_api::posix::getsockopt;
+			m_fn_setsockopt = wawo::net::socket_api::posix::setsockopt;
+			m_fn_getsockname = wawo::net::socket_api::posix::getsockname;
+			m_fn_send = wawo::net::socket_api::posix::send;
+			m_fn_recv = wawo::net::socket_api::posix::recv;
+			m_fn_sendto = wawo::net::socket_api::posix::sendto;
+			m_fn_recvfrom = wawo::net::socket_api::posix::recvfrom;
 #ifdef WAWO_ENABLE_WCP
 		}
 #endif
@@ -124,7 +124,7 @@ namespace wawo { namespace net {
 		int socket_base::open() {
 
 			WAWO_ASSERT(m_fd == -1);
-			m_fd = m_fn_socket(system_family[m_family], system_sock_type[m_type], system_protocol[m_protocol]);
+			m_fd = m_fn_socket(OS_DEF_family[m_family], OS_DEF_sock_type[m_type], OS_DEF_protocol[m_protocol]);
 			if (m_fd < 0) {
 				WAWO_ERR("[socket_base][%s]socket::socket() failed, %d", info().to_stdstring().c_str());
 				return m_fd;
@@ -216,13 +216,8 @@ namespace wawo { namespace net {
 				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 			}
 
-			sockaddr_in addr_in;
-			addr_in.sin_family = system_family[m_family];
-			addr_in.sin_port = addr.nport();
-			addr_in.sin_addr.s_addr = addr.nip();
-
 			m_laddr = addr;
-			return m_fn_bind(m_fd , reinterpret_cast<sockaddr*>(&addr_in), sizeof(addr_in));
+			return m_fn_bind(m_fd , addr);
 		}
 
 		int socket_base::listen(int const& backlog) {
@@ -241,19 +236,15 @@ namespace wawo { namespace net {
 			return wawo::OK;
 		}
 
-		int socket_base::accept(address& addr) {
-			sockaddr_in addrin;
-			socklen_t addrlen = sizeof(addrin);
+		int socket_base::accept(address& soaddr) {
 
-			int fd = m_fn_accept(m_fd, reinterpret_cast<sockaddr*>(&addrin), &addrlen);
+			int fd = m_fn_accept(m_fd, soaddr);
 			WAWO_RETURN_V_IF_NOT_MATCH(fd, fd < 0);
 
-			addr.setnip(addrin.sin_addr.s_addr);
-			addr.setnport(addrin.sin_port);
 			return fd;
 		}
 	
-		int socket_base::connect(wawo::net::address const& addr ) {
+		int socket_base::connect(address const& addr ) {
 			WAWO_ASSERT(m_sm == SM_NONE);
 			WAWO_ASSERT(m_raddr.is_null());
 
@@ -265,7 +256,7 @@ namespace wawo { namespace net {
 				//connectex requires the socket to be initially bound
 				struct sockaddr_in addr_in;
 				::memset(&addr_in, 0, sizeof(addr_in));
-				addr_in.sin_family = system_family[m_family];
+				addr_in.sin_family = OS_DEF_family[m_family];
 				addr_in.sin_addr.s_addr = INADDR_ANY;
 				addr_in.sin_port = 0;
 				int bindrt = ::bind( m_fd, reinterpret_cast<sockaddr*>(&addr_in), sizeof(addr_in));
@@ -279,13 +270,7 @@ namespace wawo { namespace net {
 				WAWO_ASSERT(!"TODO");
 			}
 #else
-			sockaddr_in addr_in;
-			::memset(&addr_in, 0, sizeof(addr_in));
-			addr_in.sin_family = system_family[m_family];
-			addr_in.sin_port = addr.nport();
-			addr_in.sin_addr.s_addr = addr.nip();
-			int socklength = sizeof(addr_in);
-			return m_fn_connect(m_fd, reinterpret_cast<sockaddr*>(&addr_in), socklength);
+			return m_fn_connect(m_fd, soaddr );
 #endif
 		}
 

@@ -17,7 +17,7 @@ namespace wawo { namespace env {
 		~env_impl() {
 		}
 		//return the ip count if success, and fill in parameter<ips> with local iplist
-		int GetLocalIpList( std::vector<wawo::net::socketaddr>& addrs ) {
+		int GetLocalIpList( std::vector<wawo::net::address>& addrs ) {
 
 			char _buffer[1024]= {0};
 			DWORD _buffer_length = 1024;
@@ -77,27 +77,25 @@ namespace wawo { namespace env {
 				for( ; pUnicast != NULL;++i ) {
 					if( pUnicast->Address.lpSockaddr->sa_family == AF_INET ) {
 						sockaddr_in* sa_in = (sockaddr_in*)(pUnicast->Address.lpSockaddr) ;
-						memset(_buffer, 0,_buffer_length);
+						::memset(_buffer, 0,_buffer_length);
 						::inet_ntop(AF_INET, &(sa_in->sin_addr), _buffer, _buffer_length) ;
 						
-						wawo::net::socketaddr info ;
-
-						info.so_family= wawo::net::F_AF_INET;
-						info.so_address = wawo::net::address( _buffer, 0);
-
-						addrs.push_back( info );
+						wawo::net::address addr = wawo::net::address( _buffer, 0, wawo::net::F_AF_INET);
+						addrs.push_back(addr);
 
 					} else if( pUnicast->Address.lpSockaddr->sa_family == AF_INET6 ) {
+						continue;
+
 						sockaddr_in6* sa_in = (sockaddr_in6*)(pUnicast->Address.lpSockaddr) ;
-						memset(_buffer, 0,_buffer_length);
+						::memset(_buffer, 0,_buffer_length);
 						inet_ntop(AF_INET6, &(sa_in->sin6_addr), _buffer, _buffer_length) ;
 
-						wawo::net::socketaddr info;
-
+						//wawo::net::socketaddr info;
 						if( strlen(_buffer) == 128 ) {
-							info.so_family = wawo::net::F_AF_INET6;
-							info.so_address = wawo::net::address( _buffer, 0 );
-							addrs.push_back( info );
+							
+							//info.so_family = wawo::net::F_AF_INET6;
+							//info.so_address = wawo::net::address( _buffer, 0 );
+							//addrs.push_back( info );
 						}
 					} else {
 						WAWO_THROW("invalid AF familay");

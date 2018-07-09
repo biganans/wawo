@@ -144,7 +144,7 @@ namespace wawo { namespace net {
 
 		std::string to_stdstring() const {
 			char _buf[1024] = { 0 };
-			int nbytes = snprintf(_buf, 1024, "#%d:%s:L:%s-R:%s", fd, protocol_str[p], laddr.info().cstr, raddr.info().cstr );
+			int nbytes = snprintf(_buf, 1024, "#%d:%s:L:%s-R:%s", fd, protocol_str[p], laddr.info().c_str(), raddr.info().c_str() );
 			return std::string(_buf, nbytes);
 		}
 	};
@@ -221,12 +221,11 @@ namespace wawo { namespace net {
 		
 		int load_local_addr() {
 			if (!m_laddr.is_null()) return wawo::OK;
-			struct sockaddr_in addr_in;
-			socklen_t addr_in_length = sizeof(addr_in);
-			int rt = m_fn_getsockname(m_fd, (struct sockaddr*) &addr_in, &addr_in_length);
+			address addr;
+			int rt = m_fn_getsockname(m_fd, addr);
 			if (rt == wawo::OK) {
-				WAWO_ASSERT(addr_in.sin_family == AF_INET);
-				m_laddr = address(addr_in);
+				WAWO_ASSERT(addr.family() == F_AF_INET);
+				m_laddr = addr;
 				return wawo::OK;
 			}
 			return wawo::socket_get_last_errno();
@@ -282,7 +281,7 @@ namespace wawo { namespace net {
 		u32_t send(byte_t const* const buffer, u32_t const& size, int& ec_o, int const& flag = 0);
 		u32_t recv(byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag = 0);
 		u32_t sendto(byte_t const* const buff, wawo::u32_t const& size, const address& addr, int& ec_o, int const& flag = 0);
-		u32_t recvfrom(byte_t* const buff_o, wawo::u32_t const& size, address& addr, int& ec_o);	
+		u32_t recvfrom(byte_t* const buff_o, wawo::u32_t const& size, address& addr, int& ec_o);
 	};
 }}
 #endif

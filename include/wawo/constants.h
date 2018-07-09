@@ -220,7 +220,7 @@ namespace wawo {
 	const int 	E_MEMORY_ALLOC_FAILED		= -20006; 
 	const int 	E_MEMORY_NEW_FAILED			= -20007; 
 	const int 	E_TRY_AGAIN					= -20008; 
-	const int 	E_INVALID_DATA				= -20009; 
+	const int 	E_INVAL						= -20009;
 
 	const int 	E_UNKNOWN					= -20010; 
 	const int 	E_THREAD_INTERRUPT			= -20011; 

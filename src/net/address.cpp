@@ -1,8 +1,6 @@
 #include <wawo/net/address.hpp>
-#include <wawo/log/logger_manager.h>
 
 namespace wawo { namespace net {
-
 
 	/**
 	 * @param hostname, domain name of the host, example: www.google.com
@@ -10,14 +8,14 @@ namespace wawo { namespace net {
 	 *		for a list of service names , u could refer to %WINDOW%/system32/drivers/etc/services on windows
 	 *
 	 */
-	int get_addrinfo_by_host( char const* const hostname, char const* const servicename, std::vector<socketaddr>& addrs, int const& filter ) {
+	int get_addrinfo_by_host( char const* const hostname, char const* const servicename, std::vector<address>& addrs, int const& filter ) {
 
 		WAWO_ASSERT( (hostname != NULL && wawo::strlen(hostname)) ||
 					 (servicename != NULL && wawo::strlen(servicename))
 					);
 
 		struct addrinfo hint;
-		memset( &hint, 0, sizeof(hint));
+		::memset( &hint, 0, sizeof(hint));
 		struct addrinfo* result = NULL;
 		struct addrinfo* ptr = NULL;
 
@@ -59,24 +57,23 @@ namespace wawo { namespace net {
 		retval = getaddrinfo( hostname, servicename, &hint, &result );
 
 		if( retval != 0 ) {
-			WAWO_ERR("[socketaddr]getaddrinfo failed: %d", wawo::socket_get_last_errno() );
 			return retval;
 		}
 
 		for( ptr=result;ptr!=NULL; ptr = ptr->ai_next ) {
 
-			socketaddr info;
-
+			address addr;
+			s_family f;
 			switch( ptr->ai_family ) {
 			case AF_UNSPEC:
 				{
-					info.so_family = F_AF_UNSPEC;
+					f = F_AF_UNSPEC;
 					//WAWO_ASSERT( !"to impl" );
 				}
 				break;
 			case AF_INET:
 				{
-					info.so_family = F_AF_INET;
+					f = F_AF_INET;
 
 					char addrv4_cstr[16] = {0};
 					struct sockaddr_in* addrv4 = (struct sockaddr_in*) ptr->ai_addr;
@@ -84,20 +81,20 @@ namespace wawo { namespace net {
 					//char* addrv4_cstr = inet_ntoa( addrv4->sin_addr );
 
 					if(addr_in_cstr != NULL ) {
-						info.so_address = address(addrv4_cstr,0);
-						addrs.push_back(info);
+						addr = address(addrv4_cstr,0, f);
+						addrs.push_back(addr);
 					}
 				}
 				break;
 			case AF_INET6:
 				{
-					info.so_family = F_AF_INET6;
+					f = F_AF_INET6;
 					//WAWO_ASSERT( !"to impl" );
 				}
 				break;
 			default:
 				{
-					info.so_family = F_AF_UNSPEC;
+					f = F_AF_UNSPEC;
 					//WAWO_ASSERT( !"to impl" );
 				}
 				break;
@@ -108,9 +105,9 @@ namespace wawo { namespace net {
 	}
 
 
-	extern int get_one_ipaddr_by_host( const char* hostname, len_cstr& ip_o, int const& filter ) {
+	extern int get_one_ipaddr_by_host( const char* hostname, std::string& ip_o, int const& filter ) {
 
-		std::vector<socketaddr> infos;
+		std::vector<address> infos;
 		int retval = get_addrinfo_by_host( hostname, "", infos, filter );
 
 		if( retval != 0 ) {
@@ -118,32 +115,31 @@ namespace wawo { namespace net {
 		}
 
 		WAWO_ASSERT( infos.size() != 0 );
-		ip_o = infos[0].so_address.ip() ;
+		ip_o = infos[0].dotip() ;
 		return wawo::OK;
 	}
 
-	int hostton( const char* hostname, ipv4::Ip& ip ) {
+	int hosttoip( const char* hostname, ipv4_t& nip ) {
 		WAWO_ASSERT( strlen(hostname) > 0 );
-		len_cstr ipaddr;
-		int cret = get_one_ipaddr_by_host( hostname, ipaddr, 0 );
+		std::string dotip;
+		int cret = get_one_ipaddr_by_host( hostname, dotip, 0 );
 		WAWO_RETURN_V_IF_NOT_MATCH( cret, cret==wawo::OK );
-		return ipton(ipaddr.cstr, ip);
+		return dotiptoip(dotip.c_str(), nip);
 	}
 
-	int ipton( const char* ipaddr, ipv4::Ip& ip ) {
+	int dotiptoip( const char* ipaddr, ipv4_t& ip ) {
 		WAWO_ASSERT( strlen(ipaddr) > 0 );
-
 		struct in_addr inaddr;
-		int rval = inet_pton( AF_INET, ipaddr, &inaddr );
-		if (rval == 0) return wawo::E_INVALID_DATA;
+		int rval = ::inet_pton( AF_INET, ipaddr, &inaddr );
+		if (rval == 0) return wawo::E_INVAL;
 		if (rval == -1) { return (wawo::socket_get_last_errno()); }
-		ip = (inaddr.s_addr);
+		ip = ::ntohl(inaddr.s_addr);
 		return wawo::OK;
 	}
 
-	bool is_ipv4_in_dotted_decimal_notation(const char* cstr) {
+	bool is_dotipv4_decimal_notation(const char* cstr) {
 		struct in_addr inaddr;
-		int rval = inet_pton(AF_INET, cstr, &inaddr);
+		int rval = ::inet_pton(AF_INET, cstr, &inaddr);
 		if (rval == 0) return false;
 
 		std::vector<std::string> vectors;
@@ -167,60 +163,58 @@ namespace wawo { namespace net {
 	}
 	#endif
 
-	address::address()
-		: m_identity(0)
+	address::address():
+		m_ipv4(0),
+		m_port(0),
+		m_family(F_AF_UNSPEC)
+	{
+	}
+
+	address::address( char const* ip, unsigned short port , s_family const& f):
+		m_ipv4(0),
+		m_port(0),
+		m_family(f)
+	{
+		WAWO_ASSERT( ip != NULL && wawo::strlen(ip) );
+		//WAWO_ASSERT( port != 0 );
+
+		ipv4_t ip_ = 0;
+		int cret = dotiptoip(ip, ip_);
+		WAWO_ASSERT( cret == wawo::OK );
+
+		if( cret == wawo::OK ) {
+			m_ipv4 = ip_;
+			m_port = port;
+		}
+	}
+
+	address::address( sockaddr_in const& sockaddr_in_ ):
+		m_ipv4(::ntohl(sockaddr_in_.sin_addr.s_addr)),
+		m_port(::ntohs(sockaddr_in_.sin_port)),
+		m_family(OS_DEF_to_WAWO_DEF_family(sockaddr_in_.sin_family))
 	{
 	}
 
 	address::~address() {
 	}
 
-	address::address( u64_t const& identity):
-		m_identity(identity)
-	{
-	}
-
-	address::address( char const* ip, unsigned short port )
-		:m_identity(0)
-	{
-		WAWO_ASSERT( ip != NULL && wawo::strlen(ip) );
-		//WAWO_ASSERT( port != 0 );
-
-		ipv4::Ip ulip = 0;
-		int cret = ipton(ip, ulip);
-		WAWO_ASSERT( cret == wawo::OK );
-
-		if( cret == wawo::OK ) {
-			m_identity	= (m_identity | (ulip&0xFFFFFFFF)) << 16 ;
-			m_identity	= (m_identity | ( htons(port)&0xFFFF)) ;
-		}
-		WAWO_ASSERT( m_identity != 0 );
-	}
-
-	address::address( sockaddr_in const& socketAddr )
-		:m_identity(0)
-	{
-		m_identity	= (m_identity | (( socketAddr.sin_addr.s_addr ) & 0xFFFFFFFF))<< 16 ;
-		m_identity	= (m_identity | (( socketAddr.sin_port ) & 0xFFFF )) ;
-	}
-
-	const len_cstr address::ip() const {
+	const std::string address::dotip() const {
 		in_addr ia ;
-		ia.s_addr = ((m_identity>>16)&0xFFFFFFFF);
+		ia.s_addr = m_ipv4;
 		char addr[16] = {0};
 		const char* addr_cstr = inet_ntop( AF_INET, &ia, addr, 16 );
 		if (addr_cstr != NULL) {
-			return len_cstr(addr);
+			return std::string(addr);
 		}
-		return len_cstr();
+		return std::string();
 	}
 
-	len_cstr address::info() const {
+	std::string address::info() const {
 		char info[32] = { 0 };
-		int rtval = snprintf(const_cast<char*>(info), sizeof(info) / sizeof(info[0]), "%s:%d", ip().cstr, hport());
+		int rtval = snprintf(const_cast<char*>(info), sizeof(info) / sizeof(info[0]), "%s:%d", dotip().c_str(), hport());
 		WAWO_ASSERT(rtval > 0);
 		(void)rtval;
-		return len_cstr(info, wawo::strlen(info));
+		return std::string(info, wawo::strlen(info));
 	}
 
 }}

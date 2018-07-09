@@ -33,7 +33,7 @@ namespace wawo { namespace env {
 		{
 		}
 
-		int GetLocalIpList( std::vector<wawo::net::socketaddr>& addrs ) {
+		int GetLocalIpList( std::vector<wawo::net::address>& addrs ) {
 			return m_impl->GetLocalIpList(addrs);
 		}
 

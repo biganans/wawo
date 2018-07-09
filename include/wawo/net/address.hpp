@@ -2,6 +2,7 @@
 #define _WAWO_NET_SOCKETADDR_HPP_
 
 #include <wawo/core.hpp>
+#include <string>
 
 namespace wawo { namespace net {
 
@@ -16,7 +17,7 @@ namespace wawo { namespace net {
 		F_MAX
 	};
 
-	static USHORT system_family[F_MAX] = {
+	static USHORT OS_DEF_family[F_MAX] = {
 		PF_INET,
 		AF_INET,
 		AF_INET6,
@@ -36,7 +37,7 @@ namespace wawo { namespace net {
 		T_MAX
 	};
 
-	static int system_sock_type[T_MAX] = {
+	static int OS_DEF_sock_type[T_MAX] = {
 		SOCK_STREAM,
 		SOCK_DGRAM,
 		SOCK_RAW,
@@ -66,11 +67,11 @@ namespace wawo { namespace net {
 		"L2TP",
 		"SCTP",
 		"RAW",
-		"wcp",
+		"WCP",
 		"UNKNOWN"
 	};
 
-	static int system_protocol[P_MAX] = {
+	static int OS_DEF_protocol[P_MAX] = {
 		IPPROTO_TCP,
 		IPPROTO_UDP,
 		IPPROTO_ICMP,
@@ -82,13 +83,8 @@ namespace wawo { namespace net {
 		0
 	};
 
-	//extern const char* protocol_str[P_MAX];
-
-	namespace ipv4 {
-		//network bytes sequence
-		typedef unsigned long Ip;
-		typedef unsigned short Port;
-	}
+	typedef unsigned long ipv4_t;
+	typedef unsigned short port_t;
 
 	enum AddrInfoFilter {
 		AIF_ALL			= 0x0, //return all
@@ -100,104 +96,132 @@ namespace wawo { namespace net {
 		AIF_P_UDP		= 0x20
 	};
 
-	class address {
-		//unsigned long m_ulongIp; //host format of ip
-		//unsigned short m_port; //host sequence of port
-		u64_t m_identity;
+	struct address {
+		s_family m_family;
+		ipv4_t m_ipv4;
+		port_t m_port;
 
 #ifdef WAWO_PLATFORM_GNU
 		char m_unixDomainPath[256];
 #endif
 
-	public:
 #ifdef WAWO_PLATFORM_GNU
-		address( sockaddr_un& sockAddr ) ;
+		address( sockaddr_un& sockaddr_un_ ) ;
 #endif
 
 		explicit address();
-		explicit address(const char* ip, unsigned short port);
-		explicit address( u64_t const& identity );
-		explicit address( sockaddr_in const& sockAddr ) ;
+		explicit address(const char* ip, unsigned short port, s_family const& f = F_AF_UNSPEC );
+		explicit address( sockaddr_in const& sockaddr_in_ ) ;
 
 		~address();
 
-		inline bool is_null() const {return 0 == m_identity ;}
-		inline u64_t const& identity() const { return m_identity; }
+		inline bool is_null() const {return 0 == m_ipv4 && 0 == m_port ;}
 
 		inline bool operator == ( address const& addr ) const {
-			return m_identity == addr.identity() ;
+			return m_ipv4 == addr.m_ipv4 && m_port == addr.m_port && m_family == addr.m_family ;
 		}
 
 		inline bool operator != ( address const& addr ) const {
-			return m_identity != addr.identity() ;
+			return !((*this) == addr);
 		}
 
 		inline bool operator < (address const& addr) const {
-			return identity() < addr.identity();
+			const u64_t idl = (m_ipv4 << 24 | m_port<<8 | m_family);
+			const u64_t idr = (addr.m_ipv4 << 24 | addr.m_port<<8|m_family);
+			return idl < idr;
 		}
 		inline bool operator > (address const& addr) const {
-			return identity() > addr.identity();
+			return !(*this < addr);
 		}
 
-		const len_cstr ip() const ;
-		inline ipv4::Port port() const {
-			return hport();
+		inline s_family family() const {
+			return m_family;
 		}
 
-		inline ipv4::Ip hip() const {
-			return ::ntohl(nip());
+		const std::string dotip() const ;
+
+		inline ipv4_t ipv4() const {
+			return m_ipv4;
 		}
-		inline ipv4::Port hport() const {
-			return ::ntohs(nport());
+		inline ipv4_t hipv4() const {
+			return ipv4();
 		}
-		inline ipv4::Port nport() const {
-			return ((m_identity&0xFFFF));
+		inline ipv4_t nipv4() const {
+			return ::htonl(m_ipv4);
 		}
-		inline ipv4::Ip nip() const {
-			return (((m_identity>>16)&0xFFFFFFFF));
+		inline port_t port() const {
+			return m_port;
+		}
+		inline port_t hport() const {
+			return port();
+		}
+		inline port_t nport() const {
+			return ::htons(m_port);
 		}
 
-		inline void setnip( ipv4::Ip const& ulongIp ) {
-			ipv4::Port port = (m_identity&0xFFFF);
-			m_identity = 0;
-			m_identity = (m_identity|ulongIp)<<16 ;
-			m_identity = (m_identity|port);
-		}
-
-		inline void setnport( ipv4::Port const& port ) {
-			ipv4::Ip current_ip = (m_identity>>16)&0xFFFFFFFF;
-			m_identity = 0;
-			m_identity = (m_identity|current_ip)<<16;
-			m_identity = (m_identity|(port&0xFFFF));
-		}
-
-		len_cstr info() const;
+		std::string info() const;
 	};
 
 	struct socketaddr {
-
-		socketaddr() :
-			so_family(F_AF_UNSPEC),
+		inline socketaddr() :
 			so_type(T_UNKNOWN),
-			so_protocol(P_UNKNOWN),
-			so_address(0)
+			so_proto(P_UNKNOWN),
+			so_address()
 		{}
 
-		s_family so_family;
-		s_type so_type;
-		s_protocol so_protocol;
+		inline socketaddr(address const& address):
+			so_type(T_UNKNOWN),
+			so_proto(P_UNKNOWN),
+			so_address(address)
+		{}
+
+		inline socketaddr(s_type const& t, s_protocol const& p, address const& address) :
+			so_type(t),
+			so_proto(p),
+			so_address(address)
+		{}
 
 		address so_address;
+		s_type so_type;
+		s_protocol so_proto;
 	};
 
+	inline s_family OS_DEF_to_WAWO_DEF_family(int f) {
+		switch (f) {
+		case AF_INET:
+		{
+			return F_AF_INET;
+		}
+		break;
+		case AF_INET6:
+		{
+			return F_AF_INET6;
+		}
+		break;
+		case AF_UNIX:
+		{
+			return F_AF_UNIX;
+		}
+		break;
+		case AF_NETBIOS:
+		{
+			return F_AF_NETBIOS;
+		}
+		break;
+		case AF_UNSPEC:
+		default:
+		{
+			return F_AF_UNSPEC;
+		}
+		}
+	}
+	extern int get_addrinfo_by_host(char const* const hostname, char const* const servicename, std::vector<address>& ips, int const& filter);
+	extern int get_one_ipaddr_by_host(const char* hostname, std::string& ip, int const& filter);
 
-	extern int get_addrinfo_by_host(char const* const hostname, char const* const servicename, std::vector<socketaddr>& ips, int const& filter);
-	extern int get_one_ipaddr_by_host(const char* hostname, len_cstr& ip, int const& filter);
+	extern int hosttoip(const char* hostname, ipv4_t& ip);
+	extern int dotiptoip(const char* dotip, ipv4_t& ip);
 
-	extern int hostton(const char* hostname, ipv4::Ip& ip);
-	extern int ipton(const char* ipaddr, ipv4::Ip& ip);
-
-	extern bool is_ipv4_in_dotted_decimal_notation(const char* string);
+	extern bool is_dotipv4_decimal_notation(const char* string);
 
 }}
-#endif //_SOCKET_ADDR_H
+#endif //_ADDRESS_H

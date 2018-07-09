@@ -61,6 +61,9 @@ using namespace wawo::net;
 int main(int argc, char* argv) {
 	int* vldtest = new int;
 
+	//int fd[2];
+	//int rt = wawo::net::socket_api::posix::socketpair(wawo::net::F_AF_INET, wawo::net::T_STREAM, wawo::net::P_TCP, fd);
+
 	wawo::app app;
 	WWRP<http_server_handler> http_handler = make_ref<http_server_handler>();
 
