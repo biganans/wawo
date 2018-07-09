@@ -15,10 +15,11 @@
 #include <wawo/net/channel_future.hpp>
 #include <wawo/net/io_event.hpp>
 
-#ifdef WAWO_PLATFORM_WIN
-	#define DEFAULT_LISTEN_BACKLOG SOMAXCONN
+#if defined(WAWO_PLATFORM_WIN) && defined(WAWO_ENABLE_IOCP)
+//	#define DEFAULT_LISTEN_BACKLOG SOMAXCONN
+	#define DEFAULT_LISTEN_BACKLOG 512
 #else
-	#define DEFAULT_LISTEN_BACKLOG 128
+	#define DEFAULT_LISTEN_BACKLOG 256
 #endif
 
 namespace wawo { namespace net {
