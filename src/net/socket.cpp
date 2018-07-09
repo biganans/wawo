@@ -104,7 +104,7 @@ namespace wawo { namespace net {
 		m_fn_accepted = fn_accepted;
 
 		if (WAWO_LIKELY(rt == wawo::OK)) {
-#ifdef WAWO_ENABLE_IOCP
+#ifdef WAWO_IO_MODE_IOCP
 			__IOCP_CALL_AcceptEx();
 #else
 			begin_accept();
@@ -145,15 +145,15 @@ namespace wawo { namespace net {
 		if (rt == wawo::OK) {
 			ch_promise->set_success(wawo::OK);
 			channel::ch_fire_connected();
-#ifdef WAWO_ENABLE_IOCP
+#ifdef WAWO_IO_MODE_IOCP
 			__IOCP_init();
 #endif
 			begin_read(F_WATCH_OPTION_INFINITE);
 			return ch_promise;
 		} else if (rt == wawo::E_SOCKET_CONNECTING) {
 			m_dial_promise = ch_promise;
-			TRACE_IOE("[socket_base][%s][async_connect]watch(IOE_WRITE)", info().to_stdstring().c_str());
-#ifdef WAWO_ENABLE_IOCP
+			TRACE_IOE("[socket][%s][async_connect]watch(IOE_WRITE)", info().to_stdstring().c_str());
+#ifdef WAWO_IO_MODE_IOCP
 			socket::__IOCP_CALL_ConnectEx();
 #else
 			socket::begin_connect();
@@ -174,8 +174,8 @@ namespace wawo { namespace net {
 
 		int ec = wawo::OK;
 		do {
-			address addr;
-			int newfd = socket_base::accept(addr);
+			address raddr;
+			int newfd = socket_base::accept(raddr);
 			if(newfd<0 ) {
 				if ( newfd == wawo::E_EINTR ) continue;
 				if( !IS_ERRNO_EQUAL_WOULDBLOCK(newfd) ) {
@@ -184,13 +184,24 @@ namespace wawo { namespace net {
 				break;
 			}
 
+			//patch for local addr
+			address laddr;
+			int rt = m_fn_getsockname(newfd, laddr);
+			if (rt != wawo::OK) {
+				WAWO_ERR("[socket][%s][accept]load local addr failed: %d", info().to_stdstring().c_str(), wawo::socket_get_last_errno());
+				WAWO_CLOSE_SOCKET(newfd);
+				continue;
+			}
+
+			WAWO_ASSERT(laddr.family() == m_family);
+			if (laddr == raddr) {
+				WAWO_CLOSE_SOCKET(newfd);
+				continue;
+			}
+
 			try {
-				WWRP<socket> so = wawo::make_ref<socket>(newfd, addr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
-				if ( so->load_local_addr() != wawo::OK || so->remote_addr() == so->local_addr()) {
-					so->ch_close();
-				} else {
-					accepted.push_back(so);
-				}
+				WWRP<socket> so = wawo::make_ref<socket>(newfd, laddr, raddr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
+				accepted.push_back(so);
 			} catch (...) {
 				WAWO_ERR("[#%d]accept new fd exception: %d", fd(), wawo::get_last_errno());
 				WAWO_CLOSE_SOCKET(newfd);

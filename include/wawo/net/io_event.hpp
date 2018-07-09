@@ -35,7 +35,7 @@ namespace wawo { namespace net {
 
 	typedef std::function<void(async_io_result const& r)> fn_io_event;
 
-#ifdef WAWO_ENABLE_IOCP
+#ifdef WAWO_IO_MODE_IOCP
 	typedef std::function<int(void* ol)> fn_overlapped_io_event;
 #endif
 }}

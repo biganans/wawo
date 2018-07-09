@@ -22,10 +22,10 @@ namespace wawo { namespace net {
 			m_fn_recvfrom = wawo::net::standard_socket::recvfrom;
 		} else {
 #endif
-#ifdef WAWO_ENABLE_IOCP
+#ifdef WAWO_IO_MODE_IOCP
 			m_fn_socket = wawo::net::socket_api::iocp::socket;
 #else
-			m_fn_socket = wawo::net::socket_api::standard::socket;
+			m_fn_socket = wawo::net::socket_api::posix::socket;
 #endif
 			m_fn_connect = wawo::net::socket_api::posix::connect;
 			m_fn_bind = wawo::net::socket_api::posix::bind;
@@ -45,7 +45,7 @@ namespace wawo { namespace net {
 #endif
 	}
 
-		socket_base::socket_base(int const& fd, address const& addr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
+		socket_base::socket_base(int const& fd, address const& laddr, address const& raddr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
 			m_fd(fd),
 			m_sm(sm),
 			m_family(family),
@@ -53,8 +53,8 @@ namespace wawo { namespace net {
 			m_protocol(proto),
 			m_option(opt),
 
-			m_raddr(addr),
-			m_laddr(),
+			m_laddr(laddr),
+			m_raddr(raddr),
 
 			m_sbc(sbc)
 		{
@@ -67,7 +67,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_sbc.rcv_size <= SOCK_RCV_MAX_SIZE && m_sbc.rcv_size >= SOCK_RCV_MIN_SIZE);
 			WAWO_ASSERT(m_sbc.snd_size <= SOCK_SND_MAX_SIZE && m_sbc.snd_size >= SOCK_SND_MIN_SIZE);
 
-			WAWO_TRACE_SOCKET("[socket_base][%s]socket::socket(), address: %p", info().to_stdstring().c_str(), this);
+			WAWO_TRACE_SOCKET("[socket_base][%s]socket_base::socket_base(), new connected address: %p", info().to_stdstring().c_str(), this);
 		}
 
 		socket_base::socket_base(s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
@@ -78,8 +78,8 @@ namespace wawo { namespace net {
 			m_type(sockt),
 			m_protocol(proto),
 			m_option(opt),
-			m_raddr(),
 			m_laddr(),
+			m_raddr(),
 
 			m_sbc(socket_buffer_cfgs[BT_MEDIUM])
 		{
@@ -102,8 +102,8 @@ namespace wawo { namespace net {
 			m_type(sockt),
 			m_protocol(proto),
 			m_option(opt),
-			m_raddr(),
 			m_laddr(),
+			m_raddr(),
 
 			m_sbc(sbc)
 		{
@@ -124,9 +124,9 @@ namespace wawo { namespace net {
 		int socket_base::open() {
 
 			WAWO_ASSERT(m_fd == -1);
-			m_fd = m_fn_socket(OS_DEF_family[m_family], OS_DEF_sock_type[m_type], OS_DEF_protocol[m_protocol]);
+			m_fd = m_fn_socket(m_family, m_type, m_protocol);
 			if (m_fd < 0) {
-				WAWO_ERR("[socket_base][%s]socket::socket() failed, %d", info().to_stdstring().c_str());
+				WAWO_ERR("[socket_base][%s]socket::socket() failed, %d", info().to_stdstring().c_str(), wawo::socket_get_last_errno() );
 				return m_fd;
 			}
 			WAWO_ASSERT(m_fd>0 );
@@ -203,7 +203,7 @@ namespace wawo { namespace net {
 			return shutrt;
 		}
 
-		int socket_base::bind(const address& addr) {
+		int socket_base::bind(address const& addr) {
 
 			WAWO_ASSERT(m_sm == SM_NONE);
 			WAWO_ASSERT(m_laddr.is_null());
@@ -237,10 +237,8 @@ namespace wawo { namespace net {
 		}
 
 		int socket_base::accept(address& soaddr) {
-
 			int fd = m_fn_accept(m_fd, soaddr);
-			WAWO_RETURN_V_IF_NOT_MATCH(fd, fd < 0);
-
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), fd<0);
 			return fd;
 		}
 	
@@ -251,7 +249,7 @@ namespace wawo { namespace net {
 			m_sm = SM_ACTIVE;
 			m_raddr = addr;
 
-#ifdef WAWO_ENABLE_IOCP
+#ifdef WAWO_IO_MODE_IOCP
 			if (m_protocol == P_TCP) {
 				//connectex requires the socket to be initially bound
 				struct sockaddr_in addr_in;
@@ -270,7 +268,7 @@ namespace wawo { namespace net {
 				WAWO_ASSERT(!"TODO");
 			}
 #else
-			return m_fn_connect(m_fd, soaddr );
+			return m_fn_connect(m_fd, addr );
 #endif
 		}
 
@@ -763,14 +761,12 @@ namespace wawo { namespace net {
 		u32_t socket_base::send(byte_t const* const buffer, u32_t const& len, int& ec_o, int const& flag) {
 			WAWO_ASSERT(buffer != NULL);
 			WAWO_ASSERT(len > 0);
-
 			return m_fn_send(m_fd, buffer, len, ec_o, flag);
 		}
 
 		u32_t socket_base::recv(byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag) {
 			WAWO_ASSERT(buffer_o != NULL);
 			WAWO_ASSERT(size > 0);
-
 			return m_fn_recv(m_fd, buffer_o, size, ec_o, flag);
 		}
 }}

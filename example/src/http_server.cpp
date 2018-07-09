@@ -39,6 +39,7 @@ public:
 //		f_write->wait();
 
 		if (close_after_write) {
+			WAWO_INFO("close fd: %d", ctx->ch->ch_id() );
 			ctx->close();
 		}
 	}

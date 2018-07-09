@@ -8,10 +8,11 @@
 	#include <wawo/net/winsock_helper.hpp>
 #endif
 
+//#define WAWO_ENABLE_TRACE_SOCKET_API
 #ifdef WAWO_ENABLE_TRACE_SOCKET_API
-#define WAWO_ENABLE_TRACE_SOCKET_API WAWO_INFO
+	#define WAWO_TRACE_SOCKET_API WAWO_INFO
 #else
-#define WAWO_ENABLE_TRACE_SOCKET_API(...)
+	#define WAWO_TRACE_SOCKET_API(...)
 #endif
 
 #define IS_ERRNO_EQUAL_WOULDBLOCK(_errno) ((_errno==wawo::E_EAGAIN)||(_errno==wawo::E_EWOULDBLOCK)||(_errno==wawo::E_WSAEWOULDBLOCK))
@@ -21,6 +22,7 @@ namespace wawo { namespace net { namespace socket_api {
 	typedef int(*fn_socket)(int const& family, int const& type, int const& proto);
 	typedef int(*fn_connect)(int const& fd, address const& addr );
 	typedef int(*fn_bind)(int const& fd, address const& addr);
+	typedef int(*fn_socket)(int const& family, int const& socket_type, int const& protocol);
 	typedef int(*fn_shutdown)(int const& fd, int const& flag);
 	typedef int(*fn_close)(int const& fd);
 	typedef int(*fn_listen)(int const& fd, int const& backlog);
@@ -30,8 +32,7 @@ namespace wawo { namespace net { namespace socket_api {
 	typedef int(*fn_setsockopt)(int const& fd, int const& level, int const& name, void const* optval, socklen_t const& option_len);
 
 	typedef u32_t(*fn_send)(int const& fd, byte_t const* const buffer, u32_t const& len, int& ec_o, int const& flag);
-	typedef u32_t(*fn_recv)(int const&fd, byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag);
-	typedef u32_t(*fn_sendto)(int const& fd, wawo::byte_t const* const buff, wawo::u32_t const& len, address const& addr, int& ec_o, int const& flag);
+	typedef u32_t(*fn_recv)(int const&fd, byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag);	typedef u32_t(*fn_sendto)(int const& fd, wawo::byte_t const* const buff, wawo::u32_t const& len, address const& addr, int& ec_o, int const& flag);
 	typedef u32_t(*fn_recvfrom)(int const& fd, byte_t* const buff_o, wawo::u32_t const& size, address& addr_o, int& ec_o, int const& flag);
 
 	namespace posix {
@@ -135,25 +136,24 @@ namespace wawo { namespace net { namespace socket_api {
 					}
 				}
 				else {
-
 					WAWO_ASSERT(r == -1);
 					int ec = socket_get_last_errno();
-					if (IS_ERRNO_EQUAL_WOULDBLOCK(ec)) {
+					if (WAWO_LIKELY(IS_ERRNO_EQUAL_WOULDBLOCK(ec))) {
 						ec_o = wawo::E_CHANNEL_WRITE_BLOCK;
-						//WAWO_TRACE_SOCKET("[wawo::net::send][#%d]send blocked, error code: <%d>", fd, ec);
+						break;
 					}
-					else if ((ec) == wawo::E_EINTR) {
+					else if (WAWO_UNLIKELY(ec == wawo::E_EINTR)) {
 						continue;
 					}
 					else {
 						WAWO_ERR("[wawo::net::send][#%d]send failed, error code: <%d>", fd, ec);
-						ec_o = (ec);
+						ec_o = ec;
+						break;
 					}
-					break;
 				}
 			} while (true);
 
-			WAWO_ENABLE_TRACE_SOCKET_API("[wawo::net::send][#%d]send, to send: %d, sent: %d, ec: %d", fd, len, sent_total, ec_o);
+			WAWO_TRACE_SOCKET_API("[wawo::net::send][#%d]send, to send: %d, sent: %d, ec: %d", fd, len, sent_total, ec_o);
 			return R;
 		}
 
@@ -161,39 +161,42 @@ namespace wawo { namespace net { namespace socket_api {
 			WAWO_ASSERT(buffer_o != NULL);
 			WAWO_ASSERT(size > 0);
 
-			u32_t r_total = 0;
+			u32_t R = 0;
 			do {
-				int r = ::recv(fd, reinterpret_cast<char*>(buffer_o) + r_total, size - r_total, flag);
-				if (WAWO_LIKELY(r > 0)) {
-					r_total += r;
+				int r = ::recv(fd, reinterpret_cast<char*>(buffer_o) + R, size - R, flag);
+				if (WAWO_LIKELY(r>0)) {
+					R += r;
 					ec_o = wawo::OK;
 					break;
 				}
 				else if (r == 0) {
-					WAWO_ENABLE_TRACE_SOCKET_API("[wawo::net::recv][#%d]socket closed by remote side gracefully[detected by recv]", fd);
+					WAWO_TRACE_SOCKET_API("[wawo::net::recv][#%d]socket closed by remote side gracefully[detected by recv]", fd);
 					ec_o = wawo::E_SOCKET_GRACE_CLOSE;
 					break;
 				}
 				else {
 					WAWO_ASSERT(r == -1);
 					int ec = socket_get_last_errno();
-					if (IS_ERRNO_EQUAL_WOULDBLOCK(ec)) {
+
+					if (WAWO_LIKELY(IS_ERRNO_EQUAL_WOULDBLOCK(ec))) {
 						ec_o = wawo::E_CHANNEL_READ_BLOCK;
+						break;
 					}
-					else if (ec == wawo::E_EINTR) {
+					else if (WAWO_UNLIKELY(ec == wawo::E_EINTR)) {
 						continue;
 					}
 					else {
 						WAWO_ASSERT(ec != wawo::OK);
 						ec_o = ec;
 						WAWO_ERR("[wawo::net::recv][#%d]recv error, errno: %d", fd, ec);
+						break;
 					}
-					break;
 				}
 			} while (true);
 
-			WAWO_ENABLE_TRACE_SOCKET_API("[wawo::net::recv][#%d]recv bytes, %d", fd, r_total);
-			return r_total;
+			WAWO_TRACE_SOCKET_API("[wawo::net::recv][#%d]recv bytes, %d", fd, R);
+			WAWO_ASSERT(R <= size);
+			return R;
 		}
 
 		inline u32_t sendto(int const& fd, wawo::byte_t const* const buff, wawo::u32_t const& len, address const& addr, int& ec_o, int const& flag) {
@@ -236,7 +239,7 @@ namespace wawo { namespace net { namespace socket_api {
 
 			} while (true);
 
-			WAWO_ENABLE_TRACE_SOCKET_API("[wawo::net::sendto][#%d]sendto() == %d", fd, sent_total);
+			WAWO_TRACE_SOCKET_API("[wawo::net::sendto][#%d]sendto() == %d", fd, sent_total);
 			return sent_total;
 		}
 
@@ -273,7 +276,7 @@ namespace wawo { namespace net { namespace socket_api {
 				break;
 			} while (true);
 
-			WAWO_ENABLE_TRACE_SOCKET_API("[wawo::net::recvfrom][#%d]recvfrom() == %d", fd, r_total);
+			WAWO_TRACE_SOCKET_API("[wawo::net::recvfrom][#%d]recvfrom() == %d", fd, r_total);
 			return r_total;
 		}
 
@@ -353,7 +356,7 @@ namespace wawo { namespace net { namespace socket_api {
 #endif
 	}
 
-#ifdef WAWO_ENABLE_IOCP
+#ifdef WAWO_IO_MODE_IOCP
 	namespace iocp {
 		inline int socket(int const& family, int const& socket_type, int const& protocol) {
 			int rt = ::WSASocketW(family, socket_type, protocol, NULL, 0, WSA_FLAG_OVERLAPPED);

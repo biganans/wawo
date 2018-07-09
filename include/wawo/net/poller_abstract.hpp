@@ -21,7 +21,7 @@ namespace wawo { namespace net {
 	inline poller_type get_poll_type() {
 #ifdef WAWO_ENABLE_EPOLL
 		return T_EPOLL;
-#elif defined(WAWO_ENABLE_IOCP)
+#elif defined(WAWO_IO_MODE_IOCP)
 		return T_IOCP;
 #else
 		return T_SELECT;

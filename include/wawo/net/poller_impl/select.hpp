@@ -7,53 +7,11 @@
 #include <wawo/core.hpp>
 #include <wawo/net/poller_abstract.hpp>
 
-#define WAWO_SELECT_BUCKET_MAX			1024
-#define WAWO_SELECT_BUCKET_ITEM_COUNT	64
-#define WAWO_SELECT_LIMIT (WAWO_SELECT_BUCKET_MAX*WAWO_SELECT_BUCKET_ITEM_COUNT)
-
-
 namespace wawo { namespace net { namespace impl {
 
 	class select:
 		public poller_abstract
 	{
-
-	private:
-		struct ctxs_to_check {
-
-			ctxs_to_check():
-				max_fd_v(0)
-			{
-				FD_ZERO( &fds_r );
-				FD_ZERO( &fds_w );
-				FD_ZERO( &fds_ex );
-				max_fd_v = 0;
-				count = 0;
-			}
-
-			void reset() {
-				FD_ZERO( &fds_r );
-				FD_ZERO( &fds_w );
-				FD_ZERO( &fds_ex );
-				max_fd_v = 0;
-				count = 0;
-#ifdef _DEBUG
-				for (int i = 0; i < WAWO_SELECT_BUCKET_MAX; ++i) {
-					ctxs[i] = NULL;
-				}
-#endif
-			}
-
-			WWRP<poller_ctx> ctxs[WAWO_SELECT_BUCKET_MAX];
-			int count;
-			fd_set fds_r;
-			fd_set fds_w;
-			fd_set fds_ex;
-			int max_fd_v;
-		};
-
-		ctxs_to_check* m_ctxs_to_check[WAWO_SELECT_BUCKET_MAX] ;
-
 		public:
 			select():
 				poller_abstract()
@@ -74,7 +32,6 @@ namespace wawo { namespace net { namespace impl {
 					TRACE_IOE("[io_event_loop][#%d]watch_ioe: make new, flag: %u", fd, flag );
 					WWRP<poller_ctx> _ctx = wawo::make_ref<poller_ctx>();
 					_ctx->fd = fd;
-//					_ctx->poll_type = T_SELECT;
 					_ctx->flag = 0;
 
 					m_ctxs.insert({fd,_ctx});
@@ -110,7 +67,7 @@ namespace wawo { namespace net { namespace impl {
 			{
 				WAWO_ASSERT( flag > 0 );
 				if( 0 != flag ) {
-					WAWO_CONDITION_CHECK( m_ctxs.size() < WAWO_SELECT_LIMIT ) ;
+					WAWO_CONDITION_CHECK( m_ctxs.size() < FD_SETSIZE ) ;
 					watch_ioe(flag, fd, fn);
 				}
 			}
@@ -124,113 +81,64 @@ namespace wawo { namespace net { namespace impl {
 			}
 
 		void do_poll() {
-			int fd_added_count = 0;
-			int idx = 0;
+
+			if (m_ctxs.size() == 0) {
+				io_event_executor::cond_wait();
+			}
+
+			fd_set fds_r;
+			FD_ZERO(&fds_r);
+
+			fd_set fds_w;
+			FD_ZERO(&fds_w);
+
+			fd_set fds_ex;
+			FD_ZERO(&fds_ex);
+			int max_fd_v = 0;
 
 			poller_ctx_map::iterator it = m_ctxs.begin();
 			while( it != m_ctxs.end() ) {
 				WWRP<poller_ctx> const& ctx = it->second ;
 				if(ctx->flag&IOE_READ) {
-					if (fd_added_count == WAWO_SELECT_BUCKET_ITEM_COUNT) {
-						++idx;
-						WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
-						fd_added_count = 0;
-						m_ctxs_to_check[idx]->max_fd_v = 0;
-						continue;
+					//TRACE_IOE("[select]check read evt for: %d", ctx->fd );
+					FD_SET((ctx->fd), &fds_r);
+					if (ctx->fd > max_fd_v) {
+						max_fd_v = ctx->fd;
 					}
-
-					FD_SET((ctx->fd), &m_ctxs_to_check[idx]->fds_r);
-					m_ctxs_to_check[idx]->ctxs[m_ctxs_to_check[idx]->count++] = ctx;
-
-					if (ctx->fd > m_ctxs_to_check[idx]->max_fd_v) {
-						m_ctxs_to_check[idx]->max_fd_v = ctx->fd;
-					}
-					++fd_added_count;
 				}
 
 				if(ctx->flag&IOE_WRITE && ctx->fn[IOE_SLOT_WRITE] != NULL ) {
-					if (fd_added_count == WAWO_SELECT_BUCKET_ITEM_COUNT) {
-						++idx;
-						WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
-						fd_added_count = 0;
-						m_ctxs_to_check[idx]->max_fd_v = 0;
-						continue;
+					FD_SET(ctx->fd, &fds_w);
+					if (ctx->fd > max_fd_v) {
+						max_fd_v = ctx->fd;
 					}
-
-					FD_SET((ctx->fd), &m_ctxs_to_check[idx]->fds_w);
-					m_ctxs_to_check[idx]->ctxs[m_ctxs_to_check[idx]->count++] = ctx;
-
-					if (ctx->fd > m_ctxs_to_check[idx]->max_fd_v) {
-						m_ctxs_to_check[idx]->max_fd_v = ctx->fd;
+					FD_SET((ctx->fd), &fds_ex);
+					if (ctx->fd > max_fd_v) {
+						max_fd_v = ctx->fd;
 					}
-
-					++fd_added_count;
-
-					//for ex
-					if (fd_added_count == WAWO_SELECT_BUCKET_ITEM_COUNT) {
-						++idx;
-						WAWO_ASSERT(idx < WAWO_SELECT_BUCKET_MAX);
-						fd_added_count = 0;
-						m_ctxs_to_check[idx]->max_fd_v = 0;
-						continue;
-					}
-
-					FD_SET((ctx->fd), &m_ctxs_to_check[idx]->fds_ex);
-					m_ctxs_to_check[idx]->ctxs[m_ctxs_to_check[idx]->count++] = ctx;
-
-					if (ctx->fd > m_ctxs_to_check[idx]->max_fd_v) {
-						m_ctxs_to_check[idx]->max_fd_v = ctx->fd;
-					}
-					++fd_added_count;
 				}
 				
 				++it;
 			}
 
-			for( int j=0;j<=idx;++j ) {
-				if( m_ctxs_to_check[j]->count > 0 ) {
-					_select_sockets( m_ctxs_to_check[j] );
-					m_ctxs_to_check[j]->reset();
-				}
-			}
+			_select(max_fd_v, fds_r, fds_w,fds_ex );
 			io_event_executor::cond_wait();
 		}
 
 		void init() {
 			poller_abstract::init();
-
-			for( int i=0;i<WAWO_SELECT_BUCKET_MAX;++i ) {
-				m_ctxs_to_check[i] = new ctxs_to_check();
-				WAWO_ALLOC_CHECK( m_ctxs_to_check[i] , sizeof(ctxs_to_check) );
-			}
 		}
 		void deinit() {
-
 			poller_abstract::ctxs_cancel_all(m_ctxs);
 			m_ctxs.clear();
 
 			WAWO_ASSERT(m_ctxs.size() == 0);
-
-			for( int i=0;i<WAWO_SELECT_BUCKET_MAX;++i ) {
-				m_ctxs_to_check[i]->reset() ;
-			}
-
-			for( int i=0;i<WAWO_SELECT_BUCKET_MAX;++i ) {
-				WAWO_DELETE( m_ctxs_to_check[i]) ;
-			}
 			poller_abstract::deinit();
-
 		}
 
-		void _select_sockets( ctxs_to_check* const sockets ) {
-			WAWO_ASSERT( sockets->count <= WAWO_SELECT_BUCKET_ITEM_COUNT && sockets->count >0 );
-
+		inline void _select(int const& max_fd_v, fd_set& fds_r, fd_set& fds_w, fd_set& fds_ex ) {
 			timeval tv = {0,0};
-			fd_set& fds_r = sockets->fds_r;
-			fd_set& fds_w = sockets->fds_w;
-			fd_set& fds_ex = sockets->fds_ex;
-
-			int ready_c = ::select( sockets->max_fd_v , &fds_r, &fds_w, &fds_ex , &tv ); //only read now
+			int ready_c = ::select( max_fd_v , &fds_r, &fds_w, &fds_ex , &tv ); //only read now
 
 			if( ready_c == 0 ) {
 				return ;
@@ -241,8 +149,15 @@ namespace wawo { namespace net { namespace impl {
 			}
 
 			//check begin
-			for( int c_idx =0; (c_idx<sockets->count)&&(ready_c>0); c_idx++ ) {
-				WWRP<poller_ctx>& ctx = sockets->ctxs[c_idx] ;
+			int total_rc = 0;
+
+			poller_ctx_map::iterator it = m_ctxs.begin();
+			while (it != m_ctxs.end() && (ready_c>0) ) {
+				poller_ctx_map::iterator it_cur = it;
+				++it;
+
+				WWRP<poller_ctx>& ctx = it_cur->second;
+				WAWO_ASSERT(ctx != NULL);
 
 				int const& fd = ctx->fd;
 				if( FD_ISSET( fd, &fds_r ) ) {
@@ -250,10 +165,10 @@ namespace wawo { namespace net { namespace impl {
 					--ready_c ;
 					fn_io_event _fn = ctx->fn[IOE_SLOT_READ];
 					if ( WAWO_UNLIKELY(ctx->flag&IOE_INFINITE_WATCH_READ) == 0) {
-						unwatch(IOE_READ, ctx->fd);
+						do_unwatch(IOE_READ, ctx->fd);
 					}
-					async_io_result r = {AIO_READ, 0,0 };
-					_fn(r);
+					_fn({ AIO_READ, 0,0 });
+					++total_rc;
 				}
 
 				if( FD_ISSET( fd, &fds_w ) ) {
@@ -261,10 +176,9 @@ namespace wawo { namespace net { namespace impl {
 					--ready_c;
 					fn_io_event _fn = ctx->fn[IOE_SLOT_WRITE];
 					if ( WAWO_LIKELY(ctx->flag&IOE_INFINITE_WATCH_WRITE) == 0) {
-						unwatch(IOE_WRITE, ctx->fd);
+						do_unwatch(IOE_WRITE, ctx->fd);
 					}
-					async_io_result r = { AIO_WRITE, 0,0 };
-					_fn(r);
+					_fn({ AIO_WRITE, 0,0 });
 				}
 
 				if( FD_ISSET(fd, &fds_ex) ) {
@@ -281,13 +195,15 @@ namespace wawo { namespace net { namespace impl {
 					fn_io_event _fn = ctx->fn[IOE_SLOT_WRITE];
 					WAWO_ASSERT(ec != wawo::OK);
 
-					unwatch(IOE_READ, ctx->fd);
-					unwatch(IOE_WRITE, ctx->fd);//only trigger once
-					async_io_result r = { AIO_WRITE, ec,0 };
+					do_unwatch(IOE_READ, ctx->fd);
+					do_unwatch(IOE_WRITE, ctx->fd);//only trigger once
 
 					WAWO_ASSERT(_fn != NULL);
-					_fn(r);
+					_fn({ AIO_WRITE, ec,0 });
 				}
+			}
+			if (total_rc >= 64) {
+				WAWO_INFO("[IOE] total_rc reach: %d", total_rc);
 			}
 		}
 	};
