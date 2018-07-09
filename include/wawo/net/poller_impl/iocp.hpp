@@ -2,6 +2,8 @@
 #define _WAWO_NET_POLLER_IMPL_IOCP_HPP
 
 #include <wawo/core.hpp>
+
+#ifdef WAWO_ENABLE_IOCP
 #include <wawo/net/poller_abstract.hpp>
 #include <wawo/net/winsock_helper.hpp>
 
@@ -220,16 +222,16 @@ namespace wawo { namespace net { namespace impl {
 		void do_poll() {
 			WAWO_ASSERT(m_handle > 0);
 			int ec = 0;
-			DWORD dwWaitMill = _before_wait();
-			if (dwWaitMill == -1) {
-				dwWaitMill = INFINITE;
+			const int dwWaitMicro = _before_wait();
+			if (dwWaitMicro == -1) {
+				dwWaitMicro = INFINITE;
 			}
-			bool bLastWait = (dwWaitMill != 0);
+			const bool bLastWait = (dwWaitMill != 0);
 #define WAWO_USE_GET_QUEUED_COMPLETION_STATUS_EX
 #ifdef WAWO_USE_GET_QUEUED_COMPLETION_STATUS_EX
 			OVERLAPPED_ENTRY entrys[64];
 			ULONG n = 64;
-			BOOL getOk = ::GetQueuedCompletionStatusEx(m_handle, &entrys[0], n,&n,dwWaitMill,FALSE);
+			BOOL getOk = ::GetQueuedCompletionStatusEx(m_handle, &entrys[0], n,&n, (DWORD)(dwWaitMicro/1000),FALSE);
 			if (bLastWait) {
 				_after_wait();
 			}
@@ -436,4 +438,6 @@ namespace wawo { namespace net { namespace impl {
 		}
 	};
 }}}
+#endif //WAWO_ENABLE_IOCP
+
 #endif

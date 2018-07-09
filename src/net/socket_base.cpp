@@ -526,46 +526,24 @@ namespace wawo { namespace net {
 			}
 			else {
 #endif
-
-#if WAWO_ISGNU
 				if (_nonblocking_should_set) {
-					int mode = ::fcntl(m_fd, F_GETFL, 0);
-					if (optval == 1) {
-						mode |= O_NONBLOCK;
+					ret = wawo::net::socket_api::helper::turnon_nonblocking(m_fd);
+					if (ret == 0) {
+						if (optval == 1) {
+							m_option |= OPTION_NON_BLOCKING;
+						}
+						else {
+							m_option &= ~OPTION_NON_BLOCKING;
+						}
 					}
 					else {
-						mode &= ~O_NONBLOCK;
+						WAWO_ERR("[socket_base][%s]socket set socket::OPTION_NON_BLOCKING failed, errno: %d", info().to_stdstring().c_str(), ret);
+						return ret;
 					}
-					ret = ::fcntl(m_fd, F_SETFL, mode);
 				}
-#elif WAWO_ISWIN
-				// FORBIDDEN NON-BLOCKING -> SET nonBlocking to 0
-				if (_nonblocking_should_set) {
-					DWORD nonBlocking = (options & OPTION_NON_BLOCKING) ? 1 : 0;
-					ret = ioctlsocket(m_fd, FIONBIO, &nonBlocking);
-				}
-#else
-	#error
-#endif
-
 #ifdef WAWO_ENABLE_WCP
 			}
 #endif
-
-			if (_nonblocking_should_set) {
-				if (ret == 0) {
-					if (optval == 1) {
-						m_option |= OPTION_NON_BLOCKING;
-					}
-					else {
-						m_option &= ~OPTION_NON_BLOCKING;
-					}
-				}
-				else {
-					WAWO_ERR("[socket_base][%s]socket set socket::OPTION_NON_BLOCKING failed, errno: %d", info().to_stdstring().c_str(), ret );
-					return ret;
-				}
-			}
 
 			if (m_type == T_STREAM) {
 
@@ -573,9 +551,9 @@ namespace wawo { namespace net {
 					(((m_option&OPTION_NODELAY) == 0) && ((options&OPTION_NODELAY))));
 
 				if (should_set) {
+					
 					optval = (options & OPTION_NODELAY) ? 1 : 0;
-					ret = m_fn_setsockopt(m_fd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval));
-
+					ret = wawo::net::socket_api::helper::turnon_nodelay(m_fd);
 					if (ret == 0) {
 						if (optval == 1) {
 							m_option |= OPTION_NODELAY;

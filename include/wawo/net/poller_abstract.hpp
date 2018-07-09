@@ -63,14 +63,10 @@ namespace wawo { namespace net {
 		{
 		}
 
-		inline void ctx_update_for_watch(WWRP<poller_ctx>& ctx, u8_t const& flag, int const& fd, fn_io_event const& fn)
+		inline void ctx_update_for_watch(WWRP<poller_ctx>& ctx, u8_t const& flag, fn_io_event const& fn)
 		{
-			(void)fd;
 			WAWO_ASSERT(flag != 0);
-
 			WAWO_ASSERT(fn != NULL);
-
-			WAWO_ASSERT(ctx->fd == fd);
 			WAWO_ASSERT((ctx->flag&flag) == 0);
 
 			if (flag&IOE_READ) {
@@ -97,10 +93,8 @@ namespace wawo { namespace net {
 			}
 		}
 
-		inline void ctx_update_for_unwatch(WWRP<poller_ctx>& ctx, u8_t const& flag, int const& fd)
+		inline void ctx_update_for_unwatch(WWRP<poller_ctx>& ctx, u8_t const& flag)
 		{
-			WAWO_ASSERT(ctx->fd == fd);
-			(void)fd;
 			if ((flag&IOE_READ) && (ctx->flag)&flag) {
 				TRACE_IOE("[io_event_loop][#%d]unwatch IOE_READ", ctx->fd);
 				ctx->flag &= ~(IOE_READ|IOE_INFINITE_WATCH_READ);
@@ -115,9 +109,9 @@ namespace wawo { namespace net {
 			}
 		}
 
-		inline void ctxs_cancel_all(poller_ctx_map& ctx_map ) {
+		static inline void ctxs_cancel_all(poller_ctx_map& ctx_map ) {
 			poller_ctx_map::iterator it = ctx_map.begin();
-			while (it != m_ctxs.end()) {
+			while (it != ctx_map.end()) {
 				WWRP<poller_ctx> const& ctx = it->second ;
 				++it;
 
@@ -130,6 +124,7 @@ namespace wawo { namespace net {
 					}
 				}
 			}
+			ctx_map.clear();
 		}
 
 		virtual ~poller_abstract() {}

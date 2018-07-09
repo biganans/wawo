@@ -364,9 +364,9 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			WAWO_ASSERT(!is_listener());
 			WAWO_ASSERT(is_nonblocking());
+			int ec = r.v.len;
 
 #ifdef WAWO_IO_MODE_IOCP
-			int ec = r.v.len;
 			if (WAWO_LIKELY(ec) > 0) {
 				WWRP<packet> income = wawo::make_ref<packet>(ec);
 				income->write((byte_t*) r.buf, r.v.len );
@@ -378,8 +378,7 @@ namespace wawo { namespace net {
 				WAWO_TRACE_SOCKET("[socket][%s]WSARead error: %d", info().to_stdstring().c_str(), ec);
 			}
 #else
-			int ec = wawo::OK;
-			do {
+			while(ec == wawo::OK) {
 				if (WAWO_UNLIKELY(m_flag&F_SHUTDOWN_RD)) { return; }
 				u32_t nbytes = socket_base::recv(m_trb, buffer_cfg().rcv_size, ec);
 				if (nbytes>0) {
@@ -387,7 +386,7 @@ namespace wawo { namespace net {
 					p->write(m_trb, nbytes);
 					channel::ch_read(p);
 				}
-			} while (ec == wawo::OK);
+			}
 #endif
 			switch (ec) {
 				case wawo::OK:

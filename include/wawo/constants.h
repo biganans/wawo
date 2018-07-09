@@ -173,17 +173,17 @@ namespace wawo {
 	const int E_WSAENOPROTOOPT					= -10042; //An unknown;  invalid;  or unsupported option or level was specified in a getsockopt or setsockopt call
 	const int E_WSAEPROTONOSUPPORT				= -10043; //The requested protocol has not been configured into the system;  or no implementation for it exists.
 	const int E_WSAEOPNOTSUPP					= -10045;  //The attempted operation is not supported for the type of object referenced.
-	const int 	E_WSAEADDRINUSE					= -10048;  // Only one usage of each socket address (protocol/network address/port) is normally permitted.
+	const int E_WSAEADDRINUSE					= -10048;  // Only one usage of each socket address (protocol/network address/port) is normally permitted.
 	const int E_WSAEADDRNOTAVAIL				= -10049; // The requested address is not valid in its context.
 	const int E_WSAENETDOWN						= -10050; //A socket operation encountered a dead network.
 	const int E_WSAENETUNREACH					= -10051;  // A socket operation was attempted to an unreachable network.
 	const int E_WSAENETRESET					= -10052; // The connection has been broken due to keep-alive activity detecting a failure while the operation was in progress.
 	const int E_WSAECONNABORTED					= -10053; // An established connection was aborted by the software in your host machine.
 	const int E_WSAECONNRESET					= -10054; // An existing connection was forcibly closed by the remote host.
-	const int 	E_WSAENOBUFS					= -10055; // An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full.
+	const int E_WSAENOBUFS						= -10055; // An operation on a socket could not be performed because the system lacked sufficient buffer space or because a queue was full.
 	const int E_WSAEISCONN						= -10056;  // A request to send or receive data was disallowed because the socket is not connected and (when sending on a datagram socket using a sendto call) no address was supplied.
-	const int 	E_WSAENOTCONN					= -10057; // A request to send or receive data was disallowed because the socket is not connected and (when sending on a datagram socket using a sendto call) no address was supplied.
-	const int 	E_WSAESHUTDOWN					= -10058;  //A request to send or receive data was disallowed because the socket had already been shut down in that direction with a previous shutdown call
+	const int E_WSAENOTCONN						= -10057; // A request to send or receive data was disallowed because the socket is not connected and (when sending on a datagram socket using a sendto call) no address was supplied.
+	const int E_WSAESHUTDOWN					= -10058;  //A request to send or receive data was disallowed because the socket had already been shut down in that direction with a previous shutdown call
 	const int E_WSAETOOMANYREFS					= -10059;  //Too many references to some kernel object.
 	const int E_WSAETIMEDOUT					= -10060;  //A connection attempt failed because the connected party did not properly respond after a period of time;  or established connection failed because connected host has failed to respond.
 	const int E_WSAECONNREFUSED					= -10061;  //No connection could be made because the target machine actively refused it.
@@ -207,20 +207,21 @@ namespace wawo {
 	const int E_WSAHOST_NOT_FOUND				= -11001; 
 	const int E_WSATRY_AGAIN					= -11002; 
 	const int E_WSANO_RECOVERY					= -11003; 
-	const int 	E_WSANO_DATA					= -11004; 
-	const int 	E_WSA_QOS_RECEIVERS				= -11005; 
-	const int 	E_WSA_QOS_SENDERS				= -11006; 
+	const int E_WSANO_DATA						= -11004; 
+	const int E_WSA_QOS_RECEIVERS				= -11005; 
+	const int E_WSA_QOS_SENDERS					= -11006; 
 
 //internal error
-	const int 	E_OPERATION_NOT_SUPPORTED	= -20001; 
-	const int 	E_INVALID_OPERATION			= -20002; 
-	const int 	E_INVALID_STATE				= -20003; 
-	const int 	E_MEMORY_MALLOC_FAILED		= -20004; 
-	const int 	E_MEMORY_ACCESS_ERROR		= -20005; 
-	const int 	E_MEMORY_ALLOC_FAILED		= -20006; 
-	const int 	E_MEMORY_NEW_FAILED			= -20007; 
-	const int 	E_TRY_AGAIN					= -20008; 
-	const int 	E_INVAL						= -20009;
+	const int E_OPERATION_NOT_SUPPORTED	= -20001; 
+	const int E_INVALID_OPERATION		= -20002; 
+	const int E_INVALID_STATE			= -20003; 
+	const int E_MEMORY_MALLOC_FAILED	= -20004; 
+	const int E_MEMORY_ACCESS_ERROR		= -20005; 
+	const int E_MEMORY_ALLOC_FAILED		= -20006; 
+	const int E_MEMORY_NEW_FAILED		= -20007; 
+	const int E_TRY_AGAIN				= -20008; 
+	const int E_INVAL					= -20009;
+	const int E_POLLER_FD_COUNT_LIMIT	= -20010;
 
 	const int 	E_UNKNOWN					= -20010; 
 	const int 	E_THREAD_INTERRUPT			= -20011; 

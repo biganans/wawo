@@ -29,7 +29,6 @@ namespace wawo { namespace net { namespace impl {
 			WAWO_ASSERT( m_wpHandle > 0 );
 
 			poller_abstract::ctxs_cancel_all(m_ctxs);
-			m_ctxs.clear();
 
 			wcp::instance()->wpoll_close(m_wpHandle);
 			m_wpHandle = -1;

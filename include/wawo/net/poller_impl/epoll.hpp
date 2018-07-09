@@ -171,7 +171,6 @@ namespace wawo { namespace net { namespace impl {
 			io_event_loop::deinit();
 
 			io_event_loop::ctxs_cancel_all(m_ctxs);
-			m_ctxs.clear();
 
 			WAWO_CONDITION_CHECK( m_epfd != -1);
 

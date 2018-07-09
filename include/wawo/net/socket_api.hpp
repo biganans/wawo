@@ -341,7 +341,6 @@ namespace wawo { namespace net { namespace socket_api {
 				goto end;
 			}
 
-			WAWO_ASSERT( address(addr_accept) == address(addr_connect) );
 			sv[0] = acceptfd;
 			sv[1] = connectfd;
 		end:
@@ -354,6 +353,46 @@ namespace wawo { namespace net { namespace socket_api {
 		}
 		return ::socketpair(OS_DEF_family[domain], OS_DEF_sock_type[type], OS_DEF_protocol[protocol], sv);
 #endif
+	}
+
+	namespace helper {
+		inline int set_nonblocking(int fd, bool on_or_off) {
+			int rt;
+#if WAWO_IS_GNU
+			int mode = ::fcntl(m_fd, F_GETFL, 0);
+			if (on_or_off) {
+				mode |= O_NONBLOCK;
+			} else {
+				mode &= ~O_NONBLOCK;
+			}
+			rt = ::fcntl(m_fd, F_SETFL, mode);
+#else
+			ULONG nonBlocking = on_or_off ? 1: 0;
+			rt = ::ioctlsocket(fd, FIONBIO, &nonBlocking);
+#endif
+			WAWO_RETURN_V_IF_MATCH(rt, rt == wawo::OK);
+			return wawo::socket_get_last_errno();
+		}
+		inline int turnon_nonblocking(int fd) {
+			return set_nonblocking(fd, true);
+		}
+		inline int turnoff_nonblocking(int fd) {
+			return set_nonblocking(fd, false);
+		}
+
+		inline int set_nodelay(int fd, bool on_or_off) {
+			int optval = on_or_off ? 1 : 0;
+			int rt = wawo::net::socket_api::posix::setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval));
+			WAWO_RETURN_V_IF_MATCH(rt, rt == wawo::OK);
+			return wawo::socket_get_last_errno();
+		}
+
+		inline int turnon_nodelay(int fd) {
+			return set_nodelay(fd, true);
+		}
+		inline int turnoff_nodelay(int fd) {
+			return set_nodelay(fd, false);
+		}
 	}
 
 #ifdef WAWO_IO_MODE_IOCP
@@ -482,7 +521,6 @@ namespace wawo { namespace net { namespace socket_api {
 		};
 
 		inline int fcntl(int const& fd, int const cmd, ...) {
-
 			switch (cmd) {
 
 			case WCP_F_SETFL:
