@@ -72,7 +72,7 @@ namespace wawo { namespace net { namespace impl {
 				WAWO_ASSERT( flag > 0 );
 				if( 0 != flag ) {
 					if (m_ctxs.size() >= FD_SETSIZE) {
-						fn({ flag, wawo::E_POLLER_FD_COUNT_LIMIT, 0 });
+						fn({ flag&IOE_READ ? AIO_READ : AIO_WRITE, wawo::E_POLLER_FD_COUNT_LIMIT, 0 });
 						return;
 					}
 					watch_ioe(flag, fd, fn);
@@ -208,12 +208,12 @@ namespace wawo { namespace net { namespace impl {
 
 					fn_io_event fn_r = ctx->fn[IOE_SLOT_READ];
 					if(fn_r != nullptr ) {
-						fn_r({ AIO_READ, 0,0 });
+						fn_r({ AIO_READ, ec,0 });
 					}
 					fn_io_event fn_w = ctx->fn[IOE_SLOT_READ];
 
 					if (fn_w != nullptr) {
-						fn_w({ AIO_WRITE, 0,0 });
+						fn_w({ AIO_WRITE, ec,0 });
 					}
 				}
 
