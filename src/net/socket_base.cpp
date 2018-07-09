@@ -236,8 +236,8 @@ namespace wawo { namespace net {
 			return wawo::OK;
 		}
 
-		int socket_base::accept(address& soaddr) {
-			int fd = m_fn_accept(m_fd, soaddr);
+		int socket_base::accept(address& addr) {
+			int fd = m_fn_accept(m_fd, addr);
 			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), fd<0);
 			return fd;
 		}

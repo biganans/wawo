@@ -167,47 +167,11 @@ namespace wawo { namespace net {
 		}
 	}
 
-	int socket::accept( std::vector<WWRP<socket>>& accepted) {
-		if( m_state != S_LISTEN ) {
+	int socket::accept( address& raddr ) {
+		if (m_state != S_LISTEN) {
 			return wawo::E_INVALID_STATE;
 		}
 
-		int ec = wawo::OK;
-		do {
-			address raddr;
-			int newfd = socket_base::accept(raddr);
-			if(newfd<0 ) {
-				if ( newfd == wawo::E_EINTR ) continue;
-				if( !IS_ERRNO_EQUAL_WOULDBLOCK(newfd) ) {
-					ec = newfd;
-				}
-				break;
-			}
-
-			//patch for local addr
-			address laddr;
-			int rt = m_fn_getsockname(newfd, laddr);
-			if (rt != wawo::OK) {
-				WAWO_ERR("[socket][%s][accept]load local addr failed: %d", info().to_stdstring().c_str(), wawo::socket_get_last_errno());
-				WAWO_CLOSE_SOCKET(newfd);
-				continue;
-			}
-
-			WAWO_ASSERT(laddr.family() == m_family);
-			if (laddr == raddr) {
-				WAWO_CLOSE_SOCKET(newfd);
-				continue;
-			}
-
-			try {
-				WWRP<socket> so = wawo::make_ref<socket>(newfd, laddr, raddr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
-				accepted.push_back(so);
-			} catch (...) {
-				WAWO_ERR("[#%d]accept new fd exception: %d", fd(), wawo::get_last_errno());
-				WAWO_CLOSE_SOCKET(newfd);
-			}
-		} while( true );
-
-		return ec ;
+		return socket_base::accept(raddr);
 	}
 }} //end of ns
