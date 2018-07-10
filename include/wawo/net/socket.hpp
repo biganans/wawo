@@ -148,10 +148,10 @@ namespace wawo { namespace net {
 		int accept(address& raddr);
 		int connect(address const& addr);
 
-		static WWRP<channel_future> dial(std::string const& addrurl, fn_dial_channel_initializer const& initializer ) {
+		static WWRP<channel_future> dial(std::string const& dialurl, fn_dial_channel_initializer const& initializer ) {
 			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(nullptr);
 			socketaddr soaddr;
-			int rt = _parse_socketaddr_from_url(addrurl, soaddr);
+			int rt = _parse_socketaddr_from_url(dialurl, soaddr);
 			if (rt != wawo::OK) {
 				ch_promise->set_success(rt);
 				return ch_promise;

@@ -158,7 +158,15 @@ namespace wawo { namespace net {
 		inline port_t nport() const {
 			return ::htons(m_port);
 		}
-
+		inline void setipv4(ipv4_t ip) {
+			m_ipv4 = ip;
+		}
+		inline void setport(port_t port) {
+			m_port = port;
+		}
+		inline void setfamily(s_family f) {
+			m_family = f;
+		}
 		std::string info() const;
 	};
 

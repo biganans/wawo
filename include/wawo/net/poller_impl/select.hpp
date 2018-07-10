@@ -218,7 +218,7 @@ namespace wawo { namespace net { namespace impl {
 				}
 
 				if (_unwatch_flag != 0) {
-					unwatch_ioe(ctx->fd, _unwatch_flag);
+					unwatch_ioe(_unwatch_flag, ctx->fd);
 				}
 			}
 

@@ -216,6 +216,7 @@ namespace wawo { namespace net {
 				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 			}
 
+			WAWO_ASSERT(m_family == addr.family());
 			m_laddr = addr;
 			return m_fn_bind(m_fd , addr);
 		}
@@ -247,6 +248,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_raddr.is_null());
 
 			m_sm = SM_ACTIVE;
+			WAWO_ASSERT(m_family == addr.family());
 			m_raddr = addr;
 
 #ifdef WAWO_IO_MODE_IOCP
