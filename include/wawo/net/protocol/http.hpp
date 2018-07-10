@@ -180,7 +180,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 	struct parser:
 		public wawo::ref_base
 	{
-//		WWRP<wawo::ref_base> ctx;
+		WWRP<wawo::ref_base> ctx;
 
 		http_parser* _p;
 
@@ -213,7 +213,6 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		parser_cb on_chunk_header;
 		parser_cb on_chunk_complete;
 	};
-
 
 }}}}
 
