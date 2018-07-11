@@ -760,24 +760,32 @@ end_accept:
 				return;
 			}
 			if ((m_flag&F_SHUTDOWN_WR) != 0) {
-				ch_promise->set_success(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
+				event_poller()->schedule([ch_promise]() {
+					ch_promise->set_success(wawo::E_CHANNEL_WR_SHUTDOWN_ALREADY);
+				});
 				return;
 			}
 
 			if ((m_flag&F_SHUTDOWN_WRITE_AFTER_WRITE_DONE)) {
-				ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWNING);
+				event_poller()->schedule([ch_promise]() {
+					ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWNING);
+				});
 				return;
 			}
 
 			if ((m_flag&F_WRITE_BLOCKED)) {
-				ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
+				event_poller()->schedule([ch_promise]() {
+					ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
+				});
 				return;
 			}
 
 			if (m_noutbound_bytes + outlet->len()>buffer_cfg().snd_size ) {
-				ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
 				m_flag |= F_WRITE_BLOCKED;
-				channel::ch_fire_write_block();
+				event_poller()->schedule([ch_promise,CH=WWRP<channel>(this)]() {
+					ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
+					CH->ch_fire_write_block();
+				});
 				return;
 			}
 			m_outbound_entry_q.push({
