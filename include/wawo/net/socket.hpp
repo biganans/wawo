@@ -809,6 +809,7 @@ end_accept:
 			}
 		}
 #else
+		//@note, we need simulate a async write, so for write operation, we'll flush outbound buffer in the next loop
 		void _do_ch_flush_impl() {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			int _errno = 0;
