@@ -240,6 +240,8 @@ namespace wawo {
 	const int 	E_CHANNEL_EXISTS				= -21006; 
 	const int 	E_CHANNEL_CLOSED_ALREADY		= -21007; 
 	const int	E_CHANNEL_WRITE_SHUTDOWNING		= -21008;
+	const int	E_CHANNEL_WRITING				= -21009;
+	const int	E_CHANNEL_OUTBOUND_EMPTY = -21010;
 
 	const int 	E_SOCKET_GRACE_CLOSE					= -30000; 
 	const int 	E_SOCKET_SEND_IO_BLOCK_EXPIRED			= -30001; 

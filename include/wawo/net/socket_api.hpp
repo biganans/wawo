@@ -127,7 +127,7 @@ namespace wawo { namespace net { namespace socket_api {
 
 			//TRY SEND
 			do {
-				int r = ::send(fd, reinterpret_cast<const char*>(buffer) + R, len - R, flag);
+				const int r = ::send(fd, reinterpret_cast<const char*>(buffer) + R, len - R, flag);
 				if (WAWO_LIKELY(r > 0)) {
 					ec_o = wawo::OK;
 					R += r;
@@ -163,7 +163,7 @@ namespace wawo { namespace net { namespace socket_api {
 
 			u32_t R = 0;
 			do {
-				int r = ::recv(fd, reinterpret_cast<char*>(buffer_o) + R, size - R, flag);
+				const int r = ::recv(fd, reinterpret_cast<char*>(buffer_o) + R, size - R, flag);
 				if (WAWO_LIKELY(r>0)) {
 					R += r;
 					ec_o = wawo::OK;
@@ -214,7 +214,7 @@ namespace wawo { namespace net { namespace socket_api {
 			ec_o = wawo::OK;
 			u32_t sent_total = 0;
 			do {
-				int sent = ::sendto(fd, reinterpret_cast<const char*>(buff), len, flag, reinterpret_cast<sockaddr*>(&addr_in), sizeof(addr_in));
+				const int sent = ::sendto(fd, reinterpret_cast<const char*>(buff), len, flag, reinterpret_cast<sockaddr*>(&addr_in), sizeof(addr_in));
 
 				if (WAWO_LIKELY(sent > 0)) {
 					WAWO_ASSERT((u32_t)sent == len);
@@ -250,7 +250,7 @@ namespace wawo { namespace net { namespace socket_api {
 			socklen_t socklen = sizeof(addr_in);
 			u32_t r_total;
 			do {
-				int nbytes = ::recvfrom(fd, reinterpret_cast<char*>(buff_o), size, flag, reinterpret_cast<sockaddr*>(&addr_in), &socklen);
+				const int nbytes = ::recvfrom(fd, reinterpret_cast<char*>(buff_o), size, flag, reinterpret_cast<sockaddr*>(&addr_in), &socklen);
 
 				if (WAWO_LIKELY(nbytes > 0)) {
 					r_total = nbytes;
