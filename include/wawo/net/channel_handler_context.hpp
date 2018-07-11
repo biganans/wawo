@@ -141,12 +141,14 @@ namespace wawo { namespace net {
 		public channel_outbound_invoker_abstract
 	{
 		friend class channel_pipeline;
-
+	public:
+		WWRP<channel> ch;
+	private:
+		WWRP<io_event_loop> m_io_event_loop;
+		u16_t m_flag;
 		WWRP<channel_handler_context> P;
 		WWRP<channel_handler_context> N;
 		WWRP<channel_handler_abstract> m_h;
-		WWRP<io_event_loop> m_io_event_loop;
-		u16_t m_flag;
 
 		inline WWRP<channel_handler_context> _find_next(channel_handler_flag const& f) {
 			WWRP<channel_handler_context> ctx = WWRP<channel_handler_context>(this);
@@ -167,11 +169,11 @@ namespace wawo { namespace net {
 		}
 
 	public:
-		WWRP<channel> ch;
-
 		channel_handler_context(WWRP<channel> const& ch_, WWRP<channel_handler_abstract> const& h);
 		virtual ~channel_handler_context();
-
+		inline WWRP<io_event_loop> const& event_poller() const {
+			return m_io_event_loop;
+		}
 		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, connected, CH_ACTIVITY, channel_activity_handler_abstract)
 		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, closed, CH_ACTIVITY, channel_activity_handler_abstract)
 		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, read_shutdowned, CH_ACTIVITY, channel_activity_handler_abstract)

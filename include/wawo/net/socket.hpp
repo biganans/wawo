@@ -751,10 +751,11 @@ end_accept:
 		inline int ch_id() const { return fd(); }
 		void ch_write_impl(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise)
 		{
+			WAWO_ASSERT(event_poller()->in_event_loop());
+
 			WAWO_ASSERT(outlet->len() > 0);
 			WAWO_ASSERT(ch_promise != NULL);
 
-			WAWO_ASSERT(event_poller()->in_event_loop());
 			if (ch_promise->is_cancelled()) {
 				return;
 			}
@@ -808,7 +809,7 @@ end_accept:
 			}
 			return;
 #else
-			if (WAWO_UNLIKELY((m_flag&(F_SHUTDOWN_WR|F_WATCH_WRITE)) != 0)) { return; }
+			if (WAWO_UNLIKELY((m_flag&(F_SHUTDOWN_WR|F_WRITE_BLOCKED)) != 0)) { return ; }
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			int _errno = 0;
 			while (m_outbound_entry_q.size()) {

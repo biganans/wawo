@@ -45,11 +45,11 @@ namespace wawo { namespace net {
 		}
 		inline int ch_get_errno() { return m_errno; }
 
-		inline WWRP<io_event_loop> event_poller() const {
+		inline WWRP<io_event_loop> const& event_poller() const {
 			return m_io_event_loop;
 		}
 
-		inline WWRP<channel_pipeline>& pipeline() {
+		inline WWRP<channel_pipeline> const& pipeline() const {
 			WAWO_ASSERT(m_pipeline != NULL);
 			return m_pipeline;
 		}

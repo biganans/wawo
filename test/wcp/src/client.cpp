@@ -108,7 +108,7 @@ _CHECK:
 		case wcp_test::C_RECEIVE_DONE:
 			{
 				if (wawo::strncmp((char*)file_content, (char*)received_packet->begin(), filelen) != 0) {
-					WAWO_ASSERT("file transfer failed");
+					WAWO_ASSERT(!"file transfer failed");
 				}
 
 #if FAST_TRANSFER
