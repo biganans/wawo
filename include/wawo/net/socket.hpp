@@ -432,7 +432,7 @@ end_accept:
 
 		void __cb_async_flush(async_io_result const& r) {
 			if (WAWO_LIKELY(r.v.code == wawo::OK)) {
-				socket::ch_flush_impl();
+				socket::_do_ch_flush_impl();
 			} else {
 				socket::ch_errno(r.v.code);
 				socket::ch_close();
@@ -794,9 +794,9 @@ end_accept:
 			ch_flush_impl();
 		}
 
-		void ch_flush_impl()
-		{
 #ifdef WAWO_IO_MODE_IOCP
+		void ch_flush_impl() {
+			WAWO_ASSERT(event_poller()->in_event_loop());
 			if (WAWO_UNLIKELY((m_flag&(F_SHUTDOWN_WR | F_WRITE_BLOCKED)) != 0)) { return; }
 			if (m_ol_write == 0) {
 				__IOCP_CALL_WSASend();
@@ -807,9 +807,9 @@ end_accept:
 					ch_close();
 				}
 			}
-			return;
+		}
 #else
-			if (WAWO_UNLIKELY((m_flag&(F_SHUTDOWN_WR|F_WRITE_BLOCKED)) != 0)) { return ; }
+		void _do_ch_flush_impl() {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			int _errno = 0;
 			while (m_outbound_entry_q.size()) {
@@ -844,10 +844,12 @@ end_accept:
 					channel::ch_fire_write_unblock();
 				}
 				return;
-			} else if (_errno == wawo::E_CHANNEL_WRITE_BLOCK ) {
+			}
+			else if (_errno == wawo::E_CHANNEL_WRITE_BLOCK) {
 				if ((m_flag&F_WATCH_WRITE) == 0) {
 					begin_write(IOE_INFINITE_WATCH_WRITE);
-				} else {
+				}
+				else {
 					//@TODO clear old before setup, this is just a quick fix
 					end_write();
 					begin_write();
@@ -855,8 +857,14 @@ end_accept:
 				return;
 			}
 			ch_close();
-#endif
 		}
+
+		void ch_flush_impl() {
+			event_poller()->schedule([so=WWRP<socket>(this)]() {
+				so->_do_ch_flush_impl();
+			});
+		}
+#endif
 
 		void ch_shutdown_read_impl(WWRP<channel_promise> const& ch_promise)
 		{
@@ -886,7 +894,7 @@ end_accept:
 				return;
 			}
 #endif
-			ch_flush_impl();
+			_do_ch_flush_impl();
 			end_write();
 			m_flag |= F_SHUTDOWN_WR;
 			int rt = socket_base::shutdown(SHUT_WR);
@@ -944,7 +952,7 @@ end_accept:
 #else
 			m_state = S_CLOSED;
 			if (!(m_flag&F_SHUTDOWN_WR) && !is_listener() && m_state == S_CONNECTED) {
-				ch_flush_impl();
+				_do_ch_flush_impl();
 			}
 #endif
 			if (!(m_flag&F_SHUTDOWN_RD)) {

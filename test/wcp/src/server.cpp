@@ -40,11 +40,8 @@ namespace wcp_test {
 			WAWO_ASSERT(blocked == true);
 			blocked = false;
 
-			WWRP<async_send_broker> B(this);
-			ctx->ch->event_poller()->schedule([B, ctx]() -> void {
-				B->state = S_SEND_BEGIN;
-				B->begin_send(ctx);
-			});
+			state = S_SEND_BEGIN;
+			begin_send(ctx);
 			ctx->ch->begin_read();
 		}
 
@@ -77,16 +74,12 @@ namespace wcp_test {
 				if (f->get() == wawo::OK) {
 					wawo::lock_guard<wawo::spin_mutex> lg(B->m_mutex);
 					B->state = S_SEND_CONTENT;
-					ctx->event_poller()->schedule([B, ctx]() -> void {
-						B->_begin_send_content(ctx);
-					});
+					B->_begin_send_content(ctx);
 				}
 				else {
 					wawo::lock_guard<wawo::spin_mutex> lg(B->m_mutex);
 					B->state = S_SEND_BEGIN;
-					ctx->event_poller()->schedule([B, ctx]() -> void {
-						B->_begin_send_header(ctx);
-					});
+					B->_begin_send_header(ctx);
 				}
 			});
 		}
@@ -124,11 +117,9 @@ namespace wcp_test {
 							B->s_total = 0;
 							B->state = S_SEND_BEGIN;
 							//WAWO_INFO("SEND DONE, LAUNCH NEW");
-							ctx->event_poller()->schedule([B, ctx]() -> void {
 								//WAWO_INFO("SEND DONE, LAUNCH NEW BEGIN");
-								B->state = S_SEND_BEGIN;
-								B->_begin_send_header(ctx);
-							});
+							B->state = S_SEND_BEGIN;
+							B->_begin_send_header(ctx);
 						}
 						else {
 							WAWO_ASSERT(!"TEST FINISHED");
@@ -136,9 +127,7 @@ namespace wcp_test {
 #endif
 					} else {
 						WAWO_ASSERT(B->s_total < B->file_len);
-						ctx->event_poller()->schedule([B, ctx]() -> void {
-							B->_begin_send_content(ctx);
-						});
+						B->_begin_send_content(ctx);
 					}
 
 				} else if (rt == wawo::E_CHANNEL_WRITE_BLOCK) {
@@ -227,9 +216,7 @@ namespace wcp_test {
 						B->writing = false;
 
 						ctx->ch->set_ctx(B);
-						ctx->event_poller()->schedule([B, ctx]() -> void {
-							B->_begin_send_header(ctx);
-						});
+						B->_begin_send_header(ctx);
 					}
 					break;
 					}
