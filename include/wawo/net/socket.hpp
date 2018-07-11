@@ -902,22 +902,6 @@ end_accept:
 				return;
 			}
 
-			WAWO_ASSERT(m_dial_promise == NULL);
-
-#ifdef WAWO_IO_MODE_IOCP
-			if (m_flag&F_WRITING) {
-				WAWO_ASSERT(!is_listener());
-				m_flag |= F_SHUTDOWN_WRITE_AFTER_WRITE_DONE;
-				if (!(m_flag&F_SHUTDOWN_RD)) {
-					ch_shutdown_read();
-				}
-				return;
-			}
-#else
-			if (!(m_flag&F_SHUTDOWN_WR) && !is_listener() && m_state == S_CONNECTED) {
-				ch_flush_impl();
-			}
-#endif
 			if (is_listener()) {
 				end_read();
 				int rt = socket_base::close();
@@ -944,7 +928,24 @@ end_accept:
 #endif
 				return;
 			}
+
+			WAWO_ASSERT(m_dial_promise == NULL);
+
+#ifdef WAWO_IO_MODE_IOCP
+			if (m_flag&F_WRITING) {
+				WAWO_ASSERT(!is_listener());
+				m_flag |= F_SHUTDOWN_WRITE_AFTER_WRITE_DONE;
+				if (!(m_flag&F_SHUTDOWN_RD)) {
+					ch_shutdown_read();
+				}
+				return;
+			}
+#else
 			m_state = S_CLOSED;
+			if (!(m_flag&F_SHUTDOWN_WR) && !is_listener() && m_state == S_CONNECTED) {
+				ch_flush_impl();
+			}
+#endif
 			if (!(m_flag&F_SHUTDOWN_RD)) {
 				ch_shutdown_read();
 			}

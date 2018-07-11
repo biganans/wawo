@@ -38,7 +38,7 @@ namespace wcp_test {
 
 			WWRP<async_send_broker> B(this);
 			wawo::task::fn_task_void L = [B, ctx]() -> void {
-				B->state == S_SEND_BEGIN;
+				B->state = S_SEND_BEGIN;
 				B->begin_send(ctx);
 			};
 			WW_SCHEDULER->schedule(L);
@@ -112,7 +112,7 @@ namespace wcp_test {
 							B->s_total = 0;
 							B->state = S_SEND_BEGIN;
 							wawo::task::fn_task_void L = [B, ctx]() -> void {
-								B->state == S_SEND_BEGIN;
+								B->state = S_SEND_BEGIN;
 								B->_begin_send_header(ctx);
 							};
 							WW_SCHEDULER->schedule(L);

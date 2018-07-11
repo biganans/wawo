@@ -188,8 +188,9 @@ namespace wawo { namespace net { namespace impl {
 						_unwatch_flag |= IOE_WRITE;
 					}
 					fn_io_event fn = ctx->fn[IOE_SLOT_WRITE];
-					WAWO_ASSERT(fn != nullptr);
-					fn({ AIO_WRITE, 0,0 });
+					if (fn != nullptr) {
+						fn({ AIO_WRITE, 0,0 });
+					}
 				}
 
 				if (FD_ISSET(fd, &fds_ex)) {

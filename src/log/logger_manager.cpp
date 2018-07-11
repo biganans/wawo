@@ -81,7 +81,7 @@ namespace wawo { namespace log {
 		}
 	}
 
-	#define LOG_BUFFER_SIZE_MAX		(1024*20)
+	#define LOG_BUFFER_SIZE_MAX		(1024*10)
 	#define TRACE_INFO_SIZE 1024
 
 	void logger_manager::write( logger_abstract::LogLevelMask const& level, char const* const file, int line, char const* const func, ... ) {
