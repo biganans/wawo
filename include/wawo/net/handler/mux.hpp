@@ -130,16 +130,7 @@ namespace wawo { namespace net { namespace handler {
 			WAWO_RETURN_V_IF_NOT_MATCH(wrt, wrt == wawo::OK);
 			m_state = SS_ESTABLISHED;
 			m_flag |= STREAM_IS_ACTIVE;
-
-			//WWRP<mux_stream> s(this);
-			//auto l = [s]() ->void {
-			//	s->ch_fire_connected();
-			//};
-			//WWRP<wawo::task::task> t = wawo::make_ref<wawo::task::task>(l);
-			//event_poller()->execute(t);
-
 			channel::ch_fire_connected();
-
 			return wrt;
 		}
 

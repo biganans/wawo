@@ -37,11 +37,10 @@ namespace wcp_test {
 			blocked = false;
 
 			WWRP<async_send_broker> B(this);
-			wawo::task::fn_task_void L = [B, ctx]() -> void {
+			ctx->ch->event_poller()->schedule([B, ctx]() -> void {
 				B->state = S_SEND_BEGIN;
 				B->begin_send(ctx);
-			};
-			WW_SCHEDULER->schedule(L);
+			});
 			ctx->ch->begin_read();
 		}
 
@@ -70,18 +69,16 @@ namespace wcp_test {
 				if (f->get() == wawo::OK) {
 					wawo::lock_guard<wawo::spin_mutex> lg(B->m_mutex);
 					B->state = S_SEND_CONTENT;
-					wawo::task::fn_task_void L = [B, ctx]() -> void {
+					ctx->ch->event_poller()->schedule([B, ctx]() -> void {
 						B->_begin_send_content(ctx);
-					};
-					WW_SCHEDULER->schedule(L);
+					});
 				}
 				else {
 					wawo::lock_guard<wawo::spin_mutex> lg(B->m_mutex);
 					B->state = S_SEND_BEGIN;
-					wawo::task::fn_task_void L = [B, ctx]() -> void {
+					ctx->ch->event_poller()->schedule([B, ctx]() -> void {
 						B->_begin_send_header(ctx);
-					};
-					WW_SCHEDULER->schedule(L);
+					});
 				}
 			});
 		}
@@ -111,21 +108,20 @@ namespace wcp_test {
 							++B->now_times;
 							B->s_total = 0;
 							B->state = S_SEND_BEGIN;
-							wawo::task::fn_task_void L = [B, ctx]() -> void {
+
+							ctx->ch->event_poller()->schedule([B, ctx]() -> void {
 								B->state = S_SEND_BEGIN;
 								B->_begin_send_header(ctx);
-							};
-							WW_SCHEDULER->schedule(L);
+							});
 						}
 						else {
 							WAWO_ASSERT("TEST FINISHED");
 						}
 #endif
 					} else {
-						wawo::task::fn_task_void L = [B, ctx]() -> void {
+						ctx->ch->event_poller()->schedule([B, ctx]() -> void {
 							B->_begin_send_content(ctx);
-						};
-						WW_SCHEDULER->schedule(L);
+						});
 					}
 
 				} else if (f->get() == wawo::E_CHANNEL_WRITE_BLOCK) {
@@ -212,12 +208,10 @@ namespace wcp_test {
 						B->state = async_send_broker::S_SEND_BEGIN;
 						B->blocked = false;
 
-						wawo::task::fn_task_void L = [B, ctx]() -> void {
-							B->_begin_send_header(ctx);
-						};
-
 						ctx->ch->set_ctx(B);
-						WW_SCHEDULER->schedule(L);
+						ctx->ch->event_poller()->schedule([B, ctx]() -> void {
+							B->_begin_send_header(ctx);
+						});
 					}
 					break;
 					}
