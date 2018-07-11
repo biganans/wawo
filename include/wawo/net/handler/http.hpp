@@ -30,7 +30,7 @@ namespace wawo { namespace net { namespace handler {
 		public wawo::net::channel_activity_handler_abstract
 	{
 		WWRP<protocol::http::parser> m_http_parser;
-		wawo::len_cstr m_tmp_for_field;
+		std::string m_tmp_for_field;
 
 		WWSP<protocol::http::message> m_tmp_m;
 		WWRP<wawo::net::channel_handler_context> m_cur_ctx;

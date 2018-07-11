@@ -17,7 +17,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 			}
 
 			char resp[512] = { 0 };
-			snprintf(resp, sizeof(resp) / sizeof(resp[0]), "%s %s HTTP/%d.%d", protocol::http::option_name[m->opt], m->url.cstr, m->ver.major, m->ver.minor);
+			snprintf(resp, sizeof(resp) / sizeof(resp[0]), "%s %s HTTP/%d.%d", protocol::http::option_name[m->opt], m->url.c_str(), m->ver.major, m->ver.minor);
 			_out->write((wawo::byte_t*)resp, wawo::strlen(resp));
 			_out->write((wawo::byte_t*)WAWO_HTTP_CRLF, wawo::strlen(WAWO_HTTP_CRLF));
 		} else if (m->type == T_RESP) {
@@ -27,9 +27,9 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 			}
 
 			char resp[128] = { 0 };
-			WAWO_ASSERT(m->status.len > 0);
+			WAWO_ASSERT(m->status.length() > 0);
 
-			snprintf(resp, sizeof(resp) / sizeof(resp[0]), "HTTP/%d.%d %d %s", m->ver.major, m->ver.minor, m->status_code, m->status.cstr);
+			snprintf(resp, sizeof(resp) / sizeof(resp[0]), "HTTP/%d.%d %d %s", m->ver.major, m->ver.minor, m->status_code, m->status.c_str());
 			_out->write((wawo::byte_t*)resp, wawo::strlen(resp));
 			_out->write((wawo::byte_t*)WAWO_HTTP_CRLF, wawo::strlen(WAWO_HTTP_CRLF));
 
@@ -38,19 +38,18 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 			}
 		}
 
-		if (m->body.len > 0) {
+		if (m->body != NULL && (m->body->len() > 0)) {
 			char blength_char[16] = { 0 };
-			snprintf(blength_char, 16, "%d", m->body.len);
+			snprintf(blength_char, 16, "%d", m->body->len());
 			m->h.set("content-length", blength_char);
 		}
 
 		WWRP<packet> hpacket;
 		m->h.encode(hpacket);
-
 		_out->write(hpacket->begin(), hpacket->len());
 
-		if (m->body.len > 0) {
-			_out->write((wawo::byte_t*)m->body.cstr, m->body.len);
+		if (m->body != NULL && (m->body->len() > 0)) {
+			_out->write((wawo::byte_t*)m->body->begin(), m->body->len());
 		}
 
 		out = _out;
@@ -61,10 +60,10 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		encode_message( m, outp );
 	}
 
-	int parse_url(wawo::len_cstr const& url, url_fields& urlfields, bool is_connect ) {
+	int parse_url(std::string const& url, url_fields& urlfields, bool is_connect ) {
 
 		http_parser_url u;
-		int rt = http_parser_parse_url(url.cstr, url.len, is_connect, &u);
+		int rt = http_parser_parse_url(url.c_str(), url.length(), is_connect, &u);
 		WAWO_RETURN_V_IF_NOT_MATCH( WAWO_NEGATIVE(rt), rt == 0);
 
 		if (u.field_set& (1 << UF_SCHEMA)) {
@@ -175,7 +174,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 			break;
 		}
 
-		p->url = wawo::len_cstr(data, len);
+		p->url = std::string(data, len);
 		if (p->on_url) return p->on_url(WWRP<parser>(p),data, len);
 
 		return 0;

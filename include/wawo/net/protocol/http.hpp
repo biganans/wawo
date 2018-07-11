@@ -58,26 +58,26 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 
 	struct header {
 
-		typedef std::unordered_map<len_cstr, len_cstr>	HeaderMap;
-		typedef std::pair<len_cstr, len_cstr>	HeaderPair;
+		typedef std::unordered_map<std::string, std::string>	HeaderMap;
+		typedef std::pair<std::string, std::string>	HeaderPair;
 
 		HeaderMap map;
-		std::list<len_cstr> keys_order;
+		std::list<std::string> keys_order;
 
 		header() {}
 		~header() {}
 
-		bool have(len_cstr const& field) const {
+		bool have(std::string const& field) const {
 			HeaderMap::const_iterator it = map.find(field);
 			return it != map.end();
 		}
 
-		void remove(len_cstr const& field) {
+		void remove(std::string const& field) {
 			HeaderMap::iterator it = map.find(field);
 			if (it != map.end()) {
 				map.erase(it);
 
-				std::list<len_cstr>::iterator it_key = std::find_if(keys_order.begin(), keys_order.end(), [&field](len_cstr const& key) {
+				std::list<std::string>::iterator it_key = std::find_if(keys_order.begin(), keys_order.end(), [&field](std::string const& key) {
 					return key == field;
 				});
 
@@ -86,7 +86,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 			}
 		}
 
-		len_cstr get(len_cstr const& field) const {
+		std::string get(std::string const& field) const {
 			HeaderMap::const_iterator it = map.find(field);
 			if (it != map.end()) {
 				return it->second;
@@ -94,7 +94,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 			return "";
 		}
 
-		void set(len_cstr const& field, len_cstr const& value) {
+		void set(std::string const& field, std::string const& value) {
 
 			/*
 			 * replace if exists, otherwise add to tail
@@ -111,7 +111,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 			keys_order.push_back(field);
 		}
 
-		void replace(len_cstr const& field, len_cstr const& value) {
+		void replace(std::string const& field, std::string const& value) {
 			HeaderMap::iterator it = map.find(field);
 			if (it != map.end()) {
 				it->second = value;
@@ -123,12 +123,12 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 
 			//WAWO_ASSERT(map.size() > 0);
 
-			std::for_each( keys_order.begin(), keys_order.end(), [&]( len_cstr const& key ) {
-				len_cstr value = map[key];
-				opacket->write((wawo::byte_t*)key.cstr, key.len);
+			std::for_each( keys_order.begin(), keys_order.end(), [&](std::string const& key ) {
+				std::string value = map[key];
+				opacket->write((wawo::byte_t*)key.c_str(), key.length());
 				opacket->write((wawo::byte_t*)WAWO_HTTP_COLON, 1);
 				opacket->write((wawo::byte_t*)WAWO_HTTP_SP, 1);
-				opacket->write((wawo::byte_t*)value.cstr, value.len);
+				opacket->write((wawo::byte_t*)value.c_str(), value.length());
 				opacket->write((wawo::byte_t*)WAWO_HTTP_CRLF, wawo::strlen(WAWO_HTTP_CRLF));
 			});
 
@@ -138,12 +138,12 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 	};
 
 	struct url_fields {
-		wawo::len_cstr schema;
-		wawo::len_cstr host;
-		wawo::len_cstr path;
-		wawo::len_cstr query;
-		wawo::len_cstr fragment;
-		wawo::len_cstr userinfo;
+		std::string schema;
+		std::string host;
+		std::string path;
+		std::string query;
+		std::string fragment;
+		std::string userinfo;
 		u16_t port;
 	};
 
@@ -153,11 +153,11 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		version ver;
 
 		u16_t status_code;
-		wawo::len_cstr url;
-		wawo::len_cstr status;
+		std::string url;
+		std::string status;
 
 		header h;
-		wawo::len_cstr body;
+		WWRP<wawo::packet> body;
 
 		url_fields urlfields;
 		bool is_header_contain_connection_close;
@@ -165,7 +165,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		void encode( WWRP<wawo::packet>& out );
 	};
 
-	int parse_url(wawo::len_cstr const& url, url_fields& urlfields, bool is_connect);
+	int parse_url(std::string const& url, url_fields& urlfields, bool is_connect);
 
 	struct parser;
 
@@ -189,7 +189,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		version ver;
 
 		u16_t status_code;
-		wawo::len_cstr url;
+		std::string url;
 
 		parser();
 		~parser();

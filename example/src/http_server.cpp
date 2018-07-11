@@ -27,7 +27,10 @@ public:
 		WWRP<wawo::packet> req;
 		m->encode(req);
 
-		resp->body = wawo::len_cstr((char*)req->begin(), req->len());
+		WWRP<wawo::packet> body = wawo::make_ref<wawo::packet>(req->len());
+		body->write((wawo::byte_t*)req->begin(), req->len());
+		resp->body = body;
+
 		WWRP<wawo::packet> outp;
 		resp->encode(outp);
 

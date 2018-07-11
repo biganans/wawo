@@ -404,7 +404,7 @@ end_accept:
 			while(ec == wawo::OK) {
 				if (WAWO_UNLIKELY(m_flag&F_SHUTDOWN_RD)) { return; }
 				u32_t nbytes = socket_base::recv(m_trb, buffer_cfg().rcv_size, ec);
-				if (nbytes>0) {
+				if (WAWO_LIKELY(nbytes>0)) {
 					WWRP<packet> p = wawo::make_ref<packet>(nbytes);
 					p->write(m_trb, nbytes);
 					channel::ch_read(p);

@@ -58,13 +58,13 @@ namespace wawo { namespace net { namespace handler {
 
 	int http::http_on_url(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len) {
 		(void)p;
-		m_tmp_m->url = wawo::len_cstr( data,len );
+		m_tmp_m->url = std::string( data,len );
 		return wawo::OK;
 	}
 
 	int http::http_on_status(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len) {
 		(void)p;
-		WAWO_ERR("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
+		WAWO_ERR("[%s]<<< %s", __FUNCTION__, std::string(data, len).c_str());
 		WAWO_ASSERT(!"WHAT");
 		return wawo::OK;
 	}
@@ -72,14 +72,14 @@ namespace wawo { namespace net { namespace handler {
 	int http::http_on_header_field(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len) {
 		(void)p;
 		//WAWO_DEBUG("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
-		m_tmp_for_field = wawo::len_cstr(data, len);
+		m_tmp_for_field = std::string(data, len);
 		return wawo::OK;
 	}
 
 	int http::http_on_header_value(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len) {
 		(void)p;
 		//WAWO_DEBUG("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
-		m_tmp_m->h.set(m_tmp_for_field, wawo::len_cstr(data, len));
+		m_tmp_m->h.set(m_tmp_for_field, std::string(data, len));
 		return wawo::OK;
 	}
 
