@@ -810,6 +810,7 @@ end_accept:
 		}
 #else
 		//@note, we need simulate a async write, so for write operation, we'll flush outbound buffer in the next loop
+		//flush until error
 		void _do_ch_flush_impl() {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			int _errno = 0;
@@ -894,9 +895,15 @@ end_accept:
 				ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWNING);
 				return;
 			}
-#endif
+			ch_flush_impl();
+			if (m_flag&F_WRITING) {
+				m_flag |= F_SHUTDOWN_WRITE_AFTER_WRITE_DONE;
+				return;
+			}
+#else
 			_do_ch_flush_impl();
 			end_write();
+#endif
 			m_flag |= F_SHUTDOWN_WR;
 			int rt = socket_base::shutdown(SHUT_WR);
 			channel::ch_fire_write_shutdowned();
@@ -942,6 +949,7 @@ end_accept:
 			WAWO_ASSERT(m_dial_promise == NULL);
 
 #ifdef WAWO_IO_MODE_IOCP
+			//wait for write done event
 			if (m_flag&F_WRITING) {
 				WAWO_ASSERT(!is_listener());
 				m_flag |= F_SHUTDOWN_WRITE_AFTER_WRITE_DONE;
@@ -950,8 +958,18 @@ end_accept:
 				}
 				return;
 			}
-#else
+
+			ch_flush_impl();
+			if (m_flag&F_WRITING) {
+				m_flag |= F_SHUTDOWN_WRITE_AFTER_WRITE_DONE;
+				if (!(m_flag&F_SHUTDOWN_RD)) {
+					ch_shutdown_read();
+				}
+				return;
+			}
+#endif
 			m_state = S_CLOSED;
+#ifndef WAWO_ENABLE_IOCP
 			if (!(m_flag&F_SHUTDOWN_WR) && !is_listener() && m_state == S_CONNECTED) {
 				_do_ch_flush_impl();
 			}
@@ -959,10 +977,10 @@ end_accept:
 			if (!(m_flag&F_SHUTDOWN_RD)) {
 				ch_shutdown_read();
 			}
-
 			if (!(m_flag&F_SHUTDOWN_WR)) {
 				ch_shutdown_write();
 			}
+
 			while (m_outbound_entry_q.size()) {
 				socket_outbound_entry& entry = m_outbound_entry_q.front();
 				entry.ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY);
