@@ -997,11 +997,10 @@ end_accept:
 				}
 			}
 
+			m_state = S_CLOSED;
 			if (!(m_flag&F_SHUTDOWN_WR)) {
 				ch_shutdown_write();
 			}
-			m_state = S_CLOSED;
-
 			int rt = socket_base::close();
 			ch_promise->set_success(rt);
 			channel::ch_close_promise()->set_success(rt);
