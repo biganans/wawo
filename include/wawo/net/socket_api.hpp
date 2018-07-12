@@ -397,8 +397,8 @@ namespace wawo { namespace net { namespace socket_api {
 
 #ifdef WAWO_IO_MODE_IOCP
 	namespace iocp {
-		inline int socket(int const& family, int const& socket_type, int const& protocol) {
-			int rt = ::WSASocketW(family, socket_type, protocol, NULL, 0, WSA_FLAG_OVERLAPPED);
+		inline int socket(int const& family, int const& type, int const& proto) {
+			int rt = ::WSASocketW( OS_DEF_family[family], OS_DEF_sock_type[type], OS_DEF_protocol[proto], NULL, 0, WSA_FLAG_OVERLAPPED);
 			WAWO_RETURN_V_IF_MATCH(rt, rt > 0);
 			return socket_get_last_errno();
 		}

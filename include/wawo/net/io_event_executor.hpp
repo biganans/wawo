@@ -140,6 +140,8 @@ namespace wawo { namespace net {
 		}
 
 		virtual void deinit() {
+			//last time to exec tasks
+			exec_task();
 			WAWO_ASSERT(m_tq->empty());
 			WAWO_ASSERT(m_tq_standby->empty());
 			m_tm = NULL;

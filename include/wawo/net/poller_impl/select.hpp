@@ -70,21 +70,17 @@ namespace wawo { namespace net { namespace impl {
 			void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn)
 			{
 				WAWO_ASSERT( flag > 0 );
-				if( 0 != flag ) {
-					if (m_ctxs.size() >= FD_SETSIZE) {
-						fn({ flag&IOE_READ ? AIO_READ : AIO_WRITE, wawo::E_POLLER_FD_COUNT_LIMIT, 0 });
-						return;
-					}
-					watch_ioe(flag, fd, fn);
+				if (m_ctxs.size() >= FD_SETSIZE) {
+					fn({ flag&IOE_READ ? AIO_READ : AIO_WRITE, wawo::E_POLLER_FD_COUNT_LIMIT, 0 });
+					return;
 				}
+				watch_ioe(flag, fd, fn);
 			}
 
 			void do_unwatch(u8_t const& flag, int const& fd)
 			{
 				WAWO_ASSERT( flag > 0 );
-				if( 0 != flag ) {
-					unwatch_ioe( flag, fd );
-				}
+				unwatch_ioe( flag, fd );
 			}
 
 #pragma warning(push)
@@ -163,8 +159,6 @@ namespace wawo { namespace net { namespace impl {
 				poller_ctx_map::iterator it_cur = it;
 				++it;
 
-				u8_t _unwatch_flag = 0;
-
 				WWRP<poller_ctx> ctx = it_cur->second;
 				WAWO_ASSERT(ctx != NULL);
 
@@ -172,9 +166,6 @@ namespace wawo { namespace net { namespace impl {
 				if (FD_ISSET(fd, &fds_r)) {
 					FD_CLR(fd, &fds_r);
 					--ready_c;
-					if (WAWO_UNLIKELY(ctx->flag&IOE_INFINITE_WATCH_READ) == 0) {
-						_unwatch_flag |= IOE_READ;
-					}
 					fn_io_event fn = ctx->fn[IOE_SLOT_READ];
 					WAWO_ASSERT(fn != nullptr);
 					fn({ AIO_READ, 0,0 });
@@ -184,13 +175,7 @@ namespace wawo { namespace net { namespace impl {
 				if (FD_ISSET(fd, &fds_w)) {
 					FD_CLR(fd, &fds_w);
 					--ready_c;
-					if (WAWO_LIKELY(ctx->flag&IOE_INFINITE_WATCH_WRITE) == 0) {
-						_unwatch_flag |= IOE_WRITE;
-					}
-					fn_io_event fn = ctx->fn[IOE_SLOT_WRITE];
-					if (fn != nullptr) {
-						fn({ AIO_WRITE, 0,0 });
-					}
+					ctx->fn[IOE_SLOT_WRITE]({ AIO_WRITE,0,0 });
 				}
 
 				if (FD_ISSET(fd, &fds_ex)) {
@@ -205,27 +190,11 @@ namespace wawo { namespace net { namespace impl {
 						ec = wawo::socket_get_last_errno();
 					}
 					WAWO_ASSERT(ec != wawo::OK);
-					_unwatch_flag = (IOE_WRITE | IOE_READ);
 
-					fn_io_event fn_r = ctx->fn[IOE_SLOT_READ];
-					if(fn_r != nullptr ) {
-						fn_r({ AIO_READ, ec,0 });
-					}
-					fn_io_event fn_w = ctx->fn[IOE_SLOT_READ];
-
-					if (fn_w != nullptr) {
-						fn_w({ AIO_WRITE, ec,0 });
-					}
-				}
-
-				if (_unwatch_flag != 0) {
-					unwatch_ioe(_unwatch_flag, ctx->fd);
+					ctx->fn[IOE_SLOT_READ]({ AIO_READ, ec,0 });
+					ctx->fn[IOE_SLOT_WRITE]({ AIO_WRITE, ec,0 });
 				}
 			}
-
-			//if (total_rc >= 64) {
-			//	WAWO_INFO("[IOE] total_rc reach: %d", total_rc);
-			//}
 		}
 
 #pragma warning(pop)
@@ -245,7 +214,7 @@ namespace wawo { namespace net { namespace impl {
 			rt = wawo::net::socket_api::helper::turnon_nodelay(m_signalfds[1]);
 			WAWO_ASSERT(rt == wawo::OK);
 
-			watch_ioe(IOE_READ|IOE_INFINITE_WATCH_READ, m_signalfds[0], [fd= m_signalfds[0]](async_io_result const& r) {
+			watch_ioe(IOE_READ, m_signalfds[0], [fd= m_signalfds[0]](async_io_result const& r) {
 				//do nothing...JUST FOR API compatible
 				(void)r;
 				WAWO_DEBUG("[select]interrupt wait callback");

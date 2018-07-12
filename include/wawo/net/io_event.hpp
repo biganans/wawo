@@ -11,6 +11,7 @@ namespace wawo { namespace net {
 	enum async_io_op {
 		AIO_READ,
 		AIO_WRITE,
+		AIO_DIRECT_WRITE,
 		AIO_ACCEPT,
 		AIO_LISTEN,
 		AIO_CONNECT

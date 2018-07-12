@@ -148,7 +148,7 @@ namespace wawo { namespace net {
 #ifdef WAWO_IO_MODE_IOCP
 			__IOCP_init();
 #endif
-			begin_read(F_WATCH_OPTION_INFINITE);
+			begin_read();
 			return ch_promise;
 		} else if (rt == wawo::E_SOCKET_CONNECTING) {
 			m_dial_promise = ch_promise;

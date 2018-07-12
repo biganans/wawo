@@ -71,24 +71,15 @@ namespace wawo { namespace net {
 
 			if (flag&IOE_READ) {
 				ctx->flag |= IOE_READ;
-				if ( flag&IOE_INFINITE_WATCH_READ ) {
-					ctx->flag |= IOE_INFINITE_WATCH_READ;
-				}
-
 				TRACE_IOE("[io_event_loop][#%d]watch IOE_READ", ctx->fd);
 				WAWO_ASSERT(ctx->fn[IOE_SLOT_READ] == NULL);
-
 				ctx->fn[IOE_SLOT_READ] = fn;
 			}
 
 			if (flag&IOE_WRITE) {
 				ctx->flag |= IOE_WRITE;
-				if (flag&IOE_INFINITE_WATCH_WRITE) {
-					ctx->flag |= IOE_INFINITE_WATCH_WRITE;
-				}
 				TRACE_IOE("[io_event_loop][#%d]watch IOE_WRITE", ctx->fd);
 				WAWO_ASSERT(ctx->fn[IOE_SLOT_WRITE] == NULL);
-
 				ctx->fn[IOE_SLOT_WRITE] = fn;
 			}
 		}
@@ -97,15 +88,12 @@ namespace wawo { namespace net {
 		{
 			if ((flag&IOE_READ) && (ctx->flag)&flag) {
 				TRACE_IOE("[io_event_loop][#%d]unwatch IOE_READ", ctx->fd);
-				ctx->flag &= ~(IOE_READ|IOE_INFINITE_WATCH_READ);
-
-				ctx->fn[IOE_SLOT_READ] = NULL;
+				ctx->flag &= ~(IOE_READ);
 			}
 
 			if ((flag&IOE_WRITE) && (ctx->flag)&flag) {
 				TRACE_IOE("[io_event_loop][#%d]unwatch IOE_WRITE", ctx->fd);
-				ctx->flag &= ~(IOE_WRITE|IOE_INFINITE_WATCH_WRITE);
-				ctx->fn[IOE_SLOT_WRITE] = NULL;
+				ctx->flag &= ~(IOE_WRITE);
 			}
 		}
 
