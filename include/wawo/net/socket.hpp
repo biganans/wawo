@@ -484,8 +484,8 @@ namespace wawo { namespace net {
 			::memset(&addr, 0,sizeof(addr));
 
 			addr.sin_family = OS_DEF_family[m_family];
-			addr.sin_port = m_raddr.nport();
-			addr.sin_addr.s_addr = m_raddr.ipv4();
+			addr.sin_port = (m_raddr.nport());
+			addr.sin_addr.s_addr = m_raddr.nipv4();
 			int socklen = sizeof(addr);
 			LPFN_CONNECTEX fn_connectEx = (LPFN_CONNECTEX)winsock_helper::instance()->load_api_ex_address(API_CONNECT_EX);
 			WAWO_ASSERT(fn_connectEx != 0);
@@ -843,8 +843,7 @@ namespace wawo { namespace net {
 			return _errno;
 		}
 		void ch_flush_impl() {
-			const static async_io_result _ = { AIO_DIRECT_WRITE, 0, NULL};
-			__cb_async_flush(_);
+			__cb_async_flush({ AIO_DIRECT_WRITE, 0, NULL });
 		}
 #endif
 

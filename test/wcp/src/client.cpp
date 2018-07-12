@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
 	});
 
 	if (dial_future->get() != wawo::OK) {
-		WAWO_ERR("dial %s failed", url.c_str());
+		WAWO_ERR("dial %s failed: %d", url.c_str(), dial_future->get() );
 		return dial_future->get();
 	}
 

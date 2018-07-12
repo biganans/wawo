@@ -304,7 +304,7 @@ namespace wawo { namespace net { namespace socket_api {
 			::memset(&addr_listen, 0, sizeof(addr_listen));
 
 			addr_listen.sin_family = AF_INET;
-			addr_listen.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+			addr_listen.sin_addr.s_addr = ::htonl(INADDR_LOOPBACK);
 			addr_listen.sin_port = 0;
 			int rt = ::bind(listenfd, reinterpret_cast<sockaddr*>(&addr_listen), sizeof(addr_listen));
 			if (rt != wawo::OK) {
