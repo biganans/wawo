@@ -3,7 +3,7 @@
 
 #include <wawo/net/io_event.hpp>
 #include <wawo/net/io_event_executor.hpp>
-#include <wawo/thread_run_object_abstract.hpp>
+#include <wawo/thread.hpp>
 
 namespace wawo { namespace net {
 
@@ -12,32 +12,37 @@ namespace wawo { namespace net {
 		IOE_WRITE = 1<<1, //check write, sys io
 		IOE_ACCEPT = 1<<2,
 		IOE_CONNECT = 1<<3,
-//		IOE_INFINITE_WATCH_READ = 1 << 4,
-//		IOE_INFINITE_WATCH_WRITE = 1 << 5,
-		IOE_IOCP_INIT = 1<<6,
-		IOE_IOCP_DEINIT = 1<<7
+		IOE_IOCP_INIT = 1<<4,
+		IOE_IOCP_DEINIT = 1<<5
 	};
 
 	class io_event_loop :
-		public io_event_executor,
-		public thread_run_object_abstract
+		public io_event_executor
 	{
-
+		enum state {
+			S_IDLE,
+			S_RUNNING,
+			S_EXIT
+		};
+		WWRP<wawo::thread> m_th;
+		volatile state m_state;
 	protected:
-		void on_start() {
+		inline void run() {
 			init();
-		}
-
-		void on_stop() {
+			while (WAWO_LIKELY(S_RUNNING == m_state)) {
+				try {
+					io_event_executor::exec_task();
+					do_poll();
+				} catch (...) {
+					m_state = S_EXIT;
+					throw;
+				}
+			}
 			deinit();
 		}
 
-		void run() {
-			io_event_executor::exec_task();
-			do_poll();
-		}
-
 	public:
+		io_event_loop() :m_state(S_IDLE) {}
 		inline void watch(u8_t const& flag, int const& fd, fn_io_event const& fn) {
 			WAWO_ASSERT(fd > 0);
 			WWRP<io_event_loop> loop(this);
@@ -52,6 +57,21 @@ namespace wawo { namespace net {
 				loop->do_unwatch(flag, fd);
 			});
 		}
+		int start() {
+			m_th = wawo::make_ref<wawo::thread>();
+			int rt = m_th->start(&io_event_loop::run, WWRP<io_event_loop>(this));
+			WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
+			while (m_state == S_IDLE) {
+				wawo::this_thread::yield();
+			}
+			return wawo::OK;
+		}
+		void stop() {
+			m_state = S_EXIT;
+			interrupt_wait();
+			m_th->interrupt();
+			m_th->join();
+		}
 
 #ifdef WAWO_IO_MODE_IOCP
 		inline void IOCP_overlapped_call(u8_t const& flag, int const& fd, fn_overlapped_io_event const& fn_overlapped, fn_io_event const& fn) {
@@ -63,9 +83,11 @@ namespace wawo { namespace net {
 		}
 #endif
 		virtual void init() {
+			m_state = S_RUNNING;
 			io_event_executor::init();
 		}
 		virtual void deinit() {
+			WAWO_ASSERT(m_state == S_EXIT);
 			io_event_executor::deinit();
 		}
 	public:

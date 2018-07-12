@@ -84,6 +84,7 @@ namespace wawo { namespace net {
 			return ch_promise;
 		}
 		int rt = socket::open();
+		//int rt = -10043;
 		if (rt != wawo::OK) {
 			ch_promise->set_success(rt);
 			return ch_promise;

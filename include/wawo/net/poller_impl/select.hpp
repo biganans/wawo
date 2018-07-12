@@ -228,6 +228,7 @@ namespace wawo { namespace net { namespace impl {
 			});
 		}
 		void deinit() {
+			unwatch_ioe(IOE_READ, m_signalfds[0]);
 			poller_abstract::ctxs_cancel_all(m_ctxs);
 			WAWO_CLOSE_SOCKET(m_signalfds[0]);
 			WAWO_CLOSE_SOCKET(m_signalfds[1]);
