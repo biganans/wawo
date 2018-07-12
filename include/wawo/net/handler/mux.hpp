@@ -101,7 +101,7 @@ namespace wawo { namespace net { namespace handler {
 
 	public:
 		mux_stream(u32_t const& id, WWRP<wawo::net::channel_handler_context> const& ctx):
-			channel(ctx->ch->event_poller()),
+			channel(ctx->event_poller()),
 			m_ch_ctx(ctx),
 			m_state(SS_CLOSED),
 			m_flag(0),
@@ -116,10 +116,12 @@ namespace wawo { namespace net { namespace handler {
 		{
 		}
 
+		/*
 		inline bool is_read_shutdowned() const { return (m_rflag&STREAM_READ_SHUTDOWN_CALLED) != 0; }
 		inline bool is_write_shutdowned() const { return (m_wflag&STREAM_WRITE_SHUTDOWN_CALLED) != 0; }
 		inline bool is_readwrite_shutdowned() const { return (((m_rflag | m_wflag)&(STREAM_READ_SHUTDOWN_CALLED|STREAM_WRITE_SHUTDOWN_CALLED)) == (STREAM_READ_SHUTDOWN_CALLED | STREAM_WRITE_SHUTDOWN_CALLED)); }
 		inline bool is_closed() const { return (m_state == SS_CLOSED); }
+		*/
 
 		int dial() {
 			lock_guard<spin_mutex> lg(m_mutex);
