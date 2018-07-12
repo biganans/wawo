@@ -57,7 +57,7 @@ public:\
 	inline WWRP<channel_future> NAME##(WWRP<packet> const& p, WWRP<channel_promise> const& ch_promise) { \
 		WAWO_ASSERT(m_io_event_loop != NULL); \
 		WWRP<CTX_CLASS_NAME> _ctx(this); \
-		m_io_event_loop->execute([_ctx, p, ch_promise]() { \
+		m_io_event_loop->schedule([_ctx, p, ch_promise]() { \
 			_ctx->_##NAME##(p, ch_promise); \
 		}); \
 		return ch_promise; \

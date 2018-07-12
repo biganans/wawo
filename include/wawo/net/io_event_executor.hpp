@@ -70,6 +70,10 @@ namespace wawo { namespace net {
 
 		inline void schedule(WWRP<wawo::task::task_abstract> const& t) {
 			WAWO_ASSERT(t != NULL);
+			if (in_event_loop()) {
+				m_tq_standby->push(t);
+				return;
+			}
 			lock_guard<spin_mutex> lg(m_tq_mtx);
 			m_tq_standby->push(t);
 			__wait_check();
