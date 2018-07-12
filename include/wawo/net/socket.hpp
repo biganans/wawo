@@ -45,6 +45,7 @@ namespace wawo { namespace net {
 		S_BINDED,
 		S_LISTEN,
 		S_CONNECTING,// for async connect
+		S_CLOSING,
 		S_CONNECTED
 	};
 
@@ -467,7 +468,7 @@ end_accept:
 
 		inline void __rdwr_check() {
 			WAWO_ASSERT(event_poller()->in_event_loop());
-			if ((m_flag&(F_SHUTDOWN_RDWR)) == F_SHUTDOWN_RDWR) {
+			if ( (m_flag&(F_SHUTDOWN_RDWR)) == F_SHUTDOWN_RDWR) {
 				ch_close();
 			}
 		}
@@ -895,8 +896,8 @@ end_accept:
 			m_flag |= F_SHUTDOWN_RD;
 			int rt = socket_base::shutdown(SHUT_RD);
 			channel::ch_fire_read_shutdowned();
-			__rdwr_check();
 			ch_promise->set_success(rt);
+			__rdwr_check();
 		}
 		void ch_shutdown_write_impl(WWRP<channel_promise> const& ch_promise)
 		{
@@ -931,8 +932,8 @@ end_accept:
 			m_flag |= F_SHUTDOWN_WR;
 			int rt = socket_base::shutdown(SHUT_WR);
 			channel::ch_fire_write_shutdowned();
-			__rdwr_check();
 			ch_promise->set_success(rt);
+			__rdwr_check();
 		}
 
 		void ch_close_impl(WWRP<channel_promise> const& ch_promise)
@@ -940,6 +941,10 @@ end_accept:
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			if (m_state==S_CLOSED) {
 				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY);
+				return;
+			}
+			if (m_state == S_CLOSING) {
+				ch_promise->set_success(wawo::E_CHANNEL_CLOSING);
 				return;
 			}
 
@@ -970,6 +975,7 @@ end_accept:
 				return;
 			}
 
+			m_state = S_CLOSING;
 			if (!(m_flag&F_SHUTDOWN_RD)) {
 				ch_shutdown_read();
 			}
@@ -996,7 +1002,7 @@ end_accept:
 					m_flag |= F_WRITE_ERROR;
 				}
 			}
-
+			WAWO_ASSERT(m_state == S_CLOSING);
 			m_state = S_CLOSED;
 			if (!(m_flag&F_SHUTDOWN_WR)) {
 				ch_shutdown_write();
