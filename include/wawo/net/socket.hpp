@@ -558,19 +558,6 @@ namespace wawo { namespace net {
 				std::bind(&socket::__IOCP_CALL_CB_WSASend, WWRP<socket>(this), std::placeholders::_1));
 		}
 #endif
-		inline void begin_accept() {
-			if (!event_poller()->in_event_loop()) {
-				WWRP<socket> _so(this);
-				event_poller()->execute([_so]()->void {
-					_so->begin_accept();
-				});
-				return;
-			}
-
-			WAWO_ASSERT(is_listener());
-			event_poller()->watch(IOE_READ, fd(), std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1));
-		}
-
 		inline void begin_read(u8_t const& async_flag = F_WATCH_READ_INFINITE, fn_io_event const& fn_read = NULL) {
 			WAWO_ASSERT(is_nonblocking());
 			if (!event_poller()->in_event_loop()) {
@@ -621,6 +608,19 @@ namespace wawo { namespace net {
 		}
 
 #ifndef WAWO_IO_MODE_IOCP
+		inline void begin_accept() {
+			if (!event_poller()->in_event_loop()) {
+				WWRP<socket> _so(this);
+				event_poller()->execute([_so]()->void {
+					_so->begin_accept();
+				});
+				return;
+			}
+
+			WAWO_ASSERT(is_listener());
+			event_poller()->watch(IOE_READ, fd(), std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1));
+		}
+
 		inline void end_write() {
 			if (!event_poller()->in_event_loop()) {
 				WWRP<socket> _so(this);
@@ -745,9 +745,9 @@ namespace wawo { namespace net {
 #ifdef WAWO_IO_MODE_IOCP
 		inline int _do_ch_flush_impl() {
 			WAWO_ASSERT(event_poller()->in_event_loop());
-			WAWO_ASSERT(m_ol_write != NULL);
 			WAWO_ASSERT((m_flag&F_WATCH_WRITE) == 0);
 			while (m_outbound_entry_q.size()) {
+				WAWO_ASSERT(m_ol_write != NULL);
 				WAWO_ASSERT(m_noutbound_bytes > 0);
 				socket_outbound_entry& entry = m_outbound_entry_q.front();
 				if (entry.ch_promise->is_cancelled()) {
