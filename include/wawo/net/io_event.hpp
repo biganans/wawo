@@ -27,13 +27,6 @@ namespace wawo { namespace net {
 		char* buf;
 	};
 	
-	/*
-	typedef std::function<void(const char* buf, int len)> fn_io_event_read;
-	typedef std::function<void()> fn_io_event_accept;
-	typedef std::function<void(int len)> fn_io_event_write;
-	typedef std::function<void(int code)> fn_io_event_error;
-	*/
-
 	typedef std::function<void(async_io_result const& r)> fn_io_event;
 
 #ifdef WAWO_IO_MODE_IOCP
