@@ -335,38 +335,38 @@ namespace wawo { namespace net {
 				ec = wawo::OK;
 			}
 #else
-			if (ec != wawo::OK) {
-				goto end_accept;
-			}
-			while (true) {
-				address raddr;
-				int nfd = socket_base::accept(raddr);
-				if (nfd<0) {
-					ec = wawo::socket_get_last_errno();
-					if (ec == wawo::E_EINTR) {
-						continue;
-					} else {
-						break;
+			if (ec == wawo::OK) {
+				while (true) {
+					address raddr;
+					int nfd = socket_base::accept(raddr);
+					if (nfd < 0) {
+						ec = wawo::socket_get_last_errno();
+						if (ec == wawo::E_EINTR) {
+							continue;
+						}
+						else {
+							break;
+						}
 					}
-				}
 
-				//patch for local addr
-				address laddr;
-				int rt = m_fn_getsockname(nfd, laddr);
-				if (rt != wawo::OK) {
-					WAWO_ERR("[socket][%s][accept]load local addr failed: %d", info().to_stdstring().c_str(), wawo::socket_get_last_errno());
-					WAWO_CLOSE_SOCKET(nfd);
-					continue;
-				}
+					//patch for local addr
+					address laddr;
+					int rt = m_fn_getsockname(nfd, laddr);
+					if (rt != wawo::OK) {
+						WAWO_ERR("[socket][%s][accept]load local addr failed: %d", info().to_stdstring().c_str(), wawo::socket_get_last_errno());
+						WAWO_CLOSE_SOCKET(nfd);
+						continue;
+					}
 
-				WAWO_ASSERT(laddr.family() == m_family);
-				if (laddr == raddr) {
-					WAWO_CLOSE_SOCKET(nfd);
-					continue;
+					WAWO_ASSERT(laddr.family() == m_family);
+					if (laddr == raddr) {
+						WAWO_CLOSE_SOCKET(nfd);
+						continue;
+					}
+					__new_fd(nfd, laddr, raddr);
 				}
-				__new_fd(nfd,laddr,raddr);
-			}
 #endif
+			}
 			if (IS_ERRNO_EQUAL_WOULDBLOCK(ec) || ec == wawo::OK) {
 				return;
 			}
