@@ -128,13 +128,13 @@ namespace wawo {
 
 		~sp_counter() _WW_NOEXCEPT { if( base != 0) base->release();}
 
-		sp_counter(sp_counter const& r) _WW_NOEXCEPT :
+		inline sp_counter(sp_counter const& r) _WW_NOEXCEPT :
 			base(r.base)
 		{
 			if( base != 0 ) base->require();
 		}
 
-		sp_counter(sp_counter&& r) _WW_NOEXCEPT:
+		inline sp_counter(sp_counter&& r) _WW_NOEXCEPT:
 			base(r.base)
 		{
 			r.reset();
@@ -277,16 +277,16 @@ namespace wawo {
 			static_assert(std::is_convertible<_Tp_rel*, ELEMENT_TYPE*>::value, "convertible check failed");
 		}
 
-		shared_ptr(THIS_TYPE const& r) _WW_NOEXCEPT:
+		inline shared_ptr(THIS_TYPE const& r) _WW_NOEXCEPT:
 			sp_ct(r.sp_ct)
 		{}
 
-		shared_ptr(THIS_TYPE&& r) _WW_NOEXCEPT :
+		inline shared_ptr(THIS_TYPE&& r) _WW_NOEXCEPT :
 			sp_ct(std::move(r.sp_ct))
 		{}
 
 		template <class _From>
-		shared_ptr(shared_ptr<_From> const& r, ELEMENT_TYPE*) _WW_NOEXCEPT:
+		inline shared_ptr(shared_ptr<_From> const& r, ELEMENT_TYPE*) _WW_NOEXCEPT:
 			sp_ct(r.sp_ct)
 		{ //for cast
 		}
@@ -300,7 +300,7 @@ namespace wawo {
 #else
 		, class = typename std::enable_if<std::is_convertible<_Tp_rel*, ELEMENT_TYPE*>::value>::type
 		>
-		shared_ptr( shared_ptr<_Tp_rel> const& r) _WW_NOEXCEPT
+		inline shared_ptr( shared_ptr<_Tp_rel> const& r) _WW_NOEXCEPT
 #endif
 			:sp_ct(r.sp_ct)
 		{
@@ -315,33 +315,33 @@ namespace wawo {
 #else
 		, class = typename std::enable_if<std::is_convertible<_Tp_rel*, ELEMENT_TYPE*>::value>::type
 		>
-		shared_ptr( shared_ptr<_Tp_rel>&& r) _WW_NOEXCEPT
+		inline shared_ptr( shared_ptr<_Tp_rel>&& r) _WW_NOEXCEPT
 #endif
 			: sp_ct(std::move(r.sp_ct))
 		{
 		}
 
-		shared_ptr& operator=(THIS_TYPE const& r) _WW_NOEXCEPT
+		inline shared_ptr& operator=(THIS_TYPE const& r) _WW_NOEXCEPT
 		{
 			THIS_TYPE(r).swap(*this);
 			return (*this);
 		}
 
-		shared_ptr& operator=(THIS_TYPE&& r) _WW_NOEXCEPT
+		inline shared_ptr& operator=(THIS_TYPE&& r) _WW_NOEXCEPT
 		{
 			sp_ct = std::move(r.sp_ct);
 			return (*this);
 		}
 
 		template <typename _Tp_rel>
-		shared_ptr& operator= ( shared_ptr<_Tp_rel> const& r ) _WW_NOEXCEPT
+		inline shared_ptr& operator= ( shared_ptr<_Tp_rel> const& r ) _WW_NOEXCEPT
 		{
 			THIS_TYPE(r).swap(*this);
 			return (*this) ;
 		}
 
 		template <typename _Tp_rel>
-		shared_ptr& operator= (shared_ptr<_Tp_rel>&& r) _WW_NOEXCEPT
+		inline shared_ptr& operator= (shared_ptr<_Tp_rel>&& r) _WW_NOEXCEPT
 		{
 			sp_ct = std::move(r.sp_ct);
 			return (*this);
@@ -351,18 +351,18 @@ namespace wawo {
 			std::swap( sp_ct, r.sp_ct );
 		}
 
-		shared_ptr(WEAK_POINTER_TYPE const& weak) _WW_NOEXCEPT:
+		inline shared_ptr(WEAK_POINTER_TYPE const& weak) _WW_NOEXCEPT:
 			sp_ct(weak.weak_ct)
 		{
 		}
 
-		inline POINTER_TYPE operator -> () const {
+		__WW_FORCE_INLINE POINTER_TYPE operator -> () const {
 			WAWO_ASSERT( sp_ct.base != 0 );
 			WAWO_ASSERT( sp_ct.base->__p != 0 );
 			return static_cast<POINTER_TYPE>(sp_ct.base->__p);
 		}
 
-		inline POINTER_TYPE operator -> () {
+		__WW_FORCE_INLINE POINTER_TYPE operator -> () {
 			WAWO_ASSERT(sp_ct.base != 0);
 			WAWO_ASSERT(sp_ct.base->__p != 0);
 			return static_cast<POINTER_TYPE>(sp_ct.base->__p);
@@ -584,20 +584,20 @@ namespace wawo {
 
 		~ref_ptr() { if (_p != 0) _p->_ref_drop(); }
 
-		ref_ptr(THIS_TYPE const& r) _WW_NOEXCEPT :
+		inline ref_ptr(THIS_TYPE const& r) _WW_NOEXCEPT :
 			_p(r._p)
 		{
 			if (_p != 0) _p->_ref_grab();
 		}
 
-		ref_ptr(THIS_TYPE&& r) _WW_NOEXCEPT:
+		inline ref_ptr(THIS_TYPE&& r) _WW_NOEXCEPT:
 		_p(r._p)
 		{
 			r._p = 0;
 		}
 
 		template <class _From>
-		ref_ptr(ref_ptr<_From> const& r, ELEMENT_TYPE* const p) _WW_NOEXCEPT:
+		inline ref_ptr(ref_ptr<_From> const& r, ELEMENT_TYPE* const p) _WW_NOEXCEPT:
 		_p(p)
 		{//for cast
 			if (_p != 0) _p->_ref_grab();
@@ -607,7 +607,7 @@ namespace wawo {
 		template <typename _Tp_rel
 			,class = typename std::enable_if<std::is_convertible<_Tp_rel*, ELEMENT_TYPE*>::value>::type
 		>
-		ref_ptr(_Tp_rel* const& p)
+		inline ref_ptr(_Tp_rel* const& p)
 			:_p(p)
 		{
 			//static_assert(std::is_convertible<_Tp_rel*, ELEMENT_TYPE*>::value, "convertible check failed");
@@ -622,7 +622,7 @@ namespace wawo {
 #else
 		, class = typename std::enable_if<std::is_convertible<_Tp_rel*, ELEMENT_TYPE*>::value>::type
 		>
-		ref_ptr( ref_ptr<_Tp_rel> const& r )
+		inline ref_ptr( ref_ptr<_Tp_rel> const& r )
 #endif
 			:_p(r._p)
 		{
@@ -637,7 +637,7 @@ namespace wawo {
 #else
 			, class = typename std::enable_if<std::is_convertible<_Tp_rel*, ELEMENT_TYPE*>::value>::type
 		>
-		ref_ptr(ref_ptr<_Tp_rel>&& r)
+		inline ref_ptr(ref_ptr<_Tp_rel>&& r)
 #endif
 			:_p(r._p)
 		{
@@ -688,12 +688,12 @@ namespace wawo {
 
 		inline long ref_count() const _WW_NOEXCEPT { return (_p==0)?0:_p->_ref_count(); }
 
-		inline T* const & operator -> () const
+		__WW_FORCE_INLINE T* const & operator -> () const
 		{
 			WAWO_ASSERT( _p != 0 );
 			return (_p);
 		}
-		inline POINTER_TYPE& operator -> ()
+		__WW_FORCE_INLINE POINTER_TYPE& operator -> ()
 		{
 			WAWO_ASSERT(_p != 0);
 			return (_p);

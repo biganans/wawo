@@ -68,7 +68,7 @@ namespace wawo {
 	template <class T>
 	class tls {
 		WAWO_DECLARE_NONCOPYABLE(tls<T>)
-		static WAWO_TLS T* instance;
+		static __WAWO_TLS T* instance;
 
 		tls() {}
 		virtual ~tls() {}
@@ -126,7 +126,7 @@ _VARIADIC_EXPAND_0X(_ALLOCATE_CREATE_TLS_INSTANCE, , , , )
 		}
 	};
 	template <class T>
-	WAWO_TLS T* tls<T>::instance = NULL;
+	__WAWO_TLS T* tls<T>::instance = NULL;
 
 #ifdef _WW_NO_CXX11_TEMPLATE_VARIADIC_ARGS
 #define _ALLOCATE_TLS_CREATE( \

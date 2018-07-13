@@ -38,26 +38,21 @@ namespace wawo { namespace net {
 		}
 	}
 
+	/*
 	WWRP<channel_pipeline> channel_pipeline::add_last(WWRP<channel_handler_abstract> const& h) {
 		WAWO_ASSERT(m_io_event_loop != NULL);
 		WWRP<channel_pipeline> _this(this);
 		if (m_io_event_loop->in_event_loop()) {
-			//if ch closed , m_ch == NULL 
-			WAWO_ASSERT(m_ch != NULL);
-			WWRP<channel_handler_context> ctx = wawo::make_ref<channel_handler_context>(m_ch, h);
-			ctx->N = m_tail;
-			ctx->P = m_tail->P;
 
-			m_tail->P->N = ctx;
-			m_tail->P = ctx;
 
 			return _this;
 		}
 
-		m_io_event_loop->execute([_this, h]() -> void {
-			_this->add_last(h);
+		m_io_event_loop->execute([P= WWRP<channel_pipeline>(this), h]() -> void {
+			P->add_last(h);
 		});
 		return _this;
 	}
+	*/
 
 }}

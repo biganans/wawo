@@ -63,16 +63,17 @@ using namespace wawo;
 using namespace wawo::net;
 
 int main(int argc, char* argv) {
+
 	int* vldtest = new int;
 
 	//int fd[2];
 	//int rt = wawo::net::socket_api::posix::socketpair(wawo::net::F_AF_INET, wawo::net::T_STREAM, wawo::net::P_TCP, fd);
 
 	wawo::app app;
-	WWRP<http_server_handler> http_handler = make_ref<http_server_handler>();
+	WWRP<http_server_handler> http_handler = wawo::make_ref<http_server_handler>();
 
 	WWRP<channel_future> ch_future = socket::listen_on("tcp://0.0.0.0:8082", [http_handler](WWRP<channel> const& ch) {
-		WWRP<handler::http> h = make_ref<my_http_handler>();
+		WWRP<handler::http> h = wawo::make_ref<my_http_handler>();
 		h->bind<handler::fn_http_message_header_end_t >(handler::http_event::E_HEADER_COMPLETE, &http_server_handler::on_header_end, http_handler, std::placeholders::_1, std::placeholders::_2);
 		ch->pipeline()->add_last(h);
 	});
@@ -90,6 +91,6 @@ int main(int argc, char* argv) {
 
 	WAWO_ASSERT(ch_future->channel()->ch_close_future()->is_done());
 	WAWO_INFO("lsocket closed close: %d", ch_future->channel()->ch_close_future()->get());
-
+	
 	return wawo::OK;
 }

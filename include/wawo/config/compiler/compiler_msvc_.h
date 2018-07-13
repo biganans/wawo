@@ -1,11 +1,10 @@
 #ifndef _WAWO_CONFIG_COMPILER_COMPILER_MSVC_H_
 #define _WAWO_CONFIG_COMPILER_COMPILER_MSVC_H_
 
-#define WAWO_TLS __declspec(thread)
-
+#define __WAWO_TLS __declspec(thread)
+#define __WW_FORCE_INLINE __forceinline
 
 #if _MSC_VER == 1700
-
 	#undef _WW_OVERRIDE
 	#define _WW_OVERRIDE
 

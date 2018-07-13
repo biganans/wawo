@@ -6,8 +6,7 @@
 #include <wawo/packet.hpp>
 #include <wawo/net/channel_invoker.hpp>
 #include <wawo/net/channel_handler_context.hpp>
-
-//#include <wawo/net/io_event_loop.hpp>
+#include <wawo/net/io_event_loop.hpp>
 
 #define PIPELINE_VOID_FIRE_VOID(NAME) \
 	inline void fire_##NAME() {\
@@ -96,13 +95,26 @@ namespace wawo { namespace net {
 		WWRP<channel_handler_context> m_head;
 		WWRP<channel_handler_context> m_tail;
 
+		inline void _add_last(WWRP<channel_handler_abstract> const& h) {
+			WAWO_ASSERT(m_ch != NULL);
+			WWRP<channel_handler_context> ctx = wawo::make_ref<channel_handler_context>(m_ch, h);
+			ctx->N = m_tail;
+			ctx->P = m_tail->P;
+
+			m_tail->P->N = ctx;
+			m_tail->P = ctx;
+		}
 	public:
 		channel_pipeline(WWRP<channel> const& ch);
 		virtual ~channel_pipeline();
 
 		void init();
 		void deinit();
-		WWRP<channel_pipeline> add_last(WWRP<channel_handler_abstract> const& h);
+		inline void add_last(WWRP<channel_handler_abstract> const& h) {
+			m_io_event_loop->execute([P = WWRP<channel_pipeline>(this), h]() -> void {
+				P->_add_last(h);
+			});
+		}
 
 	protected:
 		PIPELINE_VOID_FIRE_VOID(connected)

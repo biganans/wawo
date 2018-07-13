@@ -2,10 +2,8 @@
 #define _WAWO_NET_CHANNEL_HANDLER_CONTEXT_HPP
 
 #include <wawo/net/io_event_loop.hpp>
-
 #include <wawo/net/channel_invoker.hpp>
 #include <wawo/net/channel_handler.hpp>
-
 #include <wawo/net/channel_future.hpp>
 
 #define VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(CTX_CLASS_NAME,NAME,HANDLER_FLAG,HANDLER_CLASS_NAME) \
