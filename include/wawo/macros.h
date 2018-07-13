@@ -14,13 +14,13 @@ namespace wawo {
 #define WAWO_MALLOC_H_RESERVE (128)
 
 #ifndef NULL
-#define NULL 0
+	#define NULL 0
 #endif
 
-#ifndef _DEBUG
 #ifdef DEBUG
-#define _DEBUG
-#endif
+	#ifndef _DEBUG
+	#define _DEBUG
+	#endif
 #endif
 
 #define WAWO_MIN2(A,B)		((A)>(B)?(B):(A))

@@ -45,7 +45,7 @@ namespace wawo {
 	}
 
 	inline bool is_big_endian() {
-		unsigned int x = 1;
+		const unsigned int x = 1;
 		return 0 == *(unsigned char*)(&x);
 	}
 
@@ -135,7 +135,7 @@ namespace wawo {
 		}
 	};
 }
-
+/*
 namespace wawo {
 
 		//union data contain 64 bit
@@ -163,6 +163,7 @@ namespace wawo {
 		void* ptr_v;
 	};
 }
+*/
 
 namespace wawo {
 	void	srand(unsigned int const& seed = 0);
