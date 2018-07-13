@@ -9,7 +9,7 @@
 
 namespace wawo { namespace net {
 	class channel_pipeline;
-
+	typedef SOCKET channel_id_t;
 	class channel :
 		public wawo::ref_base
 	{
@@ -190,7 +190,7 @@ public: \
 		CH_ACTION_IMPL_VOID(flush)
 
 		//could be called directly in any place
-		virtual int ch_id() const = 0; //called by context in event_poller
+		virtual channel_id_t ch_id() const = 0; //called by context in event_poller
 		
 		virtual void ch_write_impl(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) = 0;
 		virtual void ch_flush_impl() = 0;

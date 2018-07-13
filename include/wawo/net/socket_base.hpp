@@ -59,7 +59,6 @@ namespace wawo { namespace net {
 }}
 
 namespace wawo { namespace net {
-	
 
 	enum socket_buffer_cfg_type {
 		BT_SUPER_LARGE,
@@ -134,7 +133,7 @@ namespace wawo { namespace net {
 	const static keep_alive_vals default_keep_alive_vals = {1,(60*1000),(30*1000),10};
 
 	struct socketinfo {
-		int fd;
+		SOCKET fd;
 		s_family f:8;
 		s_type t:8;
 		s_protocol p:8;
@@ -144,7 +143,7 @@ namespace wawo { namespace net {
 
 		std::string to_stdstring() const {
 			char _buf[1024] = { 0 };
-			int nbytes = snprintf(_buf, 1024, "#%d:%s:L:%s-R:%s", fd, protocol_str[p], laddr.info().c_str(), raddr.info().c_str() );
+			int nbytes = snprintf(_buf, 1024, "#%lld:%s:L:%s-R:%s", fd, protocol_str[p], laddr.info().c_str(), raddr.info().c_str() );
 			return std::string(_buf, nbytes);
 		}
 	};
@@ -152,7 +151,7 @@ namespace wawo { namespace net {
 	class socket_base
 	{
 	protected:
-		int m_fd;
+		SOCKET m_fd;
 		socket_mode m_sm; //
 		s_family m_family;
 		s_type m_type;
@@ -186,12 +185,12 @@ namespace wawo { namespace net {
 		int set_options(int const& options);
 
 	protected:
-		int open();
+		SOCKET open();
 		int shutdown(int const& flag);
 		int close();
 		int bind(address const& addr);
 		int listen(int const& backlog);
-		int accept(address& addr);
+		SOCKET accept(address& addr);
 		int connect(address const& addr);
 
 	public:
@@ -215,7 +214,7 @@ namespace wawo { namespace net {
 
 		inline bool is_listener() const { return m_sm == SM_LISTENER; }
 
-		inline int const& fd() const { return m_fd; }
+		inline SOCKET const& fd() const { return m_fd; }
 		inline address const& remote_addr() const { return m_raddr; }
 		inline address const& local_addr() const { return m_laddr; }
 		

@@ -77,14 +77,9 @@ namespace wawo {
 	typedef unsigned int		u32_t;
 	typedef unsigned long long	u64_t;
 	typedef u8_t				byte_t;
+	typedef long				long_t;
 
-#if WAWO_ADDRESSMODE_X64
-	typedef u64_t				size_t;
-#elif WAWO_ADDRESSMODE_X32
-	typedef u32_t				size_t;
-#else
-	#error
-#endif
-
+	typedef ::size_t				size_t;
+	typedef ::size_t				size_t;
 }
 #endif

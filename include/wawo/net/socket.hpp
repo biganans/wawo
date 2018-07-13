@@ -69,7 +69,7 @@ namespace wawo { namespace net {
 		WWRP<channel_promise> m_dial_promise;
 
 		std::queue<socket_outbound_entry> m_outbound_entry_q;
-		u32_t m_noutbound_bytes;
+		wawo::size_t m_noutbound_bytes;
 
 #ifdef WAWO_IO_MODE_IOCP
 		WSAOVERLAPPED* m_ol_write;
@@ -126,7 +126,7 @@ namespace wawo { namespace net {
 			_deinit();
 		}
 
-		int open();
+		SOCKET open();
 
 		inline bool is_active() const { return socket_base::is_active(); }
 
@@ -136,7 +136,7 @@ namespace wawo { namespace net {
 		int bind(address const& addr);
 		int listen(int const& backlog = DEFAULT_LISTEN_BACKLOG);
 
-		int accept(address& raddr);
+		SOCKET accept(address& raddr);
 		int connect(address const& addr);
 
 		static WWRP<channel_future> dial(std::string const& dialurl, fn_dial_channel_initializer const& initializer ) {
@@ -265,7 +265,7 @@ namespace wawo { namespace net {
 			}
 		}
 
-		inline void __new_fd(int nfd, address const& laddr, address& raddr) {
+		inline void __new_fd(SOCKET nfd, address const& laddr, address& raddr) {
 			try {
 				WWRP<socket> so = wawo::make_ref<socket>(nfd, laddr, raddr, SM_PASSIVE, buffer_cfg(), sock_family(), sock_type(), sock_protocol(), OPTION_NONE);
 				int nonblocking = so->turnon_nonblocking();
@@ -338,8 +338,8 @@ namespace wawo { namespace net {
 			if (ec == wawo::OK) {
 				while (true) {
 					address raddr;
-					int nfd = socket_base::accept(raddr);
-					if (nfd < 0) {
+					SOCKET nfd = socket_base::accept(raddr);
+					if (nfd == INVALID_SOCKET ) {
 						ec = wawo::socket_get_last_errno();
 						if (ec == wawo::E_EINTR) {
 							continue;
@@ -699,7 +699,7 @@ namespace wawo { namespace net {
 		}
 #endif
 
-		inline int ch_id() const { return fd(); }
+		inline channel_id_t ch_id() const { return fd(); }
 		void ch_write_impl(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise)
 		{
 			WAWO_ASSERT(event_poller()->in_event_loop());
@@ -802,7 +802,7 @@ namespace wawo { namespace net {
 					continue;
 				}
 
-				const u32_t sent = socket_base::send(entry.data->begin(), entry.data->len(), _errno);
+				const wawo::size_t sent = socket_base::send(entry.data->begin(), entry.data->len(), _errno);
 				WAWO_ASSERT(sent <= m_noutbound_bytes);
 				m_noutbound_bytes -= sent;
 

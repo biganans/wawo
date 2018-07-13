@@ -125,7 +125,7 @@ namespace wawo { namespace net {
 
 			WAWO_ASSERT(m_fd == -1);
 			m_fd = m_fn_socket(m_family, m_type, m_protocol);
-			if (m_fd < 0) {
+			if (m_fd == INVALID_SOCKET ) {
 				WAWO_ERR("[socket_base][%s]socket::socket() failed, %d", info().to_stdstring().c_str(), wawo::socket_get_last_errno() );
 				return m_fd;
 			}
@@ -237,9 +237,9 @@ namespace wawo { namespace net {
 			return wawo::OK;
 		}
 
-		int socket_base::accept(address& addr) {
-			int fd = m_fn_accept(m_fd, addr);
-			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), fd<0);
+		SOCKET socket_base::accept(address& addr) {
+			SOCKET fd = m_fn_accept(m_fd, addr);
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), fd==INVALID_SOCKET);
 			return fd;
 		}
 	

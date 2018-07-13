@@ -18,10 +18,10 @@
 			/**
 			 *  syslog has a 1024 len limit, so we'll split log into piece if it exceed 1024
 			 */
-			void write( LogLevelMask const& level, char const* const log, u32_t const& len ) = 0 ;
+			void write( LogLevelMask const& level, char const* const log, wawo::size_t const& len ) = 0 ;
 
 		private:
-			static void Syslog( int const& level, char const* const log, u32_t const& len );
+			static void Syslog( int const& level, char const* const log, wawo::size_t const& len );
 			char m_ident[32] ;
 		};
 	}}

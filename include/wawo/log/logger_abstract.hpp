@@ -154,24 +154,24 @@ namespace wawo { namespace log {
 			m_level = WAWO_DEFAULT_LOG_LEVEL ;
 		}
 
-		virtual void write( LogLevelMask const& level, char const* const log, u32_t const& len ) = 0 ;
+		virtual void write( LogLevelMask const& level, char const* const log, wawo::size_t const& len ) = 0 ;
 
-		virtual void Debug( char const* const log, u32_t const& len ) {
+		virtual void Debug( char const* const log, wawo::size_t const& len ) {
 			write( logger_abstract::LOG_LEVEL_DEBUG, log, len );
 		}
-		virtual void Info( char const* const log, u32_t const& len ) {
+		virtual void Info( char const* const log, wawo::size_t const& len ) {
 			write( logger_abstract::LOG_LEVEL_INFO, log, len );
 		}
-		virtual void Notice( char const* const log, u32_t const& len ) {
+		virtual void Notice( char const* const log, wawo::size_t const& len ) {
 			write( logger_abstract::LOG_LEVEL_NOTICE, log, len );
 		}
-		virtual void Warn( char const* const log, u32_t const& len ) {
+		virtual void Warn( char const* const log, wawo::size_t const& len ) {
 			write( logger_abstract::LOG_LEVEL_WARN, log, len );
 		}
-		virtual void Fatal( char const* const log, u32_t const& len ) {
+		virtual void Fatal( char const* const log, wawo::size_t const& len ) {
 			write( logger_abstract::LOG_LEVEL_ERR, log, len );
 		}
-		virtual void Core( char const* const log, u32_t const& len ) {
+		virtual void Core( char const* const log, wawo::size_t const& len ) {
 			write( logger_abstract::LOG_LEVEL_CORE, log, len );
 		}
 		inline void SetFormat( WWSP<format_interface> const& format ){

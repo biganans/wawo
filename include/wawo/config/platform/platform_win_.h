@@ -10,9 +10,8 @@
 #endif
 #define FD_SETSIZE 2048 //will only affact MODE_SELECT
 
-namespace wawo {
-	typedef int SOCKET ;
-}
+//#ifndef SOCKET
+//typedef int SOCKET ;
 
 #ifndef WIN32_LEAN_AND_MEAN
 	#define WIN32_LEAN_AND_MEAN

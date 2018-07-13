@@ -24,7 +24,7 @@ namespace wawo { namespace log {
 		}
 	}
 
-	void file_logger::write( LogLevelMask const& level, char const* const log, u32_t const& len ) {
+	void file_logger::write( LogLevelMask const& level, char const* const log, wawo::size_t const& len ) {
 
 		WAWO_ASSERT(TestLevel(level));
 

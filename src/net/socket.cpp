@@ -22,8 +22,8 @@ namespace wawo { namespace net {
 
 	int socket::open() {
 		WAWO_ASSERT(m_state==S_CLOSED);
-		int rt = socket_base::open();
-		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
+		SOCKET rt = socket_base::open();
+		WAWO_RETURN_V_IF_MATCH(rt, rt == INVALID_SOCKET);
 		channel::ch_fire_opened();
 		m_state = S_OPENED;
 		return rt;
@@ -83,7 +83,7 @@ namespace wawo { namespace net {
 			});
 			return ch_promise;
 		}
-		int rt = socket::open();
+		SOCKET rt = socket::open();
 		//int rt = -10043;
 		if (rt != wawo::OK) {
 			ch_promise->set_success(rt);
@@ -168,7 +168,7 @@ namespace wawo { namespace net {
 		}
 	}
 
-	int socket::accept( address& raddr ) {
+	SOCKET socket::accept( address& raddr ) {
 		if (m_state != S_LISTEN) {
 			return wawo::E_INVALID_STATE;
 		}

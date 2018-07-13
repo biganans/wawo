@@ -81,7 +81,7 @@ namespace wawo {
 		}
 	};
 
-	void stack_trace(char stack_buffer[], u32_t const& s) {
+	void stack_trace(char stack_buffer[], wawo::size_t const& s) {
 		stack_walker sw;
 		sw.ShowCallstack();
 		assert(sw.stack_info.len > 0);
@@ -145,9 +145,9 @@ namespace wawo {
 	void __WAWO_EXCEPTION_INIT__( wawo::exception* e, int code_, char const* const sz_message_, char const* const sz_file_, int line_, char const* const sz_func_, char const* const stack_info_ ) {
 		e->code = code_;
 		if (sz_message_ != 0) {
-			int len_1 = ::strlen(sz_message_); 
-			int len_2 = sizeof(e->message) / sizeof(e->message[0]) - 1;
-			int copy_len = len_1 > len_2 ? len_2 : len_1; 
+			wawo::size_t len_1 = ::strlen(sz_message_);
+			wawo::size_t len_2 = sizeof(e->message) / sizeof(e->message[0]) - 1;
+			wawo::size_t copy_len = len_1 > len_2 ? len_2 : len_1;
 			::memcpy(e->message, sz_message_, copy_len); 
 			e->message[copy_len] = '\0'; 
 		} 
@@ -156,20 +156,20 @@ namespace wawo {
 		}
 		if (sz_file_ != 0) {
 						
-			int len_1 = ::strlen(sz_file_); 
-			int len_2 = sizeof(e->file) / sizeof(e->file[0]) - 1; 
-			int copy_len = len_1 > len_2 ? len_2 : len_1; 
+			wawo::size_t len_1 = ::strlen(sz_file_); 
+			wawo::size_t len_2 = sizeof(e->file) / sizeof(e->file[0]) - 1;
+			wawo::size_t copy_len = len_1 > len_2 ? len_2 : len_1;
 			::memcpy(e->file, sz_file_, copy_len); 
 			e->file[copy_len] = '\0'; 
 		} 
-		else {				
+		else {
 			e->file[0] = '\0'; 
 		} 
 		e->line = line_; 
 		if (sz_func_ != 0) {
-			int len_1 = ::strlen(sz_func_);
-			int len_2 = sizeof(e->func) / sizeof(e->func[0]) - 1; 
-			int copy_len = len_1 > len_2 ? len_2 : len_1; 
+			wawo::size_t len_1 = ::strlen(sz_func_);
+			wawo::size_t len_2 = sizeof(e->func) / sizeof(e->func[0]) - 1;
+			wawo::size_t copy_len = len_1 > len_2 ? len_2 : len_1;
 			::memcpy(e->func, sz_func_, copy_len); 
 			e->func[copy_len] = '\0'; 
 		} 
@@ -181,7 +181,7 @@ namespace wawo {
 				::free(e->callstack);
 			}
 
-			int info_len = ::strlen(stack_info_); 
+			wawo::size_t info_len = ::strlen(stack_info_);
 			e->callstack = (char*)::malloc(info_len + 1);
 			::memcpy(e->callstack, stack_info_, info_len);
 			*((e->callstack) + info_len) = '\0'; 

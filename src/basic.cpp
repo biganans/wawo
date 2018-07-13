@@ -27,7 +27,6 @@ namespace wawo {
 		return 0 ; //not implemented
 	#endif
 	}
-
 	void srand( unsigned int const& seed ) {
 		if (seed != 0) {
 			std::srand(seed);

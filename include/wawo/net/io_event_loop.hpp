@@ -44,14 +44,14 @@ namespace wawo { namespace net {
 
 	public:
 		io_event_loop() :m_state(S_IDLE) {}
-		inline void watch(u8_t const& flag, int const& fd, fn_io_event const& fn) {
+		inline void watch(u8_t const& flag, SOCKET const& fd, fn_io_event const& fn) {
 			WAWO_ASSERT(fd > 0);
 			WWRP<io_event_loop> loop(this);
 			execute([loop, flag, fd, fn]() -> void {
 				loop->do_watch(flag, fd, fn);
 			});
 		}
-		inline void unwatch(u8_t const& flag, int const& fd) {
+		inline void unwatch(u8_t const& flag, SOCKET const& fd) {
 			WAWO_ASSERT(fd > 0);
 			WWRP<io_event_loop> loop(this);
 			execute([loop, flag, fd]() -> void {
@@ -93,8 +93,8 @@ namespace wawo { namespace net {
 		}
 	public:
 		virtual void do_poll() = 0;
-		virtual void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn) = 0;
-		virtual void do_unwatch(u8_t const& flag, int const& fd) = 0;
+		virtual void do_watch(u8_t const& flag, SOCKET const& fd, fn_io_event const& fn) = 0;
+		virtual void do_unwatch(u8_t const& flag, SOCKET const& fd) = 0;
 
 #ifdef WAWO_IO_MODE_IOCP
 		virtual void do_IOCP_overlapped_call( u8_t const& flag, int const& fd, fn_overlapped_io_event const& fn_overlapped, fn_io_event const& fn) = 0;

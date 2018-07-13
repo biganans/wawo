@@ -19,30 +19,28 @@
 #define IS_ERRNO_EQUAL_CONNECTING(_errno) ((_errno==wawo::E_EINPROGRESS)||(_errno==wawo::E_WSAEWOULDBLOCK))
 
 namespace wawo { namespace net { namespace socket_api {
-	typedef int(*fn_socket)(int const& family, int const& type, int const& proto);
-	typedef int(*fn_connect)(int const& fd, address const& addr );
-	typedef int(*fn_bind)(int const& fd, address const& addr);
-	typedef int(*fn_socket)(int const& family, int const& socket_type, int const& protocol);
-	typedef int(*fn_shutdown)(int const& fd, int const& flag);
-	typedef int(*fn_close)(int const& fd);
-	typedef int(*fn_listen)(int const& fd, int const& backlog);
-	typedef int(*fn_accept)(int const& fd, address& addr );
-	typedef int(*fn_getsockname)(int const& fd, address& addr);
-	typedef int(*fn_getsockopt)(int const& fd, int const& level, int const& name, void* value, socklen_t* option_len);
-	typedef int(*fn_setsockopt)(int const& fd, int const& level, int const& name, void const* optval, socklen_t const& option_len);
+	typedef SOCKET(*fn_socket)(int const& family, int const& type, int const& proto);
+	typedef int(*fn_connect)(SOCKET const& fd, address const& addr );
+	typedef int(*fn_bind)(SOCKET const& fd, address const& addr);
+	typedef int(*fn_shutdown)(SOCKET const& fd, int const& flag);
+	typedef int(*fn_close)(SOCKET const& fd);
+	typedef int(*fn_listen)(SOCKET const& fd, int const& backlog);
+	typedef SOCKET(*fn_accept)(SOCKET const& fd, address& addr );
+	typedef int(*fn_getsockname)(SOCKET const& fd, address& addr);
+	typedef int(*fn_getsockopt)(SOCKET const& fd, int const& level, int const& name, void* value, socklen_t* option_len);
+	typedef int(*fn_setsockopt)(SOCKET const& fd, int const& level, int const& name, void const* optval, socklen_t const& option_len);
 
-	typedef u32_t(*fn_send)(int const& fd, byte_t const* const buffer, u32_t const& len, int& ec_o, int const& flag);
-	typedef u32_t(*fn_recv)(int const&fd, byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag);	typedef u32_t(*fn_sendto)(int const& fd, wawo::byte_t const* const buff, wawo::u32_t const& len, address const& addr, int& ec_o, int const& flag);
-	typedef u32_t(*fn_recvfrom)(int const& fd, byte_t* const buff_o, wawo::u32_t const& size, address& addr_o, int& ec_o, int const& flag);
+	typedef u32_t(*fn_send)(SOCKET const& fd, byte_t const* const buffer, u32_t const& len, int& ec_o, int const& flag);
+	typedef u32_t(*fn_recv)(SOCKET const&fd, byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag);
+	typedef u32_t(*fn_sendto)(SOCKET const& fd, wawo::byte_t const* const buff, wawo::u32_t const& len, address const& addr, int& ec_o, int const& flag);
+	typedef u32_t(*fn_recvfrom)(SOCKET const& fd, byte_t* const buff_o, wawo::u32_t const& size, address& addr_o, int& ec_o, int const& flag);
 
 	namespace posix {
-		inline int socket(int const& family, int const& type, int const& protocol) {
-			int rt = ::socket( OS_DEF_family[family], OS_DEF_sock_type[type], OS_DEF_protocol[protocol]);
-			WAWO_RETURN_V_IF_MATCH(rt, rt > 0);
-			return socket_get_last_errno();
+		inline SOCKET socket(int const& family, int const& type, int const& protocol) {
+			return ::socket( OS_DEF_family[family], OS_DEF_sock_type[type], OS_DEF_protocol[protocol]);
 		}
 
-		inline int connect(int const& fd, address const& addr) {
+		inline int connect(SOCKET const& fd, address const& addr) {
 			sockaddr_in addr_in;
 			::memset(&addr_in, 0, sizeof(addr_in) );
 			addr_in.sin_family = OS_DEF_family[addr.family()];
@@ -55,7 +53,7 @@ namespace wawo { namespace net { namespace socket_api {
 			return socket_get_last_errno();
 		}
 
-		inline int bind(int const& fd, address const& addr) {
+		inline int bind(SOCKET const& fd, address const& addr) {
 			sockaddr_in addr_in;
 			::memset(&addr_in, 0, sizeof(addr_in));
 			addr_in.sin_family = OS_DEF_family[addr.family()];
@@ -67,36 +65,36 @@ namespace wawo { namespace net { namespace socket_api {
 			return socket_get_last_errno();
 		}
 
-		inline int shutdown(int const& fd, int const& flag) {
+		inline int shutdown(SOCKET const& fd, int const& flag) {
 			int rt = ::shutdown(fd, flag);
 			WAWO_RETURN_V_IF_MATCH(0, rt == 0);
 			return socket_get_last_errno();
 		}
 
-		inline int close(int const& fd) {
+		inline int close(SOCKET const& fd) {
 			int rt = WAWO_CLOSE_SOCKET(fd);
 			WAWO_RETURN_V_IF_MATCH(0, rt == 0);
 			return socket_get_last_errno();
 		}
 
-		inline int listen(int const& fd, int const& backlog) {
+		inline int listen(SOCKET const& fd, int const& backlog) {
 			int rt = ::listen(fd, backlog);
 			WAWO_RETURN_V_IF_MATCH(0, rt == 0);
 			return socket_get_last_errno();
 		}
 
-		inline int accept(int const& fd, address& addr) {
+		inline SOCKET accept(SOCKET const& fd, address& addr) {
 			sockaddr_in addr_in;
 			::memset(&addr_in, 0, sizeof(addr_in));
 
 			socklen_t len = sizeof(addr_in);
-			int accepted_fd = ::accept(fd, (sockaddr*)(&addr_in), &len);
-			WAWO_RETURN_V_IF_NOT_MATCH(socket_get_last_errno(), (accepted_fd > 0));
+			SOCKET  accepted_fd = ::accept(fd, (sockaddr*)(&addr_in), &len);
+			WAWO_RETURN_V_IF_NOT_MATCH(socket_get_last_errno(), (accepted_fd == INVALID_SOCKET));
 			addr = address(addr_in);
 			return accepted_fd;
 		}
 
-		inline int getsockname(int const& fd, address& addr) {
+		inline int getsockname(SOCKET const& fd, address& addr) {
 			sockaddr_in addr_in;
 			::memset(&addr_in, 0, sizeof(addr_in));
 
@@ -107,19 +105,19 @@ namespace wawo { namespace net { namespace socket_api {
 			return rt;
 		}
 
-		inline int getsockopt(int const& fd, int const& level, int const& name, void* value, socklen_t* option_len) {
+		inline int getsockopt(SOCKET const& fd, int const& level, int const& name, void* value, socklen_t* option_len) {
 			int rt = ::getsockopt(fd, level, name, (char*)value, option_len);
 			WAWO_RETURN_V_IF_MATCH(0, rt == 0);
 			return socket_get_last_errno();
 		}
 
-		inline int setsockopt(int const& fd, int const& level, int const& name, void const* value, socklen_t const& option_len) {
+		inline int setsockopt(SOCKET const& fd, int const& level, int const& name, void const* value, socklen_t const& option_len) {
 			int rt = ::setsockopt(fd, level, name, (char*)value, option_len);
 			WAWO_RETURN_V_IF_MATCH(0, rt == 0);
 			return socket_get_last_errno();
 		}
 
-		inline u32_t send(int const& fd, byte_t const* const buffer, u32_t const& len, int& ec_o, int const& flag) {
+		inline u32_t send(SOCKET const& fd, byte_t const* const buffer, u32_t const& len, int& ec_o, int const& flag) {
 			WAWO_ASSERT(buffer != NULL);
 			WAWO_ASSERT(len > 0);
 
@@ -157,7 +155,7 @@ namespace wawo { namespace net { namespace socket_api {
 			return R;
 		}
 
-		inline u32_t recv(int const&fd, byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag) {
+		inline u32_t recv(SOCKET const&fd, byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag) {
 			WAWO_ASSERT(buffer_o != NULL);
 			WAWO_ASSERT(size > 0);
 
@@ -199,7 +197,7 @@ namespace wawo { namespace net { namespace socket_api {
 			return R;
 		}
 
-		inline u32_t sendto(int const& fd, wawo::byte_t const* const buff, wawo::u32_t const& len, address const& addr, int& ec_o, int const& flag) {
+		inline u32_t sendto(SOCKET const& fd, wawo::byte_t const* const buff, wawo::u32_t const& len, address const& addr, int& ec_o, int const& flag) {
 
 			WAWO_ASSERT(buff != NULL);
 			WAWO_ASSERT(len > 0);
@@ -243,7 +241,7 @@ namespace wawo { namespace net { namespace socket_api {
 			return sent_total;
 		}
 
-		inline u32_t recvfrom(int const& fd, byte_t* const buff_o, wawo::u32_t const& size, address& addr_o, int& ec_o, int const& flag) {
+		inline u32_t recvfrom(SOCKET const& fd, byte_t* const buff_o, wawo::u32_t const& size, address& addr_o, int& ec_o, int const& flag) {
 
 			sockaddr_in addr_in;
 			::memset(&addr_in, 0, sizeof(addr_in));
@@ -280,7 +278,7 @@ namespace wawo { namespace net { namespace socket_api {
 			return r_total;
 		}
 
-		inline int socketpair(int domain, int type, int protocol, int sv[2]) {
+		inline int socketpair(int domain, int type, int protocol, SOCKET sv[2]) {
 			if (domain != wawo::net::F_AF_INET) {
 				return wawo::E_INVAL;
 			}
@@ -294,8 +292,8 @@ namespace wawo { namespace net { namespace socket_api {
 			WAWO_ASSERT(protocol == P_TCP || protocol == P_UDP);
 
 #ifdef WAWO_PLATFORM_WIN
-			int listenfd = ::socket(OS_DEF_family[domain], OS_DEF_sock_type[type], OS_DEF_protocol[protocol]);
-			WAWO_RETURN_V_IF_NOT_MATCH(wawo::socket_get_last_errno(), listenfd > 0);
+			SOCKET listenfd = ::socket(OS_DEF_family[domain], OS_DEF_sock_type[type], OS_DEF_protocol[protocol]);
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), listenfd == INVALID_SOCKET );
 
 			struct sockaddr_in addr_listen;
 			struct sockaddr_in addr_connect;
@@ -323,8 +321,8 @@ namespace wawo { namespace net { namespace socket_api {
 				goto end;
 			}
 
-			int connectfd = ::socket(OS_DEF_family[domain], OS_DEF_sock_type[type], OS_DEF_protocol[protocol]);
-			if (connectfd < 0) {
+			SOCKET connectfd = ::socket(OS_DEF_family[domain], OS_DEF_sock_type[type], OS_DEF_protocol[protocol]);
+			if (connectfd == INVALID_SOCKET ) {
 				rt = wawo::socket_get_last_errno();
 				goto end;
 			}
@@ -334,7 +332,7 @@ namespace wawo { namespace net { namespace socket_api {
 				goto end;
 			}
 
-			int acceptfd = ::accept(listenfd, reinterpret_cast<sockaddr*>(&addr_accept), &socklen);
+			SOCKET acceptfd = ::accept(listenfd, reinterpret_cast<sockaddr*>(&addr_accept), &socklen);
 			if (acceptfd < 0) {
 				rt = wawo::socket_get_last_errno();
 				WAWO_CLOSE_SOCKET(connectfd);
@@ -356,7 +354,7 @@ namespace wawo { namespace net { namespace socket_api {
 	}
 
 	namespace helper {
-		inline int set_nonblocking(int fd, bool on_or_off) {
+		inline int set_nonblocking(SOCKET fd, bool on_or_off) {
 			int rt;
 #if WAWO_IS_GNU
 			int mode = ::fcntl(m_fd, F_GETFL, 0);
@@ -373,31 +371,31 @@ namespace wawo { namespace net { namespace socket_api {
 			WAWO_RETURN_V_IF_MATCH(rt, rt == wawo::OK);
 			return wawo::socket_get_last_errno();
 		}
-		inline int turnon_nonblocking(int fd) {
+		inline int turnon_nonblocking(SOCKET fd) {
 			return set_nonblocking(fd, true);
 		}
-		inline int turnoff_nonblocking(int fd) {
+		inline int turnoff_nonblocking(SOCKET fd) {
 			return set_nonblocking(fd, false);
 		}
 
-		inline int set_nodelay(int fd, bool on_or_off) {
+		inline int set_nodelay(SOCKET fd, bool on_or_off) {
 			int optval = on_or_off ? 1 : 0;
 			int rt = wawo::net::socket_api::posix::setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval));
 			WAWO_RETURN_V_IF_MATCH(rt, rt == wawo::OK);
 			return wawo::socket_get_last_errno();
 		}
 
-		inline int turnon_nodelay(int fd) {
+		inline int turnon_nodelay(SOCKET fd) {
 			return set_nodelay(fd, true);
 		}
-		inline int turnoff_nodelay(int fd) {
+		inline int turnoff_nodelay(SOCKET fd) {
 			return set_nodelay(fd, false);
 		}
 	}
 
 #ifdef WAWO_IO_MODE_IOCP
 	namespace iocp {
-		inline int socket(int const& family, int const& type, int const& proto) {
+		inline int socket(SOCKET const& family, int const& type, int const& proto) {
 			int rt = ::WSASocketW( OS_DEF_family[family], OS_DEF_sock_type[type], OS_DEF_protocol[proto], NULL, 0, WSA_FLAG_OVERLAPPED);
 			WAWO_RETURN_V_IF_MATCH(rt, rt > 0);
 			return socket_get_last_errno();
@@ -408,46 +406,46 @@ namespace wawo { namespace net { namespace socket_api {
 #ifdef WAWO_ENABLE_WCP
 #include <wawo/net/wcp.hpp>
 	namespace wcp {
-		inline int socket(int const& family, int const& socket_type, int const& protocol) {
+		inline int socket(SOCKET const& family, int const& socket_type, int const& protocol) {
 			return wcp::instance()->socket(family, socket_type, protocol);
 		}
 
-		inline int connect(int const& fd, const struct sockaddr* addr, socklen_t const& length) {
+		inline int connect(SOCKET const& fd, const struct sockaddr* addr, socklen_t const& length) {
 			return wcp::instance()->connect(fd, addr, length);
 		}
 
-		inline int bind(int const& fd, const struct sockaddr* addr, socklen_t const& length) {
+		inline int bind(SOCKET const& fd, const struct sockaddr* addr, socklen_t const& length) {
 			return wcp::instance()->bind(fd, addr, length);
 		}
 
-		inline int shutdown(int const& fd, int const& flag) {
+		inline int shutdown(SOCKET const& fd, int const& flag) {
 			return wcp::instance()->shutdown(fd, flag);
 		}
 
-		inline int close(int const& fd) {
+		inline int close(SOCKET const& fd) {
 			return wcp::instance()->close(fd);
 		}
-		inline int listen(int const& fd, int const& backlog) {
+		inline int listen(SOCKET const& fd, int const& backlog) {
 			return wcp::instance()->listen(fd, backlog);
 		}
 
-		inline int accept(int const& fd, struct sockaddr* addr, socklen_t* addrlen) {
+		inline int accept(SOCKET const& fd, struct sockaddr* addr, socklen_t* addrlen) {
 			return wcp::instance()->accept(fd, addr, addrlen);
 		}
 
-		inline int getsockopt(int const& fd, int const& level, int const& option_name, void* value, socklen_t* option_len) {
+		inline int getsockopt(SOCKET const& fd, int const& level, int const& option_name, void* value, socklen_t* option_len) {
 			return wcp::instance()->getsockopt(fd, level, option_name, value, option_len);
 		}
 
-		inline int setsockopt(int const& fd, int const& level, int const& option_name, void const* value, socklen_t const& option_len) {
+		inline int setsockopt(SOCKET const& fd, int const& level, int const& option_name, void const* value, socklen_t const& option_len) {
 			return wcp::instance()->setsockopt(fd, level, option_name, value, option_len);
 		}
 
-		inline int getsockname(int const& fd, struct sockaddr* addr, socklen_t* addrlen) {
+		inline int getsockname(SOCKET const& fd, struct sockaddr* addr, socklen_t* addrlen) {
 			return wcp::instance()->getsockname(fd, addr, addrlen);
 		}
 
-		inline u32_t send(int const& fd, byte_t const* const buffer, u32_t const& len, int& ec_o, int const& flag = 0) {
+		inline u32_t send(SOCKET const& fd, byte_t const* const buffer, u32_t const& len, int& ec_o, int const& flag = 0) {
 			WAWO_ASSERT(buffer != NULL);
 			WAWO_ASSERT(len > 0);
 
@@ -478,7 +476,7 @@ namespace wawo { namespace net { namespace socket_api {
 			return sent_total;
 		}
 
-		inline u32_t recv(int const& fd, byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag = 0) {
+		inline u32_t recv(SOCKET const& fd, byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag = 0) {
 
 			WAWO_ASSERT(buffer_o != NULL);
 			WAWO_ASSERT(size > 0);
@@ -520,7 +518,7 @@ namespace wawo { namespace net { namespace socket_api {
 			WCP_F_SETFL = 0x02
 		};
 
-		inline int fcntl(int const& fd, int const cmd, ...) {
+		inline int fcntl(SOCKET const& fd, int const cmd, ...) {
 			switch (cmd) {
 
 			case WCP_F_SETFL:
@@ -551,5 +549,4 @@ namespace wawo { namespace net { namespace socket_api {
 #endif
 
 }}}
-
 #endif

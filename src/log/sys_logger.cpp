@@ -21,7 +21,7 @@ namespace wawo { namespace log {
 		closelog();
 	}
 
-	void sys_logger::write( LogLevelMask const& level, char const* const log, u32_t const& len ) {
+	void sys_logger::write( LogLevelMask const& level, char const* const log, wawo::size_t const& len ) {
 
 		if( !TestLevel( level) ) {
 			 return ;

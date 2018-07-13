@@ -17,23 +17,21 @@
 #include <arpa/inet.h>
 #include <sys/un.h> //sockaddr_un
 #include <sys/uio.h>
-
 #include <sys/ioctl.h>
+#include <sys/epoll.h>
 
-#ifdef WAWO_IO_MODE_EPOLL
-	#include <sys/epoll.h>
+#if WAWO_ADDRESSMODE_X64
+	typedef unsigned long SOCKET ;
+#else
+	typedef unsigned int SOCKET;
 #endif
-
-namespace wawo {
-	typedef int SOCKET ;
-}
 
 #ifndef SOCKET_ERROR
 	#define SOCKET_ERROR (-1)
 #endif
 
 #ifndef INVALID_SOCKET
-	#define INVALID_SOCKET -1
+	#define INVALID_SOCKET  (SOCKET)(~0)
 #endif
 
 

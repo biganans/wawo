@@ -13,7 +13,7 @@ namespace wawo { namespace net { namespace impl {
 	class select:
 		public poller_abstract
 	{
-		int m_signalfds[2];
+		SOCKET m_signalfds[2];
 		public:
 			select():
 				poller_abstract()
@@ -24,7 +24,7 @@ namespace wawo { namespace net { namespace impl {
 
 			~select() {}
 
-			inline void watch_ioe( u8_t const& flag, int const& fd, fn_io_event const& fn ) {
+			inline void watch_ioe( u8_t const& flag, SOCKET const& fd, fn_io_event const& fn ) {
 
 				WAWO_ASSERT(fd >0);
 				WAWO_ASSERT(fn != NULL);
@@ -49,7 +49,7 @@ namespace wawo { namespace net { namespace impl {
 				TRACE_IOE("[io_event_loop][#%d]watch_ioe: update: %d, now: %d", fd, flag, ctx->flag);
 			}
 
-			inline void unwatch_ioe( u8_t const& flag, int const& fd) {
+			inline void unwatch_ioe( u8_t const& flag, SOCKET const& fd) {
 
 				WAWO_ASSERT(fd>0);
 				WAWO_ASSERT(flag > 0 && flag <= 0xFF);
@@ -67,7 +67,7 @@ namespace wawo { namespace net { namespace impl {
 				}
 			}
 
-			void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn)
+			void do_watch(u8_t const& flag, SOCKET const& fd, fn_io_event const& fn)
 			{
 				WAWO_ASSERT( flag > 0 );
 				if (m_ctxs.size() >= FD_SETSIZE) {
@@ -77,7 +77,7 @@ namespace wawo { namespace net { namespace impl {
 				watch_ioe(flag, fd, fn);
 			}
 
-			void do_unwatch(u8_t const& flag, int const& fd)
+			void do_unwatch(u8_t const& flag, SOCKET const& fd)
 			{
 				WAWO_ASSERT( flag > 0 );
 				unwatch_ioe( flag, fd );
@@ -95,7 +95,7 @@ namespace wawo { namespace net { namespace impl {
 
 			fd_set fds_ex;
 			FD_ZERO(&fds_ex);
-			int max_fd_v = 0;
+			SOCKET max_fd_v = INVALID_SOCKET;
 
 			poller_ctx_map::iterator it = m_ctxs.begin();
 			while( it != m_ctxs.end() ) {
@@ -123,7 +123,7 @@ namespace wawo { namespace net { namespace impl {
 			}
 			_select(max_fd_v, fds_r, fds_w,fds_ex );
 		}
-		inline void _select(int const& max_fd_v, fd_set& fds_r, fd_set& fds_w, fd_set& fds_ex) {
+		inline void _select(SOCKET const& max_fd_v, fd_set& fds_r, fd_set& fds_w, fd_set& fds_ex) {
 			timeval _tv = { 0,0 };
 			timeval* tv;
 			const int wait_in_micro = _before_wait();
@@ -138,7 +138,7 @@ namespace wawo { namespace net { namespace impl {
 				}
 			}
 			const bool bLastWait = (wait_in_micro != 0);
-			int ready_c = ::select(max_fd_v, &fds_r, &fds_w, &fds_ex, tv); //only read now
+			int ready_c = ::select((int)max_fd_v, &fds_r, &fds_w, &fds_ex, tv); //only read now
 			if (bLastWait) {
 				_after_wait();
 			}
@@ -162,7 +162,7 @@ namespace wawo { namespace net { namespace impl {
 				WWRP<poller_ctx> ctx = it_cur->second;
 				WAWO_ASSERT(ctx != NULL);
 
-				int const& fd = ctx->fd;
+				SOCKET const& fd = ctx->fd;
 				if (FD_ISSET(fd, &fds_r)) {
 					FD_CLR(fd, &fds_r);
 					--ready_c;

@@ -186,7 +186,7 @@ namespace wawo { namespace task {
 		}
 
 		int i = 0;
-		int size = m_assigning->size();
+		wawo::size_t size = m_assigning->size();
 		while( m_state == S_RUN && i != size ) {
 			WWRP<sequencial_task>& task = (*m_assigning)[i++] ;
 			WAWO_ASSERT( task != NULL );

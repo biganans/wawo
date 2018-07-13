@@ -11,7 +11,7 @@ namespace wawo { namespace log {
 		file_logger(wawo::len_cstr const& logFile);
 		~file_logger();
 
-		void write( LogLevelMask const& level, char const* const log, u32_t const& len ) ;
+		void write( LogLevelMask const& level, char const* const log, wawo::size_t const& len ) ;
 
 	private:
 		FILE* m_fp;

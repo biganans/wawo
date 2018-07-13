@@ -8,12 +8,12 @@ namespace wawo {
 	struct memory_alloc_failed:
 		public wawo::exception
 	{ 
-		memory_alloc_failed(int const& size, const char* const file, const int line, const char* const func ) :
+		memory_alloc_failed(wawo::size_t const& size, const char* const file, const int line, const char* const func ) :
 			exception(wawo::get_last_errno(), "", file,line,func, true)
 		{
 			char tmp[128] = { 0 };
-			snprintf(tmp, 128, "memory alloc failed, alloc size: %d", size);
-			int _len = ::strlen(tmp);
+			snprintf(tmp, 128, "memory alloc failed, alloc size: %zu", size);
+			::size_t _len = ::strlen(tmp);
 			::memcpy(message, tmp, _len);
 			*(message + _len) = '\0';
 		}

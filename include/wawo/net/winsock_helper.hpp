@@ -26,7 +26,7 @@ namespace wawo { namespace net {
 			GUID guid = WSAID_CONNECTEX;
 			LPFN_CONNECTEX fn_connectEx;
 			DWORD dwBytes;
-			int fd = ::WSASocketW( AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
+			SOCKET fd = ::WSASocketW( AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
 			if (fd == SOCKET_ERROR) {
 				WAWO_THROW("CREATE FD FAILED");
 			}

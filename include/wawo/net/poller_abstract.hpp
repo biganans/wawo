@@ -35,7 +35,7 @@ namespace wawo { namespace net {
 	struct poller_ctx :
 		public wawo::ref_base
 	{
-		int fd;
+		SOCKET fd;
 		fn_io_event fn[IOE_SLOT_MAX];
 		u8_t flag;
 
@@ -49,8 +49,8 @@ namespace wawo { namespace net {
 		}
 	};
 
-	typedef std::map<int, WWRP<poller_ctx>> poller_ctx_map;
-	typedef std::pair<int, WWRP<poller_ctx>> fd_ctx_pair;
+	typedef std::map<SOCKET, WWRP<poller_ctx>> poller_ctx_map;
+	typedef std::pair<SOCKET, WWRP<poller_ctx>> fd_ctx_pair;
 
 	class poller_abstract:
 		public io_event_loop

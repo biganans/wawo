@@ -11,7 +11,7 @@ namespace wawo { namespace log {
 	console_logger::~console_logger() {
 	}
 
-	void console_logger::write( logger_abstract::LogLevelMask const& level, char const* const log, u32_t const& len ) {
+	void console_logger::write( logger_abstract::LogLevelMask const& level, char const* const log, wawo::size_t const& len ) {
 		WAWO_ASSERT(TestLevel(level));
 
 		len_cstr local_time_str;

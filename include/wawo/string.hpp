@@ -13,7 +13,6 @@
 #define _WAWO_IS_CHAR_T(_T) (sizeof(_T)==sizeof(char))
 #define _WAWO_IS_WCHAR_T(_T) (sizeof(_T)==sizeof(wchar_t))
 
-
 //extern part
 namespace wawo {
 
@@ -128,18 +127,18 @@ namespace wawo {
 	 * 5, if I'm wrong, please correct me, thx.
 	 */
 
-	inline u32_t strlen( char const* const str ) {
+	inline wawo::size_t strlen( char const* const str ) {
 		return std::strlen(str);
 	}
 
-	inline u32_t strlen(wchar_t const* const wstr ) {
+	inline wawo::size_t strlen(wchar_t const* const wstr ) {
 		return std::wcslen(wstr);
 	}
 
 	inline int strcmp(char const* const lcptr, char const* const rcptr ) {
 		return std::strcmp(lcptr,rcptr);
 	}
-	inline int strncmp(char const* const lcptr, char const* const rcptr, u32_t const& length ) {
+	inline int strncmp(char const* const lcptr, char const* const rcptr, wawo::size_t const& length ) {
 		return std::strncmp(lcptr,rcptr,length);
 	}
 
@@ -147,35 +146,35 @@ namespace wawo {
 		return std::wcscmp(lwcptr,rwcptr);
 	}
 
-	inline int strncmp(wchar_t const* const lwcptr, wchar_t const* const rwcptr, u32_t const& length) {
+	inline int strncmp(wchar_t const* const lwcptr, wchar_t const* const rwcptr, wawo::size_t const& length) {
 		return std::wcsncmp(lwcptr,rwcptr,length);
 	}
 
 	//src must be null-terminated
 	//The behavior is undefined if the dest array is not large enough. The behavior is undefined if the strings overlap
 	inline char* strcpy(char* const dst, char const* const src) {
-		u32_t src_len = wawo::strlen(src);
+		wawo::size_t src_len = wawo::strlen(src);
 		::memcpy(dst,src,src_len);
 		*(dst+src_len) = '\0';
 		return dst;
 	}
 	inline wchar_t* strcpy(wchar_t* const dst, wchar_t const* const src) {
-		u32_t src_len = wawo::strlen(src);
+		wawo::size_t src_len = wawo::strlen(src);
 		::memcpy(dst,src,src_len*sizeof(wchar_t) );
 		*(dst+src_len) = L'\0';
 		return dst;
 	}
 
-	inline char* strncpy(char* const dst, char const* const src, u32_t const& length) {
-		u32_t src_len = wawo::strlen(src);
-		u32_t copy_length = (src_len>length)?length:src_len;
+	inline char* strncpy(char* const dst, char const* const src, wawo::size_t const& length) {
+		wawo::size_t src_len = wawo::strlen(src);
+		wawo::size_t copy_length = (src_len>length)?length:src_len;
 		::memcpy(dst,src,copy_length*sizeof(char));
 		*(dst+length) = '\0';
 		return dst;
 	}
-	inline wchar_t* strncpy(wchar_t* const dst, wchar_t const* const src, u32_t const& length) {
-		u32_t src_len = wawo::strlen(src);
-		u32_t copy_length = (src_len>length)?length:src_len;
+	inline wchar_t* strncpy(wchar_t* const dst, wchar_t const* const src, wawo::size_t const& length) {
+		wawo::size_t src_len = wawo::strlen(src);
+		wawo::size_t copy_length = (src_len>length)?length:src_len;
 		::memcpy(dst,src,copy_length*sizeof(wchar_t));
 		*(dst+length) = L'\0';
 		return dst;
@@ -185,24 +184,24 @@ namespace wawo {
 	//dst must have enough space, or the behaviour is undefined if the strings overlap
 	//dst will be null-terminated after strcat&strncat
 	inline char* strcat(char* const dst, char const* const src) {
-		u32_t dst_length = wawo::strlen(dst);
-		u32_t src_len = wawo::strlen(src);
+		wawo::size_t dst_length = wawo::strlen(dst);
+		wawo::size_t src_len = wawo::strlen(src);
 
 		wawo::strncpy(dst+dst_length,src,src_len);
 		return dst;
 	}
-	inline char* strncat(char* const dst, char const* const src, u32_t const& length) {
-		u32_t dst_length = wawo::strlen(dst);
-		u32_t src_len = wawo::strlen(src);
-		u32_t copy_length = (src_len>length) ? length : src_len;
+	inline char* strncat(char* const dst, char const* const src, wawo::size_t const& length) {
+		wawo::size_t dst_length = wawo::strlen(dst);
+		wawo::size_t src_len = wawo::strlen(src);
+		wawo::size_t copy_length = (src_len>length) ? length : src_len;
 
 		wawo::strncpy(dst+dst_length,src,copy_length);
 		return dst;
 	}
-	inline wchar_t* strncat(wchar_t* const dst, wchar_t const* const src, u32_t const& length) {
-		u32_t dst_length = wawo::strlen(dst);
-		u32_t src_len = wawo::strlen(src);
-		u32_t copy_length = (src_len>length) ? length : src_len;
+	inline wchar_t* strncat(wchar_t* const dst, wchar_t const* const src, wawo::size_t const& length) {
+		wawo::size_t dst_length = wawo::strlen(dst);
+		wawo::size_t src_len = wawo::strlen(src);
+		wawo::size_t copy_length = (src_len>length) ? length : src_len;
 
 		wawo::strncpy(dst+dst_length,src,copy_length);
 		return dst;
@@ -231,7 +230,7 @@ namespace wawo {
 			return -1;
 		}
 
-		return (sub-dst);
+		return wawo::long_t(sub-dst);
 	}
 
 	inline int strpos( wchar_t const* const dst, wchar_t const* const check ) {
@@ -241,23 +240,23 @@ namespace wawo {
 			return -1;
 		}
 
-		return (sub-dst);
+		return wawo::long_t(sub-dst);
 	}
 
 	inline void strtolower( char* const buffer, u32_t const& size, char const* const src ) {
 		WAWO_ASSERT(size>=wawo::strlen(src) );
-		u32_t c = wawo::strlen(src);
-		u32_t i = 0;
+		wawo::size_t c = wawo::strlen(src);
+		wawo::size_t i = 0;
 		while ( (i<c) && (i<size) )  {
 			*(buffer + i) = static_cast<char>(::tolower(*(src + i) ));
 			++i;
 		}
 	}
 
-	inline void strtoupper(char* const buffer, u32_t const& size, char const* const src) {
+	inline void strtoupper(char* const buffer, wawo::size_t const& size, char const* const src) {
 		WAWO_ASSERT(size >= wawo::strlen(src));
-		u32_t c = wawo::strlen(src);
-		u32_t i = 0;
+		wawo::size_t c = wawo::strlen(src);
+		wawo::size_t i = 0;
 		while ( (i<c) && (i<size)) {
 			*(buffer + i) = static_cast<char>(::toupper(*(src + i)));
 			++i;
@@ -292,7 +291,7 @@ namespace wawo {
 		typedef len_cstr_impl<char_t> _MyT;
 
 		char_t* cstr;
-		u32_t len;
+		wawo::size_t len;
 
 		len_cstr_impl():
 			cstr( (char_t*)("")),
@@ -315,7 +314,7 @@ namespace wawo {
 			}
 		}
 
-		explicit len_cstr_impl( char_t const* const str, u32_t const& slen ) :
+		explicit len_cstr_impl( char_t const* const str, wawo::size_t const& slen ) :
 			cstr( (char_t*)("")),
 			len(0)
 		{
@@ -336,7 +335,7 @@ namespace wawo {
 			len =0;
 		}
 
-		len_cstr_impl substr( u32_t const& begin, u32_t const& _len ) const {
+		len_cstr_impl substr(wawo::size_t const& begin, wawo::size_t const& _len ) const {
 			WAWO_ASSERT( ( begin + _len) <= len );
 			return len_cstr_impl( cstr+begin, _len );
 		}
@@ -387,7 +386,7 @@ namespace wawo {
 		}
 
 		_MyT operator + (len_cstr_impl const& other) const {
-			u32_t buffer_length = len + other.len + 1;
+			wawo::size_t buffer_length = len + other.len + 1;
 			char_t* _buffer = (char_t*) ::calloc( sizeof(char_t), buffer_length );
 
 			if( len ) {
@@ -448,7 +447,7 @@ namespace wawo {
 	inline wawo::len_cstr rtrim(wawo::len_cstr const& source_) {
 		if (source_.len == 0) return wawo::len_cstr();
 
-		u32_t end = source_.len - 1;
+		wawo::size_t end = source_.len - 1;
 		while (end > 0 && (*(source_.cstr + end)) == ' ')
 			--end;
 
@@ -458,7 +457,7 @@ namespace wawo {
 	inline wawo::len_cstr ltrim(wawo::len_cstr const& source_) {
 		if (source_.len == 0) return wawo::len_cstr();
 
-		u32_t start = 0;
+		wawo::size_t start = 0;
 		while (start < source_.len && (*(source_.cstr + start)) == ' ')
 			++start;
 
@@ -490,11 +489,11 @@ namespace wawo {
 
 		WAWO_ASSERT( result.size() == 0 );
 		char const* check_cstr = string.c_str();
-		u32_t check_length = string.length();
-		u32_t next_check_idx = 0;
+		wawo::size_t check_length = string.length();
+		wawo::size_t next_check_idx = 0;
 
 		char const* delimiter_cstr = delimiter.c_str();
-		u32_t delimiter_length = delimiter.length();
+		wawo::size_t delimiter_length = delimiter.length();
 
 		int hit_pos ;
 
