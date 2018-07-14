@@ -57,7 +57,7 @@ namespace wawo {
 		}
 
 		template <class InIt>
-		inline u32_t read_bytes( byte_t* const target, u32_t const& len,InIt const& start ) {
+		inline wawo::u32_t read_bytes( byte_t* const target, wawo::u32_t const& len,InIt const& start ) {
 			wawo::u32_t read_idx = 0;
 
 			for( ; read_idx < len; ++read_idx ) {

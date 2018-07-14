@@ -19,7 +19,7 @@
 //	#define DEFAULT_LISTEN_BACKLOG SOMAXCONN
 	#define DEFAULT_LISTEN_BACKLOG 512
 #else
-	#define DEFAULT_LISTEN_BACKLOG 256
+	#define WAWO_DEFAULT_LISTEN_BACKLOG 256
 #endif
 
 namespace wawo { namespace net {
@@ -44,7 +44,6 @@ namespace wawo { namespace net {
 		S_BINDED,
 		S_LISTEN,
 		S_CONNECTING,// for async connect
-//		S_CLOSING,
 		S_CONNECTED
 	};
 
@@ -78,7 +77,7 @@ namespace wawo { namespace net {
 		void _deinit();
 
 	public:
-		explicit socket(int const& fd, address const& laddr, address const& raddr, socket_mode const& sm, socket_buffer_cfg const& sbc ,s_family const& family , s_type const& sockt, s_protocol const& proto, option const& opt = OPTION_NONE ):
+		explicit socket(SOCKET const& fd, address const& laddr, address const& raddr, socket_mode const& sm, socket_buffer_cfg const& sbc ,s_family const& family , s_type const& sockt, s_protocol const& proto, option const& opt = OPTION_NONE ):
 			socket_base(fd,laddr,raddr,sm,sbc,family, sockt,proto,opt),
 			channel(wawo::net::io_event_loop_group::instance()->next(proto == P_WCP)),
 			m_flag(0),
@@ -126,7 +125,7 @@ namespace wawo { namespace net {
 			_deinit();
 		}
 
-		SOCKET open();
+		int open();
 
 		inline bool is_active() const { return socket_base::is_active(); }
 
@@ -134,7 +133,7 @@ namespace wawo { namespace net {
 		inline int turnoff_nodelay() { return socket_base::turnoff_nodelay(); }
 
 		int bind(address const& addr);
-		int listen(int const& backlog = DEFAULT_LISTEN_BACKLOG);
+		int listen(int const& backlog = WAWO_DEFAULT_LISTEN_BACKLOG);
 
 		SOCKET accept(address& raddr);
 		int connect(address const& addr);
@@ -224,8 +223,8 @@ namespace wawo { namespace net {
 			return wawo::OK;
 		}
 
-		WWRP<wawo::net::channel_future> _listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, int const& backlog = 128);
-		WWRP<wawo::net::channel_future> _listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise, int const& backlog = 128);
+		WWRP<wawo::net::channel_future> _listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, int const& backlog = WAWO_DEFAULT_LISTEN_BACKLOG);
+		WWRP<wawo::net::channel_future> _listen_on(address const& addr, fn_accepted_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise, int const& backlog = WAWO_DEFAULT_LISTEN_BACKLOG);
 
 		WWRP<channel_future> _dial(address const& addr, fn_dial_channel_initializer const& initializer);
 		WWRP<channel_future> _dial(address const& addr, fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise);
@@ -393,7 +392,7 @@ namespace wawo { namespace net {
 #else
 			while(ec == wawo::OK) {
 				if (WAWO_UNLIKELY(m_flag&F_SHUTDOWN_RD)) { return; }
-				u32_t nbytes = socket_base::recv(m_trb, buffer_cfg().rcv_size, ec);
+				wawo::u32_t nbytes = socket_base::recv(m_trb, buffer_cfg().rcv_size, ec);
 				if (WAWO_LIKELY(nbytes>0)) {
 					WWRP<packet> p = wawo::make_ref<packet>(nbytes);
 					p->write(m_trb, nbytes);
@@ -802,7 +801,7 @@ namespace wawo { namespace net {
 					continue;
 				}
 
-				const wawo::size_t sent = socket_base::send(entry.data->begin(), entry.data->len(), _errno);
+				const wawo::u32_t sent = socket_base::send(entry.data->begin(), entry.data->len(), _errno);
 				WAWO_ASSERT(sent <= m_noutbound_bytes);
 				m_noutbound_bytes -= sent;
 
@@ -909,10 +908,6 @@ namespace wawo { namespace net {
 				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY);
 				return;
 			}
-			//if (m_state == S_CLOSING) {
-			//	ch_promise->set_success(wawo::E_CHANNEL_CLOSING);
-			//	return;
-			//}
 
 			if (is_listener()) {
 				end_read();

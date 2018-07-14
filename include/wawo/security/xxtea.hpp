@@ -88,7 +88,7 @@ namespace wawo { namespace security {
 	};
 
 	//different endian on both side is supported
-	inline static xxtea_ctx* xxtea_encrypt( byte_t const* const data, u32_t const& dlen, byte_t const* const key, u32_t const& klen,int& ec ) {
+	inline static xxtea_ctx* xxtea_encrypt( byte_t const* const data, wawo::u32_t const& dlen, byte_t const* const key, wawo::u32_t const& klen,int& ec ) {
 		WAWO_ASSERT(key != NULL);
 		WAWO_ASSERT(klen > 0);
 
@@ -99,7 +99,7 @@ namespace wawo { namespace security {
 
 		xxtea_to_uint32_array(u32k,4,tmp,16);
 
-		u32_t u32len = ((dlen & 3) == 0) ? (dlen >> 2) : ((dlen >> 2) + 1);
+		wawo::u32_t u32len = ((dlen & 3) == 0) ? (dlen >> 2) : ((dlen >> 2) + 1);
 		u32_t* u32data = (u32_t*)::calloc( sizeof(u32_t),(u32len +1)) ;
 		if (u32data == NULL) {
 			ec = wawo::E_MEMORY_ALLOC_FAILED;
@@ -130,7 +130,7 @@ namespace wawo { namespace security {
 		return ctx;
 	}
 
-	inline static xxtea_ctx* xxtea_decrypt(byte_t const* const data, u32_t const& dlen, byte_t const* const key, u32_t const& klen, int& ec) {
+	inline static xxtea_ctx* xxtea_decrypt(byte_t const* const data, wawo::u32_t const& dlen, byte_t const* const key, wawo::u32_t const& klen, int& ec) {
 		WAWO_ASSERT(key != NULL);
 		WAWO_ASSERT(klen > 0);
 
@@ -209,12 +209,12 @@ namespace wawo { namespace security {
 			byte_t k[16] = { 0 };
 			set_key( k, 16);
 		}
-		xxtea( byte_t* k, u32_t const& klen ) {
+		xxtea( byte_t* k, wawo::u32_t const& klen ) {
 			set_key(k,klen);
 		}
 		~xxtea() {}
 
-		void set_key(byte_t const* const k, u32_t const& klen) {
+		void set_key(byte_t const* const k, wawo::u32_t const& klen) {
 			WAWO_ASSERT( k != NULL );
 			WAWO_ASSERT( klen > 0 );
 			::memcpy(m_key, k, klen );
@@ -233,7 +233,7 @@ namespace wawo { namespace security {
 			WAWO_DEBUG("[xxtea]encrypt using key: %s", key_cstr );
 #endif
 			int ec;
-			xxtea_ctx* tea = xxtea_encrypt(in->begin(), in->len(), m_key, sizeof(m_key)/sizeof(m_key[0]), ec );
+			xxtea_ctx* tea = xxtea_encrypt(in->begin(), (wawo::u32_t)in->len(), m_key, sizeof(m_key)/sizeof(m_key[0]), ec );
 			WAWO_ASSERT(ec == wawo::OK);
 			if (tea == NULL) {
 				return wawo::E_XXTEA_ENCRYPT_FAILED;
@@ -259,7 +259,7 @@ namespace wawo { namespace security {
 			WAWO_DEBUG("[xxtea]decrypt using key: %s", key_cstr);
 #endif
 			int ec;
-			xxtea_ctx* tea = xxtea_decrypt(in->begin(), in->len(), m_key, sizeof(m_key)/sizeof(m_key[0]), ec );
+			xxtea_ctx* tea = xxtea_decrypt(in->begin(), (wawo::u32_t)in->len(), m_key, sizeof(m_key)/sizeof(m_key[0]), ec );
 			WAWO_ASSERT(ec == wawo::OK);
 			if (tea == NULL) {
 				return wawo::E_XXTEA_DECRYPT_FAILED;

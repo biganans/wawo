@@ -185,7 +185,7 @@ namespace wawo { namespace net {
 		int set_options(int const& options);
 
 	protected:
-		SOCKET open();
+		int open();
 		int shutdown(int const& flag);
 		int close();
 		int bind(address const& addr);
@@ -194,7 +194,7 @@ namespace wawo { namespace net {
 		int connect(address const& addr);
 
 	public:
-		explicit socket_base(int const& fd, address const& laddr, address const& raddr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt = OPTION_NONE); //by pass a connected socket fd
+		explicit socket_base(SOCKET const& fd, address const& laddr, address const& raddr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt = OPTION_NONE); //by pass a connected socket fd
 		explicit socket_base(s_family const& family, s_type const& type, s_protocol const& protocol, option const& opt = OPTION_NONE);
 		explicit socket_base(socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& option = OPTION_NONE); //init a empty socket object
 
@@ -277,10 +277,10 @@ namespace wawo { namespace net {
 		int reuse_addr();
 		int reuse_port();
 
-		u32_t send(byte_t const* const buffer, u32_t const& size, int& ec_o, int const& flag = 0);
-		u32_t recv(byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag = 0);
-		u32_t sendto(byte_t const* const buff, wawo::u32_t const& size, const address& addr, int& ec_o, int const& flag = 0);
-		u32_t recvfrom(byte_t* const buff_o, wawo::u32_t const& size, address& addr, int& ec_o);
+		wawo::u32_t send(byte_t const* const buffer, wawo::u32_t const& size, int& ec_o, int const& flag = 0);
+		wawo::u32_t recv(byte_t* const buffer_o, wawo::u32_t const& size, int& ec_o, int const& flag = 0);
+		wawo::u32_t sendto(byte_t const* const buff, wawo::u32_t const& size, const address& addr, int& ec_o, int const& flag = 0);
+		wawo::u32_t recvfrom(byte_t* const buff_o, wawo::u32_t const& size, address& addr, int& ec_o);
 	};
 }}
 #endif

@@ -59,7 +59,7 @@ namespace wawo { namespace net {
 		P_MAX
 	};
 
-	static char* protocol_str[P_MAX] = {
+	const static char* protocol_str[P_MAX] = {
 		"TCP",
 		"UDP",
 		"ICMP",

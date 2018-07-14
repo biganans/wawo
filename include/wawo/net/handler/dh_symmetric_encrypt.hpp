@@ -362,7 +362,7 @@ namespace wawo {namespace net {namespace handler {
 				ctx->write(hello_reply);
 
 				WWRP<packet> message = wawo::make_ref<packet>();
-				message->write((byte_t*)HOK_MESSAGE, wawo::strlen(HOK_MESSAGE));
+				message->write((byte_t*)HOK_MESSAGE, (wawo::u32_t)wawo::strlen(HOK_MESSAGE));
 				WWRP<packet> encrypted_message;
 				WWRP<packet> hlength_encrypted_message;
 
@@ -404,7 +404,7 @@ namespace wawo {namespace net {namespace handler {
 				m_cipher = cipher;
 
 				WWRP<packet> message = wawo::make_ref<packet>();
-				message->write((byte_t*)HOK_MESSAGE, wawo::strlen(HOK_MESSAGE));
+				message->write((byte_t*)HOK_MESSAGE, (wawo::u32_t)wawo::strlen(HOK_MESSAGE));
 				WWRP<packet> encrypted_message;
 				WWRP<packet> hlength_encrypted_message;
 

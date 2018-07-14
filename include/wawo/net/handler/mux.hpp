@@ -315,7 +315,7 @@ end_write_frame:
 			}
 		}
 
-		int ch_id() const { return m_id; }
+		channel_id_t ch_id() const { return m_id; }
 
 		void ch_close_impl(WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(event_poller()->in_event_loop());

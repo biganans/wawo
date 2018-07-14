@@ -80,6 +80,5 @@ namespace wawo {
 	typedef long				long_t;
 
 	typedef ::size_t				size_t;
-	typedef ::size_t				size_t;
 }
 #endif

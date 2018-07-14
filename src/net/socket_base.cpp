@@ -45,7 +45,7 @@ namespace wawo { namespace net {
 #endif
 	}
 
-		socket_base::socket_base(int const& fd, address const& laddr, address const& raddr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
+		socket_base::socket_base(SOCKET const& fd, address const& laddr, address const& raddr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
 			m_fd(fd),
 			m_sm(sm),
 			m_family(family),
@@ -122,12 +122,11 @@ namespace wawo { namespace net {
 		}
 
 		int socket_base::open() {
-
 			WAWO_ASSERT(m_fd == -1);
 			m_fd = m_fn_socket(m_family, m_type, m_protocol);
-			if (m_fd == INVALID_SOCKET ) {
+			if (m_fd<0) {
 				WAWO_ERR("[socket_base][%s]socket::socket() failed, %d", info().to_stdstring().c_str(), wawo::socket_get_last_errno() );
-				return m_fd;
+				return (int)m_fd;
 			}
 			WAWO_ASSERT(m_fd>0 );
 
@@ -694,7 +693,7 @@ namespace wawo { namespace net {
 			return set_options(m_option | OPTION_REUSEPORT);
 		}
 
-		u32_t socket_base::sendto(wawo::byte_t const* const buffer, wawo::u32_t const& len, const wawo::net::address& addr, int& ec_o, int const& flag) {
+		wawo::u32_t socket_base::sendto(wawo::byte_t const* const buffer, wawo::u32_t const& len, const wawo::net::address& addr, int& ec_o, int const& flag) {
 
 			//WAWO_ASSERT(!"TOCHECK FOR WCP");
 
@@ -718,7 +717,7 @@ namespace wawo { namespace net {
 			return m_fn_sendto(m_fd, buffer, len, addr, ec_o, flag);
 		}
 
-		u32_t socket_base::recvfrom(byte_t* const buffer_o, wawo::u32_t const& size, address& addr_o, int& ec_o) {
+		wawo::u32_t socket_base::recvfrom(byte_t* const buffer_o, wawo::u32_t const& size, address& addr_o, int& ec_o) {
 			ec_o = wawo::OK;
 			//WAWO_ASSERT(!"TOCHECK FOR WCP");
 			/*
@@ -738,13 +737,13 @@ namespace wawo { namespace net {
 			return m_fn_recvfrom(m_fd, buffer_o, size, addr_o, ec_o,0);
 		}
 
-		u32_t socket_base::send(byte_t const* const buffer, u32_t const& len, int& ec_o, int const& flag) {
+		wawo::u32_t socket_base::send(byte_t const* const buffer, wawo::u32_t const& len, int& ec_o, int const& flag) {
 			WAWO_ASSERT(buffer != NULL);
 			WAWO_ASSERT(len > 0);
 			return m_fn_send(m_fd, buffer, len, ec_o, flag);
 		}
 
-		u32_t socket_base::recv(byte_t* const buffer_o, u32_t const& size, int& ec_o, int const& flag) {
+		wawo::u32_t socket_base::recv(byte_t* const buffer_o, wawo::u32_t const& size, int& ec_o, int const& flag) {
 			WAWO_ASSERT(buffer_o != NULL);
 			WAWO_ASSERT(size > 0);
 			return m_fn_recv(m_fd, buffer_o, size, ec_o, flag);

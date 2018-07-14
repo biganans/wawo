@@ -157,7 +157,7 @@ namespace wawo { namespace log {
 			}
 
 #ifdef _DEBUG
-			int length = strlen(__traceInfo) + 1;
+			wawo::size_t length = wawo::strlen(__traceInfo) + 1;
 
 			if ((LOG_BUFFER_SIZE_MAX - idx_fmt) < length) {
 				int tsnsize = snprintf((log_buffer + (LOG_BUFFER_SIZE_MAX-(length+5))), (length+5), "...\n%s", __traceInfo);

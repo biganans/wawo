@@ -38,7 +38,7 @@ namespace wawo { namespace net { namespace handler {
 
 		int ec;
 		m_cur_ctx = ctx;
-		u32_t nparsed = m_http_parser->parse( (char*) income->begin(), income->len(), ec );
+		wawo::u32_t nparsed = m_http_parser->parse( (char*) income->begin(), income->len(), ec );
 		WAWO_ASSERT(ec == wawo::OK ? nparsed == income->len(): true);
 
 		income->skip(nparsed);
@@ -56,27 +56,27 @@ namespace wawo { namespace net { namespace handler {
 		return wawo::OK;
 	}
 
-	int http::http_on_url(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len) {
+	int http::http_on_url(WWRP<protocol::http::parser> const& p, const char* data, wawo::u32_t const& len) {
 		(void)p;
 		m_tmp_m->url = std::string( data,len );
 		return wawo::OK;
 	}
 
-	int http::http_on_status(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len) {
+	int http::http_on_status(WWRP<protocol::http::parser> const& p, const char* data, wawo::u32_t const& len) {
 		(void)p;
 		WAWO_ERR("[%s]<<< %s", __FUNCTION__, std::string(data, len).c_str());
 		WAWO_ASSERT(!"WHAT");
 		return wawo::OK;
 	}
 
-	int http::http_on_header_field(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len) {
+	int http::http_on_header_field(WWRP<protocol::http::parser> const& p, const char* data, wawo::u32_t const& len) {
 		(void)p;
 		//WAWO_DEBUG("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
 		m_tmp_for_field = std::string(data, len);
 		return wawo::OK;
 	}
 
-	int http::http_on_header_value(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len) {
+	int http::http_on_header_value(WWRP<protocol::http::parser> const& p, const char* data, wawo::u32_t const& len) {
 		(void)p;
 		//WAWO_DEBUG("[%s]<<< %s", __FUNCTION__, wawo::len_cstr(data, len).cstr);
 		m_tmp_m->h.set(m_tmp_for_field, std::string(data, len));
@@ -91,7 +91,7 @@ namespace wawo { namespace net { namespace handler {
 		return wawo::OK;
 	}
 
-	int http::http_on_body(WWRP<protocol::http::parser> const& p, const char* data, u32_t const& len) {
+	int http::http_on_body(WWRP<protocol::http::parser> const& p, const char* data, wawo::u32_t const& len) {
 		WWRP<wawo::packet> income = wawo::make_ref<wawo::packet>((wawo::byte_t*)data, len);
 		event_trigger::invoke<fn_http_message_body_t>(E_BODY, m_cur_ctx, income);
 		(void)p;

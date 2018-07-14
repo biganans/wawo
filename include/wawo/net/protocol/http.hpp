@@ -125,14 +125,14 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 
 			std::for_each( keys_order.begin(), keys_order.end(), [&](std::string const& key ) {
 				std::string value = map[key];
-				opacket->write((wawo::byte_t*)key.c_str(), key.length());
+				opacket->write((wawo::byte_t*)key.c_str(), (wawo::u32_t)key.length());
 				opacket->write((wawo::byte_t*)WAWO_HTTP_COLON, 1);
 				opacket->write((wawo::byte_t*)WAWO_HTTP_SP, 1);
-				opacket->write((wawo::byte_t*)value.c_str(), value.length());
-				opacket->write((wawo::byte_t*)WAWO_HTTP_CRLF, wawo::strlen(WAWO_HTTP_CRLF));
+				opacket->write((wawo::byte_t*)value.c_str(), (wawo::u32_t)value.length());
+				opacket->write((wawo::byte_t*)WAWO_HTTP_CRLF, (wawo::u32_t)wawo::strlen(WAWO_HTTP_CRLF));
 			});
 
-			opacket->write((wawo::byte_t*)WAWO_HTTP_CRLF, wawo::strlen(WAWO_HTTP_CRLF));
+			opacket->write((wawo::byte_t*)WAWO_HTTP_CRLF, (wawo::u32_t)wawo::strlen(WAWO_HTTP_CRLF));
 			packet_o = opacket;
 		}
 	};
@@ -169,7 +169,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 
 	struct parser;
 
-	typedef std::function<int(WWRP<parser> const&, const char* data, u32_t const& len)> parser_cb_data;
+	typedef std::function<int(WWRP<parser> const&, const char* data, wawo::u32_t const& len)> parser_cb_data;
 	typedef std::function<int(WWRP<parser> const&)> parser_cb;
 
 	enum parser_type {
@@ -198,7 +198,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		void deinit();
 		void reset();
 
-		u32_t parse(char const* const data, u32_t const& len, int& ec);
+		wawo::u32_t parse(char const* const data, wawo::u32_t const& len, int& ec);
 
 		parser_cb on_message_begin;
 		parser_cb_data on_url;

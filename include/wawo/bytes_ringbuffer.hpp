@@ -10,7 +10,7 @@ namespace wawo {
 		public wawo::ref_base {
 		WAWO_DECLARE_NONCOPYABLE(bytes_ringbuffer)
 
-		enum SizeRange {
+		enum size_range {
 			MAX_RING_BUFFER_SIZE = 1024*1024*32,
 			MIN_RING_BUFFER_SIZE = 1024*2
 		};
@@ -65,7 +65,7 @@ namespace wawo {
 
 		inline bool try_read( wawo::byte_t* const buffer, wawo::u32_t const& size) {
 			if( count() >= size	) {
-				u32_t read_count = read(buffer, size);
+				wawo::u32_t read_count = read(buffer, size);
 				WAWO_ASSERT( read_count == size);
 				(void)read_count;
 				return true;
