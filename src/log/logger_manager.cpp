@@ -92,12 +92,12 @@ namespace wawo { namespace log {
 #endif
 		wawo::u64_t tid = wawo::this_thread::get_id();
 		char log_buffer[LOG_BUFFER_SIZE_MAX] = {0};
-		int idx_tid = 0;
+		wawo::size_t idx_tid = 0;
 		int snwrite = snprintf( log_buffer + idx_tid, LOG_BUFFER_SIZE_MAX- idx_tid, "[%llu]",tid);
-		WAWO_ASSERT( snwrite < (LOG_BUFFER_SIZE_MAX- idx_tid) );
 		if (snwrite == -1) {
 			WAWO_THROW("snprintf failed for loggerManager::write");
 		}
+		WAWO_ASSERT( (wawo::size_t)snwrite < (LOG_BUFFER_SIZE_MAX - idx_tid));
 		idx_tid += snwrite;
 
 		//for log buffer
@@ -159,7 +159,7 @@ namespace wawo { namespace log {
 #ifdef _DEBUG
 			wawo::size_t length = wawo::strlen(__traceInfo) + 1;
 
-			if ((LOG_BUFFER_SIZE_MAX - idx_fmt) < length) {
+			if ( (wawo::size_t)(LOG_BUFFER_SIZE_MAX - idx_fmt) < length) {
 				int tsnsize = snprintf((log_buffer + (LOG_BUFFER_SIZE_MAX-(length+5))), (length+5), "...\n%s", __traceInfo);
 				idx_fmt = (LOG_BUFFER_SIZE_MAX-1);
 				(void)&tsnsize;

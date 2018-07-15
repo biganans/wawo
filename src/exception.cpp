@@ -84,7 +84,7 @@ namespace wawo {
 	void stack_trace(char stack_buffer[], wawo::u32_t const& s) {
 		stack_walker sw;
 		sw.ShowCallstack();
-		assert(sw.stack_info.len > 0);
+		assert(sw.stack_info.length() > 0);
 
 		if (sw.stack_info.length() > (s - 1)) {
 			::memcpy(stack_buffer, sw.stack_info.c_str(), s - 1);

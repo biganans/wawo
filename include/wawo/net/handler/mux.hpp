@@ -94,6 +94,7 @@ namespace wawo { namespace net { namespace handler {
 		u32_t m_wnd;
 		u8_t m_write_flag;
 
+		fn_dial_channel_initializer m_dial_initializer;
 		void _init() {
 			m_rb = wawo::make_ref<bytes_ringbuffer>(MUX_STREAM_WND_SIZE);
 			m_wnd = MUX_STREAM_WND_SIZE;
@@ -116,16 +117,10 @@ namespace wawo { namespace net { namespace handler {
 		{
 		}
 
-		/*
-		inline bool is_read_shutdowned() const { return (m_rflag&STREAM_READ_SHUTDOWN_CALLED) != 0; }
-		inline bool is_write_shutdowned() const { return (m_wflag&STREAM_WRITE_SHUTDOWN_CALLED) != 0; }
-		inline bool is_readwrite_shutdowned() const { return (((m_rflag | m_wflag)&(STREAM_READ_SHUTDOWN_CALLED|STREAM_WRITE_SHUTDOWN_CALLED)) == (STREAM_READ_SHUTDOWN_CALLED | STREAM_WRITE_SHUTDOWN_CALLED)); }
-		inline bool is_closed() const { return (m_state == SS_CLOSED); }
-		*/
-
-		int dial() {
+		int dial(fn_dial_channel_initializer const& lintializer, WWRP<channel_promise> const& f ) {
 			lock_guard<spin_mutex> lg(m_mutex);
-			WAWO_ASSERT(m_state != SS_ESTABLISHED);
+			WAWO_ASSERT(m_state == SS_CLOSED);
+
 			mux_stream_frame f = make_frame_syn();
 			int wrt = write_frame(f);
 
@@ -162,18 +157,18 @@ namespace wawo { namespace net { namespace handler {
 			*/
 		}
 
-		inline int write_frame(mux_stream_frame const& frame) {
-			lock_guard<spin_mutex> lg(m_wmutex);
-			return _write_frame(frame);
-		}
+		//inline int write_frame(mux_stream_frame const& frame) {
+		//	lock_guard<spin_mutex> lg(m_wmutex);
+		//	return _write_frame(frame);
+		//}
 
-		inline int write_frame(mux_stream_frame&& frame) {
+		inline WWRP<wawo::net::channel_promise> write_frame(mux_stream_frame&& frame, WWRP<wawo::net::channel_promise> const& f) {
 			lock_guard<spin_mutex> lg(m_wmutex);
-			return _write_frame(frame);
+			return _write_frame(frame,f);
 		}
 
 		//write success would make frame data dirty
-		inline int _write_frame(mux_stream_frame const& frame) {
+		inline WWRP<wawo::net::channel_promise> _write_frame(mux_stream_frame&& frame, WWRP<wawo::net::channel_promise> const& f) {
 
 			WAWO_ASSERT("@TODO");
 
