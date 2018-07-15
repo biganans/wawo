@@ -69,14 +69,14 @@ namespace wawo {
 namespace wawo {
 	class stack_walker : public StackWalker {
 	public:
-		len_cstr stack_info;
+		std::string stack_info;
 
 		stack_walker() : StackWalker(), stack_info() {
 		}
 	protected:
 		virtual void OnOutput(LPCSTR szText)
 		{
-			stack_info += len_cstr(szText);
+			stack_info += std::string(szText);
 			StackWalker::OnOutput(szText);
 		}
 	};
@@ -86,13 +86,13 @@ namespace wawo {
 		sw.ShowCallstack();
 		assert(sw.stack_info.len > 0);
 
-		if (sw.stack_info.len > (s - 1)) {
-			::memcpy(stack_buffer, sw.stack_info.cstr, s - 1);
+		if (sw.stack_info.length() > (s - 1)) {
+			::memcpy(stack_buffer, sw.stack_info.c_str(), s - 1);
 			stack_buffer[s-1] = '\0';
 		}
 		else {
-			::memcpy(stack_buffer, sw.stack_info.cstr, sw.stack_info.len);
-			stack_buffer[sw.stack_info.len] = '\0';
+			::memcpy(stack_buffer, sw.stack_info.c_str(), sw.stack_info.length());
+			stack_buffer[sw.stack_info.length()] = '\0';
 		}
 	}
 }

@@ -143,7 +143,11 @@ namespace wawo { namespace net {
 
 		std::string to_stdstring() const {
 			char _buf[1024] = { 0 };
+#if WAWO_IS_ADDRESS_MODE_X64
 			int nbytes = snprintf(_buf, 1024, "#%llu:%s:L:%s-R:%s", fd, protocol_str[p], laddr.info().c_str(), raddr.info().c_str() );
+#else
+			int nbytes = snprintf(_buf, 1024, "#%u:%s:L:%s-R:%s", fd, protocol_str[p], laddr.info().c_str(), raddr.info().c_str());
+#endif
 			return std::string(_buf, nbytes);
 		}
 	};
