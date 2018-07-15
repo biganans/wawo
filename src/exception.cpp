@@ -155,7 +155,6 @@ namespace wawo {
 			e->message[0] = '\0'; 
 		}
 		if (sz_file_ != 0) {
-						
 			wawo::size_t len_1 = ::strlen(sz_file_); 
 			wawo::size_t len_2 = sizeof(e->file) / sizeof(e->file[0]) - 1;
 			wawo::size_t copy_len = len_1 > len_2 ? len_2 : len_1;
@@ -185,7 +184,7 @@ namespace wawo {
 			e->callstack = (char*)::malloc(info_len + 1);
 			::memcpy(e->callstack, stack_info_, info_len);
 			*((e->callstack) + info_len) = '\0'; 
-		} 
+		}
 		else {
 			e->callstack = 0; 
 		} 
@@ -198,7 +197,7 @@ namespace wawo {
 		callstack(0)
 	{
 		if (no_stack_info == false) {
-			const u32_t info_size = 1024 * 20;
+			const u32_t info_size = 1024*32;
 			char info[info_size] = {0};
 			stack_trace(info, info_size);
 			__WAWO_EXCEPTION_INIT__(this, code_, sz_message_, sz_file_, line_, sz_func_, info);

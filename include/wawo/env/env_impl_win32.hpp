@@ -17,7 +17,7 @@ namespace wawo { namespace env {
 		~env_impl() {
 		}
 		//return the ip count if success, and fill in parameter<ips> with local iplist
-		int GetLocalIpList( std::vector<wawo::net::address>& addrs ) {
+		int get_local_ip_list( std::vector<wawo::net::address>& addrs ) {
 
 			char _buffer[1024]= {0};
 			DWORD _buffer_length = 1024;
@@ -111,7 +111,7 @@ namespace wawo { namespace env {
 		}
 
 		//refer to https://msdn.microsoft.com/en-us/library/windows/desktop/ms724295(v=vs.85).aspx
-		int GetLocalComputerName(len_cstr& name) {
+		int get_local_computer_name(std::string& name) {
 			TCHAR infoBuf[256] = {0};
 			DWORD bufSize = 256;
 
@@ -119,15 +119,16 @@ namespace wawo { namespace env {
 			WAWO_RETURN_V_IF_NOT_MATCH( WAWO_NEGATIVE(rt), rt != wawo::OK );
 
 #ifdef _UNICODE
+			// it returns ¨C1 cast to type size_t and sets errno to EILSEQ
 			char mbBuf[512] = { 0 };
-			int size = std::wcstombs(mbBuf, infoBuf, 512 );
-			if (size == -1) {
+			::size_t size = std::wcstombs(mbBuf, infoBuf, 512 );
+			if (size == (::size_t)-1) {
 				return wawo::get_last_errno();
 			}
-			name = len_cstr(mbBuf, size);
+			name = std::string(mbBuf, size);
 			return wawo::OK;
 #else
-			name = len_cstr((const char*)infoBuf, (u32_t)bufSize);
+			name = std::string((const char*)infoBuf, (u32_t)bufSize);
 			return wawo::OK;
 #endif
 		}

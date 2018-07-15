@@ -9,8 +9,8 @@
 #endif
 
 #define WAWO_EXCEPTION_MESSAGE_LENGTH_LIMIT 1024
-#define WAWO_EXCEPTION_FILE_LENGTH_LIMIT 256
-#define WAWO_EXCEPTION_FUNC_LENGTH_LIMIT 256
+#define WAWO_EXCEPTION_FILE_LENGTH_LIMIT 512
+#define WAWO_EXCEPTION_FUNC_LENGTH_LIMIT 512
 
 namespace wawo {
 
@@ -19,7 +19,6 @@ namespace wawo {
 	struct exception {
 		int code;
 		char message[WAWO_EXCEPTION_MESSAGE_LENGTH_LIMIT];
-
 		char file[WAWO_EXCEPTION_FILE_LENGTH_LIMIT];
 		int line;
 		char func[WAWO_EXCEPTION_FUNC_LENGTH_LIMIT];

@@ -79,8 +79,12 @@ namespace wawo {
 		}
 
 		char _assert_buf[_ERR_MSG_MAX_LEN + 1024] = {0};
-		snprintf(_assert_buf, _ERR_MSG_MAX_LEN + 1024, "assert failed : %s, \nInfo: %s\nFile : %s\nLine : %d\nFunction : %s",
+		int c = snprintf(_assert_buf, _ERR_MSG_MAX_LEN + 1024, "assert failed : %s, \nInfo: %s\nFile : %s\nLine : %d\nFunction : %s",
 			check, _message, file, line, function);
+
+		if (c < 0) {
+			throw wawo::exception(wawo::get_last_errno(), "assert check format failed", file, line, function);
+		}
 
 #if defined(WAWO_ISWIN) && defined(WAWO_USE_MESSAGE_BOX)
 		int ret = 2;

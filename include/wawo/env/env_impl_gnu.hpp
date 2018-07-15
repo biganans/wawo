@@ -18,7 +18,7 @@ namespace wawo { namespace env {
 		env_impl() {}
 		~env_impl() {}
 
-		int GetLocalIpList( std::vector<wawo::net::socketaddr>& addrs ) {
+		int get_local_ip_list( std::vector<wawo::net::socketaddr>& addrs ) {
 
             struct ifaddrs *ifaddr;
             struct ifaddrs *ifa;
@@ -72,7 +72,7 @@ namespace wawo { namespace env {
             return wawo::OK;
 		}
 
-		int GetLocalComputerName(len_cstr& name) {
+		int get_local_computer_name(std::string& name) {
 			name = "to_do";
 			return wawo::OK;
 		}

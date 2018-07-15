@@ -14,9 +14,6 @@ namespace wawo { namespace net {
 	//@todo impl block until no new task feature
 
 	typedef std::function<void()> fn_io_event_task;
-	//typedef wawo::task::task io_task;
-	//typedef std::queue<WWRP<wawo::task::task_abstract>> TASK_Q;
-
 	typedef std::queue<fn_io_event_task> TASK_Q;
 
 	enum wait_type {
@@ -140,11 +137,16 @@ namespace wawo { namespace net {
 				}
 			}
 
-			while (m_tq->size()) {
-				fn_io_event_task& t = m_tq->front();
-				WAWO_ASSERT(t);
-				t();
+			try {
+				while (m_tq->size()) {
+					fn_io_event_task& t = m_tq->front();
+					WAWO_ASSERT(t);
+					t();
+					m_tq->pop();
+				}
+			} catch (...) {
 				m_tq->pop();
+				throw;
 			}
 		}
 	};

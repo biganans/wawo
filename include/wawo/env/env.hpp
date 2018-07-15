@@ -33,12 +33,12 @@ namespace wawo { namespace env {
 		{
 		}
 
-		int GetLocalIpList( std::vector<wawo::net::address>& addrs ) {
-			return m_impl->GetLocalIpList(addrs);
+		int get_local_ip_list( std::vector<wawo::net::address>& addrs ) {
+			return m_impl->get_local_ip_list(addrs);
 		}
 
-		int GetLocalComputerName(len_cstr& name) {
-			return m_impl->GetLocalComputerName(name);
+		int get_local_computer_name(std::string& name) {
+			return m_impl->get_local_computer_name(name);
 		}
 	};
 }}
