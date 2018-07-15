@@ -81,7 +81,7 @@ namespace wawo {
 		}
 	};
 
-	void stack_trace(char stack_buffer[], wawo::size_t const& s) {
+	void stack_trace(char stack_buffer[], wawo::u32_t const& s) {
 		stack_walker sw;
 		sw.ShowCallstack();
 		assert(sw.stack_info.len > 0);

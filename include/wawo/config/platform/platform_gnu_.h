@@ -20,20 +20,6 @@
 #include <sys/ioctl.h>
 #include <sys/epoll.h>
 
-#if WAWO_ADDRESSMODE_X64
-	typedef unsigned long SOCKET ;
-#else
-	typedef unsigned int SOCKET;
-#endif
-
-#ifndef SOCKET_ERROR
-	#define SOCKET_ERROR (-1)
-#endif
-
-#ifndef INVALID_SOCKET
-	#define INVALID_SOCKET  (SOCKET)(~0)
-#endif
-
 
 #define WAWO_CLOSE_SOCKET	::close
 #define WAWO_DUP			dup

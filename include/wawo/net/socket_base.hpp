@@ -143,7 +143,7 @@ namespace wawo { namespace net {
 
 		std::string to_stdstring() const {
 			char _buf[1024] = { 0 };
-			int nbytes = snprintf(_buf, 1024, "#%lld:%s:L:%s-R:%s", fd, protocol_str[p], laddr.info().c_str(), raddr.info().c_str() );
+			int nbytes = snprintf(_buf, 1024, "#%llu:%s:L:%s-R:%s", fd, protocol_str[p], laddr.info().c_str(), raddr.info().c_str() );
 			return std::string(_buf, nbytes);
 		}
 	};

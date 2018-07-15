@@ -86,10 +86,10 @@ namespace wawo { namespace net { namespace socket_api {
 		inline SOCKET accept(SOCKET const& fd, address& addr) {
 			sockaddr_in addr_in;
 			::memset(&addr_in, 0, sizeof(addr_in));
-
 			socklen_t len = sizeof(addr_in);
-			SOCKET  accepted_fd = ::accept(fd, (sockaddr*)(&addr_in), &len);
-			WAWO_RETURN_V_IF_NOT_MATCH(socket_get_last_errno(), (accepted_fd == INVALID_SOCKET));
+
+			SOCKET accepted_fd = ::accept(fd, (sockaddr*)(&addr_in), &len);
+			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, (accepted_fd == wawo::E_INVALID_SOCKET));
 			addr = address(addr_in);
 			return accepted_fd;
 		}
@@ -293,7 +293,7 @@ namespace wawo { namespace net { namespace socket_api {
 
 #ifdef WAWO_PLATFORM_WIN
 			SOCKET listenfd = ::socket(OS_DEF_family[domain], OS_DEF_sock_type[type], OS_DEF_protocol[protocol]);
-			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), listenfd == INVALID_SOCKET );
+			WAWO_RETURN_V_IF_MATCH(SOCKET_ERROR, listenfd == INVALID_SOCKET );
 
 			struct sockaddr_in addr_listen;
 			struct sockaddr_in addr_connect;

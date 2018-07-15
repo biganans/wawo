@@ -170,7 +170,8 @@ namespace wawo { namespace net {
 
 	SOCKET socket::accept( address& raddr ) {
 		if (m_state != S_LISTEN) {
-			return wawo::E_INVALID_STATE;
+			wawo::set_last_errno(wawo::E_INVALID_STATE);
+			return wawo::E_SOCKET_ERROR;
 		}
 
 		return socket_base::accept(raddr);

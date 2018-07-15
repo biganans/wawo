@@ -38,12 +38,10 @@ MSVC++ 5.0  _MSC_VER == 1100
 #define _WAWO_ADDRESS_MODEL_X32	32
 #define _WAWO_ADDRESS_MODEL_X64	64
 
-#if defined(_WIN32) || defined(_WIN64)
-	#if defined(_WIN64) && __WIN64
-		#define WAWO_ADDRESS_MODEL _WAWO_ADDRESS_MODEL_X64
-	#else
-		#define WAWO_ADDRESS_MODEL _WAWO_ADDRESS_MODEL_X32
-	#endif
+#if defined(_WIN64)
+	#define WAWO_ADDRESS_MODEL _WAWO_ADDRESS_MODEL_X64
+#else
+	#define WAWO_ADDRESS_MODEL _WAWO_ADDRESS_MODEL_X32
 #endif
 
 #if defined(__GNUC__) && __GNUC__
@@ -54,8 +52,8 @@ MSVC++ 5.0  _MSC_VER == 1100
 	#endif
 #endif
 
-#define WAWO_ADDRESSMODE_X32 (WAWO_ADDRESS_MODEL==_WAWO_ADDRESS_MODEL_X32)
-#define WAWO_ADDRESSMODE_X64 (WAWO_ADDRESS_MODEL==_WAWO_ADDRESS_MODEL_X64)
+#define WAWO_IS_ADDRESS_MODE_X32 (WAWO_ADDRESS_MODEL==_WAWO_ADDRESS_MODEL_X32)
+#define WAWO_IS_ADDRESS_MODE_X64 (WAWO_ADDRESS_MODEL==_WAWO_ADDRESS_MODEL_X64)
 
 #define _WW_OVERRIDE	override
 #define _WW_NOEXCEPT	noexcept
@@ -80,5 +78,12 @@ namespace wawo {
 	typedef long				long_t;
 
 	typedef ::size_t				size_t;
+
+#if WAWO_IS_ADDRESS_MODE_X64
+	typedef unsigned long long SOCKET;
+#else
+	typedef unsigned int SOCKET;
+#endif
 }
+
 #endif

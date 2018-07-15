@@ -338,7 +338,7 @@ namespace wawo { namespace net {
 				while (true) {
 					address raddr;
 					SOCKET nfd = socket_base::accept(raddr);
-					if (nfd == INVALID_SOCKET ) {
+					if (nfd == SOCKET_ERROR ) {
 						ec = wawo::socket_get_last_errno();
 						if (ec == wawo::E_EINTR) {
 							continue;

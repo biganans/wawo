@@ -18,8 +18,8 @@ namespace wawo { namespace net { namespace impl {
 			select():
 				poller_abstract()
 			{
-				m_signalfds[0] = -1;
-				m_signalfds[1] = -1;
+				m_signalfds[0] = wawo::E_INVALID_SOCKET;
+				m_signalfds[1] = wawo::E_INVALID_SOCKET;
 			}
 
 			~select() {}
@@ -232,8 +232,8 @@ namespace wawo { namespace net { namespace impl {
 			poller_abstract::ctxs_cancel_all(m_ctxs);
 			WAWO_CLOSE_SOCKET(m_signalfds[0]);
 			WAWO_CLOSE_SOCKET(m_signalfds[1]);
-			m_signalfds[0] = -1;
-			m_signalfds[1] = -1;
+			m_signalfds[0] = wawo::E_INVALID_SOCKET;
+			m_signalfds[1] = wawo::E_INVALID_SOCKET;
 			poller_abstract::deinit();
 		}
 		void interrupt_wait() {

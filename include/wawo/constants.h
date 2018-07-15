@@ -23,9 +23,10 @@ namespace wawo {
 		const u64_t UINT64_MAX_V = 0xffffffffffffffffULL;
 	}
 
+	const static SOCKET E_SOCKET_ERROR = (SOCKET)(-1);
+	const static SOCKET E_INVALID_SOCKET = (SOCKET)(~0);
 
 	const int OK = 0;
-	const int E_SOCKET_ERROR					= -1;
 	const int E_EPERM							= -1; //operation not permitted
 	const int E_ENOENT							= -2; //no such file or directory
 	const int E_ESRCH							= -3; //no such process

@@ -40,7 +40,7 @@ namespace wawo { namespace net {
 		u8_t flag;
 
 		poller_ctx() :
-			fd(-2),
+			fd(wawo::E_INVALID_SOCKET),
 			flag(0)
 		{
 			for (u8_t i = 0; i < IOE_SLOT_MAX; ++i) {

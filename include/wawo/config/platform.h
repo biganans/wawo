@@ -25,5 +25,4 @@
 #define WAWO_PLATFORM_HEADER2(path,platform)	<path##_##platform##_.h>
 
 #include WAWO_PLATFORM_HEADER(wawo/config/platform/platform)
-
 #endif

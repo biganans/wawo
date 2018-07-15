@@ -71,7 +71,7 @@ namespace wawo { namespace net {
 		}
 
 		socket_base::socket_base(s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
-			m_fd(-1),
+			m_fd(wawo::E_INVALID_SOCKET),
 			m_sm(SM_NONE),
 
 			m_family(family),
@@ -95,7 +95,7 @@ namespace wawo { namespace net {
 		}
 
 		socket_base::socket_base(socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt) :
-			m_fd(-1),
+			m_fd(wawo::E_INVALID_SOCKET),
 			m_sm(SM_NONE),
 
 			m_family(family),
@@ -237,9 +237,7 @@ namespace wawo { namespace net {
 		}
 
 		SOCKET socket_base::accept(address& addr) {
-			SOCKET fd = m_fn_accept(m_fd, addr);
-			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), fd==INVALID_SOCKET);
-			return fd;
+			return m_fn_accept(m_fd, addr);
 		}
 	
 		int socket_base::connect(address const& addr ) {
