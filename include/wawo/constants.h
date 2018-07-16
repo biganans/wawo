@@ -234,8 +234,8 @@ namespace wawo {
 	const int 	E_CHANNEL_WRITE_BLOCK		= -21001; 
 	const int 	E_CHANNEL_READ_BLOCK		= -21002; 
 
-	const int 	E_CHANNEL_RD_SHUTDOWN_ALREADY = -21003; 
-	const int 	E_CHANNEL_WR_SHUTDOWN_ALREADY = -21004; 
+	const int 	E_CHANNEL_READ_SHUTDOWN_ALREADY = -21003; 
+	const int 	E_CHANNEL_WRITE_SHUTDOWN_ALREADY = -21004; 
 
 	const int 	E_CHANNEL_INVALID_STATE			= -21005; 
 	const int 	E_CHANNEL_EXISTS				= -21006; 
@@ -246,8 +246,7 @@ namespace wawo {
 	const int	E_CHANNEL_OUTBOUND_EMPTY		= -21011;
 
 	const int 	E_SOCKET_GRACE_CLOSE					= -30000; 
-	const int 	E_SOCKET_SEND_IO_BLOCK_EXPIRED			= -30001; 
-	const int 	E_SOCKET_CONNECTING						= -30002; 
+	const int 	E_SOCKET_CONNECTING						= -30001; 
 
 	const int 	E_SOCKET_INVALID_FAMILY					= -30012; 
 	const int 	E_SOCKET_INVALID_TYPE					= -30013; 

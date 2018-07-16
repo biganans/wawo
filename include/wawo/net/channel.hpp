@@ -8,8 +8,33 @@
 #include <wawo/net/channel_pipeline.hpp>
 
 namespace wawo { namespace net {
+
+	enum channel_flag {
+		F_NONE = 0,
+		F_READ_SHUTDOWN = 1,
+		F_WRITE_SHUTDOWN = 1 << 1,
+		F_READWRITE_SHUTDOWN = (F_READ_SHUTDOWN | F_WRITE_SHUTDOWN),
+
+		F_WATCH_READ = 1 << 2,
+		F_WATCH_READ_INFINITE = 1 << 3,
+		F_WATCH_WRITE = 1 << 4,
+
+		F_WRITE_BLOCKED = 1 << 5,
+		F_WRITE_SHUTDOWNING = 1 << 6,
+		F_WRITE_ERROR = 1 << 7,
+		F_CLOSE_AFTER_WRITE=1<<8
+	};
+
+	#define WAWO_CHANNEL_CUSTOM_FLAG_BEGIN 12
+	#define WAWO_CHANNEL_CUSTOM_FLAG_END 15
+
 	class channel_pipeline;
 	typedef SOCKET channel_id_t;
+
+	class channel;
+	typedef std::function<void(WWRP<channel>const& ch)> fn_accepted_channel_initializer;
+	typedef std::function<void(WWRP<channel>const& ch)> fn_dial_channel_initializer;
+
 	class channel :
 		public wawo::ref_base
 	{
@@ -137,17 +162,17 @@ public: \
 
 #define CH_FUTURE_ACTION_IMPL_PACKET_1_CH_PROMISE_1(_NAME) \
 private: \
-			inline void _ch_##_NAME(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {\
+		inline void _ch_##_NAME(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {\
 			WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 			if (m_pipeline == NULL) { \
 				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
 				return; \
 			} \
-			m_pipeline->##NAME(ch_promise,ch_promise); \
+			m_pipeline->##_NAME(outlet,ch_promise); \
 		} \
 public: \
 		WWRP<channel_future> ch_##_NAME(WWRP<packet> const& outlet) {\
-			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(); \
+			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this)); \
 			return ch_##_NAME(outlet,ch_promise); \
 		} \
 		WWRP<channel_future> ch_##_NAME(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {\
@@ -162,7 +187,8 @@ public: \
 			} \
 			return ch_promise; \
 		} \
-		CH_FUTURE_ACTION_DECL_PACKET_1_CH_PROMISE_1(write);
+		
+		CH_FUTURE_ACTION_IMPL_PACKET_1_CH_PROMISE_1(write);
 
 
 #define CH_ACTION_IMPL_VOID(NAME) \
@@ -214,12 +240,6 @@ public: \
 		virtual int turnoff_nodelay() { return wawo::OK; }
 		
 		virtual bool is_active() const = 0;
-
-		/*virtual bool is_read_shutdowned() const = 0;
-		virtual bool is_write_shutdowned() const = 0;
-		virtual bool is_readwrite_shutdowned() const = 0;
-		virtual bool is_closed() const = 0;
-		*/
 	};
 }}
 #endif

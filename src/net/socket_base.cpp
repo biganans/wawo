@@ -699,7 +699,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(len > 0);
 			ec_o = wawo::OK;
 
-			//if (m_wflag&F_SHUTDOWN_WR) {
+			//if (m_wflag&F_WRITE_SHUTDOWN) {
 			//	ec_o = wawo::E_SOCKET_WR_SHUTDOWN_ALREADY;
 			//	return 0;
 			//}
@@ -719,7 +719,7 @@ namespace wawo { namespace net {
 			ec_o = wawo::OK;
 			//WAWO_ASSERT(!"TOCHECK FOR WCP");
 			/*
-			if (m_flag&F_SHUTDOWN_RD) {
+			if (m_flag&F_READ_SHUTDOWN) {
 				ec_o = wawo::E_SOCKET_RD_SHUTDOWN_ALREADY;
 				return 0;
 			}

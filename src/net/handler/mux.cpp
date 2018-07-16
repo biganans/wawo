@@ -22,7 +22,7 @@ namespace wawo { namespace net { namespace handler {
 		mux_stream_frame_flag_t flag = income->read<mux_stream_frame_flag_t>();
 
 		if (flag >= mux_stream_frame_flag::T_MUX_STREAM_MESSAGE_TYPE_MAX) {
-			DEBUG_STREAM("[mux_cargo][s%u][rst]invalid stream message type, ignore", stream_id);
+			DEBUG_STREAM("[muxs][s%u][rst]invalid stream message type, ignore", id);
 			return;
 		}
 
@@ -44,10 +44,10 @@ namespace wawo { namespace net { namespace handler {
 				s->m_state = SS_ESTABLISHED;
 				m_stream_map.insert({id, s});
 
-				DEBUG_STREAM("[mux_cargo][s%u]stream insert (by syn)", stream_id);
+				DEBUG_STREAM("[mux][s%u]stream insert (by syn)", id);
 			}
 
-			invoke<fn_mux_stream_accepted_t>(E_MUX_CH_STREAM_ACCEPTED,WWRP<mux>(this),s);
+			invoke<fn_mux_stream_accepted_t>(E_MUX_CH_STREAM_ACCEPTED,s);
 			s->ch_fire_connected();
 			return;
 		}
@@ -57,11 +57,11 @@ namespace wawo { namespace net { namespace handler {
 			typename stream_map_t::iterator it = m_stream_map.find(id);
 			if (it == m_stream_map.end()) {
 				if (flag == mux_stream_frame_flag::T_RST) {
-					DEBUG_STREAM("[mux_cargo][s%u][rst]stream not found, ignore", stream_id);
+					DEBUG_STREAM("[mux][s%u][rst]stream not found, ignore", id);
 					return;
 				}
 
-				DEBUG_STREAM("[mux_cargo][s%u][%u]stream not found, reply rst, len: %u", id, t, income->len() );
+				DEBUG_STREAM("[mux][s%u][%u]stream not found, reply rst, len: %u", id, flag, income->len() );
 				stream_snd_rst(ctx,id);
 				return;
 			}
@@ -70,7 +70,7 @@ namespace wawo { namespace net { namespace handler {
 		}
 
 		WAWO_ASSERT(s != NULL);
-		s->arrive_frame({ flag, income });
+		s->arrive_frame({flag, income });
 	}
 
 	void mux::connected(WWRP<wawo::net::channel_handler_context> const& ctx) {
@@ -86,7 +86,7 @@ namespace wawo { namespace net { namespace handler {
 		stream_map_t::iterator it = m_stream_map.begin();
 		while (it != m_stream_map.end()) {
 			it->second->ch_close();
-			DEBUG_STREAM("[mux_cargo][s%u][mux_close]force close stream, for E_CLOSE", it->second->id);
+			DEBUG_STREAM("[mux][s%u][mux_close]force close stream, for E_CLOSE", it->second->ch_id() );
 			++it;
 		}
 
