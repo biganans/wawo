@@ -170,6 +170,15 @@ namespace wawo { namespace net {
 		std::string info() const;
 	};
 
+	extern int get_addrinfo_by_host(char const* const hostname, char const* const servicename, std::vector<address>& ips, int const& filter);
+	extern int get_one_ipaddr_by_host(const char* hostname, std::string& ip, int const& filter);
+
+	extern int hosttoip(const char* hostname, ipv4_t& ip);
+	extern int dotiptoip(const char* dotip, ipv4_t& ip);
+	extern bool is_dotipv4_decimal_notation(const char* string);
+
+	extern std::string ipv4todotip(ipv4_t const& ip);
+
 	struct socketaddr {
 		inline socketaddr() :
 			so_type(T_UNKNOWN),
@@ -223,13 +232,5 @@ namespace wawo { namespace net {
 		}
 		}
 	}
-	extern int get_addrinfo_by_host(char const* const hostname, char const* const servicename, std::vector<address>& ips, int const& filter);
-	extern int get_one_ipaddr_by_host(const char* hostname, std::string& ip, int const& filter);
-
-	extern int hosttoip(const char* hostname, ipv4_t& ip);
-	extern int dotiptoip(const char* dotip, ipv4_t& ip);
-
-	extern bool is_dotipv4_decimal_notation(const char* string);
-
 }}
 #endif //_ADDRESS_H

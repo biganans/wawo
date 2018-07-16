@@ -106,7 +106,6 @@ namespace wawo { namespace net {
 
 
 	extern int get_one_ipaddr_by_host( const char* hostname, std::string& ip_o, int const& filter ) {
-
 		std::vector<address> infos;
 		int retval = get_addrinfo_by_host( hostname, "", infos, filter );
 
@@ -152,6 +151,18 @@ namespace wawo { namespace net {
 
 		return wawo::strcmp(_tmp, cstr) == 0;
 	}
+
+	std::string ipv4todotip(ipv4_t const& ip) {
+		in_addr ia;
+		ia.s_addr = ::htonl(ip);
+		char addr[16] = { 0 };
+		const char* addr_cstr = ::inet_ntop(AF_INET, &ia, addr, 16);
+		if (addr_cstr != NULL) {
+			return std::string(addr);
+		}
+		return std::string();
+	}
+
 
 
 	#ifdef WAWO_PLATFORM_GNU
@@ -199,14 +210,7 @@ namespace wawo { namespace net {
 	}
 
 	const std::string address::dotip() const {
-		in_addr ia ;
-		ia.s_addr = m_ipv4;
-		char addr[16] = {0};
-		const char* addr_cstr = inet_ntop( AF_INET, &ia, addr, 16 );
-		if (addr_cstr != NULL) {
-			return std::string(addr);
-		}
-		return std::string();
+		return ipv4todotip(m_ipv4);
 	}
 
 	std::string address::info() const {

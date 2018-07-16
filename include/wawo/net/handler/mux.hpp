@@ -63,7 +63,6 @@ namespace wawo { namespace net { namespace handler {
 
 	enum mux_stream_state {
 		SS_CLOSED,
-		SS_DIALING,
 		SS_ESTABLISHED,	//read/write ok
 	};
 
@@ -246,12 +245,13 @@ namespace wawo { namespace net { namespace handler {
 			WAWO_ASSERT(m_state == SS_CLOSED);
 			m_is_active= true;
 
-			m_state = SS_DIALING;
+			m_state = SS_ESTABLISHED;
+			initializer(WWRP<channel>(this));
 			mux_stream_frame syn_frame = make_frame_syn();
 			write_frame(std::move(syn_frame), ch_promise);
-			ch_promise->add_listener([initializer, CH = WWRP<channel>(this)](WWRP<wawo::net::channel_future> const& f) {
+			ch_promise->add_listener([CH = WWRP<channel>(this)](WWRP<wawo::net::channel_future> const& f) {
 				if (f->get() == wawo::OK) {
-					initializer(CH);
+					CH->ch_fire_connected();
 				}
 			});
 		}
@@ -465,7 +465,7 @@ namespace wawo { namespace net { namespace handler {
 	typedef std::function<void(WWRP<mux> const& mux_)> fn_mux_evt_t;
 	typedef std::function<void(WWRP<mux> const& mux_)> fn_mux_evt_t;
 	typedef std::function<void(WWRP<mux> const& mux_)> fn_mux_evt_t;
-	typedef std::function<void( WWRP<mux> const& mux_, WWRP<mux_stream> const& s)> fn_mux_stream_accepted_t;
+	typedef std::function<void(WWRP<mux_stream> const& s)> fn_mux_stream_accepted_t;
 
 	class mux:
 		public wawo::net::channel_inbound_handler_abstract,
