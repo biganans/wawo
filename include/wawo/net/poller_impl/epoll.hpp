@@ -11,8 +11,6 @@
 
 namespace wawo { namespace net { namespace impl {
 
-	
-
 	class epoll:
 		public io_event_loop
 	{

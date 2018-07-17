@@ -191,8 +191,12 @@ namespace wawo { namespace net { namespace impl {
 					}
 					WAWO_ASSERT(ec != wawo::OK);
 
-					ctx->fn[IOE_SLOT_READ]({ AIO_READ, ec,0 });
-					ctx->fn[IOE_SLOT_WRITE]({ AIO_WRITE, ec,0 });
+					if (ctx->fn[IOE_SLOT_READ] != nullptr) { 
+						ctx->fn[IOE_SLOT_READ]({ AIO_READ, ec,0 });
+					}
+					if (ctx->fn[IOE_SLOT_WRITE] != nullptr) {
+						ctx->fn[IOE_SLOT_WRITE]({ AIO_WRITE, ec,0 });
+					}
 				}
 			}
 		}
