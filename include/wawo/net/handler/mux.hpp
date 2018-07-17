@@ -196,6 +196,11 @@ namespace wawo { namespace net { namespace handler {
 			_write_frame({T_DATA, outlet}, ch_promise);
 		}
 
+		void _ch_write_block_check() {
+			WAWO_ASSERT(!"TODO");
+			//@todo plan a timer, if the send failed, we'll close this channel for a write timeout errno
+		}
+
 		void _ch_flush_done( async_io_result const& r ) {
 			WAWO_ASSERT(r.op == AIO_WRITE);
 			m_flag &= ~F_WATCH_WRITE;
@@ -205,9 +210,12 @@ namespace wawo { namespace net { namespace handler {
 				WAWO_ASSERT(m_entry_q_bytes >= entry.data->len());
 
 				m_entry_q_bytes -= entry.data->len();
+				m_wnd -= entry.data->len();
+				WAWO_ASSERT(m_wnd>0);
+
 				ch_flush_impl();
 			} else if(r.v.code == wawo::E_CHANNEL_WRITE_BLOCK) {
-				//TODO
+				_ch_write_block_check();
 			} else {
 				ch_errno(r.v.code);
 				ch_close();
@@ -300,7 +308,12 @@ namespace wawo { namespace net { namespace handler {
 						income = frame.data;
 					}
 
-					write_frame(make_frame_uwnd(income->len()));
+					WWRP<wawo::net::channel_future> f=write_frame(make_frame_uwnd(income->len()));
+					f->add_listener([](WWRP<wawo::net::channel_future> const& f) {
+						if (wawo::E_CHANNEL_WRITE_BLOCK == f->get()) {
+							WAWO_ASSERT(!"TODO, WE NEED A TIMER");
+						}
+					});
 				}
 				WAWO_ASSERT(income->len());
 				ch_read(income);
