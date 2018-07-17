@@ -11,11 +11,11 @@ public:
 		//WAWO_INFO("[%d]", ctx->ch->ch_id());
 		bool close_after_write = false;
 		WWSP<wawo::net::protocol::http::message> resp = wawo::make_shared<wawo::net::protocol::http::message>();
+		resp->type = wawo::net::protocol::http::T_RESP;
 
+		resp->ver = m->ver;
 		resp->status_code = 200;
 		resp->status = "OK";
-
-		resp->h.set("server", "wawo");
 
 		if (m->h.have("Connection") && m->h.get("Connection") == "Keep-Alive") {
 			resp->h.set("Connection", "Keep-Alive");
@@ -28,7 +28,8 @@ public:
 		m->encode(req);
 
 		WWRP<wawo::packet> body = wawo::make_ref<wawo::packet>(req->len());
-		body->write((wawo::byte_t*)req->begin(), req->len());
+		body->write((wawo::byte_t*)"OK",2);
+
 		resp->body = body;
 
 		WWRP<wawo::packet> outp;

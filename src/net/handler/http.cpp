@@ -86,6 +86,7 @@ namespace wawo { namespace net { namespace handler {
 	int http::http_on_headers_complete(WWRP<protocol::http::parser> const& p) {
 		//WAWO_DEBUG(__FUNCTION__);
 		(void)p;
+		m_tmp_m->ver = p->ver;
 		event_trigger::invoke<fn_http_message_header_end_t>(E_HEADER_COMPLETE, m_cur_ctx, m_tmp_m);
 		m_tmp_m = NULL;
 		return wawo::OK;

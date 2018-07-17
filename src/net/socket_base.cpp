@@ -307,6 +307,7 @@ namespace wawo { namespace net {
 
 			int rt = m_fn_setsockopt(m_fd, SOL_SOCKET, SO_SNDBUF, (char*)&(size), sizeof(size));
 			if (wawo::OK == rt) {
+				m_sbc.snd_size = size;
 				return wawo::OK;
 			}
 
@@ -370,6 +371,7 @@ namespace wawo { namespace net {
 
 			int rt = m_fn_setsockopt(m_fd, SOL_SOCKET, SO_RCVBUF, (char*)&(size), sizeof(size));
 			if (wawo::OK == rt) {
+				m_sbc.rcv_size = size;
 				return wawo::OK;
 			}
 

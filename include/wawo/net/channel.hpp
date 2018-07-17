@@ -215,7 +215,6 @@ public: \
 
 		CH_ACTION_IMPL_VOID(flush)
 
-		//could be called directly in any place
 		virtual channel_id_t ch_id() const = 0; //called by context in event_poller
 		
 		virtual void ch_write_impl(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) = 0;
@@ -223,6 +222,12 @@ public: \
 		virtual void ch_shutdown_read_impl(WWRP<channel_promise> const& ch_promise) = 0;
 		virtual void ch_shutdown_write_impl(WWRP<channel_promise> const& ch_promise) = 0;
 		virtual void ch_close_impl(WWRP<channel_promise> const& ch_promise) = 0;
+
+		virtual int ch_set_read_buffer_size(u32_t size) = 0;
+		virtual int ch_get_read_buffer_size(u32_t& size) = 0;
+
+		virtual int ch_set_write_buffer_size(u32_t size) = 0;
+		virtual int ch_get_write_buffer_size(u32_t& size) = 0;
 
 		virtual void begin_read(u8_t const& async_flag = 0, fn_io_event const& fn_read = NULL) {
 			(void)async_flag;

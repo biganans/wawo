@@ -41,20 +41,6 @@ namespace wawo { namespace net { namespace handler {
 	static std::atomic<int> _s_id_{1};
 	inline static int mux_make_stream_id() {return wawo::atomic_increment(&_s_id_)%0x7FFFFFFF;}
 
-	//enum mux_stream_flag {
-		//STREAM_READ_SHUTDOWN_CALLED = 1,
-		//STREAM_READ_SHUTDOWN = 1 << 1,
-		//STREAM_READ_CHOKED = 1 << 2,
-
-		//STREAM_WRITE_SHUTDOWN_CALLED = 1 << 3,
-		//STREAM_WRITE_SHUTDOWN = 1 << 4,
-
-		//STREAM_PLAN_FIN = 1 << 5,
-		//STREAM_PLAN_SYN = 1 << 6,
-
-		//STREAM_IS_ACTIVE = 1<<8
-	//};
-
 	enum mux_stream_flag {
 		F_STREAM_READ_CHOKED = (1<<WAWO_CHANNEL_CUSTOM_FLAG_BEGIN),
 		F_STREAM_FLUSH_CHOKED = (1<<(WAWO_CHANNEL_CUSTOM_FLAG_BEGIN+1))
@@ -97,6 +83,7 @@ namespace wawo { namespace net { namespace handler {
 
 		void _init() {
 			m_rb = wawo::make_ref<bytes_ringbuffer>(MUX_STREAM_WND_SIZE);
+			channel::ch_fire_opened();
 		}
 
 	public:
@@ -115,6 +102,24 @@ namespace wawo { namespace net { namespace handler {
 
 		~mux_stream()
 		{
+		}
+
+		int ch_set_read_buffer_size(u32_t size) {
+			//return socket_base::set_rcv_buffer_size(size);
+			(void)size;
+			return wawo::OK;
+		}
+		int ch_get_read_buffer_size(u32_t& size) {
+			//return socket_base::get_rcv_buffer_size(size);
+			(void)size;
+			return wawo::OK;
+		}
+		int ch_set_write_buffer_size(u32_t size) {
+			m_wnd = size;
+			return wawo::OK;
+		}
+		int ch_get_write_buffer_size(u32_t& size) {
+			return m_wnd;
 		}
 
 		inline mux_stream_frame make_frame_syn() {
@@ -212,6 +217,7 @@ namespace wawo { namespace net { namespace handler {
 				m_entry_q_bytes -= entry.data->len();
 				m_wnd -= entry.data->len();
 				WAWO_ASSERT(m_wnd>0);
+				m_entry_q.pop();
 
 				ch_flush_impl();
 			} else if(r.v.code == wawo::E_CHANNEL_WRITE_BLOCK) {

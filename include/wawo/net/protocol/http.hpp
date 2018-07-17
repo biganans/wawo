@@ -121,8 +121,6 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		void encode(WWRP<packet>& packet_o) {
 			WWRP<packet> opacket = wawo::make_ref<packet>();
 
-			//WAWO_ASSERT(map.size() > 0);
-
 			std::for_each( keys_order.begin(), keys_order.end(), [&](std::string const& key ) {
 				std::string value = map[key];
 				opacket->write((wawo::byte_t*)key.c_str(), (wawo::u32_t)key.length());

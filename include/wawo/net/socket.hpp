@@ -120,6 +120,19 @@ namespace wawo { namespace net {
 		SOCKET accept(address& raddr);
 		int connect(address const& addr);
 
+		int ch_set_read_buffer_size(u32_t size) {
+			return socket_base::set_rcv_buffer_size(size);
+		}
+		int ch_get_read_buffer_size(u32_t& size) {
+			return socket_base::get_rcv_buffer_size(size);
+		}
+		int ch_set_write_buffer_size(u32_t size) {
+			return socket_base::set_snd_buffer_size(size);
+		}
+		int ch_get_write_buffer_size(u32_t& size) {
+			return socket_base::get_snd_buffer_size(size);
+		}
+
 		static WWRP<channel_future> dial(std::string const& dialurl, fn_dial_channel_initializer const& initializer ) {
 			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(nullptr);
 			socketaddr soaddr;

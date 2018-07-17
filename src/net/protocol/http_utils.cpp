@@ -6,8 +6,10 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 
 	void encode_message(WWSP<message> const& m, WWRP<packet>& out) {
 		WWRP<packet> _out = wawo::make_ref<packet>();
-		if (m->type == T_REQ) {
 
+		WAWO_ASSERT(m->ver.major != 0);
+
+		if (m->type == T_REQ) {
 			if (m->url == "") {
 				m->url = "/";
 			}
@@ -26,7 +28,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 				m->status = "OK";
 			}
 
-			char resp[128] = { 0 };
+			char resp[512] = { 0 };
 			WAWO_ASSERT(m->status.length() > 0);
 
 			snprintf(resp, sizeof(resp) / sizeof(resp[0]), "HTTP/%d.%d %d %s", m->ver.major, m->ver.minor, m->status_code, m->status.c_str());
@@ -41,7 +43,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		if (m->body != NULL && (m->body->len() > 0)) {
 			char blength_char[16] = { 0 };
 			snprintf(blength_char, 16, "%d", m->body->len());
-			m->h.set("content-length", blength_char);
+			m->h.set("Content-Length", blength_char);
 		}
 
 		WWRP<packet> hpacket;

@@ -485,6 +485,22 @@ namespace wawo {
 		goto begin;
 	}
 
+	inline int replace(std::string const& source_, std::string const& search_, std::string const& replace_, std::string& result) {
+		int replace_count = 0;
+		std::string source = source_;
+	begin:
+		std::size_t pos = source.find(search_);
+		if (pos == std::string::npos) {
+			return replace_count;
+		}
+		std::string new_str = source.replace(pos, search_.length(), replace_);
+		++replace_count;
+		source = new_str;
+
+		result = new_str;
+		goto begin;
+	}
+
 	inline void split(std::string const& string, std::string const& delimiter, std::vector<std::string>& result ) {
 
 		WAWO_ASSERT( result.size() == 0 );
