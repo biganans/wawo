@@ -214,11 +214,12 @@ namespace wawo { namespace net { namespace handler {
 				mux_stream_outbound_entry& entry = m_entry_q.front();
 				WAWO_ASSERT(m_entry_q_bytes >= entry.data->len());
 
+				entry.ch_promise->set_success(wawo::OK);
 				m_entry_q_bytes -= entry.data->len();
 				m_wnd -= entry.data->len();
 				WAWO_ASSERT(m_wnd>0);
-				m_entry_q.pop();
 
+				m_entry_q.pop();
 				ch_flush_impl();
 			} else if(r.v.code == wawo::E_CHANNEL_WRITE_BLOCK) {
 				_ch_write_block_check();

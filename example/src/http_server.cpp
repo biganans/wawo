@@ -28,8 +28,7 @@ public:
 		m->encode(req);
 
 		WWRP<wawo::packet> body = wawo::make_ref<wawo::packet>(req->len());
-		body->write((wawo::byte_t*)"OK",2);
-
+		body->write((wawo::byte_t*)req->begin(), req->len());
 		resp->body = body;
 
 		WWRP<wawo::packet> outp;
