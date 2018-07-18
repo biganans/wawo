@@ -225,9 +225,7 @@ namespace wawo { namespace net {
 		WWRP<channel_future> _dial(address const& addr, fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise);
 
 		inline int close() {
-			int rt = socket_base::close();
-			m_state = S_CLOSED;
-			return rt;
+			ch_close();
 		}
 
 		inline void __cb_async_connect(async_io_result const& r) {
@@ -538,10 +536,11 @@ namespace wawo { namespace net {
 					m_flag &= ~F_WRITE_BLOCKED;
 					channel::ch_fire_write_unblock();
 				}
-				if (m_flag&F_WRITE_SHUTDOWNING) {
-					m_flag &= ~F_WRITE_SHUTDOWNING;
+				if (m_flag&F_CLOSE_AFTER_WRITE) {
+					ch_close();
+				} else if (m_flag&F_WRITE_SHUTDOWNING) {
 					ch_shutdown_write();
-				}
+				}else {}
 				return;
 			}
 			ch_flush_impl();
@@ -806,30 +805,33 @@ namespace wawo { namespace net {
 				entry.data->skip(sent);
 				WAWO_ASSERT(entry.data->len());
 				WAWO_ASSERT(_errno != wawo::OK);
-
-				if (_errno == wawo::OK) {
-					WAWO_ASSERT(m_outbound_entry_q.size() == 0);
-					end_write();
-					if (m_flag&F_WRITE_BLOCKED) {
-						m_flag &= ~F_WRITE_BLOCKED;
-						channel::ch_fire_write_unblock();
-					}
-					if (m_flag&F_WRITE_SHUTDOWNING) {
-						socket::ch_shutdown_write();
-					}
-				}
-				else if (_errno == wawo::E_CHANNEL_WRITE_BLOCK) {
-					WAWO_ASSERT(m_outbound_entry_q.size() > 0);
-					if ((m_flag&F_WATCH_WRITE) == 0) {
-						begin_write();
-					}
-				}
-				else {
-					end_write();
-					ch_errno(_errno);
-					m_flag |= F_WRITE_ERROR;
-				}
 				break;
+			}
+			//check send result
+			if (_errno == wawo::OK) {
+				WAWO_ASSERT(m_outbound_entry_q.size() == 0);
+				end_write();
+				if (m_flag&F_WRITE_BLOCKED) {
+					m_flag &= ~F_WRITE_BLOCKED;
+					ch_fire_write_unblock();
+				}
+
+				if (m_flag&F_CLOSE_AFTER_WRITE) {
+					ch_close();
+				} else if (m_flag&F_WRITE_SHUTDOWNING) {
+					ch_shutdown_write();
+				} else {}
+			}
+			else if (_errno == wawo::E_CHANNEL_WRITE_BLOCK) {
+				WAWO_ASSERT(m_outbound_entry_q.size() > 0);
+				if ((m_flag&F_WATCH_WRITE) == 0) {
+					begin_write();
+				}
+			}
+			else {
+				end_write();
+				ch_errno(_errno);
+				m_flag |= F_WRITE_ERROR;
 			}
 			return _errno;
 		}
@@ -934,10 +936,9 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_dial_promise == NULL);
 			//wait for write done event
 
-			if (m_flag&F_WRITE_SHUTDOWNING) {
+			if (m_flag&F_WATCH_WRITE) {
 				WAWO_ASSERT((m_flag&F_WRITE_ERROR) == 0);
-				WAWO_ASSERT((m_flag&F_WATCH_WRITE) );
-				m_flag |= F_CLOSE_AFTER_WRITE;
+				m_flag |= (F_WRITE_SHUTDOWNING | F_CLOSE_AFTER_WRITE);
 				ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWNING);
 				return;
 			}
@@ -963,6 +964,7 @@ namespace wawo { namespace net {
 			}
 			int rt = socket_base::close();
 			ch_promise->set_success(rt);
+
 			channel::ch_close_promise()->set_success(rt);
 			channel::ch_fire_closed();
 			channel::ch_close_future()->reset();

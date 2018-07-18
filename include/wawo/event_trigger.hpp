@@ -63,7 +63,7 @@ namespace wawo {
 			m_handlers.insert({id, v});
 		}
 
-		void unbind(int const& handler_id) {
+		inline void unbind(int const& handler_id) {
 			event_map_t::iterator it = m_handlers.begin();
 			while ( it != m_handlers.end()) {
 				handler_vector_t::iterator it_handlers = it->second.begin();

@@ -137,16 +137,11 @@ namespace wawo { namespace net {
 				}
 			}
 
-			try {
-				while (m_tq->size()) {
-					fn_io_event_task& t = m_tq->front();
-					WAWO_ASSERT(t);
-					t();
-					m_tq->pop();
-				}
-			} catch (...) {
+			while (m_tq->size()) {
+				fn_io_event_task& t = m_tq->front();
+				WAWO_ASSERT(t);
+				t();
 				m_tq->pop();
-				throw;
 			}
 		}
 	};

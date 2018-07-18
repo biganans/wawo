@@ -95,7 +95,7 @@ namespace wawo { namespace net { namespace impl {
 
 			fd_set fds_ex;
 			FD_ZERO(&fds_ex);
-			SOCKET max_fd_v = INVALID_SOCKET;
+			SOCKET max_fd_v = wawo::E_INVALID_SOCKET;
 
 			poller_ctx_map::iterator it = m_ctxs.begin();
 			while( it != m_ctxs.end() ) {

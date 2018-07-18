@@ -147,9 +147,6 @@
     <ClCompile Include="..\..\src\task\runner.cpp">
       <Filter>Source Files\src\task</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\3rd\stack_walker\win_stack_walker.cpp">
-      <Filter>3rd\stack_walker</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\net\handler\websocket.cpp">
       <Filter>Source Files\src\net\handler</Filter>
     </ClCompile>
@@ -182,6 +179,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\net\io_event_loop.cpp">
       <Filter>Source Files\src\net</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\3rd\stack_walker\StackWalker.cpp">
+      <Filter>3rd\stack_walker</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -329,9 +329,6 @@
     <ClInclude Include="..\..\include\wawo\task\runner.hpp">
       <Filter>Header Files\wawo\task</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\3rd\stack_walker\win_stack_walker.hpp">
-      <Filter>3rd\stack_walker</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\wawo\memory.hpp">
       <Filter>Header Files\wawo</Filter>
     </ClInclude>
@@ -469,6 +466,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\winsock_helper.hpp">
       <Filter>Header Files\wawo\net</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\3rd\stack_walker\StackWalker.h">
+      <Filter>3rd\stack_walker</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

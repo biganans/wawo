@@ -293,7 +293,7 @@ namespace wawo { namespace net { namespace socket_api {
 
 #ifdef WAWO_PLATFORM_WIN
 			SOCKET listenfd = ::socket(OS_DEF_family[domain], OS_DEF_sock_type[type], OS_DEF_protocol[protocol]);
-			WAWO_RETURN_V_IF_MATCH(SOCKET_ERROR, listenfd == INVALID_SOCKET );
+			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, listenfd == wawo::E_INVALID_SOCKET);
 
 			struct sockaddr_in addr_listen;
 			struct sockaddr_in addr_connect;
@@ -324,7 +324,7 @@ namespace wawo { namespace net { namespace socket_api {
 			}
 
 			connectfd = ::socket(OS_DEF_family[domain], OS_DEF_sock_type[type], OS_DEF_protocol[protocol]);
-			if (connectfd == INVALID_SOCKET ) {
+			if (connectfd == wawo::E_INVALID_SOCKET) {
 				rt = wawo::socket_get_last_errno();
 				goto end;
 			}
@@ -335,7 +335,7 @@ namespace wawo { namespace net { namespace socket_api {
 			}
 
 			acceptfd = ::accept(listenfd, reinterpret_cast<sockaddr*>(&addr_accept), &socklen);
-			if (acceptfd == INVALID_SOCKET ) {
+			if (acceptfd == wawo::E_INVALID_SOCKET) {
 				rt = wawo::socket_get_last_errno();
 				WAWO_CLOSE_SOCKET(connectfd);
 				goto end;

@@ -23,6 +23,8 @@ namespace wawo {
 		const u64_t UINT64_MAX_V = 0xffffffffffffffffULL;
 	}
 
+	//WSAEWOULDBLOCK
+
 	const static SOCKET E_SOCKET_ERROR = (SOCKET)(-1);
 	const static SOCKET E_INVALID_SOCKET = (SOCKET)(~0);
 
@@ -162,6 +164,7 @@ namespace wawo {
 // 1---19999; reserved for system call error code (windows)
 	const int E_WSAEINTR						= -10004; // A blocking operation was interrupted by a call to WSACancelBlockingCall.
 	const int E_WSAEBADF						= -10009; // The file handle supplied is not valid.
+	const int E_WSAEFAULT						= -10014; // The system detected an invalid pointer address in attempting to use a pointer argument in a call.
 	const int E_WSAEINVAL						= -10022; // An invalid argument was supplied
 	const int E_WSAEACCES						= -10013; // An attempt was made to access a socket in a way forbidden by its access permissions.
 	const int E_WSAEMFILE						= -10024; // Too many open sockets.

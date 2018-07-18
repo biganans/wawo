@@ -62,7 +62,7 @@ namespace wawo {
 
 
 #ifdef WAWO_PLATFORM_WIN
-	#include "./../3rd/stack_walker/win_stack_walker.hpp"
+	#include "./../3rd/stack_walker/StackWalker.h"
 #endif
 
 #ifdef WAWO_PLATFORM_WIN
@@ -70,7 +70,6 @@ namespace wawo {
 	class stack_walker : public StackWalker {
 	public:
 		std::string stack_info;
-
 		stack_walker() : StackWalker(), stack_info() {
 		}
 	protected:

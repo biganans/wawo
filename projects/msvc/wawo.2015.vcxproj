@@ -143,7 +143,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\3rd\http_parser\http_parser.c" />
-    <ClCompile Include="..\..\3rd\stack_walker\win_stack_walker.cpp" />
+    <ClCompile Include="..\..\3rd\stack_walker\StackWalker.cpp" />
     <ClCompile Include="..\..\src\basic.cpp" />
     <ClCompile Include="..\..\src\exception.cpp" />
     <ClCompile Include="..\..\src\log\console_logger.cpp" />
@@ -172,7 +172,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\3rd\http_parser\http_parser.h" />
-    <ClInclude Include="..\..\3rd\stack_walker\win_stack_walker.hpp" />
+    <ClInclude Include="..\..\3rd\stack_walker\StackWalker.h" />
     <ClInclude Include="..\..\include\wawo.h" />
     <ClInclude Include="..\..\include\wawo\app.hpp" />
     <ClInclude Include="..\..\include\wawo\basic.hpp" />

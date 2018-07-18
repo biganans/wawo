@@ -29,15 +29,9 @@ namespace wawo { namespace net {
 	protected:
 		inline void run() {
 			init();
-			try {
-				while (WAWO_LIKELY(S_RUNNING == m_state)) {
-					io_event_executor::exec_task();
-					do_poll();
-				}
-			} catch (...) {
-				m_state = S_EXIT;
-				deinit();
-				throw;
+			while (WAWO_LIKELY(S_RUNNING == m_state)) {
+				io_event_executor::exec_task();
+				do_poll();
 			}
 			deinit();
 		}

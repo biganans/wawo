@@ -21,7 +21,7 @@ namespace wawo {
 	};
 
 	//@note
-	//if you inherit this class, you must impl inline void _notify_listeners() at least
+	//if you inherit this class, you must impl void _notify_listeners() at least
 	template <typename T>
 	class future:
 		public ref_base,
@@ -57,11 +57,12 @@ namespace wawo {
 		}
 
 		void _notify_listeners() {
-			if (m_handlers.size() == 0) {
+			const ::size_t _size = m_handlers.size();
+			if (_size == 0) {
 				return;
 			}
 			event_trigger::invoke<std::function<void()>>(E_COMPLETE);
-			for( size_t i=0;i<m_handlers.size();++i) {
+			for( size_t i=0;i<_size;++i) {
 				event_trigger::unbind(m_handlers[i]);
 			}
 			m_handlers.clear();
