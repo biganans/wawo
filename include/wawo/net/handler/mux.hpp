@@ -143,6 +143,7 @@ namespace wawo { namespace net { namespace handler {
 		}
 
 		inline mux_stream_frame make_frame_data(WWRP<wawo::packet> const& data) {
+			WAWO_ASSERT(data != NULL);
 			return { mux_stream_frame_flag::T_DATA, data };
 		}
 		inline mux_stream_frame make_frame_fin() {
@@ -198,8 +199,9 @@ namespace wawo { namespace net { namespace handler {
 
 		void ch_write_impl(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(event_poller()->in_event_loop());
-			WAWO_ASSERT(outlet->len() > 0);
+			WAWO_ASSERT(outlet != NULL);
 			WAWO_ASSERT(ch_promise != NULL);
+			WAWO_ASSERT(outlet->len() > 0);
 			_write_frame({T_DATA, outlet}, ch_promise);
 		}
 
@@ -284,7 +286,7 @@ namespace wawo { namespace net { namespace handler {
 					CH->ch_fire_connected();
 				}
 			});
-			write_frame(std::move(syn_frame), ch_promise);
+			write_frame(syn_frame, ch_promise);
 		}
 
 		WWRP<wawo::net::channel_future> dial(fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise) {

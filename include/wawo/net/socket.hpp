@@ -555,8 +555,8 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(is_nonblocking());
 			if (!event_poller()->in_event_loop()) {
 				WWRP<socket> _so(this);
-				event_poller()->execute([_so]()->void {
-					_so->begin_read();
+				event_poller()->execute([_so,async_flag,fn_read]()->void {
+					_so->begin_read(async_flag,fn_read);
 				});
 				return;
 			}
@@ -633,8 +633,8 @@ namespace wawo { namespace net {
 		inline void begin_connect( fn_io_event const& fn_connected = NULL ) {
 			if (!event_poller()->in_event_loop()) {
 				WWRP<socket> _so(this);
-				event_poller()->execute([_so]()->void {
-					_so->begin_connect();
+				event_poller()->execute([_so,fn_connected]()->void {
+					_so->begin_connect(fn_connected);
 				});
 				return;
 			}
@@ -663,8 +663,8 @@ namespace wawo { namespace net {
 
 			if (!event_poller()->in_event_loop()) {
 				WWRP<socket> _so(this);
-				event_poller()->execute([_so]()->void {
-					_so->begin_write();
+				event_poller()->execute([_so,fn_write]()->void {
+					_so->begin_write(fn_write);
 				});
 				return;
 			}
