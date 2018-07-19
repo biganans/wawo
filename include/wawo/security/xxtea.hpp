@@ -69,7 +69,7 @@ inline static void xxtea_to_uint32_array(wawo::u32_t* arr, wawo::u32_t const& al
 	WAWO_ASSERT(alength >= dlen >> 2);
 	WAWO_ASSERT(data != NULL);
 	if (wawo::is_little_endian()) {
-		memcpy(arr, data, dlen);
+		::memcpy(arr, data, dlen);
 		return;
 	}
 	for (wawo::u32_t i = 0; i < dlen; ++i) {
@@ -147,7 +147,7 @@ namespace wawo { namespace security {
 		xxtea_to_uint32_array(u32k, 4, tmp, 16);
 
 		u32_t u32len = dlen >> 2;
-		u32_t* u32data = (u32_t*)calloc(sizeof(u32_t), u32len);
+		u32_t* u32data = (u32_t*)::calloc(sizeof(u32_t), u32len);
 		if (u32data == NULL) {
 			ec = wawo::E_MEMORY_ALLOC_FAILED;
 			return NULL;

@@ -353,7 +353,6 @@ namespace wawo { namespace net {
 #else
 			while(ec == wawo::OK) {
 				if (WAWO_UNLIKELY(m_flag&F_READ_SHUTDOWN)) { return; }
-				//byte_t m_trb_[65535];
 				wawo::u32_t nbytes = socket_base::recv(m_trb, 65535, ec);
 				if (WAWO_LIKELY(nbytes>0)) {
 					WWRP<packet> p = wawo::make_ref<packet>(nbytes);
@@ -395,7 +394,9 @@ namespace wawo { namespace net {
 		inline void __rdwr_shutdown_check() {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			if ( (m_flag&(F_READWRITE_SHUTDOWN)) == F_READWRITE_SHUTDOWN) {
-				ch_close();
+				event_poller()->schedule([CH=WWRP<channel>(this)]() {
+					CH->ch_close();
+				});
 			}
 		}
 

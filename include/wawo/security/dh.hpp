@@ -21,7 +21,7 @@ namespace wawo { namespace security {
 
 	inline static DH_Factor dh_generate_factor() {
 		DH_Factor f = { 0,0 };
-		f.priv_key = wawo::random_u64();
+		f.priv_key = wawo::random_u64(true);
 		f.pub_key = wawo::math::formula::Q_powmod(DH_g, f.priv_key, DH_q);
 		return f;
 	}

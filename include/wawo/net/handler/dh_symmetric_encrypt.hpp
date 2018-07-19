@@ -340,7 +340,7 @@ namespace wawo {namespace net {namespace handler {
 
 				WWSP<wawo::security::cipher_abstract> cipher = make_cipher_suite(dh_frameHello_reply.cipher);
 				WAWO_ASSERT(cipher != NULL);
-				u64_t key = wawo::security::dh_generate_key(dh_frameHello_reply.pub_key, m_context.dhfactor.priv_key);
+				u64_t key = wawo::security::dh_generate_key(hello.pub_key, m_context.dhfactor.priv_key);
 				WAWO_TRACE_DH("[dh_symmetric_encrypt]generate key: %llu", key);
 				byte_t bkey[16] = { 0 };
 				wawo::bytes_helper::write_u64(key, (byte_t*)&bkey[0]);
