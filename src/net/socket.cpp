@@ -10,7 +10,7 @@ namespace wawo { namespace net {
 		WAWO_CONDITION_CHECK( m_trb != NULL );
 
 #ifdef _DEBUG
-		//::memset( m_trb, 'i', m_cfg.buffer.rcv_size );
+		::memset( m_trb, 'i', m_cfg.buffer.rcv_size );
 #endif
 	}
 

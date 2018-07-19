@@ -135,6 +135,11 @@ namespace wawo { namespace net {
 			buffer({0,0}),
 			kvals({false,0,0,0})
 		{}
+		socket_cfg(int option_, socket_buffer_cfg const& bcfg_, keep_alive_vals const& kvals_):
+			option(option_),
+			buffer(bcfg_),
+			kvals(kvals_)
+		{}
 	};
 
 	struct socketinfo {

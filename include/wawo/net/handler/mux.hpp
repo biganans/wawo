@@ -274,7 +274,7 @@ namespace wawo { namespace net { namespace handler {
 			_do_ch_flush_impl();
 		}
 
-		void _dial(fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise) {
+		void _dial(fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise ) {
 			WAWO_ASSERT(m_state == SS_CLOSED);
 			m_is_active= true;
 

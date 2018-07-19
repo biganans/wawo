@@ -71,10 +71,6 @@ namespace wawo { namespace net {
 #endif
 		{
 			_init();
-
-			//set_rcv_buffer_size(1024 * 1024);
-			//set_snd_buffer_size(1024 * 1024);
-
 			ch_fire_opened(); //may throw
 		}
 
