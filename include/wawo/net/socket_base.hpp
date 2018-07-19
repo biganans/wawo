@@ -8,7 +8,7 @@
 #include <wawo/net/address.hpp>
 #include <wawo/net/socket_api.hpp>
 
-//#define WAWO_ENABLE_TRACE_SOCKET
+#define WAWO_ENABLE_TRACE_SOCKET
 #ifdef WAWO_ENABLE_TRACE_SOCKET
 	#define WAWO_TRACE_SOCKET WAWO_INFO
 #else
@@ -39,14 +39,7 @@
 #define	IPTOS_MINCOST		0x02
 #endif
 
-
-#define __FLUSH_DEFAULT_BLOCK_TIME__		(5*1000)	//5 ms
-#define __FLUSH_BLOCK_TIME_INFINITE__		(-1)		//
-#define __FLUSH_SLEEP_TIME_MAX__			(200)		//0.2 ms
-#define __WAIT_FACTOR__						(50)		//50 microseconds
-
 namespace wawo { namespace net {
-
 	#ifdef WAWO_PLATFORM_GNU
 		typedef socklen_t socklen_t;
 	#elif defined(WAWO_PLATFORM_WIN)
@@ -54,8 +47,6 @@ namespace wawo { namespace net {
 	#else
 		#error
 	#endif
-
-
 }}
 
 namespace wawo { namespace net {
@@ -86,6 +77,8 @@ namespace wawo { namespace net {
 		{ 1024 * 8,		1024 * 8 }, //8k, super tiny
 	};
 
+	const static socket_buffer_cfg default_socket_buffer_cfg = socket_buffer_cfgs[BT_DEFAULT];
+
 	enum socket_buffer_range {
 		SOCK_SND_MAX_SIZE = 1024 * 1024 * 2,
 		SOCK_SND_MIN_SIZE = 1024 * 4,
@@ -99,7 +92,7 @@ namespace wawo { namespace net {
 		SM_PASSIVE,
 		SM_LISTENER
 	};
-	enum option {
+	enum socket_option {
 		OPTION_NONE = 0,
 		OPTION_BROADCAST = 0x01, //only for UDP
 		OPTION_REUSEADDR = 0x02,
@@ -107,21 +100,22 @@ namespace wawo { namespace net {
 		OPTION_NON_BLOCKING = 0x08,
 		OPTION_NODELAY = 0x10, //only for TCP
 	};
+	const static int default_socket_option = OPTION_NONE;
 
 	struct keep_alive_vals {
-		u8_t	onoff;
+		bool	onoff;
 		i32_t	idle; //in milliseconds
 		i32_t	interval; //in milliseconds
 		i32_t	probes;
 
 		keep_alive_vals() :
-			onoff(0),
+			onoff(false),
 			idle(0),
 			interval(0),
 			probes(0)
 		{}
 
-		keep_alive_vals(u8_t const& onoff_, i32_t const& idle_, i32_t const& interval_, i32_t const& probes_):
+		keep_alive_vals(bool const& onoff_, i32_t const& idle_, i32_t const& interval_, i32_t const& probes_):
 			onoff(onoff_),
 			idle(idle_),
 			interval(interval_),
@@ -130,7 +124,18 @@ namespace wawo { namespace net {
 		}
 	};
 
-	const static keep_alive_vals default_keep_alive_vals = {1,(60*1000),(30*1000),10};
+	const static keep_alive_vals default_keep_alive_vals(true,(60*1000),(30*1000),10);
+
+	struct socket_cfg {
+		int option;
+		socket_buffer_cfg buffer;
+		keep_alive_vals kvals;
+		socket_cfg() :
+			option(OPTION_NONE),
+			buffer({0,0}),
+			kvals({false,0,0,0})
+		{}
+	};
 
 	struct socketinfo {
 		SOCKET fd;
@@ -157,15 +162,14 @@ namespace wawo { namespace net {
 	protected:
 		SOCKET m_fd;
 		socket_mode m_sm; //
+
 		s_family m_family;
 		s_type m_type;
 		s_protocol m_protocol;
 
-		int m_option;
 		address m_laddr;
 		address m_raddr;
-
-		socket_buffer_cfg m_sbc; //socket buffer setting
+		socket_cfg m_cfg;
 
 		socket_api::fn_socket m_fn_socket;
 		socket_api::fn_connect m_fn_connect;
@@ -181,15 +185,24 @@ namespace wawo { namespace net {
 
 		socket_api::fn_getsockopt m_fn_getsockopt;
 		socket_api::fn_setsockopt m_fn_setsockopt;
-
 		socket_api::fn_getsockname m_fn_getsockname;
 
 	private:
 		void _socket_fn_init();
-		int set_options(int const& options);
 
+		int _cfg_reuseaddr(bool onoff);
+		int _cfg_reuseport(bool onoff);
+		int _cfg_nonblocking(bool onoff);
+
+		int _cfg_buffer( socket_buffer_cfg const& bcfg );
+		int _cfg_nodelay(bool onoff);
+		int _cfg_keep_alive(bool onoff);
+		int _cfg_keep_alive_vals(keep_alive_vals const& vals);
+
+		int _cfg_broadcast(bool onoff);
+		int _cfgs_setup(socket_cfg const& cfg);
 	protected:
-		int open();
+		int open(socket_cfg const& cfg = socket_cfg());
 		int shutdown(int const& flag);
 		int close();
 		int bind(address const& addr);
@@ -198,13 +211,12 @@ namespace wawo { namespace net {
 		int connect(address const& addr);
 
 	public:
-		explicit socket_base(SOCKET const& fd, address const& laddr, address const& raddr, socket_mode const& sm, socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& opt = OPTION_NONE); //by pass a connected socket fd
-		explicit socket_base(s_family const& family, s_type const& type, s_protocol const& protocol, option const& opt = OPTION_NONE);
-		explicit socket_base(socket_buffer_cfg const& sbc, s_family const& family, s_type const& sockt, s_protocol const& proto, option const& option = OPTION_NONE); //init a empty socket object
+		explicit socket_base(SOCKET const& fd, socket_mode const& sm, address const& laddr, address const& raddr, s_family const& family, s_type const& sockt, s_protocol const& proto, socket_cfg const& cfg); //by pass a connected socket fd
+		explicit socket_base(s_family const& family, s_type const& type, s_protocol const& protocol);
 
 		virtual ~socket_base();
 
-		inline socket_buffer_cfg const& buffer_cfg() const { return m_sbc; }
+		inline socket_cfg const& cfg() const { return m_cfg; }
 		inline s_family const& sock_family() const { return m_family; };
 		inline s_type const& sock_type() const { return m_type; };
 		inline s_protocol const& sock_protocol() { return m_protocol; };
@@ -246,14 +258,16 @@ namespace wawo { namespace net {
 			return m_fn_setsockopt(m_fd, level, option_name, value, option_len);
 		}
 
-		inline bool is_nodelay() const { return ((m_option&OPTION_NODELAY) != 0); }
+		inline bool is_nodelay() const { return ((m_cfg.option&OPTION_NODELAY) != 0); }
+		inline int turnon_nodelay() { return _cfg_nodelay(true); }
+		inline int turnoff_nodelay() { return _cfg_nodelay(false); }
 
-		int turnoff_nodelay();
-		int turnon_nodelay();
+		int turnon_nonblocking() { return _cfg_nonblocking(true); }
+		int turnoff_nonblocking() { return _cfg_nonblocking(false); }
+		inline bool is_nonblocking() const { return ((m_cfg.option&OPTION_NON_BLOCKING) != 0); }
 
-		int turnon_nonblocking();
-		int turnoff_nonblocking();
-		inline bool is_nonblocking() const { return ((m_option&OPTION_NON_BLOCKING) != 0); }
+		int reuse_addr() { return _cfg_reuseaddr(true); }
+		int reuse_port() { return _cfg_reuseport(true); }
 
 		//must be called between open and connect|listen
 		int set_snd_buffer_size(u32_t const& size);
@@ -268,18 +282,15 @@ namespace wawo { namespace net {
 		int get_linger(bool& on_off, int& linger_t) const;
 		int set_linger(bool const& on_off, int const& linger_t = 30 /* in seconds */);
 
-		int turnon_keep_alive();
-		int turnoff_keep_alive();
+		int turnon_keep_alive() { return _cfg_keep_alive(true); }
+		int turnoff_keep_alive() { return _cfg_keep_alive(false); }
 
 		//@hint windows do not provide ways to retrieve idle time and interval ,and probes has been disabled by programming since vista
-		int set_keep_alive_vals(keep_alive_vals const& vals);
-		int get_keep_alive_vals(keep_alive_vals& vals);
+		int set_keep_alive_vals(keep_alive_vals const& vals) { return _cfg_keep_alive_vals(vals); }
+		//int get_keep_alive_vals(keep_alive_vals& vals);
 
 		int get_tos(u8_t& tos) const;
 		int set_tos(u8_t const& tos);
-
-		int reuse_addr();
-		int reuse_port();
 
 		wawo::u32_t send(byte_t const* const buffer, wawo::u32_t const& size, int& ec_o, int const& flag = 0);
 		wawo::u32_t recv(byte_t* const buffer_o, wawo::u32_t const& size, int& ec_o, int const& flag = 0);
