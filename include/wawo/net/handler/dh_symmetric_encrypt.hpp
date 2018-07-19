@@ -246,8 +246,7 @@ namespace wawo {namespace net {namespace handler {
 			if (m_cookie != NULL) {
 				WAWO_ASSERT(sizeof(DH_Context) == m_cookie_size);
 				::memcpy(&m_context, m_cookie, m_cookie_size);
-			}
-			else {
+			} else {
 				m_context.cipher_count = 2;
 				m_context.ciphers[0] = CS_XXTEA;
 				m_context.ciphers[1] = CS_NONE;
