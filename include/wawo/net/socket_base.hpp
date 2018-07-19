@@ -109,7 +109,7 @@ namespace wawo { namespace net {
 		i32_t	probes;
 
 		keep_alive_vals() :
-			onoff(false),
+			onoff(true),
 			idle(0),
 			interval(0),
 			probes(0)
@@ -133,7 +133,7 @@ namespace wawo { namespace net {
 		socket_cfg() :
 			option(OPTION_NONE),
 			buffer({0,0}),
-			kvals({false,0,0,0})
+			kvals({true,0,0,0})
 		{}
 		socket_cfg(int option_, socket_buffer_cfg const& bcfg_, keep_alive_vals const& kvals_):
 			option(option_),
