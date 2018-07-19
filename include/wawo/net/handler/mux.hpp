@@ -520,6 +520,8 @@ namespace wawo { namespace net { namespace handler {
 		virtual ~mux();
 
 		void read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income);
+		void read_shutdowned(WWRP<wawo::net::channel_handler_context> const& ctx);
+
 		void connected(WWRP<wawo::net::channel_handler_context> const& ctx);
 		void closed(WWRP<wawo::net::channel_handler_context> const& ctx);
 

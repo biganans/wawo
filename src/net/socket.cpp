@@ -40,12 +40,13 @@ namespace wawo { namespace net {
 			m_state = S_CONNECTED;
 			return wawo::OK;
 		}
-		WAWO_ASSERT(rt<0);
-		if (is_nonblocking() && (IS_ERRNO_EQUAL_CONNECTING(rt))) {
+		WAWO_ASSERT(rt== wawo::E_SOCKET_ERROR);
+		WAWO_ASSERT(is_nonblocking());
+		int ec = wawo::socket_get_last_errno();
+		if (IS_ERRNO_EQUAL_CONNECTING(ec)) {
 			m_state = S_CONNECTING;
-			return wawo::E_SOCKET_CONNECTING;
 		}
-		return rt;
+		return wawo::E_SOCKET_ERROR;
 	}
 
 	int socket::bind(wawo::net::address const& addr) {
@@ -153,20 +154,24 @@ namespace wawo { namespace net {
 #endif
 			begin_read();
 			return ch_promise;
-		} else if (rt == wawo::E_SOCKET_CONNECTING) {
-			m_dial_promise = ch_promise;
-			TRACE_IOE("[socket][%s][async_connect]watch(IOE_WRITE)", info().to_stdstring().c_str());
+		} 
+		if (rt == wawo::E_SOCKET_ERROR) {
+			int ec = wawo::socket_get_last_errno();
+			if ( IS_ERRNO_EQUAL_CONNECTING(ec) ) {
+				m_dial_promise = ch_promise;
+				TRACE_IOE("[socket][%s][async_connect]watch(IOE_WRITE)", info().to_stdstring().c_str());
 #ifdef WAWO_IO_MODE_IOCP
-			socket::__IOCP_CALL_ConnectEx();
+				socket::__IOCP_CALL_ConnectEx();
 #else
-			socket::begin_connect();
+				socket::begin_connect();
 #endif
-			return ch_promise;
-		} else {
-			ch_promise->set_success(rt);
-			channel::ch_errno(rt);
-			channel::ch_close();
-			return ch_promise;
+				return ch_promise;
+			} else {
+				ch_promise->set_success(ec);
+				channel::ch_errno(ec);
+				channel::ch_close();
+				return ch_promise;
+			}
 		}
 	}
 

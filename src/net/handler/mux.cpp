@@ -73,6 +73,11 @@ namespace wawo { namespace net { namespace handler {
 		s->arrive_frame({flag, income });
 	}
 
+	void mux::read_shutdowned(WWRP<wawo::net::channel_handler_context> const& ctx) {
+		ctx->shutdown_write();
+		ctx->fire_read_shutdowned();
+	}
+
 	void mux::connected(WWRP<wawo::net::channel_handler_context> const& ctx) {
 		WAWO_ASSERT(m_ch_ctx == NULL);
 		m_ch_ctx = ctx;
