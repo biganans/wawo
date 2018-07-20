@@ -32,8 +32,7 @@ namespace wawo { namespace net {
 	typedef SOCKET channel_id_t;
 
 	class channel;
-	typedef std::function<void(WWRP<channel>const& ch)> fn_accepted_channel_initializer;
-	typedef std::function<void(WWRP<channel>const& ch)> fn_dial_channel_initializer;
+	typedef std::function<void(WWRP<channel>const& ch)> fn_channel_initializer;
 
 	class channel :
 		public wawo::ref_base
@@ -145,14 +144,9 @@ public: \
 		} \
 		WWRP<channel_future> ch_##NAME(WWRP<channel_promise> const& ch_promise) { \
 			WAWO_ASSERT( m_io_event_loop != NULL ); \
-			if( !m_io_event_loop->in_event_loop() ) { \
-				WWRP<channel> _ch(this); \
-				m_io_event_loop->schedule([_ch, ch_promise]() { \
-					_ch->_ch_##NAME(ch_promise); \
-				}); \
-			} else {\
-				_ch_##NAME(ch_promise); \
-			} \
+			m_io_event_loop->execute([_ch=WWRP<channel>(this), ch_promise]() { \
+				_ch->_ch_##NAME(ch_promise); \
+			}); \
 			return ch_promise; \
 		} \
 
@@ -177,14 +171,9 @@ public: \
 		} \
 		WWRP<channel_future> ch_##_NAME(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {\
 			WAWO_ASSERT(m_io_event_loop != NULL); \
-			if(!m_io_event_loop->in_event_loop()) { \
-				WWRP<channel> _ch(this); \
-				m_io_event_loop->schedule([_ch, outlet, ch_promise]() { \
-					_ch->_ch_##_NAME(outlet, ch_promise); \
-				}); \
-			} else { \
-				_ch_##_NAME(outlet,ch_promise); \
-			} \
+			m_io_event_loop->execute([_ch=WWRP<channel>(this), outlet, ch_promise]() { \
+				_ch->_ch_##_NAME(outlet, ch_promise); \
+			}); \
 			return ch_promise; \
 		} \
 		
@@ -203,14 +192,9 @@ private: \
 public: \
 		void ch_##NAME() {\
 			WAWO_ASSERT( m_io_event_loop != NULL ); \
-			if(!m_io_event_loop->in_event_loop()) { \
-				WWRP<channel> _ch(this); \
-				m_io_event_loop->schedule([_ch]() { \
-					_ch->_ch_##NAME(); \
-				}); \
-			} else {\
-				_ch_##NAME(); \
-			}\
+			m_io_event_loop->execute([_ch=WWRP<channel>(this)]() { \
+				_ch->_ch_##NAME(); \
+			}); \
 		} \
 
 		CH_ACTION_IMPL_VOID(flush)

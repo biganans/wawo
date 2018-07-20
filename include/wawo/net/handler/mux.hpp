@@ -274,7 +274,7 @@ namespace wawo { namespace net { namespace handler {
 			_do_ch_flush_impl();
 		}
 
-		void _dial(fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise ) {
+		void _dial(fn_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise ) {
 			WAWO_ASSERT(m_state == SS_CLOSED);
 			m_is_active= true;
 
@@ -289,17 +289,14 @@ namespace wawo { namespace net { namespace handler {
 			write_frame(syn_frame, ch_promise);
 		}
 
-		WWRP<wawo::net::channel_future> dial(fn_dial_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise) {
-			if (!event_poller()->in_event_loop()) {
-				WWRP<mux_stream> muxs(this);
-				event_poller()->execute([S = WWRP<mux_stream>(this), initializer, ch_promise]() -> void {
-					S->_dial(initializer, ch_promise);
-				});
-			}
+		WWRP<wawo::net::channel_future> dial(fn_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise) {
+			event_poller()->execute([S = WWRP<mux_stream>(this), initializer, ch_promise]() -> void {
+				S->_dial(initializer, ch_promise);
+			});
 			return ch_promise;
 		}
 
-		WWRP<wawo::net::channel_future> dial(fn_dial_channel_initializer const& initializer) {
+		WWRP<wawo::net::channel_future> dial(fn_channel_initializer const& initializer) {
 			WWRP<wawo::net::channel_promise> ch_promise = wawo::make_ref<wawo::net::channel_promise>(WWRP<wawo::net::channel>(this));
 			return dial(initializer, ch_promise);
 		}
