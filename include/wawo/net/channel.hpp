@@ -53,7 +53,7 @@ namespace wawo { namespace net {
 		{}
 		~channel() {}
 
-		inline WWRP<io_event_loop> const& event_poller() const {
+		__WW_FORCE_INLINE WWRP<io_event_loop> const& event_poller() const {
 			return m_io_event_loop;
 		}
 

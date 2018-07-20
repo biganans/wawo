@@ -42,7 +42,7 @@ namespace wawo { namespace net {
 		std::thread::id m_tid;
 		wait_type m_wait_t;
 
-		inline void __wait_check() {
+		__WW_FORCE_INLINE void __wait_check() {
 			if (WAWO_LIKELY(m_wait_t == W_NOWAIT)) {
 				return;
 			} else if (m_wait_t == W_COND) {

@@ -102,7 +102,7 @@ namespace wawo { namespace net { namespace impl {
 			}
 
 			ctx_update_for_unwatch(ctx, flag, fd);
-			if (ctx->flag == 0) {
+			if (0 == ctx->flag) {
 				m_ctxs.erase(it);
 			}
 			TRACE_IOE("[WPOLL][##%d][#%d][unwatch]wpoll op success, op flag: %d, new flag: %d", m_wpHandle, fd, flag, ctx->flag);
