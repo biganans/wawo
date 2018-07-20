@@ -270,7 +270,6 @@ namespace wawo { namespace net { namespace handler {
 		}
 
 		void ch_flush_impl() {
-			if (m_flag&F_WATCH_WRITE) { return; }
 			_do_ch_flush_impl();
 		}
 
@@ -457,8 +456,7 @@ namespace wawo { namespace net { namespace handler {
 			}
 			ch_promise->set_success(wawo::OK);
 
-			channel::ch_close_promise()->set_success(wawo::OK);
-			channel::ch_fire_closed();
+			channel::ch_fire_closed(wawo::OK);
 			channel::ch_close_future()->reset();
 		}
 

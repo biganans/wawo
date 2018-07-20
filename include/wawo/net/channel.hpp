@@ -37,37 +37,21 @@ namespace wawo { namespace net {
 	class channel :
 		public wawo::ref_base
 	{
-		WWRP<channel_pipeline> m_pipeline;
-		WWRP<ref_base>	m_ctx;
 		WWRP<io_event_loop> m_io_event_loop;
+		WWRP<channel_pipeline> m_pipeline;
 		WWRP<channel_promise> m_ch_close_future;
+		WWRP<ref_base>	m_ctx;
 		int m_errno;
 
-	protected:
-		inline WWRP<channel_promise> ch_close_promise() {
-			return m_ch_close_future;
-		}
 	public:
 		channel(WWRP<io_event_loop> const& poller) :
-			m_pipeline(NULL),
-			m_ctx(NULL),
 			m_io_event_loop(poller),
+			m_pipeline(NULL),
 			m_ch_close_future(NULL),
+			m_ctx(NULL),
 			m_errno(0)
 		{}
 		~channel() {}
-
-		template <class ctx_t>
-		inline WWRP<ctx_t> get_ctx() const {
-			return wawo::static_pointer_cast<ctx_t>(m_ctx);
-		}
-		inline void set_ctx(WWRP<ref_base> const& ctx) {
-			m_ctx = ctx;
-		}
-		inline void ch_errno(int e) {
-			m_errno = e;
-		}
-		inline int ch_get_errno() { return m_errno; }
 
 		inline WWRP<io_event_loop> const& event_poller() const {
 			return m_io_event_loop;
@@ -81,6 +65,18 @@ namespace wawo { namespace net {
 		inline WWRP<channel_future> ch_close_future() const {
 			return m_ch_close_future;
 		}
+
+		template <class ctx_t>
+		inline WWRP<ctx_t> get_ctx() const {
+			return wawo::static_pointer_cast<ctx_t>(m_ctx);
+		}
+		inline void set_ctx(WWRP<ref_base> const& ctx) {
+			m_ctx = ctx;
+		}
+		inline void ch_errno(int e) {
+			m_errno = e;
+		}
+		inline int ch_get_errno() { return m_errno; }
 
 #define CH_FIRE_ACTION_IMPL_PACKET_1(_NAME,_P) \
 		void ch_##_NAME(WWRP<packet> const& _P) { \
@@ -115,12 +111,16 @@ namespace wawo { namespace net {
 			m_ch_close_future = wawo::make_ref<channel_promise>(WWRP<channel>(this));
 		}
 
-		inline void ch_fire_closed() {
+		inline void ch_fire_closed(int const& code ) {
 			WAWO_ASSERT(m_io_event_loop != NULL);
 			WAWO_ASSERT(m_pipeline != NULL);
+			WAWO_ASSERT(m_ch_close_future != NULL);
+			m_ch_close_future->set_success(code);
+
 			m_pipeline->fire_closed();
 			m_pipeline->deinit();
 			m_pipeline = NULL;
+			m_ch_close_future = NULL;
 		}
 
 		inline bool is_ch_closed() const {
