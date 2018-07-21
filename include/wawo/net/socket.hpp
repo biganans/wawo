@@ -813,9 +813,7 @@ namespace wawo { namespace net {
 				if (m_outbound_entry_q.size() == 0) {
 					if (m_flag&F_CLOSING) {
 						WAWO_ASSERT(m_close_promise != NULL);
-						_ch_do_close_read_write(m_shutdown_write_promise, m_close_promise);
-						m_close_promise = NULL;
-						m_shutdown_write_promise = NULL;
+						_ch_do_close_read_write(NULL);
 					}
 					else if (m_flag&F_WRITE_SHUTDOWNING) {
 						WAWO_ASSERT(m_shutdown_write_promise != NULL);
@@ -826,6 +824,7 @@ namespace wawo { namespace net {
 						m_shutdown_write_promise = NULL;
 					} else {
 						WAWO_ASSERT(m_shutdown_write_promise == NULL);
+						WAWO_ASSERT(m_close_promise == NULL);
 						end_write();
 						if (m_flag&F_WRITE_BLOCKED) {
 							m_flag &= ~F_WRITE_BLOCKED;
@@ -944,7 +943,7 @@ namespace wawo { namespace net {
 #endif
 		}
 
-		inline void _ch_do_close_read_write(WWRP<channel_promise> const& write_f, WWRP<channel_promise> const& close_f) {
+		inline void _ch_do_close_read_write(WWRP<channel_promise> const& close_f) {
 			WAWO_ASSERT(m_state == S_CONNECTED);
 			WAWO_ASSERT(!is_listener());
 			m_state = S_CLOSED;
@@ -957,10 +956,11 @@ namespace wawo { namespace net {
 
 			if (!(m_flag&F_WRITE_SHUTDOWN)) {
 				int rt = _ch_do_shutdown_write();
-				if (write_f != NULL) {
-					event_poller()->schedule([write_f,rt]() {
-						write_f->set_success(rt);
+				if (m_shutdown_write_promise != NULL) {
+					event_poller()->schedule([CHF=m_shutdown_write_promise,rt]() {
+						CHF->set_success(rt);
 					});
+					m_shutdown_write_promise = NULL;
 				}
 				event_poller()->schedule([CH = WWRP<channel>(this)]() {
 					CH->ch_fire_write_shutdowned();
@@ -969,6 +969,14 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_outbound_entry_q.size() == 0);
 			WAWO_ASSERT(m_noutbound_bytes == 0);
 			int rt = socket_base::close();
+			if (m_close_promise != NULL) {
+				event_poller()->schedule([CHF= m_close_promise, CH = WWRP<channel>(this), rt]() {
+					CHF->set_success(rt);
+					CH->ch_fire_closed(rt);
+				});
+				m_close_promise = NULL;
+			}
+
 			if (close_f != NULL) {
 				event_poller()->schedule([close_f, CH = WWRP<channel>(this), rt]() {
 					close_f->set_success(rt);
@@ -1020,7 +1028,7 @@ namespace wawo { namespace net {
 #endif
 			}
 
-			_ch_do_close_read_write(NULL, ch_promise);
+			_ch_do_close_read_write(ch_promise);
 		}
 	};
 }}
