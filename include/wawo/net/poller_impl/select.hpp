@@ -188,6 +188,8 @@ namespace wawo { namespace net { namespace impl {
 					int getrt = ::getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*)&ec, &optlen);
 					if (getrt == -1) {
 						ec = wawo::socket_get_last_errno();
+					} else {
+						ec = WAWO_NEGATIVE(ec);
 					}
 					WAWO_ASSERT(ec != wawo::OK);
 
@@ -195,7 +197,7 @@ namespace wawo { namespace net { namespace impl {
 						ctx->fn[IOE_SLOT_READ]({ AIO_READ, ec,0 });
 					}
 					if (ctx->fn[IOE_SLOT_WRITE] != nullptr) {
-						ctx->fn[IOE_SLOT_WRITE]({ AIO_WRITE, ec,0 });
+						ctx->fn[IOE_SLOT_WRITE]({ AIO_WRITE,ec,0 });
 					}
 				}
 			}

@@ -22,7 +22,7 @@ namespace wawo { namespace net {
 		F_WRITE_BLOCKED = 1 << 5,
 		F_WRITE_SHUTDOWNING = 1 << 6,
 		F_WRITE_ERROR = 1 << 7,
-		F_CLOSE_AFTER_WRITE=1<<8
+		F_CLOSING=1<<8
 	};
 
 	#define WAWO_CHANNEL_CUSTOM_FLAG_BEGIN 12

@@ -20,7 +20,6 @@
 #endif
 
 namespace wawo { namespace net { namespace handler {
-	
 
 	enum mux_stream_frame_flag {
 		T_SYN = 1,
@@ -38,12 +37,13 @@ namespace wawo { namespace net { namespace handler {
 	typedef int mux_stream_id_t;
 	typedef u16_t mux_stream_frame_flag_t;
 
-	static std::atomic<int> _s_id_{1};
-	inline static int mux_make_stream_id() {return wawo::atomic_increment(&_s_id_)%0x7FFFFFFF;}
+	static std::atomic<int> __stream_id_{1};
+	inline static int mux_make_stream_id() {return wawo::atomic_increment(&__stream_id_)%0x7FFFFFFF;}
 
 	enum mux_stream_flag {
 		F_STREAM_READ_CHOKED = (1<<WAWO_CHANNEL_CUSTOM_FLAG_BEGIN),
-		F_STREAM_FLUSH_CHOKED = (1<<(WAWO_CHANNEL_CUSTOM_FLAG_BEGIN+1))
+		F_STREAM_FLUSH_CHOKED = (1<<(WAWO_CHANNEL_CUSTOM_FLAG_BEGIN+1)),
+		F_STREAM_FIN_WRITEING = (1<<(WAWO_CHANNEL_CUSTOM_FLAG_BEGIN+2))
 	};
 	static_assert(WAWO_CHANNEL_CUSTOM_FLAG_BEGIN + 3 <= WAWO_CHANNEL_CUSTOM_FLAG_END, "CHANNEL FLAG CHECK FAILED, MAX LEFT SHIFT REACHED");
 
@@ -189,7 +189,9 @@ namespace wawo { namespace net { namespace handler {
 
 			m_entry_q.push({frame.data,ch_promise});
 			m_entry_q_bytes += frame.data->len();
-
+			if((m_flag&F_WATCH_WRITE) != 0 ) {
+				return;
+			}
 			ch_flush_impl();
 		}
 
@@ -219,6 +221,7 @@ namespace wawo { namespace net { namespace handler {
 		}
 
 		void _ch_flush_done( async_io_result const& r ) {
+			WAWO_ASSERT(event_poller()->in_event_loop());
 			WAWO_ASSERT(r.op == AIO_WRITE);
 			m_flag &= ~F_WATCH_WRITE;
 			if (r.v.code == wawo::OK) {
@@ -235,13 +238,11 @@ namespace wawo { namespace net { namespace handler {
 				if (m_entry_q.size()) {
 					ch_flush_impl();
 				} else {
-					//
 					if (m_flag&F_WRITE_BLOCKED) {
 						m_flag &= ~F_WRITE_BLOCKED;
 						ch_fire_write_unblock();
 					}
-
-					if (m_flag&F_CLOSE_AFTER_WRITE) {
+					if (m_flag&F_CLOSING) {
 						ch_close();
 					} else if (m_flag&F_WRITE_SHUTDOWNING) {
 						ch_shutdown_write();
@@ -258,7 +259,7 @@ namespace wawo { namespace net { namespace handler {
 		inline int _do_ch_flush_impl() {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			WAWO_ASSERT((m_flag&F_WATCH_WRITE) == 0);
-			WAWO_ASSERT(m_entry_q.size() == 0);
+			WAWO_ASSERT(m_entry_q.size() != 0);
 			while (m_entry_q.size()) {
 				WAWO_ASSERT(m_entry_q_bytes > 0);
 				mux_stream_outbound_entry& entry = m_entry_q.front();
@@ -382,54 +383,79 @@ namespace wawo { namespace net { namespace handler {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 
 			if (m_flag&F_READ_SHUTDOWN) {
-				ch_promise->set_success(E_CHANNEL_READ_SHUTDOWN_ALREADY);
+				event_poller()->schedule([ch_promise]() {
+					ch_promise->set_success(E_CHANNEL_READ_SHUTDOWN_ALREADY);
+				});
 				return;
 			}
 
 			DEBUG_STREAM("[mux][s%u]stream close read, left buffer count: %u", ch_id(), m_rb->count() );
 			m_flag |= (F_READ_SHUTDOWN);
 
-			ch_promise->set_success(wawo::OK);
-
-			ch_fire_read_shutdowned();
-			__rdwr_shutdown_check();
+			event_poller()->schedule([ch_promise,S=WWRP<mux_stream>(this)]() {
+				ch_promise->set_success(wawo::OK);
+				S->ch_fire_read_shutdowned();
+				S->__rdwr_shutdown_check();
+			});
 		}
 
 		void ch_shutdown_write_impl(WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 
 			if (m_flag&F_WRITE_SHUTDOWN) {
-				ch_promise->set_success(E_CHANNEL_WRITE_SHUTDOWN_ALREADY);
+				event_poller()->schedule([ch_promise]() {
+					ch_promise->set_success(E_CHANNEL_WRITE_SHUTDOWN_ALREADY);
+				});
 				return ;
 			}
 
 			if (m_flag&F_WATCH_WRITE) {
 				WAWO_ASSERT((m_flag&F_WRITE_ERROR) == 0);
-				m_flag |= F_WRITE_SHUTDOWNING;
-				ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWNING);
+
+				if ((m_flag&F_STREAM_FIN_WRITEING) != 0) {
+					mux_stream_frame f = make_frame_fin();
+					WWRP<channel_future> ch_f = write_frame(f);
+					m_flag |= F_WRITE_SHUTDOWNING | F_STREAM_FIN_WRITEING;
+					ch_f->add_listener([](WWRP<channel_future> const& f) {
+						int rt = f->get();
+						if (rt == wawo::OK) {
+
+						}
+						else if (rt == wawo::E_CHANNEL_WRITE_BLOCK) {
+							//launch a timer
+							WAWO_ASSERT(!"TODO, LAUNCH A TIEMR");
+						}
+						else {
+							WAWO_ASSERT(!"TODO, FORCE CLOSE");
+						}
+					});
+				}
+
+				event_poller()->schedule([ch_promise]() {
+					ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWNING);
+				});
 				return;
 			}
 
 			if ((m_flag&F_WRITE_ERROR) == 0) {
-				int rt = _do_ch_flush_impl();
-				if (rt == wawo::OK && (m_flag&F_WATCH_WRITE)) {
-					m_flag |= F_WRITE_SHUTDOWNING;
-					return;
-				}
+				WAWO_ASSERT(m_entry_q.size() == 0);
+				WAWO_ASSERT(m_entry_q_bytes == 0);
 			}
 
 			while (m_entry_q.size()) {
 				mux_stream_outbound_entry& entry = m_entry_q.front();
 				m_entry_q_bytes -= entry.data->len();
-				entry.ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWN_ALREADY);
+				event_poller()->schedule([ch_promise,entry]() {
+					entry.ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWN_ALREADY);
+				});
 				m_entry_q.pop();
 			}
 			m_flag |= F_WRITE_SHUTDOWN;
-
-			ch_promise->set_success(wawo::OK);
-			ch_fire_write_shutdowned();
-
-			__rdwr_shutdown_check();
+			event_poller()->schedule([ch_promise, S=WWRP<mux_stream>(this)]() {
+				ch_promise->set_success(wawo::OK);
+				S->ch_fire_write_shutdowned();
+				S->__rdwr_shutdown_check();
+			});
 		}
 
 		void ch_close_impl(WWRP<channel_promise> const& ch_promise) {
@@ -443,17 +469,14 @@ namespace wawo { namespace net { namespace handler {
 			WAWO_ASSERT(m_state == SS_ESTABLISHED);
 
 			if (m_flag&F_WATCH_WRITE) {
-				m_flag |= (F_WRITE_SHUTDOWNING | F_CLOSE_AFTER_WRITE);
+				m_flag |= (F_WRITE_SHUTDOWNING | F_CLOSING);
 				ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWNING);
 				return;
 			}
 
 			if ((m_flag&F_WRITE_ERROR) == 0) {
-				const int rt = _do_ch_flush_impl();
-				if (m_flag&F_WATCH_WRITE) {
-					m_flag |= (F_WRITE_SHUTDOWNING | F_CLOSE_AFTER_WRITE);
-					return;
-				}
+				WAWO_ASSERT(m_entry_q.size() == 0);
+				WAWO_ASSERT(m_entry_q_bytes == 0);
 			}
 			m_state = SS_CLOSED;
 
