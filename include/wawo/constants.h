@@ -247,6 +247,7 @@ namespace wawo {
 	const int	E_CHANNEL_WRITE_SHUTDOWNING		= -21009;
 	const int	E_CHANNEL_WRITING				= -21010;
 	const int	E_CHANNEL_OUTBOUND_EMPTY		= -21011;
+	const int	E_CHANNEL_CANCEL_WRITE = -210012;
 
 	const int 	E_SOCKET_GRACE_CLOSE					= -30000; 
 	const int 	E_SOCKET_CONNECTING						= -30001; 

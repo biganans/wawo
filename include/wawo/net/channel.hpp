@@ -74,6 +74,7 @@ namespace wawo { namespace net {
 			m_ctx = ctx;
 		}
 		inline void ch_errno(int e) {
+			WAWO_ASSERT(e != wawo::OK);
 			m_errno = e;
 		}
 		inline int ch_get_errno() { return m_errno; }

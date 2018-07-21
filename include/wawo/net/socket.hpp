@@ -220,7 +220,7 @@ namespace wawo { namespace net {
 				socket_outbound_entry& entry = m_outbound_entry_q.front();
 				m_noutbound_bytes -= entry.data->len();
 				event_poller()->schedule([entry]() {
-					entry.ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWN_ALREADY);
+					entry.ch_promise->set_success(wawo::E_CHANNEL_CANCEL_WRITE);
 				});
 				m_outbound_entry_q.pop();
 			}
@@ -413,6 +413,9 @@ namespace wawo { namespace net {
 			)) {
 				return;
 			}
+
+			end_write();
+			m_flag |= F_WRITE_ERROR;
 			socket::ch_errno(code);
 			socket::ch_close();
 		}
@@ -839,9 +842,6 @@ namespace wawo { namespace net {
 					begin_write();
 				}
 			} else {
-				end_write();
-				ch_errno(_errno);
-				m_flag |= F_WRITE_ERROR;
 			}
 			return _errno;
 		}
@@ -972,17 +972,16 @@ namespace wawo { namespace net {
 			if (m_close_promise != NULL) {
 				event_poller()->schedule([CHF= m_close_promise, CH = WWRP<channel>(this), rt]() {
 					CHF->set_success(rt);
-					CH->ch_fire_closed(rt);
 				});
 				m_close_promise = NULL;
 			}
 
-			if (close_f != NULL) {
-				event_poller()->schedule([close_f, CH = WWRP<channel>(this), rt]() {
+			event_poller()->schedule([close_f,CH = WWRP<channel>(this), rt]() {
+				if (close_f != NULL) {
 					close_f->set_success(rt);
-					CH->ch_fire_closed(rt);
-				});
-			}
+				}
+				CH->ch_fire_closed(rt);
+			});
 
 #ifdef WAWO_IO_MODE_IOCP
 			__IOCP_deinit();
