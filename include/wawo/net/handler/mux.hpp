@@ -155,24 +155,32 @@ namespace wawo { namespace net { namespace handler {
 
 		inline void _write_frame(mux_stream_frame const& frame, WWRP<wawo::net::channel_promise> const& ch_promise) {
 			if (m_flag&F_WRITE_SHUTDOWN) {
-				ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWN_ALREADY);
+				event_poller()->schedule([ch_promise]() {
+					ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWN_ALREADY);
+				});
 				return;
 			}
 
 			if (m_flag&F_WRITE_SHUTDOWNING) {
-				ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWNING);
+				event_poller()->schedule([ch_promise]() {
+					ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWNING);
+				});
 				return;
 			}
 
 			if (m_flag&F_WRITE_BLOCKED) {
-				ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
+				event_poller()->schedule([ch_promise]() {
+					ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
+				});
 				return;
 			}
 
 			if ( m_entry_q_bytes + frame.data->len() + sizeof(mux_stream_frame_flag_t) + sizeof(u32_t) > m_wnd) {
 				m_flag |= F_WRITE_BLOCKED;
-				ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
-				ch_fire_write_block();
+				event_poller()->schedule([ch_promise,CH=WWRP<wawo::net::channel>(this)]() {
+					ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
+					CH->ch_fire_write_block();
+				});
 				return;
 			}
 
@@ -247,8 +255,10 @@ namespace wawo { namespace net { namespace handler {
 			}
 		}
 
-		int _do_ch_flush_impl() {
+		inline int _do_ch_flush_impl() {
 			WAWO_ASSERT(event_poller()->in_event_loop());
+			WAWO_ASSERT((m_flag&F_WATCH_WRITE) == 0);
+			WAWO_ASSERT(m_entry_q.size() == 0);
 			while (m_entry_q.size()) {
 				WAWO_ASSERT(m_entry_q_bytes > 0);
 				mux_stream_outbound_entry& entry = m_entry_q.front();
@@ -258,10 +268,10 @@ namespace wawo { namespace net { namespace handler {
 					continue;
 				}
 
-				m_ch_ctx != NULL;
+				WAWO_ASSERT(m_ch_ctx != NULL);
 				m_flag |= F_WATCH_WRITE;
 				WWRP<channel_future> write_f = m_ch_ctx->write(entry.data);
-				write_f->add_listener([S = WWRP<mux_stream>(this)](WWRP<channel_future> const& f) {
+				write_f->add_listener([S= WWRP<mux_stream>(this)](WWRP<channel_future> const& f) {
 					S->_ch_flush_done({ AIO_WRITE, f->get() });
 				});
 				break;

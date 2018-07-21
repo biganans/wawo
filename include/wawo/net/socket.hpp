@@ -767,12 +767,18 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_outbound_entry_q.size());
 			WAWO_ASSERT(m_flag&F_WATCH_WRITE);
 
-			while (m_outbound_entry_q.size()) {
+			//@NOTE
+			//there is a rough flush algorithm to control which outlets should be flushed:
+			//the maxium flush count === m_outbound_entry_q.size() at the mement
+			//this is a consideration for FD flush fair
+			::size_t s = m_outbound_entry_q.size();
+			while ( s > 0 ) {
 				WAWO_ASSERT(m_noutbound_bytes > 0);
 				socket_outbound_entry& entry = m_outbound_entry_q.front();
 				if (entry.ch_promise->is_cancelled()) {
 					m_noutbound_bytes -= entry.data->len();
 					m_outbound_entry_q.pop();
+					--s;
 					continue;
 				}
 
@@ -782,8 +788,11 @@ namespace wawo { namespace net {
 
 				if (sent == entry.data->len()) {
 					WAWO_ASSERT(_errno == wawo::OK);
+					//event_poller()->schedule([CH_P=entry.ch_promise]() {
 					entry.ch_promise->set_success(wawo::OK);
+					//});
 					m_outbound_entry_q.pop();
+					--s;
 					continue;
 				}
 				entry.data->skip(sent);
@@ -793,18 +802,21 @@ namespace wawo { namespace net {
 			}
 			//check send result
 			if (_errno == wawo::OK) {
-				WAWO_ASSERT(m_outbound_entry_q.size() == 0);
-				end_write();
-				if (m_flag&F_WRITE_BLOCKED) {
-					m_flag &= ~F_WRITE_BLOCKED;
-					ch_fire_write_unblock();
-				}
+				if (m_outbound_entry_q.size() == 0) {
+					end_write();
+					if (m_flag&F_WRITE_BLOCKED) {
+						m_flag &= ~F_WRITE_BLOCKED;
+						ch_fire_write_unblock();
+					}
 
-				if (m_flag&F_CLOSE_AFTER_WRITE) {
-					ch_close();
-				} else if (m_flag&F_WRITE_SHUTDOWNING) {
-					ch_shutdown_write();
-				} else {}
+					if (m_flag&F_CLOSE_AFTER_WRITE) {
+						ch_close();
+					}
+					else if (m_flag&F_WRITE_SHUTDOWNING) {
+						ch_shutdown_write();
+					}
+					else {}
+				}
 			}
 			else if (_errno == wawo::E_CHANNEL_WRITE_BLOCK) {
 				WAWO_ASSERT(m_outbound_entry_q.size() > 0);
