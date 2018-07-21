@@ -269,13 +269,8 @@ namespace wawo { namespace net { namespace handler {
 						m_flag &= ~F_STREAM_WRITE_FIN_AFTER_WRITE_DONE;
 						//WAWO_ASSERT(m_shutdown_write_promise != NULL);
 						//f is for call compatible only
-						WWRP<channel_promise> f = wawo::make_ref<channel_promise>(WWRP<channel>(this));
-						ch_shutdown_write_impl(f);
-#ifdef _DEBUG
-						WWRP<channel_future> f =
-#endif
 						mux_stream_frame frame = make_frame_fin();
-						WWRP<channel_future> f = wawo::make_ref<channel_promise>(WWRP<channel>(this));
+						WWRP<channel_promise> f = wawo::make_ref<channel_promise>(WWRP<channel>(this));
 						frame.data->write_left<mux_stream_frame_flag_t>(frame.flag);
 						frame.data->write_left<u32_t>(m_id);
 						m_entry_q.push({ frame.data,f });

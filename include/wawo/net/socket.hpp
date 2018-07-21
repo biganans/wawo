@@ -693,7 +693,7 @@ namespace wawo { namespace net {
 				return;
 			}
 
-			if ((m_flag&F_WRITE_SHUTDOWNING)) {
+			if ((m_flag&(F_WRITE_SHUTDOWNING|F_CLOSING))) {
 				event_poller()->schedule([ch_promise]() {
 					ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWNING);
 				});
