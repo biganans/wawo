@@ -1,0 +1,15 @@
+channel write & close
+
+1, all pending queue would be flushed until we encounter a error
+2, corresponding promise would be set and only be set at the time of ch_do_shutdown_write or ch_do_close_read_write
+3, no additional outlets would be permited right after we call channel write  or channel close
+
+todo:
+1, we need a timer to check the underlayer transmission when we get write block  for both socket and mux_stream
+
+
+optimization:
+1, pipeline fire flow 
+
+
+
