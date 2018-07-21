@@ -42,7 +42,7 @@ namespace wawo { namespace net { namespace handler {
 
 	enum mux_stream_flag {
 		F_STREAM_READ_CHOKED = (1<<WAWO_CHANNEL_CUSTOM_FLAG_BEGIN),
-		F_STREAM_FLUSH_CHOKED = (1<<(WAWO_CHANNEL_CUSTOM_FLAG_BEGIN+1)),
+//		F_STREAM_FLUSH_CHOKED = (1<<(WAWO_CHANNEL_CUSTOM_FLAG_BEGIN+1)),
 		F_STREAM_WRITE_FIN_AFTER_WRITE_DONE = (1<<(WAWO_CHANNEL_CUSTOM_FLAG_BEGIN+2))
 	};
 	static_assert(WAWO_CHANNEL_CUSTOM_FLAG_BEGIN + 3 <= WAWO_CHANNEL_CUSTOM_FLAG_END, "CHANNEL FLAG CHECK FAILED, MAX LEFT SHIFT REACHED");
@@ -244,7 +244,6 @@ namespace wawo { namespace net { namespace handler {
 		void _ch_flush_done( async_io_result const& r ) {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			WAWO_ASSERT(r.op == AIO_WRITE);
-			m_flag &= ~F_WATCH_WRITE;
 			const int _errno = r.v.code;
 			if (_errno == wawo::OK) {
 				WAWO_ASSERT(m_entry_q.size());
@@ -256,13 +255,16 @@ namespace wawo { namespace net { namespace handler {
 				m_wnd -= entry.data->len();
 				WAWO_ASSERT(m_wnd>0);
 				m_entry_q.pop();
+				m_flag &= ~F_WATCH_WRITE;
 
 				if (m_entry_q.size()) {
 					ch_flush_impl();
 				} else {
 					if (m_flag&F_WRITE_BLOCKED) {
 						m_flag &= ~F_WRITE_BLOCKED;
-						ch_fire_write_unblock();
+						event_poller()->schedule([CH=WWRP<channel>(this)]() {
+							CH->ch_fire_write_unblock();
+						});
 					}
 					
 					if (m_flag&F_STREAM_WRITE_FIN_AFTER_WRITE_DONE) {
@@ -289,8 +291,10 @@ namespace wawo { namespace net { namespace handler {
 					} else {}
 				}
 			} else if(_errno == wawo::E_CHANNEL_WRITE_BLOCK) {
+				m_flag &= ~F_WATCH_WRITE;
 				_ch_write_block_check();
 			} else {
+				m_flag &= ~F_WATCH_WRITE;
 				ch_errno(_errno);
 				m_flag |= F_WRITE_ERROR;
 				ch_close();
@@ -408,11 +412,23 @@ namespace wawo { namespace net { namespace handler {
 			{
 				WAWO_ASSERT(frame.data->len() == sizeof(wawo::u32_t));
 				wawo::u32_t wnd_incre = frame.data->read<wawo::u32_t>();
-
 				m_wnd += wnd_incre;
 				m_wnd = WAWO_MIN(MUX_STREAM_WND_SIZE, m_wnd);
-
 				DEBUG_STREAM("[muxs][s%u]new wb_wnd: %u, incre: %u", ch_id(), m_wnd, wnd_incre);
+
+				if (m_flag&F_WRITE_BLOCKED) {
+					if (m_entry_q.size()) {
+						WAWO_ASSERT(m_entry_q_bytes > 0);
+						WAWO_ASSERT(m_flag&F_WATCH_WRITE);
+						//wait next outlet promise set
+					} else {
+						//manual unchoke
+						m_flag &= ~F_WRITE_BLOCKED;
+						event_poller()->schedule([CH = WWRP<channel>(this)]() {
+							CH->ch_fire_write_unblock();
+						});
+					}
+				}
 			}
 			break;
 			}
