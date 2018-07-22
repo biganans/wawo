@@ -156,12 +156,12 @@ namespace wawo { namespace net { namespace handler {
 			return wawo::OK;
 		}
 
-		inline mux_stream_frame make_frame_syn() {
+		inline static mux_stream_frame make_frame_syn() {
 			WWRP<wawo::packet> o = wawo::make_ref<wawo::packet>();
 			return { mux_stream_frame_flag::T_SYN, o };
 		}
 
-		inline mux_stream_frame make_frame_uwnd(u32_t size) {
+		inline static mux_stream_frame make_frame_uwnd(u32_t size) {
 			WAWO_ASSERT(size > 0);
 			WWRP<packet> o = wawo::make_ref<packet>();
 			o->write<u32_t>(size);
@@ -169,18 +169,16 @@ namespace wawo { namespace net { namespace handler {
 			return { mux_stream_frame_flag::T_UWND, o };
 		}
 
-		inline mux_stream_frame make_frame_rst() {
+		inline static mux_stream_frame make_frame_rst() {
 			WWRP<packet> o = wawo::make_ref<wawo::packet>();
 			return { mux_stream_frame_flag::T_RST, o };
 		}
 
-		inline mux_stream_frame make_frame_data(WWRP<wawo::packet> const& data) {
+		inline static mux_stream_frame make_frame_data(WWRP<wawo::packet> const& data) {
 			WAWO_ASSERT(data != NULL);
 			return { mux_stream_frame_flag::T_DATA, data };
 		}
-		inline mux_stream_frame make_frame_fin() {
-			WAWO_ASSERT(m_id != 0);
-			WAWO_ASSERT(m_state == SS_ESTABLISHED);
+		inline static mux_stream_frame make_frame_fin() {
 			WWRP<wawo::packet> o = wawo::make_ref<wawo::packet>();
 			return { mux_stream_frame_flag::T_FIN, o };
 		}

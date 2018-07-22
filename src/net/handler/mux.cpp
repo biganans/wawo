@@ -3,7 +3,17 @@
 namespace wawo { namespace net { namespace handler {
 
 	void stream_snd_rst(WWRP<wawo::net::channel_handler_context> const& ctx, mux_stream_id_t id) {
-		WAWO_ASSERT(!"TODO");
+		mux_stream_frame f = mux_stream::make_frame_rst();
+		f.data->write_left<mux_stream_frame_flag_t>(f.flag);
+		f.data->write_left<mux_stream_id_t>(id);
+
+		WWRP<wawo::net::channel_future> write_f = ctx->write(f.data);
+		write_f->add_listener([]( WWRP<wawo::net::channel_future> const& f ) {
+			int rt = f->get();
+			if (rt == wawo::E_CHANNEL_WRITE_BLOCK) {
+				WAWO_ASSERT(!"WE NEED A TIMER");
+			}
+		});
 	}
 
 	mux::mux()

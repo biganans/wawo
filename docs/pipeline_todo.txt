@@ -1,4 +1,4 @@
-channel write & close
+channel write & close feature
 
 1, all pending queue would be flushed until we encounter a error
 2, corresponding promise would be set and only be set at the time of ch_do_shutdown_write or ch_do_close_read_write
@@ -12,4 +12,6 @@ optimization:
 1, pipeline fire flow 
 
 
-
+bugs:
+1, mux_stream mwnd update issue,  
+	issue: we've only count data->len() for uwnd now, but we've decreased m_wnd for each outlet
