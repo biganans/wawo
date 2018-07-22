@@ -88,12 +88,17 @@ namespace wawo { namespace net { namespace handler {
 			m_rb = wawo::make_ref<bytes_ringbuffer>(MUX_STREAM_WND_SIZE);
 			channel::ch_fire_open();
 		}
-		inline int _ch_do_shutdown_read() {
+		inline void _ch_do_shutdown_read(WWRP<channel_promise> const& ch_p) {
 			WAWO_ASSERT((m_flag&F_READ_SHUTDOWN) == 0);
 			m_flag |= F_READ_SHUTDOWN;
-			return wawo::OK;
+			event_poller()->schedule([ch_p, CH = WWRP<channel>(this)]() {
+				if (ch_p != NULL) {
+					ch_p->set_success(wawo::OK);
+				}
+				CH->ch_fire_read_shutdowned();
+			});
 		}
-		inline int _ch_do_shutdown_write() {
+		inline void _ch_do_shutdown_write(WWRP<channel_promise> const& ch_p) {
 			WAWO_ASSERT((m_flag&F_WRITE_SHUTDOWN) == 0);
 			while (m_entry_q.size()) {
 				mux_stream_outbound_entry& entry = m_entry_q.front();
@@ -105,7 +110,12 @@ namespace wawo { namespace net { namespace handler {
 				m_entry_q.pop();
 			}
 			m_flag |= F_WRITE_SHUTDOWN;
-			return wawo::OK;
+			event_poller()->schedule([ch_p,CH=WWRP<channel>(this)]() {
+				if (ch_p != NULL) {
+					ch_p->set_success(wawo::OK);
+				}
+				CH->ch_fire_write_shutdowned();
+			});
 		}
 
 	public:
@@ -286,15 +296,10 @@ namespace wawo { namespace net { namespace handler {
 					} else if (m_flag&F_CLOSING) {
 						_ch_do_close_read_write(NULL);
 					} else if (m_flag&F_WRITE_SHUTDOWNING) {
-						_ch_do_shutdown_write();
 						WAWO_ASSERT(m_shutdown_write_promise != NULL);
-						event_poller()->schedule([CHF= m_shutdown_write_promise]() {
-							CHF->set_success(wawo::OK);
-						});
+						_ch_do_shutdown_write(m_shutdown_write_promise);
 						m_shutdown_write_promise = NULL;
-						event_poller()->schedule([CH = WWRP<channel>(this)]() {
-							CH->ch_fire_write_shutdowned();
-						});
+						__rdwr_shutdown_check();
 					} else {
 					}
 				}
@@ -457,12 +462,8 @@ namespace wawo { namespace net { namespace handler {
 			}
 
 			DEBUG_STREAM("[mux][s%u]stream close read, left buffer count: %u", ch_id(), m_rb->count() );
-			_ch_do_shutdown_read();//always return wawo::OK
-			event_poller()->schedule([ch_promise,S=WWRP<mux_stream>(this)]() {
-				ch_promise->set_success(wawo::OK);
-				S->ch_fire_read_shutdowned();
-				S->__rdwr_shutdown_check();
-			});
+			_ch_do_shutdown_read(ch_promise);//always return wawo::OK
+			__rdwr_shutdown_check();
 		}
 
 		void ch_shutdown_write_impl(WWRP<channel_promise> const& ch_promise) {
@@ -501,11 +502,8 @@ namespace wawo { namespace net { namespace handler {
 				return;
 			}
 			//for error case
-			_ch_do_shutdown_write();
-			event_poller()->schedule([ch_promise,CH = WWRP<channel>(this)]() {
-				ch_promise->set_success(wawo::OK);
-				CH->ch_fire_write_shutdowned();
-			});
+			_ch_do_shutdown_write(ch_promise);
+			__rdwr_shutdown_check();
 		}
 
 		void _ch_do_close_read_write(WWRP<channel_promise> const& close_f) {
@@ -514,22 +512,11 @@ namespace wawo { namespace net { namespace handler {
 			DEBUG_STREAM("[mux_stream][s%u]close mux_stream", m_id );
 			m_state = SS_CLOSED;
 			if (!(m_flag&F_READ_SHUTDOWN)) {
-				_ch_do_shutdown_read();
-				event_poller()->schedule([CH = WWRP<channel>(this)]() {
-					CH->ch_fire_read_shutdowned();
-				});
+				_ch_do_shutdown_read(NULL);
 			}
 			if (!(m_flag&F_WRITE_SHUTDOWN)) {
-				_ch_do_shutdown_write();//ALWAYS RETURN OK
-				if (m_shutdown_write_promise != NULL) {
-					event_poller()->schedule([CHP=m_shutdown_write_promise]() {
-						CHP->set_success(wawo::OK);
-					});
-					m_shutdown_write_promise = NULL;
-				}
-				event_poller()->schedule([CH = WWRP<channel>(this)]() {
-					CH->ch_fire_write_shutdowned();
-				});
+				_ch_do_shutdown_write(m_shutdown_write_promise);//ALWAYS RETURN OK
+				m_shutdown_write_promise = NULL;
 			}
 			if (m_close_promise != NULL) {
 				event_poller()->schedule([CHP = m_close_promise]() {
@@ -574,8 +561,10 @@ namespace wawo { namespace net { namespace handler {
 
 		void __rdwr_shutdown_check() {
 			WAWO_ASSERT(event_poller()->in_event_loop());
-			if ((m_flag&(F_READWRITE_SHUTDOWN)) == F_READWRITE_SHUTDOWN) {
-				ch_close();
+			if (m_state != SS_CLOSED && (m_flag&(F_READWRITE_SHUTDOWN)) == F_READWRITE_SHUTDOWN) {
+				event_poller()->schedule([CH=WWRP<channel>(this)]() {
+					CH->ch_close();
+				});
 			}
 		}
 

@@ -154,14 +154,14 @@ int main(int argc, char** argv) {
 	wawo::app _app;
 
 	const int th_count = 4;
-	WWRP<wawo::thread::thread> th[th_count];
+	WWRP<wawo::thread> th[th_count];
 	for (int i = 0; i < th_count; ++i) {
-		th[i] = wawo::make_ref<wawo::thread::thread>();
+		th[i] = wawo::make_ref<wawo::thread>();
 		th[i]->start(&th_spawn_timer);
 	}
 
 	//spawn_circle_tick(1);
-	_app.run_for();
+	_app.run();
 
 	for (int i = 0; i < th_count; ++i) {
 		th[i]->interrupt();
