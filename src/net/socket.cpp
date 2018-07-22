@@ -110,9 +110,9 @@ namespace wawo { namespace net {
 		rt = socket::listen(child_cfg, backlog);
 		if (rt == wawo::E_SOCKET_ERROR) {
 			rt = wawo::socket_get_last_errno();
-			ch_promise->set_success(rt);
-			return;
 		}
+
+		ch_promise->set_success(rt);
 		m_fn_accept_initializer = fn_accepted;
 		WAWO_ASSERT(rt == wawo::OK);
 #ifdef WAWO_IO_MODE_IOCP
