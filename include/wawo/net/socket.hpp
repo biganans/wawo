@@ -840,6 +840,9 @@ namespace wawo { namespace net {
 							P->set_success(rt);
 						});
 						m_shutdown_write_promise = NULL;
+						event_poller()->schedule([CH=WWRP<channel>(this)]{
+							CH->ch_fire_write_shutdowned();
+						});
 					} else {
 						WAWO_ASSERT(m_shutdown_write_promise == NULL);
 						WAWO_ASSERT(m_close_promise == NULL);
