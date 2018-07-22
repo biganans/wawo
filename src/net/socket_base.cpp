@@ -56,7 +56,8 @@ namespace wawo { namespace net {
 			m_laddr(laddr),
 			m_raddr(raddr),
 
-			m_cfg()
+			m_cfg(),
+			m_child_cfg()
 		{
 			WAWO_ASSERT(family < F_AF_UNSPEC);
 			WAWO_ASSERT(sockt < T_UNKNOWN);
@@ -84,7 +85,8 @@ namespace wawo { namespace net {
 			m_laddr(),
 			m_raddr(),
 
-			m_cfg()
+			m_cfg(),
+			m_child_cfg()
 		{
 			WAWO_ASSERT(family < F_AF_UNSPEC);
 			WAWO_ASSERT(sockt < T_UNKNOWN);
@@ -304,11 +306,14 @@ namespace wawo { namespace net {
 			int rt = _cfg_nonblocking(true);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
 
+			rt = _cfg_buffer(cfg.buffer);
+			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+
 			rt = _cfg_reuseaddr((cfg.option&OPTION_REUSEADDR) !=0);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
 
-#ifdef WAWO_ISGNU
-			rt = _cfg_reuseaddr((cfg.option&OPTION_REUSEPORT)!=0);
+#if WAWO_ISGNU
+			rt = _cfg_reuseport((cfg.option&OPTION_REUSEPORT)!=0);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
 #endif
 			return wawo::OK;
@@ -320,9 +325,7 @@ namespace wawo { namespace net {
 
 		//wcp share same cfg with tcp
 		int socket_base::_cfg_setup_tcp(socket_cfg const& cfg) {
-			int rt = _cfg_buffer(cfg.buffer);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
-			rt = _cfg_nodelay((cfg.option&OPTION_NODELAY) != 0);
+			int rt = _cfg_nodelay((cfg.option&OPTION_NODELAY) != 0);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
 			return _cfg_keep_alive_vals(cfg.kvals);
 		}

@@ -6,6 +6,7 @@
 namespace wawo { namespace net {
 
 	void socket::_init() {
+		WAWO_ASSERT(m_cfg.buffer.rcv_size > 0);
 		m_trb = (byte_t*) ::malloc( sizeof(byte_t)*m_cfg.buffer.rcv_size ) ;
 		WAWO_CONDITION_CHECK( m_trb != NULL );
 

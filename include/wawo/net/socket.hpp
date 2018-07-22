@@ -161,10 +161,10 @@ namespace wawo { namespace net {
 			//clean res in case of failure
 			WAWO_ASSERT(rt == wawo::E_SOCKET_ERROR);
 			rt = wawo::socket_get_last_errno();
-			ch_promise->set_success(rt);
 
 			so->ch_errno(rt);
 			so->ch_close();
+			ch_promise->set_success(rt);
 			return ch_promise;
 		}
 
@@ -382,7 +382,7 @@ namespace wawo { namespace net {
 #else
 			while(ec == wawo::OK) {
 				if (WAWO_UNLIKELY(m_flag&F_READ_SHUTDOWN)) { return; }
-				wawo::u32_t nbytes = socket_base::recv(m_trb, 65535, ec);
+				wawo::u32_t nbytes = socket_base::recv(m_trb, m_cfg.buffer.rcv_size, ec);
 				if (WAWO_LIKELY(nbytes>0)) {
 					WWRP<packet> p = wawo::make_ref<packet>(nbytes);
 					p->write(m_trb, nbytes);
