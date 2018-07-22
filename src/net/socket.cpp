@@ -89,14 +89,16 @@ namespace wawo { namespace net {
 		}
 		int rt = socket::open(cfg);
 		//int rt = -10043;
-		if (rt != wawo::OK) {
+		if (rt == wawo::E_SOCKET_ERROR) {
+			rt = wawo::socket_get_last_errno();
 			event_poller()->schedule([ch_promise,rt]() {
 				ch_promise->set_success(rt);
 			});
 			return;
 		}
 		rt = socket::bind(addr);
-		if (rt != wawo::OK) {
+		if (rt == wawo::E_SOCKET_ERROR) {
+			rt = wawo::socket_get_last_errno();
 			event_poller()->schedule([ch_promise, rt]() {
 				ch_promise->set_success(rt);
 			});
@@ -104,16 +106,18 @@ namespace wawo { namespace net {
 		}
 
 		rt = socket::listen(child_cfg, backlog);
-		ch_promise->set_success(rt);
-		m_fn_accept_initializer = fn_accepted;
-
-		if (WAWO_LIKELY(rt == wawo::OK)) {
-#ifdef WAWO_IO_MODE_IOCP
-			__IOCP_CALL_AcceptEx();
-#else
-			begin_accept();
-#endif
+		if (rt == wawo::E_SOCKET_ERROR) {
+			rt = wawo::socket_get_last_errno();
+			ch_promise->set_success(rt);
+			return;
 		}
+		m_fn_accept_initializer = fn_accepted;
+		WAWO_ASSERT(rt == wawo::OK);
+#ifdef WAWO_IO_MODE_IOCP
+		__IOCP_CALL_AcceptEx();
+#else
+		begin_accept();
+#endif
 	}
 
 	WWRP<channel_future> socket::_dial(address const& addr, fn_channel_initializer const& initializer, socket_cfg const& cfg) {
@@ -128,10 +132,12 @@ namespace wawo { namespace net {
 			event_poller()->execute([_this, addr, initializer, ch_promise, cfg]() ->void {
 				_this->_dial(addr, initializer, ch_promise, cfg);
 			});
+			return;
 		}
 
 		int rt = socket::open(cfg);
-		if (rt != wawo::OK) {
+		if (rt == wawo::E_SOCKET_ERROR) {
+			rt = wawo::socket_get_last_errno();
 			event_poller()->schedule([ch_promise, rt]() {
 				ch_promise->set_success(rt);
 			});
@@ -139,7 +145,8 @@ namespace wawo { namespace net {
 		}
 
 		rt = m_protocol == P_UDP ? _cfg_setup_udp(cfg) : _cfg_setup_tcp(cfg);
-		if (rt != wawo::OK) {
+		if (rt == wawo::E_SOCKET_ERROR) {
+			rt = wawo::socket_get_last_errno();
 			event_poller()->schedule([ch_promise, rt]() {
 				ch_promise->set_success(rt);
 			});
@@ -161,8 +168,8 @@ namespace wawo { namespace net {
 			return;
 		} 
 		if (rt == wawo::E_SOCKET_ERROR) {
-			int ec = wawo::socket_get_last_errno();
-			if ( IS_ERRNO_EQUAL_CONNECTING(ec) ) {
+			rt = wawo::socket_get_last_errno();
+			if ( IS_ERRNO_EQUAL_CONNECTING(rt) ) {
 				WAWO_ASSERT(m_state == S_CONNECTING);
 				m_fn_dial_initializer = initializer;
 				m_dial_promise = ch_promise;
@@ -173,9 +180,9 @@ namespace wawo { namespace net {
 				socket::begin_connect();
 #endif
 			} else {
-				event_poller()->schedule([ch_promise, ec, CH=WWRP<channel>(this)]() {
-					ch_promise->set_success(ec);
-					CH->ch_errno(ec);
+				event_poller()->schedule([ch_promise, rt, CH=WWRP<channel>(this)]() {
+					ch_promise->set_success(rt);
+					CH->ch_errno(rt);
 					CH->ch_close();
 				});
 			}

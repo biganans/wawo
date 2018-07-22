@@ -269,7 +269,7 @@ namespace wawo { namespace net {
 
 		inline void __new_fd(SOCKET nfd, address const& laddr, address& raddr) {
 			try {
-				WWRP<socket> so = wawo::make_ref<socket>(nfd, SM_PASSIVE, laddr, raddr, sock_family(), sock_type(), sock_protocol(), m_cfg );
+				WWRP<socket> so = wawo::make_ref<socket>(nfd, SM_PASSIVE, laddr, raddr, sock_family(), sock_type(), sock_protocol(), m_child_cfg );
 				m_fn_accept_initializer(so);
 				so->ch_fire_connected();
 #ifdef WAWO_IO_MODE_IOCP

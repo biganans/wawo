@@ -9,7 +9,7 @@
 
 namespace wawo {
 
-	static std::atomic<long> s_event_handler_id{ 0 };
+	static std::atomic<long> s_event_handler_id{0};
 	class event_handler_base :public wawo::ref_base
 	{
 		friend class event_trigger;
@@ -63,7 +63,7 @@ namespace wawo {
 			m_handlers.insert({id, v});
 		}
 
-		inline void unbind(int const& handler_id) {
+		inline void unbind(long const& handler_id) {
 			event_map_t::iterator it = m_handlers.begin();
 			while ( it != m_handlers.end()) {
 				handler_vector_t::iterator it_handlers = it->second.begin();
@@ -78,26 +78,26 @@ namespace wawo {
 		}
 
 		template<class _Callable>
-		inline int bind(int const& id, _Callable&& evt_callee ) {
+		inline long bind(int const& evt_id, _Callable&& evt_callee ) {
 			static_assert(std::is_class<std::remove_reference<_Callable>>::value, "_Callable must be lambda or std::function type");
 			WWRP<event_handler_base> evt_handler = make_event_handler<_Callable>(std::forward<_Callable>(evt_callee));
-			_insert_into_map( id, evt_handler);
+			_insert_into_map(evt_id, evt_handler);
 			return evt_handler->id;
 		}
 
 		template<class _Callable_Hint, class _Callable
 			, class = typename std::enable_if<std::is_convertible<_Callable, _Callable_Hint>::value>::type>
-		inline int bind(int const& id, _Callable&& evt_callee) {
+		inline long bind(int const& evt_id, _Callable&& evt_callee) {
 			static_assert(std::is_class<std::remove_reference<_Callable>>::value, "_Callable must be lambda or std::function type");
 			WWRP<event_handler_base> evt_handler = make_event_handler<_Callable_Hint>(std::forward<std::remove_reference<_Callable>::type>(evt_callee));
-			_insert_into_map(id, evt_handler);
+			_insert_into_map(evt_id, evt_handler);
 			return evt_handler->id;
 		}
 
 		template<class _Callable_Hint, class _Fx, class... _Args>
-		inline int bind(int const& id, _Fx&& _func, _Args&&... _args) {
+		inline long bind(int const& evt_id, _Fx&& _func, _Args&&... _args) {
 			WWRP<event_handler_base> evt_handler = make_event_handler<_Callable_Hint>(std::bind(std::forward<_Fx>(_func), std::forward<_Args>(_args)...));
-			_insert_into_map(id, evt_handler);
+			_insert_into_map(evt_id, evt_handler);
 			return evt_handler->id;
 		}
 

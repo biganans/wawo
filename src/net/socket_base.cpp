@@ -56,7 +56,7 @@ namespace wawo { namespace net {
 			m_laddr(laddr),
 			m_raddr(raddr),
 
-			m_cfg(cfg)
+			m_cfg()
 		{
 			WAWO_ASSERT(family < F_AF_UNSPEC);
 			WAWO_ASSERT(sockt < T_UNKNOWN);
@@ -297,7 +297,11 @@ namespace wawo { namespace net {
 		}
 
 		int socket_base::_cfgs_setup_common(socket_cfg const& cfg) {
-			int rt = _cfg_nonblocking((cfg.option&OPTION_NON_BLOCKING) != 0 );
+			//int rt = _cfg_nonblocking((cfg.option&OPTION_NON_BLOCKING) != 0 );
+			//WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+
+			//force nonblocking
+			int rt = _cfg_nonblocking(true);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
 
 			rt = _cfg_reuseaddr((cfg.option&OPTION_REUSEADDR) !=0);
@@ -371,9 +375,10 @@ namespace wawo { namespace net {
 			if (m_protocol == wawo::net::P_WCP) {
 				int rt = reuse_addr();
 				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
-
+#if !WAWO_ISWIN
 				rt = reuse_port();
 				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
+#endif
 			}
 
 			WAWO_ASSERT(m_family == addr.family());
