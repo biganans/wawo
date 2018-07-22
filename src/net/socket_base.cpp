@@ -45,7 +45,7 @@ namespace wawo { namespace net {
 #endif
 	}
 
-		socket_base::socket_base(SOCKET const& fd, socket_mode const& sm, address const& laddr, address const& raddr, s_family const& family, s_type const& sockt, s_protocol const& proto, socket_cfg const& cfg) :
+		socket_base::socket_base(SOCKET const& fd, socket_mode const& sm, address const& laddr, address const& raddr, s_family const& family, s_type const& sockt, s_protocol const& proto) :
 			m_fd(fd),
 			m_sm(sm),
 
@@ -65,11 +65,6 @@ namespace wawo { namespace net {
 
 			_socket_fn_init();
 			WAWO_ASSERT(fd != wawo::E_INVALID_SOCKET );
-			WAWO_ASSERT(cfg.buffer.rcv_size <= SOCK_RCV_MAX_SIZE );
-			WAWO_ASSERT(cfg.buffer.snd_size <= SOCK_SND_MAX_SIZE );
-
-			_cfgs_setup_common(cfg);
-			m_protocol == P_UDP ? _cfg_setup_udp(cfg): _cfg_setup_tcp(cfg);
 
 			WAWO_TRACE_SOCKET("[socket_base][%s]socket_base::socket_base(), new connected address: %p", info().to_stdstring().c_str(), this);
 		}
@@ -99,7 +94,6 @@ namespace wawo { namespace net {
 		socket_base::~socket_base() {
 			WAWO_TRACE_SOCKET("[socket_base][%s]socket_base::~socket_base(),address: %p", info().to_stdstring().c_str(), this);
 		}
-
 
 		int socket_base::_cfg_reuseaddr(bool onoff) {
 			WAWO_RETURN_V_IF_MATCH(wawo::E_INVALID_OPERATION, m_fd == wawo::E_INVALID_SOCKET);
@@ -306,9 +300,6 @@ namespace wawo { namespace net {
 			int rt = _cfg_nonblocking(true);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
 
-			rt = _cfg_buffer(cfg.buffer);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
-
 			rt = _cfg_reuseaddr((cfg.option&OPTION_REUSEADDR) !=0);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
 
@@ -327,6 +318,10 @@ namespace wawo { namespace net {
 		int socket_base::_cfg_setup_tcp(socket_cfg const& cfg) {
 			int rt = _cfg_nodelay((cfg.option&OPTION_NODELAY) != 0);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+
+			rt = _cfg_buffer(cfg.buffer);
+			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+
 			return _cfg_keep_alive_vals(cfg.kvals);
 		}
 
@@ -339,7 +334,6 @@ namespace wawo { namespace net {
 			WAWO_RETURN_V_IF_MATCH(wawo::E_INVALID_SOCKET, m_fd == wawo::E_INVALID_SOCKET);
 
 			WAWO_TRACE_SOCKET("[socket_base][%s]socket::socket() ok", info().to_stdstring().c_str() );
-			return _cfgs_setup_common(cfg);
 		}
 
 		int socket_base::close() {

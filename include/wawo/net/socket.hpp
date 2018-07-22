@@ -63,8 +63,8 @@ namespace wawo { namespace net {
 		void _deinit();
 
 	public:
-		explicit socket(SOCKET const& fd, socket_mode const& sm, address const& laddr, address const& raddr,s_family const& family , s_type const& sockt, s_protocol const& proto, socket_cfg const& cfg ):
-			socket_base(fd,sm,laddr,raddr,family, sockt,proto,cfg),
+		explicit socket(SOCKET const& fd, socket_mode const& sm, address const& laddr, address const& raddr,s_family const& family , s_type const& sockt, s_protocol const& proto):
+			socket_base(fd,sm,laddr,raddr,family, sockt,proto),
 			channel(wawo::net::io_event_loop_group::instance()->next(proto == P_WCP)),
 			m_flag(0),
 			m_state(S_CONNECTED),
@@ -74,8 +74,14 @@ namespace wawo { namespace net {
 			,m_ol_write(0)
 #endif
 		{
+			ch_fire_open(); //may throw
+		}
+
+		int init(socket_cfg const& cfg) {
+			int rt = socket_base::init(cfg);
+			WAWO_RETURN_V_IF_MATCH(rt, rt == wawo::E_SOCKET_ERROR);
 			_init();
-			ch_fire_opened(); //may throw
+			return wawo::OK;
 		}
 
 		explicit socket(s_family const& family, s_type const& type, s_protocol const& proto) :
@@ -269,7 +275,13 @@ namespace wawo { namespace net {
 
 		inline void __new_fd(SOCKET nfd, address const& laddr, address& raddr) {
 			try {
-				WWRP<socket> so = wawo::make_ref<socket>(nfd, SM_PASSIVE, laddr, raddr, sock_family(), sock_type(), sock_protocol(), m_child_cfg );
+				WWRP<socket> so = wawo::make_ref<socket>(nfd, SM_PASSIVE, laddr, raddr, sock_family(), sock_type(), sock_protocol() );
+				int rt = so->init(m_child_cfg);
+				if (rt == wawo::E_SOCKET_ERROR) {
+					so->ch_close();
+					WAWO_ERR("[#%d]accept new fd error, fd: %d, errno: %d", fd(), so->ch_id(), wawo::socket_get_last_errno() );
+					return;
+				}
 				m_fn_accept_initializer(so);
 				so->ch_fire_connected();
 #ifdef WAWO_IO_MODE_IOCP
@@ -924,7 +936,7 @@ namespace wawo { namespace net {
 			int rt = socket_base::close();
 			event_poller()->schedule([CH = WWRP<channel>(this), close_f, rt]() {
 				close_f->set_success(rt);
-				CH->ch_fire_closed(rt);
+				CH->ch_fire_close(rt);
 			});
 #ifdef WAWO_IO_MODE_IOCP
 			__IOCP_deinit();
@@ -939,7 +951,7 @@ namespace wawo { namespace net {
 			int rt = socket_base::close();
 			event_poller()->schedule([close_f, CH = WWRP<channel>(this), rt]() {
 				close_f->set_success(rt);
-				CH->ch_fire_closed(rt);
+				CH->ch_fire_close(rt);
 			});
 #ifdef WAWO_IO_MODE_IOCP
 			__IOCP_deinit();
@@ -983,7 +995,7 @@ namespace wawo { namespace net {
 				if (close_f != NULL) {
 					close_f->set_success(rt);
 				}
-				CH->ch_fire_closed(rt);
+				CH->ch_fire_close(rt);
 			});
 
 #ifdef WAWO_IO_MODE_IOCP

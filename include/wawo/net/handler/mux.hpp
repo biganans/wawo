@@ -86,7 +86,7 @@ namespace wawo { namespace net { namespace handler {
 
 		void _init() {
 			m_rb = wawo::make_ref<bytes_ringbuffer>(MUX_STREAM_WND_SIZE);
-			channel::ch_fire_opened();
+			channel::ch_fire_open();
 		}
 		inline int _ch_do_shutdown_read() {
 			WAWO_ASSERT((m_flag&F_READ_SHUTDOWN) == 0);
@@ -525,7 +525,7 @@ namespace wawo { namespace net { namespace handler {
 				if (close_f != NULL) {
 					close_f->set_success(wawo::OK);
 				}
-				CH->ch_fire_closed(wawo::OK);
+				CH->ch_fire_close(wawo::OK);
 			});
 		}
 

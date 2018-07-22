@@ -212,6 +212,11 @@ namespace wawo { namespace net {
 		int _cfg_setup_udp(socket_cfg const& cfg);
 		int _cfg_setup_tcp(socket_cfg const& cfg);
 	protected:
+		int init(socket_cfg const& cfg) {
+			int rt = _cfgs_setup_common(cfg);
+			WAWO_RETURN_V_IF_MATCH(wawo::E_INVALID_SOCKET, rt == wawo::E_INVALID_SOCKET);
+			return m_protocol == P_UDP ? _cfg_setup_udp(cfg) : _cfg_setup_tcp(cfg);
+		}
 		int open(socket_cfg const& cfg );
 		int shutdown(int const& flag);
 		int close();
@@ -221,7 +226,7 @@ namespace wawo { namespace net {
 		int connect(address const& addr);
 
 	public:
-		explicit socket_base(SOCKET const& fd, socket_mode const& sm, address const& laddr, address const& raddr, s_family const& family, s_type const& sockt, s_protocol const& proto, socket_cfg const& cfg); //by pass a connected socket fd
+		explicit socket_base(SOCKET const& fd, socket_mode const& sm, address const& laddr, address const& raddr, s_family const& family, s_type const& sockt, s_protocol const& proto ); //by pass a connected socket fd
 		explicit socket_base(s_family const& family, s_type const& type, s_protocol const& protocol);
 
 		virtual ~socket_base();

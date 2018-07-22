@@ -107,7 +107,7 @@ namespace wawo { namespace net {
 		CH_FIRE_ACTION_IMPL_0(write_block)
 		CH_FIRE_ACTION_IMPL_0(write_unblock)
 
-		inline void ch_fire_opened() {
+		inline void ch_fire_open() {
 			WAWO_ASSERT(m_io_event_loop != NULL);
 			m_pipeline = wawo::make_ref<channel_pipeline>(WWRP<channel>(this));
 			m_pipeline->init();
@@ -116,7 +116,7 @@ namespace wawo { namespace net {
 			m_ch_close_future = wawo::make_ref<channel_promise>(WWRP<channel>(this));
 		}
 
-		inline void ch_fire_closed(int const& code ) {
+		inline void ch_fire_close(int const& code ) {
 			WAWO_ASSERT(m_io_event_loop != NULL);
 			WAWO_ASSERT(m_pipeline != NULL);
 			WAWO_ASSERT(m_ch_close_future != NULL);

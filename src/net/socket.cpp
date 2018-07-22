@@ -24,10 +24,11 @@ namespace wawo { namespace net {
 	int socket::open( socket_cfg const& cfg ) {
 		WAWO_ASSERT(m_state==S_CLOSED);
 		int rt = socket_base::open(cfg);
-		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt==wawo::OK);
+		WAWO_RETURN_V_IF_MATCH(rt, rt == wawo::E_SOCKET_ERROR);
 
-		_init();
-		channel::ch_fire_opened();
+		rt = init(cfg);
+		WAWO_RETURN_V_IF_MATCH(rt, rt == wawo::E_SOCKET_ERROR);
+		channel::ch_fire_open();
 		m_state = S_OPENED;
 		return rt;
 	}
@@ -145,7 +146,6 @@ namespace wawo { namespace net {
 			return;
 		}
 
-		rt = m_protocol == P_UDP ? _cfg_setup_udp(cfg) : _cfg_setup_tcp(cfg);
 		if (rt == wawo::E_SOCKET_ERROR) {
 			rt = wawo::socket_get_last_errno();
 			event_poller()->schedule([ch_promise, rt]() {
