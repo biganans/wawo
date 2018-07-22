@@ -200,14 +200,14 @@ namespace wawo { namespace net { namespace handler {
 				return;
 			}
 
-			if (m_flag&F_WRITE_BLOCKED) {
+			if ( (frame.flag&T_DATA) && (m_flag&F_WRITE_BLOCKED) ) {
 				event_poller()->schedule([ch_promise]() {
 					ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
 				});
 				return;
 			}
 
-			if ( m_entry_q_bytes + frame.data->len() + sizeof(mux_stream_frame_flag_t) + sizeof(u32_t) > m_wnd) {
+			if ((frame.flag&T_DATA) && m_entry_q_bytes + frame.data->len() + sizeof(mux_stream_frame_flag_t) + sizeof(u32_t) > m_wnd) {
 				m_flag |= F_WRITE_BLOCKED;
 				event_poller()->schedule([ch_promise,CH=WWRP<wawo::net::channel>(this)]() {
 					ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
@@ -370,6 +370,7 @@ namespace wawo { namespace net { namespace handler {
 		}
 
 		inline void arrive_frame(mux_stream_frame const& frame) {
+			WAWO_ASSERT(event_poller()->in_event_loop());
 			switch (frame.flag) {
 			case mux_stream_frame_flag::T_DATA:
 			{
@@ -620,6 +621,14 @@ namespace wawo { namespace net { namespace handler {
 
 		void connected(WWRP<wawo::net::channel_handler_context> const& ctx);
 		void closed(WWRP<wawo::net::channel_handler_context> const& ctx);
+
+		void write_block(WWRP<channel_handler_context> const& ctx) {
+			WAWO_ASSERT(!"TODO");
+		}
+
+		void write_unblock(WWRP<channel_handler_context> const& ctx) {
+			WAWO_ASSERT(!"TODO");
+		}
 
 		void _stream_close_check_() {
 			stream_map_t::iterator it = m_stream_map.begin();
