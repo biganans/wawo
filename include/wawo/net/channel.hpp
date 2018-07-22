@@ -79,6 +79,10 @@ namespace wawo { namespace net {
 		}
 		inline int ch_get_errno() { return m_errno; }
 
+		inline WWRP<channel_promise> make_promise() {
+			return wawo::make_ref<channel_promise>(WWRP<channel>(this));
+		}
+
 #define CH_FIRE_ACTION_IMPL_PACKET_1(_NAME,_P) \
 		void ch_##_NAME(WWRP<packet> const& _P) { \
 			WAWO_ASSERT(m_pipeline != NULL); \
@@ -133,7 +137,9 @@ private: \
 		inline void _ch_##NAME(WWRP<channel_promise> const& ch_promise) {\
 			WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 			if (m_pipeline == NULL) { \
-				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
+				event_poller()->schedule([ch_promise](){ \
+					ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
+				}); \
 				return; \
 			} \
 			m_pipeline->##NAME(ch_promise); \
@@ -160,7 +166,9 @@ private: \
 		inline void _ch_##_NAME(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {\
 			WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 			if (m_pipeline == NULL) { \
-				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
+				event_poller()->schedule([ch_promise](){ \
+					ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
+				}); \
 				return; \
 			} \
 			m_pipeline->##_NAME(outlet,ch_promise); \

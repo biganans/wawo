@@ -91,7 +91,7 @@ namespace wawo { namespace net { namespace handler {
 		stream_map_t::iterator it = m_stream_map.begin();
 		while (it != m_stream_map.end()) {
 			it->second->ch_close();
-			DEBUG_STREAM("[mux][s%u][mux_close]force close stream, for E_CLOSE", it->second->ch_id() );
+			DEBUG_STREAM("[mux][s%u][mux_close]mux closed, close all mux_stream", it->second->ch_id() );
 			++it;
 		}
 

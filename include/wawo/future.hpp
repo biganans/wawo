@@ -198,6 +198,7 @@ namespace wawo {
 	public:
 		void set_success(T const& v) {
 			lock_guard<mutex> lg(m_mutex);
+			WAWO_ASSERT(m_state.load(std::memory_order_acquire) == channel_future::S_IDLE);
 			typename future<T>::state s = future<T>::S_IDLE;
 			int ok = future<T>::m_state.compare_exchange_strong( s, future<T>::S_SUCCESS, std::memory_order_acq_rel);
 			WAWO_ASSERT(ok);
@@ -213,6 +214,8 @@ namespace wawo {
 
 		void set_failure(WWSP<wawo::promise_exception> const& e) {
 			lock_guard<mutex> lg(m_mutex);
+			WAWO_ASSERT(m_state.load(std::memory_order_acquire) == channel_future::S_IDLE);
+
 			int ok = future<T>::m_state.compare_exchange_strong(future<T>::S_IDLE, future<T>::S_FAILURE, std::memory_order_acq_rel);
 			WAWO_ASSERT(ok);
 			(void)ok;

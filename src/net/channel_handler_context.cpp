@@ -19,4 +19,10 @@ namespace wawo { namespace net {
 	}
 
 	channel_handler_context::~channel_handler_context() {}
+
+	WWRP<channel_promise> channel_handler_context::make_channel_promise() {
+		WAWO_ASSERT(ch != NULL);
+		return ch->make_promise();
+	}
+
 }}

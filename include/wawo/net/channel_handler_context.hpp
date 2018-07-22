@@ -39,7 +39,9 @@
 private:\
 	inline void _##NAME##(WWRP<packet> const& p, WWRP<channel_promise> const& ch_promise) { \
 		if( WAWO_UNLIKELY(m_flag&CH_CH_CLOSED) ) {\
-			ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
+			event_poller()->schedule([ch_promise](){ \
+				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
+			}); \
 			return ;\
 		} \
 		WWRP<CTX_CLASS_NAME> _ctx = CTX_CLASS_NAME::_find_prev(HANDLER_FLAG); \
@@ -71,7 +73,9 @@ public:\
 private:\
 	inline void _##NAME##(WWRP<channel_promise> const& ch_promise) { \
 		if( WAWO_UNLIKELY(m_flag&CH_CH_CLOSED) ) {\
-			ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
+			event_poller()->schedule([ch_promise](){ \
+				ch_promise->set_success(wawo::E_CHANNEL_CLOSED_ALREADY); \
+			}); \
 			return; \
 		} \
 		WWRP<CTX_CLASS_NAME> _ctx = CTX_CLASS_NAME::_find_prev(HANDLER_FLAG); \
@@ -172,6 +176,8 @@ namespace wawo { namespace net {
 		inline WWRP<io_event_loop> const& event_poller() const {
 			return m_io_event_loop;
 		}
+		WWRP<channel_promise> make_channel_promise();
+
 		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, connected, CH_ACTIVITY, channel_activity_handler_abstract)
 		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, closed, CH_ACTIVITY, channel_activity_handler_abstract)
 		VOID_FIRE_HANDLER_CONTEXT_IMPL_H_TO_T_0(channel_handler_context, read_shutdowned, CH_ACTIVITY, channel_activity_handler_abstract)
