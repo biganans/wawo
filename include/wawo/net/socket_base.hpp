@@ -133,7 +133,7 @@ namespace wawo { namespace net {
 		socket_cfg() :
 			option(OPTION_NONE),
 			buffer({0,0}),
-			kvals({true,0,0,0})
+			kvals({false,0,0,0})
 		{}
 		socket_cfg(int option_, socket_buffer_cfg const& bcfg_, keep_alive_vals const& kvals_):
 			option(option_),
@@ -141,6 +141,8 @@ namespace wawo { namespace net {
 			kvals(kvals_)
 		{}
 	};
+
+	const static socket_cfg default_socket_cfg(OPTION_NON_BLOCKING, { 0,0 }, { true,0,0,0 });
 
 	struct socketinfo {
 		SOCKET fd;
@@ -175,6 +177,7 @@ namespace wawo { namespace net {
 		address m_laddr;
 		address m_raddr;
 		socket_cfg m_cfg;
+		socket_cfg m_child_cfg; //for listen fd
 
 		socket_api::fn_socket m_fn_socket;
 		socket_api::fn_connect m_fn_connect;
@@ -194,7 +197,7 @@ namespace wawo { namespace net {
 
 	private:
 		void _socket_fn_init();
-
+	protected:
 		int _cfg_reuseaddr(bool onoff);
 		int _cfg_reuseport(bool onoff);
 		int _cfg_nonblocking(bool onoff);
@@ -205,13 +208,15 @@ namespace wawo { namespace net {
 		int _cfg_keep_alive_vals(keep_alive_vals const& vals);
 
 		int _cfg_broadcast(bool onoff);
-		int _cfgs_setup(socket_cfg const& cfg);
+		int _cfgs_setup_common(socket_cfg const& cfg);
+		int _cfg_setup_udp(socket_cfg const& cfg);
+		int _cfg_setup_tcp(socket_cfg const& cfg);
 	protected:
-		int open(socket_cfg const& cfg = socket_cfg());
+		int open(socket_cfg const& cfg );
 		int shutdown(int const& flag);
 		int close();
 		int bind(address const& addr);
-		int listen(int const& backlog);
+		int listen(socket_cfg const& child_cfg, int const& backlog);
 		SOCKET accept(address& addr);
 		int connect(address const& addr);
 

@@ -67,7 +67,9 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(cfg.buffer.rcv_size <= SOCK_RCV_MAX_SIZE );
 			WAWO_ASSERT(cfg.buffer.snd_size <= SOCK_SND_MAX_SIZE );
 
-			_cfgs_setup(cfg);
+			_cfgs_setup_common(cfg);
+			m_protocol == P_UDP ? _cfg_setup_udp(cfg): _cfg_setup_tcp(cfg);
+
 			WAWO_TRACE_SOCKET("[socket_base][%s]socket_base::socket_base(), new connected address: %p", info().to_stdstring().c_str(), this);
 		}
 
@@ -224,7 +226,7 @@ namespace wawo { namespace net {
 
 		int socket_base::_cfg_keep_alive_vals(keep_alive_vals const& vals) {
 			if (!(m_protocol == P_TCP || m_protocol == P_WCP)) { return wawo::E_INVALID_OPERATION; }
-
+			WAWO_ASSERT(!is_listener());
 			int rt = _cfg_keep_alive(vals.onoff);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
 			WAWO_RETURN_V_IF_MATCH(wawo::OK, vals.onoff == false);
@@ -284,7 +286,7 @@ namespace wawo { namespace net {
 			if (!setornot) {
 				return wawo::OK;
 			}
-			int rt = wawo::net::socket_api::helper::set_broadcaset(m_fd, onoff);
+			int rt = wawo::net::socket_api::helper::set_broadcast(m_fd, onoff);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
 			if (onoff) {
 				m_cfg.option |= OPTION_BROADCAST;
@@ -294,7 +296,7 @@ namespace wawo { namespace net {
 			return wawo::OK;
 		}
 
-		int socket_base::_cfgs_setup(socket_cfg const& cfg) {
+		int socket_base::_cfgs_setup_common(socket_cfg const& cfg) {
 			int rt = _cfg_nonblocking((cfg.option&OPTION_NON_BLOCKING) != 0 );
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
 
@@ -305,19 +307,20 @@ namespace wawo { namespace net {
 			rt = _cfg_reuseaddr((cfg.option&OPTION_REUSEPORT)!=0);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
 #endif
-			if (m_protocol == P_UDP) {
-				rt = _cfg_broadcast((cfg.option&OPTION_BROADCAST)!=0);
-				WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
-			} else if (m_protocol == P_TCP || m_protocol == P_WCP) {
-				rt = _cfg_buffer(cfg.buffer);
-				WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
-				rt = _cfg_nodelay((cfg.option&OPTION_NODELAY)!=0);
-				WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
-				rt = _cfg_keep_alive_vals(cfg.kvals);
-				WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
-			} else {}
-
 			return wawo::OK;
+		}
+
+		int socket_base::_cfg_setup_udp(socket_cfg const& cfg) {
+			return _cfg_broadcast((cfg.option&OPTION_BROADCAST) != 0);
+		}
+
+		//wcp share same cfg with tcp
+		int socket_base::_cfg_setup_tcp(socket_cfg const& cfg) {
+			int rt = _cfg_buffer(cfg.buffer);
+			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+			rt = _cfg_nodelay((cfg.option&OPTION_NODELAY) != 0);
+			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+			return _cfg_keep_alive_vals(cfg.kvals);
 		}
 
 		int socket_base::open(socket_cfg const& cfg ) {
@@ -329,7 +332,7 @@ namespace wawo { namespace net {
 			WAWO_RETURN_V_IF_MATCH(wawo::E_INVALID_SOCKET, m_fd == wawo::E_INVALID_SOCKET);
 
 			WAWO_TRACE_SOCKET("[socket_base][%s]socket::socket() ok", info().to_stdstring().c_str() );
-			return _cfgs_setup(cfg);
+			return _cfgs_setup_common(cfg);
 		}
 
 		int socket_base::close() {
@@ -361,8 +364,7 @@ namespace wawo { namespace net {
 			return shutrt;
 		}
 
-		int socket_base::bind(address const& addr) {
-
+		int socket_base::bind( address const& addr) {
 			WAWO_ASSERT(m_sm == SM_NONE);
 			WAWO_ASSERT(m_laddr.is_null());
 
@@ -379,7 +381,7 @@ namespace wawo { namespace net {
 			return m_fn_bind(m_fd , addr);
 		}
 
-		int socket_base::listen(int const& backlog) {
+		int socket_base::listen(socket_cfg const& child_cfg, int const& backlog) {
 			WAWO_ASSERT(m_sm == SM_NONE);
 			WAWO_ASSERT(m_fd>0);
 			int listenrt;
@@ -390,7 +392,9 @@ namespace wawo { namespace net {
 			else {
 				listenrt = m_fn_listen(m_fd, backlog);
 			}
+
 			WAWO_RETURN_V_IF_NOT_MATCH(listenrt, listenrt == wawo::OK);
+			m_child_cfg = child_cfg;
 			m_sm = SM_LISTENER;
 			return wawo::OK;
 		}

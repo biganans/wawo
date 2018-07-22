@@ -351,7 +351,7 @@ namespace wawo { namespace net { namespace socket_api {
 			return wawo::net::socket_api::posix::setsockopt(fd, SOL_SOCKET, OPTION_REUSEPORT, &optval, sizeof(optval));
 		}
 #endif
-		inline int set_broadcaset(SOCKET fd, bool onoff) {
+		inline int set_broadcast(SOCKET fd, bool onoff) {
 			int optval = onoff ? 1 : 0;
 			return wawo::net::socket_api::posix::setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &optval, sizeof(optval));
 		}

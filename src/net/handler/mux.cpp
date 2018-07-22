@@ -79,6 +79,7 @@ namespace wawo { namespace net { namespace handler {
 	}
 
 	void mux::connected(WWRP<wawo::net::channel_handler_context> const& ctx) {
+		lock_guard<spin_mutex> lg(m_mutex);
 		WAWO_ASSERT(m_ch_ctx == NULL);
 		m_ch_ctx = ctx;
 

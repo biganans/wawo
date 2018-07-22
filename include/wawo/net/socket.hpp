@@ -96,9 +96,9 @@ namespace wawo { namespace net {
 			_deinit();
 		}
 
-		int open(socket_cfg const& cfg = socket_cfg() );
+		int open(socket_cfg const& cfg = default_socket_cfg );
 		int bind(address const& addr);
-		int listen(int const& backlog = WAWO_DEFAULT_LISTEN_BACKLOG);
+		int listen(socket_cfg const& child_cfg, int const& backlog = WAWO_DEFAULT_LISTEN_BACKLOG);
 
 		SOCKET accept(address& raddr);
 		int connect(address const& addr);
@@ -117,7 +117,7 @@ namespace wawo { namespace net {
 			return socket_base::get_snd_buffer_size(size);
 		}
 
-		static WWRP<channel_future> dial(std::string const& dialurl, fn_channel_initializer const& initializer, socket_cfg const& cfg = socket_cfg()) {
+		static WWRP<channel_future> dial(std::string const& dialurl, fn_channel_initializer const& initializer, socket_cfg const& cfg = default_socket_cfg ) {
 			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(nullptr);
 			socketaddr soaddr;
 			int rt = _parse_socketaddr_from_url(dialurl, soaddr);
@@ -127,13 +127,13 @@ namespace wawo { namespace net {
 			}
 
 			WWRP<socket> so = wawo::make_ref<socket>(soaddr.so_address.family(), soaddr.so_type, soaddr.so_proto);
-			WWRP<channel_future> dial_future = so->_dial(soaddr.so_address, initializer,cfg );
-
+			WWRP<channel_promise> dial_future = so->make_promise();
 			dial_future->add_listener([](WWRP<channel_future> f) {
 				if (f->get() != wawo::OK) {
 					f->channel()->ch_close();
 				}
 			});
+			so->_dial(soaddr.so_address, initializer, dial_future, cfg);
 			return dial_future;
 		}
 
@@ -144,7 +144,7 @@ namespace wawo { namespace net {
 				ch->pipeline()->add_last(h);
 			});
 		*/
-		static WWRP<channel_future> listen_on(std::string const& addrurl, fn_channel_initializer const& accepted, socket_cfg const& cfg = socket_cfg(), int backlog = WAWO_DEFAULT_LISTEN_BACKLOG) {
+		static WWRP<channel_future> listen_on(std::string const& addrurl, fn_channel_initializer const& accepted, socket_cfg const& cfg = default_socket_cfg, socket_cfg const& child_cfg = default_socket_cfg, int backlog = WAWO_DEFAULT_LISTEN_BACKLOG) {
 			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(nullptr);
 			socketaddr soaddr;
 			int rt = _parse_socketaddr_from_url(addrurl, soaddr);
@@ -154,14 +154,17 @@ namespace wawo { namespace net {
 			}
 
 			WWRP<socket> so = wawo::make_ref<socket>(soaddr.so_address.family(), soaddr.so_type, soaddr.so_proto);
-			WWRP<channel_future> listen_future = so->_listen_on(soaddr.so_address, accepted, cfg, backlog);
+			WWRP<channel_future> listen_future = so->_listen_on(soaddr.so_address, accepted, cfg, child_cfg, backlog);
 			rt = listen_future->get();
 			WAWO_RETURN_V_IF_MATCH(listen_future, rt == wawo::OK);
 
 			//clean res in case of failure
-			so->ch_close();
-
+			WAWO_ASSERT(rt == wawo::E_SOCKET_ERROR);
+			rt = wawo::socket_get_last_errno();
 			ch_promise->set_success(rt);
+
+			so->ch_errno(rt);
+			so->ch_close();
 			return ch_promise;
 		}
 
@@ -202,11 +205,11 @@ namespace wawo { namespace net {
 			return wawo::OK;
 		}
 
-		WWRP<wawo::net::channel_future> _listen_on(address const& addr, fn_channel_initializer const& fn_accepted, socket_cfg const& cfg, int const& backlog = WAWO_DEFAULT_LISTEN_BACKLOG);
-		WWRP<wawo::net::channel_future> _listen_on(address const& addr, fn_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise, socket_cfg const& cfg, int const& backlog = WAWO_DEFAULT_LISTEN_BACKLOG);
+		WWRP<channel_future> _listen_on(address const& addr, fn_channel_initializer const& fn_accepted, socket_cfg const& cfg, socket_cfg const&child_cfg = default_socket_cfg, int const& backlog = WAWO_DEFAULT_LISTEN_BACKLOG);
+		void _listen_on(address const& addr, fn_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise, socket_cfg const& cfg, socket_cfg const& child_cfg = default_socket_cfg, int const& backlog = WAWO_DEFAULT_LISTEN_BACKLOG);
 
-		WWRP<channel_future> _dial(address const& addr, fn_channel_initializer const& initializer,socket_cfg const& cfg = socket_cfg());
-		WWRP<channel_future> _dial(address const& addr, fn_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise, socket_cfg const& cfg = socket_cfg());
+		WWRP<channel_future> _dial(address const& addr, fn_channel_initializer const& initializer, socket_cfg const& cfg = default_socket_cfg);
+		void _dial(address const& addr, fn_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise, socket_cfg const& cfg = default_socket_cfg);
 
 		inline int _ch_do_shutdown_read() {
 			WAWO_ASSERT((m_flag&F_READ_SHUTDOWN) == 0);

@@ -59,13 +59,13 @@ namespace wawo { namespace net {
 		return wawo::OK;
 	}
 
-	int socket::listen( int const& backlog ) {
+	int socket::listen(socket_cfg const& child_cfg, int const& backlog ) {
 		WAWO_ASSERT(event_poller()->in_event_loop());
 
 		WAWO_ASSERT(m_state == S_BINDED);
 		WAWO_ASSERT(fd() > 0);
 
-		int rt = socket_base::listen(backlog);
+		int rt = socket_base::listen( child_cfg, backlog);
 		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 
 		m_state = S_LISTEN;
@@ -73,37 +73,37 @@ namespace wawo { namespace net {
 		return wawo::OK;
 	}
 
-	WWRP<wawo::net::channel_future> socket::_listen_on(address const& addr, fn_channel_initializer const& fn_accepted, socket_cfg const& cfg, int const& backlog) {
-		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
-		return socket::_listen_on(addr, fn_accepted, ch_promise, cfg, backlog);
+	WWRP<channel_future> socket::_listen_on(address const& addr, fn_channel_initializer const& fn_accepted, socket_cfg const& cfg, socket_cfg const& child_cfg, int const& backlog) {
+		WWRP<channel_promise> ch_p = make_promise();
+		_listen_on(addr,fn_accepted,ch_p,cfg,child_cfg, backlog);
+		return ch_p;
 	}
 
-	WWRP<wawo::net::channel_future> socket::_listen_on(address const& addr, fn_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise, socket_cfg const& cfg, int const& backlog ) {
+	void socket::_listen_on(address const& addr, fn_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise, socket_cfg const& cfg, socket_cfg const& child_cfg, int const& backlog ) {
 		if (!event_poller()->in_event_loop()) {
 			WWRP<socket> _this(this);
-			event_poller()->execute([_this, addr, fn_accepted, ch_promise,cfg, backlog]() ->void {
-				_this->_listen_on(addr, fn_accepted, ch_promise, cfg, backlog);
+			event_poller()->execute([_this, addr, fn_accepted, ch_promise,cfg, child_cfg, backlog]() ->void {
+				_this->_listen_on(addr, fn_accepted, ch_promise, cfg, child_cfg, backlog);
 			});
-			return ch_promise;
+			return;
 		}
 		int rt = socket::open(cfg);
 		//int rt = -10043;
 		if (rt != wawo::OK) {
-			ch_promise->set_success(rt);
-			return ch_promise;
+			event_poller()->schedule([ch_promise,rt]() {
+				ch_promise->set_success(rt);
+			});
+			return;
 		}
-		rt = turnon_nonblocking();
-		if (rt != wawo::OK) {
-			ch_promise->set_success(rt);
-			return ch_promise;
-		}
-
 		rt = socket::bind(addr);
 		if (rt != wawo::OK) {
-			ch_promise->set_success(rt);
-			return ch_promise;
+			event_poller()->schedule([ch_promise, rt]() {
+				ch_promise->set_success(rt);
+			});
+			return;
 		}
-		rt = socket::listen(backlog);
+
+		rt = socket::listen(child_cfg, backlog);
 		ch_promise->set_success(rt);
 		m_fn_accept_initializer = fn_accepted;
 
@@ -114,46 +114,51 @@ namespace wawo { namespace net {
 			begin_accept();
 #endif
 		}
-
-		return ch_promise;
 	}
 
-	WWRP<channel_future> socket::_dial(address const& addr, fn_channel_initializer const& initializer, socket_cfg const& cfg ) {
-		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
-		return _dial(addr, initializer, ch_promise,cfg);
+	WWRP<channel_future> socket::_dial(address const& addr, fn_channel_initializer const& initializer, socket_cfg const& cfg) {
+		WWRP<channel_promise> f = make_promise();
+		_dial(addr,initializer, f, cfg);
+		return f;
 	}
 
-	WWRP<channel_future> socket::_dial(address const& addr, fn_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise, socket_cfg const& cfg) {
+	void socket::_dial(address const& addr, fn_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise, socket_cfg const& cfg) {
 		if (!event_poller()->in_event_loop()) {
 			WWRP<socket> _this(this);
-			event_poller()->execute([_this, addr, initializer, ch_promise,cfg]() ->void {
-				_this->_dial(addr, initializer, ch_promise,cfg);
+			event_poller()->execute([_this, addr, initializer, ch_promise, cfg]() ->void {
+				_this->_dial(addr, initializer, ch_promise, cfg);
 			});
-			return ch_promise;
 		}
 
 		int rt = socket::open(cfg);
 		if (rt != wawo::OK) {
-			ch_promise->set_success(rt);
-			return ch_promise;
+			event_poller()->schedule([ch_promise, rt]() {
+				ch_promise->set_success(rt);
+			});
+			return;
 		}
-		rt = turnon_nonblocking();
+
+		rt = m_protocol == P_UDP ? _cfg_setup_udp(cfg) : _cfg_setup_tcp(cfg);
 		if (rt != wawo::OK) {
-			ch_promise->set_success(rt);
-			return ch_promise;
+			event_poller()->schedule([ch_promise, rt]() {
+				ch_promise->set_success(rt);
+			});
+			return;
 		}
 
 		rt = socket::connect(addr);
 		if (rt == wawo::OK) {
 			WAWO_ASSERT(m_state == S_CONNECTED);
 			initializer(WWRP<channel>(this));
-			ch_promise->set_success(wawo::OK);
-			channel::ch_fire_connected();
+			event_poller()->schedule([ch_promise, rt,SO=WWRP<socket>(this)]() {
+				ch_promise->set_success(wawo::OK);
+				SO->ch_fire_connected();
 #ifdef WAWO_IO_MODE_IOCP
-			__IOCP_init();
+				SO->__IOCP_init();
 #endif
-			begin_read();
-			return ch_promise;
+				SO->begin_read();
+			});
+			return;
 		} 
 		if (rt == wawo::E_SOCKET_ERROR) {
 			int ec = wawo::socket_get_last_errno();
@@ -168,12 +173,13 @@ namespace wawo { namespace net {
 				socket::begin_connect();
 #endif
 			} else {
-				ch_promise->set_success(ec);
-				channel::ch_errno(ec);
-				channel::ch_close();
+				event_poller()->schedule([ch_promise, ec, CH=WWRP<channel>(this)]() {
+					ch_promise->set_success(ec);
+					CH->ch_errno(ec);
+					CH->ch_close();
+				});
 			}
 		}
-		return ch_promise;
 	}
 
 	SOCKET socket::accept( address& raddr ) {
