@@ -174,7 +174,7 @@ namespace wawo {
 	const int E_WSAENOTSOCK						= -10038; // An operation was attempted on something that is not a socket.
 	const int E_WSAEMSGSIZE						= -10040; // A message sent on a datagram socket was larger than the internal message buffer or some other network limit;  or the buffer used to receive a datagram into was smaller than the datagram itself.
 	const int E_WSAEPROTOTYPE					= -10041; //A protocol was specified in the socket function call that does not support the semantics of the socket type requested.
-	const int E_WSAENOPROTOOPT					= -10042; //An unknown;  invalid;  or unsupported option or level was specified in a getsockopt or setsockopt call
+	const int E_WSAENOPROTOOPT					= -10042; //An unknown; invalid; or unsupported option or level was specified in a getsockopt or setsockopt call
 	const int E_WSAEPROTONOSUPPORT				= -10043; //The requested protocol has not been configured into the system;  or no implementation for it exists.
 	const int E_WSAEOPNOTSUPP					= -10045;  //The attempted operation is not supported for the type of object referenced.
 	const int E_WSAEADDRINUSE					= -10048;  // Only one usage of each socket address (protocol/network address/port) is normally permitted.
