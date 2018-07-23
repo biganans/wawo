@@ -300,6 +300,10 @@ namespace wawo { namespace net {
 			int rt = _cfg_nonblocking(true);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
 
+			//child will inherite parent's buffer setting
+			rt = _cfg_buffer(cfg.buffer);
+			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+
 			rt = _cfg_reuseaddr((cfg.option&OPTION_REUSEADDR) !=0);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
 
@@ -317,9 +321,6 @@ namespace wawo { namespace net {
 		//wcp share same cfg with tcp
 		int socket_base::_cfg_setup_tcp(socket_cfg const& cfg) {
 			int rt = _cfg_nodelay((cfg.option&OPTION_NODELAY) != 0);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
-
-			rt = _cfg_buffer(cfg.buffer);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
 
 			return _cfg_keep_alive_vals(cfg.kvals);

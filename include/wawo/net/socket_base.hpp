@@ -135,6 +135,20 @@ namespace wawo { namespace net {
 			buffer({0,0}),
 			kvals({false,0,0,0})
 		{}
+		socket_cfg(int option_):
+			option(option_),
+			buffer({ 0,0 }),
+			kvals({ false,0,0,0 })
+		{
+		}
+
+		socket_cfg(int option_ ,socket_buffer_cfg const& bcfg_ ) :
+			option(option_),
+			buffer(bcfg_),
+			kvals({ false,0,0,0 })
+		{
+		}
+
 		socket_cfg(int option_, socket_buffer_cfg const& bcfg_, keep_alive_vals const& kvals_):
 			option(option_),
 			buffer(bcfg_),
@@ -284,12 +298,14 @@ namespace wawo { namespace net {
 		int reuse_addr() { return _cfg_reuseaddr(true); }
 		int reuse_port() { return _cfg_reuseport(true); }
 
-		//must be called between open and connect|listen
+
+		//@NOTE
+		// FOR PASSIVE FD , THE BEST WAY IS TO INHERITE THE SETTINGS FROM LISTEN FD
+		// FOR ACTIVE FD, THE BEST WAY IS TO CALL THESE TWO APIS BEFORE ANY DATA WRITE
 		int set_snd_buffer_size(u32_t const& size);
 		int get_snd_buffer_size(u32_t& size) const;
 		int get_left_snd_queue(u32_t& size) const;
 
-		//must be called between open and connect|listen
 		int set_rcv_buffer_size(u32_t const& size);
 		int get_rcv_buffer_size(u32_t& size) const;
 		int get_left_rcv_queue(u32_t& size) const;
