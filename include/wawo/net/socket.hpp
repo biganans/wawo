@@ -268,20 +268,20 @@ namespace wawo { namespace net {
 			m_dial_promise = NULL;
 			try {
 				_ch_p->set_success(code);
+				if (WAWO_LIKELY(code == wawo::OK)) {
+					WAWO_ASSERT(m_fn_dial_initializer != NULL);
+					m_fn_dial_initializer(WWRP<channel>(this));
+
+					m_fn_dial_initializer = NULL;
+					m_state = S_CONNECTED;
+					channel::ch_fire_connected();
+					begin_read();
+				} else {
+					ch_errno(code);
+					ch_close();
+				}
 			} catch (...) {
-			}
-
-			if ( WAWO_LIKELY(code == wawo::OK)) {
-				WAWO_ASSERT(m_fn_dial_initializer != NULL);
-				m_fn_dial_initializer(WWRP<channel>(this));
-
-				m_fn_dial_initializer = NULL;
-				m_state = S_CONNECTED;
-				channel::ch_fire_connected();
-				begin_read();
-			} else {
-				ch_errno(code);
-				ch_close();
+				WAWO_ERR("[#%d]accept new fd exception, fd code: %d, errno: %d", fd(), code, wawo::socket_get_last_errno());
 			}
 		}
 

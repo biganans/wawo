@@ -52,14 +52,40 @@ namespace wawo { namespace net { namespace handler {
 		SS_ESTABLISHED,	//read/write ok
 	};
 
-	#define MUX_STREAM_WND_SIZE (96*1024)
+	#define WAWO_DEFAULT_MUX_STREAM_WND_SIZE (96*1024)
 	struct mux_stream_frame {
 		mux_stream_frame_flag_t flag;
 		WWRP<wawo::packet> data;
 	};
 
+	inline static mux_stream_frame make_frame_syn() {
+		WWRP<wawo::packet> o = wawo::make_ref<wawo::packet>();
+		return { mux_stream_frame_flag::T_SYN, o };
+	}
+
+	inline static mux_stream_frame make_frame_uwnd(u32_t size) {
+		WAWO_ASSERT(size > 0);
+		WWRP<packet> o = wawo::make_ref<packet>();
+		o->write<u32_t>(size);
+		return { mux_stream_frame_flag::T_UWND, o };
+	}
+
+	inline static mux_stream_frame make_frame_rst() {
+		WWRP<packet> o = wawo::make_ref<wawo::packet>();
+		return { mux_stream_frame_flag::T_RST, o };
+	}
+
+	inline static mux_stream_frame make_frame_data(WWRP<wawo::packet> const& data) {
+		WAWO_ASSERT(data != NULL);
+		return { mux_stream_frame_flag::T_DATA, data };
+	}
+	inline static mux_stream_frame make_frame_fin() {
+		WWRP<wawo::packet> o = wawo::make_ref<wawo::packet>();
+		return { mux_stream_frame_flag::T_FIN, o };
+	}
+
 	struct mux_stream_outbound_entry {
-		WWRP<wawo::packet> data;
+		mux_stream_frame f;
 		WWRP<wawo::net::channel_promise> ch_promise;
 	};
 
@@ -69,7 +95,7 @@ namespace wawo { namespace net { namespace handler {
 		friend class mux;
 		
 		u32_t m_id;
-		u32_t m_wnd;
+		u32_t m_wnd; //accumulate wnd
 
 		WWRP<wawo::net::channel_handler_context> m_ch_ctx;
 		WWRP<wawo::bytes_ringbuffer> m_rb;
@@ -85,7 +111,7 @@ namespace wawo { namespace net { namespace handler {
 		bool m_is_active;
 
 		void _init() {
-			m_rb = wawo::make_ref<bytes_ringbuffer>(MUX_STREAM_WND_SIZE);
+			m_rb = wawo::make_ref<bytes_ringbuffer>(WAWO_DEFAULT_MUX_STREAM_WND_SIZE);
 			channel::ch_fire_open();
 		}
 		inline void _ch_do_shutdown_read(WWRP<channel_promise> const& ch_p) {
@@ -101,11 +127,13 @@ namespace wawo { namespace net { namespace handler {
 		inline void _ch_do_shutdown_write(WWRP<channel_promise> const& ch_p) {
 			WAWO_ASSERT((m_flag&F_WRITE_SHUTDOWN) == 0);
 			while (m_entry_q.size()) {
-				mux_stream_outbound_entry& entry = m_entry_q.front();
-				DEBUG_STREAM("[muxs][s%u][data]write cancel, bytes: %u", m_id, entry.data->len());
-				m_entry_q_bytes -= entry.data->len();
-				event_poller()->schedule([entry]() {
-					entry.ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWN_ALREADY);
+				const mux_stream_outbound_entry& f_entry = m_entry_q.front();
+				const mux_stream_frame& f = f_entry.f;
+
+				DEBUG_STREAM("[muxs][s%u][data]write cancel, bytes: %u", m_id, f.data->len());
+				m_entry_q_bytes -= f.data->len();
+				event_poller()->schedule([f_entry]() {
+					f_entry.ch_promise->set_success(wawo::E_CHANNEL_WRITE_SHUTDOWN_ALREADY);
 				});
 				m_entry_q.pop();
 			}
@@ -122,7 +150,7 @@ namespace wawo { namespace net { namespace handler {
 		mux_stream(u32_t const& id, WWRP<wawo::net::channel_handler_context> const& ctx):
 			channel(ctx->event_poller()),
 			m_id(id),
-			m_wnd(MUX_STREAM_WND_SIZE),
+			m_wnd(WAWO_DEFAULT_MUX_STREAM_WND_SIZE),
 			m_ch_ctx(ctx),
 			m_entry_q_bytes(0),
 			m_flag(0),
@@ -154,33 +182,6 @@ namespace wawo { namespace net { namespace handler {
 		int ch_get_write_buffer_size(u32_t& size) {
 			size = m_wnd;
 			return wawo::OK;
-		}
-
-		inline static mux_stream_frame make_frame_syn() {
-			WWRP<wawo::packet> o = wawo::make_ref<wawo::packet>();
-			return { mux_stream_frame_flag::T_SYN, o };
-		}
-
-		inline static mux_stream_frame make_frame_uwnd(u32_t size) {
-			WAWO_ASSERT(size > 0);
-			WWRP<packet> o = wawo::make_ref<packet>();
-			o->write<u32_t>(size);
-
-			return { mux_stream_frame_flag::T_UWND, o };
-		}
-
-		inline static mux_stream_frame make_frame_rst() {
-			WWRP<packet> o = wawo::make_ref<wawo::packet>();
-			return { mux_stream_frame_flag::T_RST, o };
-		}
-
-		inline static mux_stream_frame make_frame_data(WWRP<wawo::packet> const& data) {
-			WAWO_ASSERT(data != NULL);
-			return { mux_stream_frame_flag::T_DATA, data };
-		}
-		inline static mux_stream_frame make_frame_fin() {
-			WWRP<wawo::packet> o = wawo::make_ref<wawo::packet>();
-			return { mux_stream_frame_flag::T_FIN, o };
 		}
 
 		inline void _write_frame(mux_stream_frame const& frame, WWRP<wawo::net::channel_promise> const& ch_promise) {
@@ -215,9 +216,9 @@ namespace wawo { namespace net { namespace handler {
 			}
 
 			frame.data->write_left<mux_stream_frame_flag_t>(frame.flag);
-			frame.data->write_left<u32_t>(m_id);
+			frame.data->write_left<mux_stream_id_t>(m_id);
 
-			m_entry_q.push({frame.data,ch_promise});
+			m_entry_q.push({frame,ch_promise});
 			m_entry_q_bytes += frame.data->len();
 			if((m_flag&F_WATCH_WRITE) != 0 ) {
 				return;
@@ -257,15 +258,19 @@ namespace wawo { namespace net { namespace handler {
 			const int _errno = r.v.code;
 			if (_errno == wawo::OK) {
 				WAWO_ASSERT(m_entry_q.size());
-				mux_stream_outbound_entry& entry = m_entry_q.front();
-				WAWO_ASSERT(m_entry_q_bytes >= entry.data->len());
+				const mux_stream_outbound_entry& entry = m_entry_q.front();
+				const mux_stream_frame& f = entry.f;
+				WAWO_ASSERT(m_entry_q_bytes >= f.data->len());
 
 				entry.ch_promise->set_success(wawo::OK);
-				m_entry_q_bytes -= entry.data->len();
-				m_wnd -= entry.data->len();
-				WAWO_ASSERT(m_wnd>0);
+				m_entry_q_bytes -= f.data->len();
 
-				DEBUG_STREAM("[muxs][s%u][data]write done, bytes: %u, wnd: %u", m_id, entry.data->len(), m_wnd );
+				if (f.flag&mux_stream_frame_flag::T_DATA) {
+					WAWO_ASSERT(m_wnd >= f.data->len());
+					m_wnd -= f.data->len();
+				}
+
+				DEBUG_STREAM("[muxs][s%u][data]write done, bytes: %u, wnd: %u", m_id, f.data->len(), m_wnd );
 				m_entry_q.pop();
 				m_flag &= ~F_WATCH_WRITE;
 
@@ -284,10 +289,11 @@ namespace wawo { namespace net { namespace handler {
 						//WAWO_ASSERT(m_shutdown_write_promise != NULL);
 						//f is for call compatible only
 						mux_stream_frame frame = make_frame_fin();
-						WWRP<channel_promise> f = wawo::make_ref<channel_promise>(WWRP<channel>(this));
+						WWRP<channel_promise> frame_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
 						frame.data->write_left<mux_stream_frame_flag_t>(frame.flag);
 						frame.data->write_left<u32_t>(m_id);
-						m_entry_q.push({ frame.data,f });
+
+						m_entry_q.push({ frame, frame_promise });
 						m_entry_q_bytes += frame.data->len();
 						ch_flush_impl();
 						return;
@@ -318,16 +324,17 @@ namespace wawo { namespace net { namespace handler {
 			WAWO_ASSERT(m_entry_q.size() != 0);
 			while (m_entry_q.size()) {
 				WAWO_ASSERT(m_entry_q_bytes > 0);
-				mux_stream_outbound_entry& entry = m_entry_q.front();
+				const mux_stream_outbound_entry& entry = m_entry_q.front();
+				const mux_stream_frame& f = entry.f;
 				if (entry.ch_promise->is_cancelled()) {
-					m_entry_q_bytes -= entry.data->len();
+					m_entry_q_bytes -= f.data->len();
 					m_entry_q.pop();
 					continue;
 				}
 
 				WAWO_ASSERT(m_ch_ctx != NULL);
 				m_flag |= F_WATCH_WRITE;
-				WWRP<channel_future> write_f = m_ch_ctx->write(entry.data);
+				WWRP<channel_future> write_f = m_ch_ctx->write(f.data);
 				write_f->add_listener([S= WWRP<mux_stream>(this)](WWRP<channel_future> const& f) {
 					S->_ch_flush_done({ AIO_WRITE, f->get() });
 				});
@@ -427,7 +434,7 @@ namespace wawo { namespace net { namespace handler {
 				WAWO_ASSERT(frame.data->len() == sizeof(wawo::u32_t));
 				wawo::u32_t wnd_incre = frame.data->read<wawo::u32_t>();
 				m_wnd += wnd_incre;
-				m_wnd = WAWO_MIN(MUX_STREAM_WND_SIZE, m_wnd);
+				m_wnd = WAWO_MIN(WAWO_DEFAULT_MUX_STREAM_WND_SIZE, m_wnd);
 				DEBUG_STREAM("[muxs][s%u]new wb_wnd: %u, incre: %u", ch_id(), m_wnd, wnd_incre);
 
 				if (m_flag&F_WRITE_BLOCKED) {

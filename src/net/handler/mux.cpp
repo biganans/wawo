@@ -3,7 +3,7 @@
 namespace wawo { namespace net { namespace handler {
 
 	void stream_snd_rst(WWRP<wawo::net::channel_handler_context> const& ctx, mux_stream_id_t id) {
-		mux_stream_frame f = mux_stream::make_frame_rst();
+		mux_stream_frame f = make_frame_rst();
 		f.data->write_left<mux_stream_frame_flag_t>(f.flag);
 		f.data->write_left<mux_stream_id_t>(id);
 

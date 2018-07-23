@@ -333,7 +333,7 @@ namespace wawo { namespace net {
 			m_fd = m_fn_socket(m_family, m_type, m_protocol);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_INVALID_SOCKET, m_fd == wawo::E_INVALID_SOCKET);
 
-			WAWO_TRACE_SOCKET("[socket_base][%s]socket::socket() ok", info().to_stdstring().c_str() );
+			return wawo::OK;
 		}
 
 		int socket_base::close() {
