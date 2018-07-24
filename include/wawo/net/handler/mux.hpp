@@ -125,6 +125,7 @@ namespace wawo { namespace net { namespace handler {
 			});
 		}
 		inline void _ch_do_shutdown_write(WWRP<channel_promise> const& ch_p) {
+			DEBUG_STREAM("[muxs][s%u][data]_ch_do_shutdown_write", m_id );
 			WAWO_ASSERT((m_flag&F_WRITE_SHUTDOWN) == 0);
 			while (m_entry_q.size()) {
 				const mux_stream_outbound_entry& f_entry = m_entry_q.front();
@@ -296,7 +297,6 @@ namespace wawo { namespace net { namespace handler {
 						m_entry_q.push({ frame, frame_promise });
 						m_entry_q_bytes += frame.data->len();
 						ch_flush_impl();
-						return;
 					} else if (m_flag&F_CLOSING) {
 						_ch_do_close_read_write(NULL);
 					} else if (m_flag&F_WRITE_SHUTDOWNING) {
@@ -492,7 +492,9 @@ namespace wawo { namespace net { namespace handler {
 			}
 
 			if (m_flag&F_WATCH_WRITE) {
+				WAWO_ASSERT(m_entry_q.size() != 0);
 				WAWO_ASSERT((m_flag&F_WRITE_ERROR) == 0);
+				DEBUG_STREAM("[muxs][s%u][data]add flag F_WRITE_SHUTDOWNING", m_id);
 				m_flag |= (F_WRITE_SHUTDOWNING|F_STREAM_WRITE_FIN_AFTER_WRITE_DONE);
 				WAWO_ASSERT(m_shutdown_write_promise == NULL);
 				m_shutdown_write_promise = ch_promise;
@@ -502,9 +504,19 @@ namespace wawo { namespace net { namespace handler {
 			if ((m_flag&F_WRITE_ERROR) == 0) {
 				WAWO_ASSERT(m_entry_q.size() == 0);
 				WAWO_ASSERT(m_entry_q_bytes == 0);
+				DEBUG_STREAM("[muxs][s%u]add flag F_WRITE_SHUTDOWNING f", m_id);
 				m_flag |= F_WRITE_SHUTDOWNING;
-				mux_stream_frame f = make_frame_fin();
-				write_frame(make_frame_fin());
+				WAWO_ASSERT(m_shutdown_write_promise == NULL);
+				m_shutdown_write_promise = ch_promise;
+
+				mux_stream_frame frame = make_frame_fin();
+				WWRP<channel_promise> frame_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this));
+				frame.data->write_left<mux_stream_frame_flag_t>(frame.flag);
+				frame.data->write_left<u32_t>(m_id);
+
+				m_entry_q.push({ frame, frame_promise });
+				m_entry_q_bytes += frame.data->len();
+				ch_flush_impl();
 				return;
 			}
 			//for error case
