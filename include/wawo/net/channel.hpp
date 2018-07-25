@@ -216,13 +216,15 @@ public: \
 		virtual void ch_shutdown_write_impl(WWRP<channel_promise> const& ch_promise) = 0;
 		virtual void ch_close_impl(WWRP<channel_promise> const& ch_promise) = 0;
 
+		virtual void ch_set_read_buffer_size(u32_t size) = 0;
 		virtual void ch_set_read_buffer_size(u32_t size, WWRP<channel_promise> const& ch_promise) = 0;
 		virtual void ch_get_read_buffer_size(WWRP<channel_promise> const& ch_promise) = 0;
 
+		virtual void ch_set_write_buffer_size(u32_t size) = 0;
 		virtual void ch_set_write_buffer_size(u32_t size, WWRP<channel_promise> const& ch_promise) = 0;
 		virtual void ch_get_write_buffer_size(WWRP<channel_promise> const& ch_promise) = 0;
 
-		virtual int ch_set_nodelay(WWRP<channel_promise> const& ch_promise) { return wawo::OK; }
+		virtual void ch_set_nodelay(WWRP<channel_promise> const& ch_promise) = 0;
 
 		virtual void begin_read(u8_t const& async_flag = 0, fn_io_event const& fn_read = NULL) {
 			(void)async_flag;
@@ -236,7 +238,7 @@ public: \
 		}
 		virtual void end_write() {}
 
-		virtual bool is_active() const = 0;
+		virtual bool ch_is_active() const = 0;
 	};
 }}
 #endif

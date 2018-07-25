@@ -21,16 +21,13 @@ namespace wawo { namespace net {
 		m_trb = NULL;
 	}
 
-	int socket::open( socket_cfg const& cfg ) {
+	int socket::open() {
 		WAWO_ASSERT(m_state==S_CLOSED);
-		int rt = socket_base::open(cfg);
-		WAWO_RETURN_V_IF_MATCH(rt, rt == wawo::E_SOCKET_ERROR);
-
-		rt = init(cfg);
-		WAWO_RETURN_V_IF_MATCH(rt, rt == wawo::E_SOCKET_ERROR);
+		int rt = socket_base::open();
+		WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 		channel::ch_fire_open();
 		m_state = S_OPENED;
-		return rt;
+		return wawo::OK;
 	}
 
 	int socket::connect(address const& addr) {
@@ -42,13 +39,12 @@ namespace wawo { namespace net {
 			m_state = S_CONNECTED;
 			return wawo::OK;
 		}
-		WAWO_ASSERT(rt== wawo::E_SOCKET_ERROR);
+
 		WAWO_ASSERT(is_nonblocking());
-		int ec = wawo::socket_get_last_errno();
-		if (IS_ERRNO_EQUAL_CONNECTING(ec)) {
+		if (IS_ERRNO_EQUAL_CONNECTING(rt)) {
 			m_state = S_CONNECTING;
 		}
-		return wawo::E_SOCKET_ERROR;
+		return rt;
 	}
 
 	int socket::bind(wawo::net::address const& addr) {
@@ -89,18 +85,25 @@ namespace wawo { namespace net {
 			});
 			return;
 		}
-		int rt = socket::open(cfg);
-		//int rt = -10043;
-		if (rt == wawo::E_SOCKET_ERROR) {
-			rt = wawo::socket_get_last_errno();
-			event_poller()->schedule([ch_promise,rt]() {
+		int rt = socket::open();
+		if (rt != wawo::OK) {
+			event_poller()->schedule([ch_promise, rt]() {
 				ch_promise->set_success(rt);
 			});
 			return;
 		}
+
+		rt = socket::init(cfg);
+		if (rt != wawo::OK) {
+			event_poller()->schedule([ch_promise, rt]() {
+				ch_promise->set_success(rt);
+			});
+			return;
+		}
+
+		//int rt = -10043;
 		rt = socket::bind(addr);
-		if (rt == wawo::E_SOCKET_ERROR) {
-			rt = wawo::socket_get_last_errno();
+		if (rt != wawo::OK) {
 			event_poller()->schedule([ch_promise, rt]() {
 				ch_promise->set_success(rt);
 			});
@@ -108,18 +111,25 @@ namespace wawo { namespace net {
 		}
 
 		rt = socket::listen(child_cfg, backlog);
-		if (rt == wawo::E_SOCKET_ERROR) {
-			rt = wawo::socket_get_last_errno();
+		if (rt != wawo::OK) {
+			event_poller()->schedule([ch_promise, rt]() {
+				ch_promise->set_success(rt);
+			});
+			return;
 		}
 
-		ch_promise->set_success(rt);
-		m_fn_accept_initializer = fn_accepted;
 		WAWO_ASSERT(rt == wawo::OK);
+		m_fn_accept_initializer = fn_accepted;
+
+		event_poller()->schedule([ch_promise, S=WWRP<socket>(this)]() {
+			ch_promise->set_success(wawo::OK);
 #ifdef WAWO_IO_MODE_IOCP
-		__IOCP_CALL_AcceptEx();
+			S->__IOCP_CALL_AcceptEx();
 #else
-		begin_accept();
+			S->begin_accept();
 #endif
+	});
+
 	}
 
 	WWRP<channel_future> socket::_dial(address const& addr, fn_channel_initializer const& initializer, socket_cfg const& cfg) {
@@ -137,17 +147,16 @@ namespace wawo { namespace net {
 			return;
 		}
 
-		int rt = socket::open(cfg);
-		if (rt == wawo::E_SOCKET_ERROR) {
-			rt = wawo::socket_get_last_errno();
+		int rt = socket::open();
+		if (rt != wawo::OK ) {
 			event_poller()->schedule([ch_promise, rt]() {
 				ch_promise->set_success(rt);
 			});
 			return;
 		}
 
-		if (rt == wawo::E_SOCKET_ERROR) {
-			rt = wawo::socket_get_last_errno();
+		rt = socket::init(cfg);
+		if (rt != wawo::OK) {
 			event_poller()->schedule([ch_promise, rt]() {
 				ch_promise->set_success(rt);
 			});
@@ -167,26 +176,24 @@ namespace wawo { namespace net {
 				SO->begin_read();
 			});
 			return;
-		} 
-		if (rt == wawo::E_SOCKET_ERROR) {
-			rt = wawo::socket_get_last_errno();
-			if ( IS_ERRNO_EQUAL_CONNECTING(rt) ) {
-				WAWO_ASSERT(m_state == S_CONNECTING);
-				m_fn_dial_initializer = initializer;
-				m_dial_promise = ch_promise;
-				TRACE_IOE("[socket][%s][async_connect]watch(IOE_WRITE)", info().to_stdstring().c_str());
+		}
+
+		if ( IS_ERRNO_EQUAL_CONNECTING(rt) ) {
+			WAWO_ASSERT(m_state == S_CONNECTING);
+			m_fn_dial_initializer = initializer;
+			m_dial_promise = ch_promise;
+			TRACE_IOE("[socket][%s][async_connect]watch(IOE_WRITE)", info().to_stdstring().c_str());
 #ifdef WAWO_IO_MODE_IOCP
-				socket::__IOCP_CALL_ConnectEx();
+			socket::__IOCP_CALL_ConnectEx();
 #else
-				socket::begin_connect();
+			socket::begin_connect();
 #endif
-			} else {
-				event_poller()->schedule([ch_promise, rt, CH=WWRP<channel>(this)]() {
-					ch_promise->set_success(rt);
-					CH->ch_errno(rt);
-					CH->ch_close();
-				});
-			}
+		} else {
+			event_poller()->schedule([ch_promise, rt, CH = WWRP<channel>(this)]() {
+				ch_promise->set_success(rt);
+				CH->ch_errno(rt);
+				CH->ch_close();
+			});
 		}
 	}
 

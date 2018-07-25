@@ -446,7 +446,7 @@ namespace wawo {namespace net {namespace handler {
 		}
 
 		void connected(WWRP<channel_handler_context> const& ctx) {
-			if (ctx->ch->is_active()) {
+			if (ctx->ch->ch_is_active()) {
 				WWRP<packet> hello;
 				handshake_make_hello_packet(hello);
 				ctx->write(hello);

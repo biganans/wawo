@@ -166,24 +166,23 @@ namespace wawo { namespace net {
 			if ( !(m_protocol == P_TCP || m_protocol == P_WCP) ) { return wawo::E_INVALID_OPERATION; }
 
 			int rt;
-			u32_t s;
 			if (cfg.snd_size == 0) {
-				rt = get_snd_buffer_size(s);
-				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
-				m_cfg.buffer.snd_size = s;
+				rt = get_snd_buffer_size();
+				WAWO_RETURN_V_IF_MATCH(rt, rt<0);
+				m_cfg.buffer.snd_size = rt;
 			} else {
 				rt = set_snd_buffer_size(cfg.snd_size);
-				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
+				WAWO_RETURN_V_IF_MATCH(rt, rt < 0);
 				m_cfg.buffer.snd_size = cfg.snd_size;
 			}
 
 			if (cfg.rcv_size == 0) {
-				rt = get_rcv_buffer_size(s);
-				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
-				m_cfg.buffer.rcv_size = s;
+				rt = get_rcv_buffer_size();
+				WAWO_RETURN_V_IF_MATCH(rt, rt < 0);
+				m_cfg.buffer.rcv_size = rt;
 			} else {
 				rt = set_rcv_buffer_size(cfg.rcv_size);
-				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
+				WAWO_RETURN_V_IF_MATCH(rt, rt < 0);
 				m_cfg.buffer.rcv_size = cfg.rcv_size;
 			}
 			return wawo::OK;
@@ -326,10 +325,7 @@ namespace wawo { namespace net {
 			return _cfg_keep_alive_vals(cfg.kvals);
 		}
 
-		int socket_base::open(socket_cfg const& cfg ) {
-			WAWO_ASSERT(cfg.buffer.rcv_size <= SOCK_RCV_MAX_SIZE);
-			WAWO_ASSERT(cfg.buffer.snd_size <= SOCK_SND_MAX_SIZE);
-
+		int socket_base::open() {
 			WAWO_ASSERT(m_fd == wawo::E_INVALID_SOCKET);
 			m_fd = m_fn_socket(m_family, m_type, m_protocol);
 			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), m_fd == wawo::E_SOCKET_ERROR);

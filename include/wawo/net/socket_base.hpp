@@ -228,10 +228,10 @@ namespace wawo { namespace net {
 	protected:
 		int init(socket_cfg const& cfg) {
 			int rt = _cfgs_setup_common(cfg);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_INVALID_SOCKET, rt == wawo::E_INVALID_SOCKET);
+			WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 			return m_protocol == P_UDP ? _cfg_setup_udp(cfg) : _cfg_setup_tcp(cfg);
 		}
-		int open(socket_cfg const& cfg );
+		int open();
 		int shutdown(int const& flag);
 		int close();
 		int bind(address const& addr);

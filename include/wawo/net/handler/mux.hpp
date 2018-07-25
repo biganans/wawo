@@ -166,7 +166,44 @@ namespace wawo { namespace net { namespace handler {
 		{
 		}
 
-		int ch_set_read_buffer_size(u32_t size) {
+		void ch_set_read_buffer_size(u32_t size) {
+			ch_set_read_buffer_size(size, make_promise());
+		}
+		void ch_set_read_buffer_size(u32_t size, WWRP<channel_promise> const& ch_promise) {
+			event_poller()->execute([S = WWRP<mux_stream>(this), size, ch_promise]() {
+				int rt = S->_ch_set_read_buffer_size(size);
+				ch_promise->set_success(rt);
+			});
+		}
+		void ch_get_read_buffer_size(WWRP<channel_promise> const& ch_promise) {
+			event_poller()->execute([S = WWRP<mux_stream>(this), ch_promise]() {
+				int rt = S->_ch_get_read_buffer_size();
+				ch_promise->set_success(rt);
+			});
+		}
+		void ch_set_write_buffer_size(u32_t size) {
+			ch_set_write_buffer_size(size, make_promise());
+		}
+		void ch_set_write_buffer_size(u32_t size, WWRP<channel_promise> const& ch_promise) {
+			event_poller()->execute([S = WWRP<mux_stream>(this), size,ch_promise]() {
+				int rt = S->_ch_set_write_buffer_size(size);
+				ch_promise->set_success(rt);
+			});
+		}
+		void ch_get_write_buffer_size(WWRP<channel_promise> const& ch_promise) {
+			event_poller()->execute([S = WWRP<mux_stream>(this), ch_promise]() {
+				int rt = S->_ch_get_write_buffer_size();
+				ch_promise->set_success(rt);
+			});
+		}
+
+		void ch_set_nodelay(WWRP<channel_promise> const& ch_promise) {
+			event_poller()->execute([S = WWRP<mux_stream>(this), ch_promise]() {
+				ch_promise->set_success(wawo::OK);
+			});
+		}
+
+		int _ch_set_read_buffer_size(u32_t size) {
 			if (m_rb->capacity() == size) {
 				return wawo::OK;
 			}
@@ -178,18 +215,16 @@ namespace wawo { namespace net { namespace handler {
 			(void)size;
 			return wawo::OK;
 		}
-		int ch_get_read_buffer_size(u32_t& size) {
+		int _ch_get_read_buffer_size() {
 			//return socket_base::get_rcv_buffer_size(size);
-			(void)size;
-			return wawo::OK;
+			return m_rb->capacity();
 		}
-		int ch_set_write_buffer_size(u32_t size) {
+		int _ch_set_write_buffer_size(u32_t size) {
 			m_wnd = size;
 			return wawo::OK;
 		}
-		int ch_get_write_buffer_size(u32_t& size) {
-			size = m_wnd;
-			return wawo::OK;
+		int _ch_get_write_buffer_size() {
+			return m_wnd;
 		}
 
 		inline void _write_frame(mux_stream_frame const& frame, WWRP<wawo::net::channel_promise> const& ch_promise) {
@@ -526,7 +561,7 @@ namespace wawo { namespace net { namespace handler {
 			m_flag |= F_STREAM_READ_CHOKED;
 		}
 
-		inline bool is_active() const {
+		bool ch_is_active() const {
 			return (m_is_active == true) ;
 		}
 

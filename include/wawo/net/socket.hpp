@@ -78,8 +78,11 @@ namespace wawo { namespace net {
 		}
 
 		int init(socket_cfg const& cfg) {
+			WAWO_ASSERT(cfg.buffer.rcv_size <= SOCK_RCV_MAX_SIZE);
+			WAWO_ASSERT(cfg.buffer.snd_size <= SOCK_SND_MAX_SIZE);
+
 			int rt = socket_base::init(cfg);
-			WAWO_RETURN_V_IF_MATCH(rt, rt == wawo::E_SOCKET_ERROR);
+			WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 			_init();
 			return wawo::OK;
 		}
@@ -102,14 +105,16 @@ namespace wawo { namespace net {
 			_deinit();
 		}
 
-		int open(socket_cfg const& cfg = default_socket_cfg );
+		int open();
 		int bind(address const& addr);
 		int listen(socket_cfg const& child_cfg, int const& backlog = WAWO_DEFAULT_LISTEN_BACKLOG);
 
 		SOCKET accept(address& raddr);
 		int connect(address const& addr);
 
-		inline bool is_active() const { return socket_base::is_active(); }
+		void ch_set_read_buffer_size(u32_t size) {
+			ch_set_read_buffer_size(size, make_promise());
+		}
 
 		void ch_set_read_buffer_size(u32_t size, WWRP<channel_promise> const& ch_promise) {
 			event_poller()->execute([S=WWRP<socket>(this),size, ch_promise](){
@@ -124,6 +129,9 @@ namespace wawo { namespace net {
 			});
 		}
 
+		void ch_set_write_buffer_size(u32_t size) {
+			ch_set_write_buffer_size(size, make_promise());
+		}
 		void ch_set_write_buffer_size(u32_t size, WWRP<channel_promise> const& ch_promise) {
 			event_poller()->execute([S = WWRP<socket>(this),size, ch_promise]() {
 				int rt = S->set_snd_buffer_size(size);
@@ -136,6 +144,14 @@ namespace wawo { namespace net {
 				ch_promise->set_success(rt);
 			});
 		}
+
+		void ch_set_nodelay(WWRP<channel_promise> const& ch_promise) { 
+			event_poller()->execute([S = WWRP<socket>(this), ch_promise]() {
+				int rt = S->turnon_nodelay();
+				ch_promise->set_success(rt);
+			});
+		}
+		bool ch_is_active() const { return socket_base::is_active(); }
 
 		static WWRP<channel_future> dial(std::string const& dialurl, fn_channel_initializer const& initializer, socket_cfg const& cfg = default_socket_cfg ) {
 			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(nullptr);
@@ -367,7 +383,7 @@ namespace wawo { namespace net {
 				while (true) {
 					address raddr;
 					SOCKET nfd = socket_base::accept(raddr);
-					if (nfd == SOCKET_ERROR ) {
+					if (nfd == wawo::E_SOCKET_ERROR ) {
 						ec = wawo::socket_get_last_errno();
 						if (ec == wawo::E_EINTR) {
 							continue;
