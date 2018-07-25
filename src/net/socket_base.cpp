@@ -433,14 +433,13 @@ namespace wawo { namespace net {
 
 			int rt = setsockopt(SOL_SOCKET, SO_SNDBUF, (char*)&(size), sizeof(size));
 			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
+			m_cfg.buffer.snd_size = size;
 
 #ifdef _DEBUG
-			u32_t news;
-			rt = get_snd_buffer_size(news);
-			WAWO_ASSERT(rt == wawo::OK);
-			WAWO_TRACE_SOCKET("[socket_base][%s]new snd buffer size: %u", info().to_stdstring().c_str(), news);
+			rt = get_snd_buffer_size();
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt<0);
+			WAWO_TRACE_SOCKET("[socket_base][%s]new snd buffer size: %u", info().to_stdstring().c_str(),rt);
 #endif
-			m_cfg.buffer.snd_size = size;
 			return wawo::OK;
 		}
 
@@ -474,14 +473,12 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_fd != wawo::E_INVALID_SOCKET );
 			int rt = setsockopt(SOL_SOCKET, SO_RCVBUF, (char*)&(size), sizeof(size));
 			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR );
+			m_cfg.buffer.rcv_size = size;
 
 #ifdef _DEBUG
-			u32_t news;
-			rt = get_rcv_buffer_size(news);
-			WAWO_ASSERT(rt == wawo::OK);
-			WAWO_TRACE_SOCKET("[socket_base][%s]new rcv buffer size: %u", info().to_stdstring().c_str(), news);
+			rt = get_rcv_buffer_size();
+			WAWO_TRACE_SOCKET("[socket_base][%s]new rcv buffer size: %u", info().to_stdstring().c_str(),rt);
 #endif
-			m_cfg.buffer.rcv_size = size;
 			return wawo::OK;
 		}
 

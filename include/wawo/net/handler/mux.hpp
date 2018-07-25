@@ -207,16 +207,13 @@ namespace wawo { namespace net { namespace handler {
 			if (m_rb->capacity() == size) {
 				return wawo::OK;
 			}
-
 			if (m_rb->count() > 0) {
 				return wawo::E_INVALID_OPERATION;
 			}
-
-			(void)size;
+			m_rb = wawo::make_ref<wawo::bytes_ringbuffer>(size);
 			return wawo::OK;
 		}
 		int _ch_get_read_buffer_size() {
-			//return socket_base::get_rcv_buffer_size(size);
 			return m_rb->capacity();
 		}
 		int _ch_set_write_buffer_size(u32_t size) {
