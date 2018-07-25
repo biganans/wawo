@@ -110,17 +110,31 @@ namespace wawo { namespace net {
 		int connect(address const& addr);
 
 		inline bool is_active() const { return socket_base::is_active(); }
-		int ch_set_read_buffer_size(u32_t size) {
-			return socket_base::set_rcv_buffer_size(size);
+
+		void ch_set_read_buffer_size(u32_t size, WWRP<channel_promise> const& ch_promise) {
+			event_poller()->execute([S=WWRP<socket>(this),size, ch_promise](){
+				int rt = S->set_rcv_buffer_size(size);
+				ch_promise->set_success(rt);
+			});
 		}
-		int ch_get_read_buffer_size(u32_t& size) {
-			return socket_base::get_rcv_buffer_size(size);
+		void ch_get_read_buffer_size(WWRP<channel_promise> const& ch_promise) {
+			event_poller()->execute([S = WWRP<socket>(this), ch_promise]() {
+				int rt = S->get_rcv_buffer_size();
+				ch_promise->set_success(rt);
+			});
 		}
-		int ch_set_write_buffer_size(u32_t size) {
-			return socket_base::set_snd_buffer_size(size);
+
+		void ch_set_write_buffer_size(u32_t size, WWRP<channel_promise> const& ch_promise) {
+			event_poller()->execute([S = WWRP<socket>(this),size, ch_promise]() {
+				int rt = S->set_snd_buffer_size(size);
+				ch_promise->set_success(rt);
+			});
 		}
-		int ch_get_write_buffer_size(u32_t& size) {
-			return socket_base::get_snd_buffer_size(size);
+		void ch_get_write_buffer_size(WWRP<channel_promise> const& ch_promise) {
+			event_poller()->execute([S = WWRP<socket>(this), ch_promise]() {
+				int rt = S->get_snd_buffer_size();
+				ch_promise->set_success(rt);
+			});
 		}
 
 		static WWRP<channel_future> dial(std::string const& dialurl, fn_channel_initializer const& initializer, socket_cfg const& cfg = default_socket_cfg ) {

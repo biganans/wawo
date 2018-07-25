@@ -167,7 +167,14 @@ namespace wawo { namespace net { namespace handler {
 		}
 
 		int ch_set_read_buffer_size(u32_t size) {
-			//return socket_base::set_rcv_buffer_size(size);
+			if (m_rb->capacity() == size) {
+				return wawo::OK;
+			}
+
+			if (m_rb->count() > 0) {
+				return wawo::E_INVALID_OPERATION;
+			}
+
 			(void)size;
 			return wawo::OK;
 		}
@@ -271,7 +278,7 @@ namespace wawo { namespace net { namespace handler {
 					m_wnd -= f.data->len();
 				}
 
-				DEBUG_STREAM("[muxs][s%u][data]write done, bytes: %u, wnd: %u", m_id, f.data->len(), m_wnd );
+				//DEBUG_STREAM("[muxs][s%u][data]write done, bytes: %u, wnd: %u", m_id, f.data->len(), m_wnd );
 				m_entry_q.pop();
 				m_flag &= ~F_WATCH_WRITE;
 
@@ -373,88 +380,6 @@ namespace wawo { namespace net { namespace handler {
 			WWRP<wawo::net::channel_promise> ch_promise = wawo::make_ref<wawo::net::channel_promise>(WWRP<wawo::net::channel>(this));
 			return dial(initializer, ch_promise);
 		}
-
-		inline void arrive_frame(mux_stream_frame const& frame) {
-			WAWO_ASSERT(event_poller()->in_event_loop());
-			switch (frame.flag) {
-			case mux_stream_frame_flag::T_DATA:
-			{
-				DEBUG_STREAM("[muxs][s%u][data]nbytes: %u", m_id, frame.data->len());
-				if (m_flag&F_READ_SHUTDOWN) {
-					WWRP<wawo::net::channel_future> f = write_frame(make_frame_rst());
-					f->add_listener([](WWRP<wawo::net::channel_future> const& f) {
-						if (wawo::E_CHANNEL_WRITE_BLOCK == f->get()) {
-							WAWO_ASSERT(!"TODO, WE NEED A TIMER");
-						}
-					});
-					DEBUG_STREAM("[muxs][s%u][data]nbytes, but stream read closed, reply rst, incoming bytes: %u", m_id, frame.data->len());
-					return;
-				}
-
-				if (m_flag&F_STREAM_READ_CHOKED) {
-					WAWO_ASSERT(frame.data->len() <= m_rb->left_capacity());
-					m_rb->write(frame.data->begin(), frame.data->len());
-					DEBUG_STREAM("[muxs][s%u]incoming: %u, wirte to rb", m_id, frame.data->len());
-					return;
-				}
-				WWRP<wawo::packet> income;
-				if (m_rb->count()) {
-					WWRP<packet> tmp = wawo::make_ref<packet>(m_rb->count() + frame.data->len());
-					m_rb->read(tmp->begin(), tmp->left_left_capacity());
-					m_rb->skip(tmp->len());
-					income = tmp;
-				} else {
-					income = frame.data;
-				}
-
-				WWRP<wawo::net::channel_future> f=write_frame(make_frame_uwnd(income->len()));
-				f->add_listener([](WWRP<wawo::net::channel_future> const& f) {
-					if (wawo::E_CHANNEL_WRITE_BLOCK == f->get()) {
-						WAWO_ASSERT(!"TODO, WE NEED A TIMER");
-					}
-				});
-				WAWO_ASSERT(income->len());
-				ch_read(income);
-			}
-			break;
-			case mux_stream_frame_flag::T_FIN:
-			{
-				DEBUG_STREAM("[muxs][s%u][fin]recv", ch_id() );
-				ch_shutdown_read();
-			}
-			break;
-			case mux_stream_frame_flag::T_RST:
-			{
-				DEBUG_STREAM("[muxs][s%u][rst]recv, force close", ch_id() );
-				ch_close();
-			}
-			break;
-			case mux_stream_frame_flag::T_UWND:
-			{
-				WAWO_ASSERT(frame.data->len() == sizeof(wawo::u32_t));
-				wawo::u32_t wnd_incre = frame.data->read<wawo::u32_t>();
-				m_wnd += wnd_incre;
-				m_wnd = WAWO_MIN(WAWO_DEFAULT_MUX_STREAM_WND_SIZE, m_wnd);
-				DEBUG_STREAM("[muxs][s%u]new wb_wnd: %u, incre: %u", ch_id(), m_wnd, wnd_incre);
-
-				if (m_flag&F_WRITE_BLOCKED) {
-					if (m_entry_q.size()) {
-						WAWO_ASSERT(m_entry_q_bytes > 0);
-						WAWO_ASSERT(m_flag&F_WATCH_WRITE);
-						//wait next outlet promise set
-					} else {
-						//manual unchoke
-						m_flag &= ~F_WRITE_BLOCKED;
-						event_poller()->schedule([CH = WWRP<channel>(this)]() {
-							CH->ch_fire_write_unblock();
-						});
-					}
-				}
-			}
-			break;
-			}
-		}
-
 		channel_id_t ch_id() const { return m_id; }
 
 		void ch_shutdown_read_impl(WWRP<channel_promise> const& ch_promise) {
@@ -590,6 +515,7 @@ namespace wawo { namespace net { namespace handler {
 			WAWO_ASSERT( !(m_flag&F_STREAM_READ_CHOKED) == 0);
 			m_flag &= ~F_STREAM_READ_CHOKED;
 
+			WAWO_ASSERT(!"TODO"); //trigger read if any
 			(void)async_flag;
 			(void)cookie;
 			(void)fn_read;
@@ -602,6 +528,89 @@ namespace wawo { namespace net { namespace handler {
 
 		inline bool is_active() const {
 			return (m_is_active == true) ;
+		}
+
+		inline void arrive_frame(mux_stream_frame const& frame) {
+			WAWO_ASSERT(event_poller()->in_event_loop());
+			switch (frame.flag) {
+			case mux_stream_frame_flag::T_DATA:
+			{
+				//DEBUG_STREAM("[muxs][s%u][data]nbytes: %u", m_id, frame.data->len());
+				if (m_flag&F_READ_SHUTDOWN) {
+					WWRP<wawo::net::channel_future> f = write_frame(make_frame_rst());
+					f->add_listener([](WWRP<wawo::net::channel_future> const& f) {
+						if (wawo::E_CHANNEL_WRITE_BLOCK == f->get()) {
+							WAWO_ASSERT(!"TODO, WE NEED A TIMER");
+						}
+					});
+					DEBUG_STREAM("[muxs][s%u][data]nbytes, but stream read closed, reply rst, incoming bytes: %u", m_id, frame.data->len());
+					return;
+				}
+
+				if (m_flag&F_STREAM_READ_CHOKED) {
+					WAWO_ASSERT(frame.data->len() <= m_rb->left_capacity());
+					m_rb->write(frame.data->begin(), frame.data->len());
+					DEBUG_STREAM("[muxs][s%u]incoming: %u, wirte to rb", m_id, frame.data->len());
+					return;
+				}
+				WWRP<wawo::packet> income;
+				if (m_rb->count()) {
+					WWRP<packet> tmp = wawo::make_ref<packet>(m_rb->count() + frame.data->len());
+					m_rb->read(tmp->begin(), tmp->left_left_capacity());
+					m_rb->skip(tmp->len());
+					income = tmp;
+				}
+				else {
+					income = frame.data;
+				}
+
+				WWRP<wawo::net::channel_future> f = write_frame(make_frame_uwnd(income->len()));
+				f->add_listener([](WWRP<wawo::net::channel_future> const& f) {
+					if (wawo::E_CHANNEL_WRITE_BLOCK == f->get()) {
+						WAWO_ASSERT(!"TODO, WE NEED A TIMER");
+					}
+				});
+				WAWO_ASSERT(income->len());
+				ch_read(income);
+			}
+			break;
+			case mux_stream_frame_flag::T_FIN:
+			{
+				DEBUG_STREAM("[muxs][s%u][fin]recv", ch_id());
+				ch_shutdown_read();
+			}
+			break;
+			case mux_stream_frame_flag::T_RST:
+			{
+				DEBUG_STREAM("[muxs][s%u][rst]recv, force close", ch_id());
+				ch_close();
+			}
+			break;
+			case mux_stream_frame_flag::T_UWND:
+			{
+				WAWO_ASSERT(frame.data->len() == sizeof(wawo::u32_t));
+				wawo::u32_t wnd_incre = frame.data->read<wawo::u32_t>();
+				m_wnd += wnd_incre;
+				m_wnd = WAWO_MIN(WAWO_DEFAULT_MUX_STREAM_WND_SIZE, m_wnd);
+				//DEBUG_STREAM("[muxs][s%u]new wb_wnd: %u, incre: %u", ch_id(), m_wnd, wnd_incre);
+
+				if (m_flag&F_WRITE_BLOCKED) {
+					if (m_entry_q.size()) {
+						WAWO_ASSERT(m_entry_q_bytes > 0);
+						WAWO_ASSERT(m_flag&F_WATCH_WRITE);
+						//wait next outlet promise set
+					}
+					else {
+						//manual unchoke
+						m_flag &= ~F_WRITE_BLOCKED;
+						event_poller()->schedule([CH = WWRP<channel>(this)]() {
+							CH->ch_fire_write_unblock();
+						});
+					}
+				}
+			}
+			break;
+			}
 		}
 	};
 
@@ -678,5 +687,4 @@ namespace wawo { namespace net { namespace handler {
 	};
 
 }}}
-
 #endif

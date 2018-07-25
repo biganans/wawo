@@ -303,12 +303,12 @@ namespace wawo { namespace net {
 		// FOR PASSIVE FD , THE BEST WAY IS TO INHERITE THE SETTINGS FROM LISTEN FD
 		// FOR ACTIVE FD, THE BEST WAY IS TO CALL THESE TWO APIS BEFORE ANY DATA WRITE
 		int set_snd_buffer_size(u32_t const& size);
-		int get_snd_buffer_size(u32_t& size) const;
-		int get_left_snd_queue(u32_t& size) const;
+		int get_snd_buffer_size() const;
+		int get_left_snd_queue() const;
 
 		int set_rcv_buffer_size(u32_t const& size);
-		int get_rcv_buffer_size(u32_t& size) const;
-		int get_left_rcv_queue(u32_t& size) const;
+		int get_rcv_buffer_size() const;
+		int get_left_rcv_queue() const;
 
 		int get_linger(bool& on_off, int& linger_t) const;
 		int set_linger(bool const& on_off, int const& linger_t = 30 /* in seconds */);

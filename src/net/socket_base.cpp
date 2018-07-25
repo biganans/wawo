@@ -106,7 +106,7 @@ namespace wawo { namespace net {
 			}
 
 			int rt = wawo::net::socket_api::helper::set_reuseaddr(m_fd, onoff);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
 			if (onoff) {
 				m_cfg.option |= OPTION_REUSEADDR;
 			} else {
@@ -130,7 +130,7 @@ namespace wawo { namespace net {
 			}
 
 			int rt = wawo::net::socket_api::helper::set_reuseport(m_fd, onoff);
-			WAWO_RETURN_V_IF_MATCH(rt, rt == wawo::E_SOCKET_ERROR);
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
 			if (onoff) {
 				m_cfg.option |= OPTION_REUSEPORT;
 			} else {
@@ -152,7 +152,7 @@ namespace wawo { namespace net {
 			}
 
 			int rt = wawo::net::socket_api::helper::set_nonblocking(m_fd, onoff);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
 			if (onoff) {
 				m_cfg.option |= OPTION_NON_BLOCKING;
 			} else {
@@ -169,21 +169,21 @@ namespace wawo { namespace net {
 			u32_t s;
 			if (cfg.snd_size == 0) {
 				rt = get_snd_buffer_size(s);
-				WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 				m_cfg.buffer.snd_size = s;
 			} else {
 				rt = set_snd_buffer_size(cfg.snd_size);
-				WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 				m_cfg.buffer.snd_size = cfg.snd_size;
 			}
 
 			if (cfg.rcv_size == 0) {
 				rt = get_rcv_buffer_size(s);
-				WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 				m_cfg.buffer.rcv_size = s;
 			} else {
 				rt = set_rcv_buffer_size(cfg.rcv_size);
-				WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+				WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 				m_cfg.buffer.rcv_size = cfg.rcv_size;
 			}
 			return wawo::OK;
@@ -202,7 +202,7 @@ namespace wawo { namespace net {
 			}
 
 			int rt = wawo::net::socket_api::helper::set_nodelay(m_fd, onoff);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
 			if (onoff) {
 				m_cfg.option |= OPTION_NODELAY;
 			} else {
@@ -215,7 +215,7 @@ namespace wawo { namespace net {
 			if (!(m_protocol == P_TCP || m_protocol == P_WCP)) { return wawo::E_INVALID_OPERATION; }
 			//force to false
 			int rt = wawo::net::socket_api::helper::set_keep_alive(m_fd, onoff);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
 			m_cfg.kvals.onoff = onoff;
 			return wawo::OK;
 		}
@@ -224,7 +224,7 @@ namespace wawo { namespace net {
 			if (!(m_protocol == P_TCP || m_protocol == P_WCP)) { return wawo::E_INVALID_OPERATION; }
 			WAWO_ASSERT(!is_listener());
 			int rt = _cfg_keep_alive(vals.onoff);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+			WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 			WAWO_RETURN_V_IF_MATCH(wawo::OK, vals.onoff == false);
 
 #if WAWO_ISWIN
@@ -246,7 +246,7 @@ namespace wawo { namespace net {
 			}
 
 			rt = ::WSAIoctl(m_fd, SIO_KEEPALIVE_VALS, &alive, sizeof(alive), NULL, 0, &dwBytesRet, NULL, NULL);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
 #elif WAWO_ISGNU
 			rt = _cfg_set_keep_alive(true);
 			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
@@ -254,16 +254,16 @@ namespace wawo { namespace net {
 			if (vals.idle != 0) {
 				i32_t idle = (vals.idle / 1000);
 				rt = m_fn_setsockopt(m_fd, SOL_TCP, TCP_KEEPIDLE, &idle, sizeof(idle));
-				WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+				WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
 			}
 			if (vals.interval != 0) {
 				i32_t interval = (vals.interval / 1000);
 				rt = m_fn_setsockopt(m_fd, SOL_TCP, TCP_KEEPINTVL, &interval, sizeof(interval));
-				WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+				WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
 			}
 			if (vals.probes != 0) {
 				rt = m_fn_setsockopt(m_fd, SOL_TCP, TCP_KEEPCNT, &vals.probes, sizeof(vals.probes));
-				WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+				WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
 			}
 #else
 #error
@@ -283,7 +283,7 @@ namespace wawo { namespace net {
 				return wawo::OK;
 			}
 			int rt = wawo::net::socket_api::helper::set_broadcast(m_fd, onoff);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
 			if (onoff) {
 				m_cfg.option |= OPTION_BROADCAST;
 			} else {
@@ -298,14 +298,14 @@ namespace wawo { namespace net {
 
 			//force nonblocking
 			int rt = _cfg_nonblocking(true);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+			WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 
 			//child will inherite parent's buffer setting
 			rt = _cfg_buffer(cfg.buffer);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+			WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 
 			rt = _cfg_reuseaddr((cfg.option&OPTION_REUSEADDR) !=0);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+			WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 
 #if WAWO_ISGNU
 			rt = _cfg_reuseport((cfg.option&OPTION_REUSEPORT)!=0);
@@ -321,7 +321,7 @@ namespace wawo { namespace net {
 		//wcp share same cfg with tcp
 		int socket_base::_cfg_setup_tcp(socket_cfg const& cfg) {
 			int rt = _cfg_nodelay((cfg.option&OPTION_NODELAY) != 0);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+			WAWO_RETURN_V_IF_NOT_MATCH(rt, rt == wawo::OK);
 
 			return _cfg_keep_alive_vals(cfg.kvals);
 		}
@@ -332,25 +332,18 @@ namespace wawo { namespace net {
 
 			WAWO_ASSERT(m_fd == wawo::E_INVALID_SOCKET);
 			m_fd = m_fn_socket(m_family, m_type, m_protocol);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_INVALID_SOCKET, m_fd == wawo::E_INVALID_SOCKET);
-
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), m_fd == wawo::E_SOCKET_ERROR);
 			return wawo::OK;
 		}
 
 		int socket_base::close() {
-			int close_rt = m_fn_close(m_fd);
-			WAWO_ASSERT(close_rt == wawo::OK);
-
-			if (close_rt == 0) {
-				WAWO_TRACE_SOCKET("[socket_base][%s]socket close", info().to_stdstring().c_str() );
-			} else {
-				WAWO_WARN("[socket_base][%s]socket close, close_rt: %d, close_ec: %d", info().to_stdstring().c_str() , close_rt, socket_get_last_errno());
-			}
-			return close_rt;
+			int rt = m_fn_close(m_fd);
+			WAWO_ASSERT(rt == wawo::OK);
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
+			return wawo::OK;
 		}
 
 		int socket_base::shutdown(int const& flag) {
-
 			WAWO_ASSERT(!is_listener());
 			const char* shutdown_flag_str[3] = {
 				"SHUT_RD",
@@ -358,12 +351,9 @@ namespace wawo { namespace net {
 				"SHUT_RDWR"
 			};
 
-			int shutrt = m_fn_shutdown(m_fd, flag);
-			WAWO_TRACE_SOCKET("[socket_base][%s]shutdown(%s)", info().to_stdstring().c_str(), shutdown_flag_str[flag]);
-			if(shutrt != 0) {
-				WAWO_WARN("[socket_base][%s]shutdown(%s), shut_rt: %d", info().to_stdstring().c_str(), shutdown_flag_str[flag], shutrt);
-			}
-			return shutrt;
+			int rt = m_fn_shutdown(m_fd, flag);
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
+			return wawo::OK;
 		}
 
 		int socket_base::bind( address const& addr) {
@@ -381,22 +371,23 @@ namespace wawo { namespace net {
 
 			WAWO_ASSERT(m_family == addr.family());
 			m_laddr = addr;
-			return m_fn_bind(m_fd , addr);
+			int rt= m_fn_bind(m_fd , addr);
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
+			return wawo::OK;
 		}
 
 		int socket_base::listen(socket_cfg const& child_cfg, int const& backlog) {
 			WAWO_ASSERT(m_sm == SM_NONE);
 			WAWO_ASSERT(m_fd>0);
-			int listenrt;
+			int rt;
 
 			if (m_protocol == P_UDP) {
-				listenrt = wawo::OK;
-			}
-			else {
-				listenrt = m_fn_listen(m_fd, backlog);
+				rt = wawo::OK;
+			} else {
+				rt = m_fn_listen(m_fd, backlog);
 			}
 
-			WAWO_RETURN_V_IF_NOT_MATCH(listenrt, listenrt == wawo::OK);
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
 			m_child_cfg = child_cfg;
 			m_sm = SM_LISTENER;
 			return wawo::OK;
@@ -433,7 +424,9 @@ namespace wawo { namespace net {
 				WAWO_ASSERT(!"TODO");
 			}
 #else
-			return m_fn_connect(m_fd, addr );
+			int rt= m_fn_connect(m_fd, addr );
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
+			return wawo::OK;
 #endif
 		}
 
@@ -443,10 +436,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_fd > 0);
 
 			int rt = setsockopt(SOL_SOCKET, SO_SNDBUF, (char*)&(size), sizeof(size));
-			if (wawo::OK != rt) {
-				WAWO_ERR("[socket_base][%s]setsockopt(SO_SNDBUF) == %d failed, error code: %d", info().to_stdstring().c_str(), size, rt); \
-				return rt;
-			}
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
 
 #ifdef _DEBUG
 			u32_t news;
@@ -458,61 +448,37 @@ namespace wawo { namespace net {
 			return wawo::OK;
 		}
 
-		int socket_base::get_snd_buffer_size(u32_t& size) const {
+		int socket_base::get_snd_buffer_size() const {
 			WAWO_ASSERT(m_fd > 0);
-
+			int size;
 			socklen_t opt_length = sizeof(u32_t);
 			int rt = m_fn_getsockopt(m_fd, SOL_SOCKET, SO_SNDBUF, (char*)&size, &opt_length);
-			if (rt != wawo::OK) {
-				WAWO_ERR("[socket_base][%s]getsockopt(SO_SNDBUF) failed, error code: %d", info().to_stdstring().c_str(), rt);
-				return rt;
-			}
-			return wawo::OK;
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
+			return size;
 		}
 
-		int socket_base::get_left_snd_queue(u32_t& size) const {
+		int socket_base::get_left_snd_queue() const {
 #if WAWO_ISGNU
 			if (m_fd <= 0) {
-				size = 0;
-				return -1;
+				return wawo::E_INVALID_OPERATION;
 			}
 
+			int size;
 			int rt = ::ioctl(m_fd, TIOCOUTQ, &size);
 
-			WAWO_RETURN_V_IF_MATCH(rt, rt == 0);
-			return socket_get_last_errno();
+			WAWO_RETURN_V_IF_MATCH(socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR );
+			return size;
 #else
-			(void)size;
 			WAWO_THROW("this operation does not supported on windows");
 #endif
-		}
-
-		int socket_base::get_left_rcv_queue(u32_t& size) const {
-			if (m_fd <= 0) {
-				size = 0;
-				return -1;
-			}
-#if WAWO_ISGNU
-			int rt = ioctl(m_fd, FIONREAD, size);
-#else
-			u_long ulsize;
-			int rt = ::ioctlsocket(m_fd, FIONREAD, &ulsize);
-			if (rt == 0) size = ulsize & 0xFFFFFFFF;
-#endif
-
-			WAWO_RETURN_V_IF_MATCH(rt, rt == 0);
-			return socket_get_last_errno();
 		}
 
 		int socket_base::set_rcv_buffer_size(u32_t const& size) {
 			WAWO_ASSERT(size >= SOCK_RCV_MIN_SIZE && size <= SOCK_RCV_MAX_SIZE);
 			WAWO_ASSERT(m_fd != wawo::E_INVALID_SOCKET );
-
 			int rt = setsockopt(SOL_SOCKET, SO_RCVBUF, (char*)&(size), sizeof(size));
-			if (wawo::OK != rt) {
-				WAWO_ERR("[socket_base][%s]setsockopt(SO_RCVBUF) == %d failed, error code: %d", info().to_stdstring().c_str(), size, rt);
-				return rt;
-			}
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR );
+
 #ifdef _DEBUG
 			u32_t news;
 			rt = get_rcv_buffer_size(news);
@@ -523,16 +489,29 @@ namespace wawo { namespace net {
 			return wawo::OK;
 		}
 
-		int socket_base::get_rcv_buffer_size(u32_t& size) const {
+		int socket_base::get_rcv_buffer_size() const {
 			WAWO_ASSERT(m_fd > 0);
-
+			int size;
 			socklen_t opt_length = sizeof(u32_t);
 			int rt = m_fn_getsockopt(m_fd, SOL_SOCKET, SO_RCVBUF, (char*)&size, &opt_length);
-			if (rt != wawo::OK ) {
-				WAWO_ERR("[socket_base][%s]getsockopt(SO_RCVBUF) failed, error code: %d", info().to_stdstring().c_str(), rt);
-				return rt;
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
+			return size;
+		}
+
+		int socket_base::get_left_rcv_queue() const {
+			if (m_fd <= 0) {
+				return wawo::E_INVALID_OPERATION;
 			}
-			return wawo::OK;
+			int size;
+#if WAWO_ISGNU
+			int rt = ioctl(m_fd, FIONREAD, size);
+#else
+			u_long ulsize;
+			int rt = ::ioctlsocket(m_fd, FIONREAD, &ulsize);
+			if (rt == 0) size = ulsize & 0xFFFFFFFF;
+#endif
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
+			return size;
 		}
 
 		int socket_base::get_linger(bool& on_off, int& linger_t) const {
@@ -540,11 +519,11 @@ namespace wawo { namespace net {
 			struct linger soLinger;
 			socklen_t opt_length = sizeof(soLinger);
 			int rt = m_fn_getsockopt(m_fd, SOL_SOCKET, SO_LINGER, (char*)&soLinger, &opt_length);
-			if (rt == 0) {
-				on_off = (soLinger.l_onoff != 0);
-				linger_t = soLinger.l_linger;
-			}
-			return rt;
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
+
+			on_off = (soLinger.l_onoff != 0);
+			linger_t = soLinger.l_linger;
+			return wawo::OK;
 		}
 
 		int socket_base::set_linger(bool const& on_off, int const& linger_t /* in seconds */) {
@@ -552,7 +531,9 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_fd > 0);
 			soLinger.l_onoff = on_off;
 			soLinger.l_linger = (linger_t&0xFFFF);
-			return setsockopt(SOL_SOCKET, SO_LINGER, (char*)&soLinger, sizeof(soLinger));
+			int rt = setsockopt(SOL_SOCKET, SO_LINGER, (char*)&soLinger, sizeof(soLinger));
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
+			return wawo::OK;
 		}
 
 		/*
@@ -592,15 +573,17 @@ namespace wawo { namespace net {
 			socklen_t length;
 
 			int rt = m_fn_getsockopt(m_fd, IPPROTO_IP, IP_TOS, (char*)&_tos, &length);
-			WAWO_RETURN_V_IF_NOT_MATCH(wawo::socket_get_last_errno(), rt == 0);
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
 			tos = IPTOS_TOS(_tos);
-			return rt;
+			return wawo::OK;
 		}
 
 		int socket_base::set_tos(u8_t const& tos) {
 			WAWO_ASSERT(m_fd>0);
 			u8_t _tos = IPTOS_TOS(tos) | 0xe0;
-			return m_fn_setsockopt(m_fd, IPPROTO_IP, IP_TOS, (char*)&_tos, sizeof(_tos));
+			int rt= m_fn_setsockopt(m_fd, IPPROTO_IP, IP_TOS, (char*)&_tos, sizeof(_tos));
+			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
+			return wawo::OK;
 		}
 
 		wawo::u32_t socket_base::sendto(wawo::byte_t const* const buffer, wawo::u32_t const& len, const wawo::net::address& addr, int& ec_o, int const& flag) {
