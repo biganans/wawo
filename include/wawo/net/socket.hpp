@@ -941,6 +941,18 @@ namespace wawo { namespace net {
 				return;
 			}
 
+			if( (m_flag&F_WRITE_ERROR) != 0 ) {
+#ifdef WAWO_IO_MODE_IOCP
+				if (rt == wawo::OK && (m_flag&F_WATCH_WRITE)) {
+				}
+#else
+				WAWO_ASSERT(m_outbound_entry_q.size() != 0);
+				_ch_do_shutdown_write(ch_promise);
+				__rdwr_shutdown_check();
+				return;
+#endif
+			}
+
 			if (m_flag&F_WATCH_WRITE) {
 				WAWO_ASSERT((m_flag&F_WRITE_ERROR) == 0);
 				m_flag |= F_WRITE_SHUTDOWNING;
@@ -950,15 +962,7 @@ namespace wawo { namespace net {
 				return;
 			}
 
-			if( (m_flag&F_WRITE_ERROR) == 0 ) {
-#ifdef WAWO_IO_MODE_IOCP
-				if (rt == wawo::OK && (m_flag&F_WATCH_WRITE)) {
-				}
-#else
-				WAWO_ASSERT(m_outbound_entry_q.size() == 0);
-#endif
-			}
-
+			WAWO_ASSERT(m_outbound_entry_q.size() == 0);
 			_ch_do_shutdown_write(ch_promise);
 			__rdwr_shutdown_check();
 		}
@@ -1049,21 +1053,30 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_fn_dial_initializer == NULL);
 			//wait for write done event
 
-			if (m_flag&F_WATCH_WRITE) {
-				WAWO_ASSERT((m_flag&F_WRITE_ERROR) == 0);
-				m_flag |= F_CLOSING;
-				m_close_promise = ch_promise;
-				return;
-			}
-
-			if ((m_flag&F_WRITE_ERROR) == 0) {
+			if ((m_flag&F_WRITE_ERROR) != 0) {
 #ifdef WAWO_IO_MODE_IOCP
 				if ( (rt == wawo::OK) &&(m_flag&F_WATCH_WRITE)) {
 #else
-				WAWO_ASSERT(m_outbound_entry_q.size() == 0);
+				WAWO_ASSERT(m_outbound_entry_q.size() != 0);
+				_ch_do_close_read_write(ch_promise);
+				return;
 #endif
 			}
 
+			if (m_flag&F_WATCH_WRITE) {
+				WAWO_ASSERT((m_flag&F_WRITE_ERROR) == 0);
+				WAWO_ASSERT(m_outbound_entry_q.size() != 0);
+				if (m_flag | F_CLOSING) {
+					event_poller()->schedule([ch_promise]() {
+						ch_promise->set_success(wawo::E_CHANNEL_CLOSING);
+					});
+				} else {
+					m_flag |= F_CLOSING;
+					m_close_promise = ch_promise;
+				}
+				return;
+			}
+			WAWO_ASSERT(m_outbound_entry_q.size() == 0);
 			_ch_do_close_read_write(ch_promise);
 		}
 	};
