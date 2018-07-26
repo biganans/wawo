@@ -138,7 +138,7 @@ namespace wawo { namespace net {
 			}
 
 			while (m_tq->size()) {
-				fn_io_event_task& t = m_tq->front();
+				fn_io_event_task const& t = m_tq->front();
 				WAWO_ASSERT(t);
 				t();
 				m_tq->pop();
