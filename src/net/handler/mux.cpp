@@ -16,7 +16,51 @@ namespace wawo { namespace net { namespace handler {
 		});
 	}
 
-	mux::mux()
+	mux_stream::mux_stream(u32_t const& id, WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<mux> const& mux_) :
+		channel(ctx->event_poller()),
+		m_id(id),
+		m_mux(mux_),
+		m_wnd(WAWO_DEFAULT_MUX_STREAM_WND_SIZE),
+		m_ch_ctx(ctx),
+		m_entry_q_bytes(0),
+		m_flag(0),
+		m_state(SS_CLOSED),
+		m_fin_enqueue_done(false),
+		m_is_active(false)
+	{
+		WAWO_ASSERT(ctx != NULL);
+		_init();
+	}
+
+	mux_stream::~mux_stream() {}
+
+	void mux_stream::_ch_do_close_read_write(WWRP<channel_promise> const& close_f) {
+		WAWO_ASSERT(event_poller()->in_event_loop());
+		WAWO_ASSERT(m_state == SS_ESTABLISHED);
+		DEBUG_STREAM("[mux_stream][s%u]close mux_stream", m_id);
+		m_state = SS_CLOSED;
+		if (!(m_flag&F_READ_SHUTDOWN)) {
+			_ch_do_shutdown_read(NULL);
+		}
+		if (!(m_flag&F_WRITE_SHUTDOWN)) {
+			_ch_do_shutdown_write(m_shutdown_write_promise);//ALWAYS RETURN OK
+			m_shutdown_write_promise = NULL;
+		}
+		if (m_close_promise != NULL) {
+			event_poller()->schedule([CHP = m_close_promise]() {
+				CHP->set_success(wawo::OK);
+			});
+			m_close_promise = NULL;
+		}
+		event_poller()->schedule([close_f, CH = WWRP<channel>(this)]() {
+			if (close_f != NULL) {
+				close_f->set_success(wawo::OK);
+			}
+			CH->ch_fire_close(wawo::OK);
+		});
+	}
+
+	mux::mux():m_last_check_time(0)
 	{
 	}
 
@@ -50,7 +94,7 @@ namespace wawo { namespace net { namespace handler {
 					return;
 				}
 
-				s = wawo::make_ref<mux_stream>( id, ctx );
+				s = wawo::make_ref<mux_stream>(id, ctx );
 				s->m_state = SS_ESTABLISHED;
 				m_stream_map.insert({id, s});
 
@@ -83,6 +127,7 @@ namespace wawo { namespace net { namespace handler {
 		s->arrive_frame({flag, income });
 	}
 
+	//@TODO, flush all stream up and down, then do close
 	void mux::read_shutdowned(WWRP<wawo::net::channel_handler_context> const& ctx) {
 		ctx->shutdown_write();
 		ctx->fire_read_shutdowned();

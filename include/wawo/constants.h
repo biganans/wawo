@@ -216,38 +216,39 @@ namespace wawo {
 	const int E_WSA_QOS_SENDERS					= -11006; 
 
 //internal error
-	const int E_OPERATION_NOT_SUPPORTED	= -20001; 
-	const int E_INVALID_OPERATION		= -20002; 
-	const int E_INVALID_STATE			= -20003; 
-	const int E_MEMORY_MALLOC_FAILED	= -20004; 
-	const int E_MEMORY_ACCESS_ERROR		= -20005; 
-	const int E_MEMORY_ALLOC_FAILED		= -20006; 
-	const int E_MEMORY_NEW_FAILED		= -20007; 
-	const int E_TRY_AGAIN				= -20008; 
+	const int E_OPERATION_NOT_SUPPORTED	= -20001;
+	const int E_INVALID_OPERATION		= -20002;
+	const int E_INVALID_STATE			= -20003;
+	const int E_MEMORY_MALLOC_FAILED	= -20004;
+	const int E_MEMORY_ACCESS_ERROR		= -20005;
+	const int E_MEMORY_ALLOC_FAILED		= -20006;
+	const int E_MEMORY_NEW_FAILED		= -20007;
+	const int E_TRY_AGAIN				= -20008;
 	const int E_INVAL					= -20009;
 	const int E_POLLER_FD_COUNT_LIMIT	= -20010;
 
-	const int 	E_UNKNOWN					= -20010; 
-	const int 	E_THREAD_INTERRUPT			= -20011; 
+	const int 	E_UNKNOWN					= -20010;
+	const int 	E_THREAD_INTERRUPT			= -20011;
 			
-	const int 	E_XXTEA_INVALID_DATA		= -20012; 
-	const int 	E_XXTEA_DECRYPT_FAILED		= -20013; 
-	const int 	E_XXTEA_ENCRYPT_FAILED		= -20014; 
+	const int 	E_XXTEA_INVALID_DATA		= -20012;
+	const int 	E_XXTEA_DECRYPT_FAILED		= -20013;
+	const int 	E_XXTEA_ENCRYPT_FAILED		= -20014;
 
-	const int 	E_CHANNEL_WRITE_BLOCK		= -21001; 
-	const int 	E_CHANNEL_READ_BLOCK		= -21002; 
+	const int 	E_CHANNEL_WRITE_BLOCK		= -21001;
+	const int 	E_CHANNEL_READ_BLOCK		= -21002;
 
-	const int 	E_CHANNEL_READ_SHUTDOWN_ALREADY = -21003; 
-	const int 	E_CHANNEL_WRITE_SHUTDOWN_ALREADY = -21004; 
+	const int 	E_CHANNEL_READ_SHUTDOWN_ALREADY = -21003;
+	const int 	E_CHANNEL_WRITE_SHUTDOWN_ALREADY = -21004;
 
-	const int 	E_CHANNEL_INVALID_STATE			= -21005; 
-	const int 	E_CHANNEL_EXISTS				= -21006; 
-	const int 	E_CHANNEL_CLOSED_ALREADY		= -21007; 
-	const int	E_CHANNEL_CLOSING				= -21008;
-	const int	E_CHANNEL_WRITE_SHUTDOWNING		= -21009;
-	const int	E_CHANNEL_WRITING				= -21010;
-	const int	E_CHANNEL_OUTBOUND_EMPTY		= -21011;
-	const int	E_CHANNEL_CANCEL_WRITE = -210012;
+	const int 	E_CHANNEL_INVALID_STATE			= -21005;
+	const int	E_CHANNEL_NOT_EXISTS			= -21006;
+	const int 	E_CHANNEL_EXISTS				= -21007;
+	const int 	E_CHANNEL_CLOSED_ALREADY		= -21008;
+	const int	E_CHANNEL_CLOSING				= -21009;
+	const int	E_CHANNEL_WRITE_SHUTDOWNING		= -21010;
+	const int	E_CHANNEL_WRITING				= -21011;
+	const int	E_CHANNEL_OUTBOUND_EMPTY		= -21012;
+	const int	E_CHANNEL_CANCEL_WRITE			= -21013;
 
 	const int 	E_SOCKET_GRACE_CLOSE					= -30000; 
 	const int 	E_SOCKET_CONNECTING						= -30001; 

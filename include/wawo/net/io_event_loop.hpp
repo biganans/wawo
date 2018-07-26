@@ -96,10 +96,9 @@ namespace wawo { namespace net {
 	};
 
 	typedef std::vector<WWRP<io_event_loop>> io_event_loop_vector;
-	class io_event_loop_group :
+	class io_event_loop_group:
 		public wawo::singleton<io_event_loop_group>
 	{
-
 	private:
 		std::atomic<int> m_curr_sys;
 		std::atomic<int> m_curr_wpoll;
@@ -111,7 +110,9 @@ namespace wawo { namespace net {
 		void init(int wpoller_count = 1);
 		WWRP<io_event_loop> next(bool const& return_wpoller = false);
 		void deinit();
-	};
 
+		void execute(fn_io_event_task&& f);
+		void schedule(fn_io_event_task&& f);
+	};
 }}
 #endif

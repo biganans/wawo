@@ -126,5 +126,11 @@ namespace wawo { namespace net {
 			m_pollers.clear();
 		}
 
+		void io_event_loop_group::execute(fn_io_event_task&& f) {
+			next()->execute(std::forward<fn_io_event_task>(f));
+		}
+		void io_event_loop_group::schedule(fn_io_event_task&& f) {
+			next()->schedule(std::forward<fn_io_event_task>(f));
+		}
 	}
 }

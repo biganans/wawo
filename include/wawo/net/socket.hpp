@@ -1066,7 +1066,7 @@ namespace wawo { namespace net {
 			if (m_flag&F_WATCH_WRITE) {
 				WAWO_ASSERT((m_flag&F_WRITE_ERROR) == 0);
 				WAWO_ASSERT(m_outbound_entry_q.size() != 0);
-				if (m_flag | F_CLOSING) {
+				if (m_flag&F_CLOSING) {
 					event_poller()->schedule([ch_promise]() {
 						ch_promise->set_success(wawo::E_CHANNEL_CLOSING);
 					});

@@ -17,9 +17,13 @@ namespace wawo {
 	#define NULL 0
 #endif
 
-#ifdef DEBUG
+#if defined(_DEBUG) || defined(DEBUG)
 	#ifndef _DEBUG
-	#define _DEBUG
+		#define _DEBUG
+	#endif
+
+	#ifndef DEBUG
+		#define DEBUG
 	#endif
 #endif
 

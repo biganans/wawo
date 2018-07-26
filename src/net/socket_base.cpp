@@ -501,9 +501,9 @@ namespace wawo { namespace net {
 #else
 			u_long ulsize;
 			int rt = ::ioctlsocket(m_fd, FIONREAD, &ulsize);
-			if (rt == 0) size = ulsize & 0xFFFFFFFF;
-#endif
 			WAWO_RETURN_V_IF_MATCH(wawo::socket_get_last_errno(), rt == wawo::E_SOCKET_ERROR);
+			size = ulsize & 0xFFFFFFFF;
+#endif
 			return size;
 		}
 

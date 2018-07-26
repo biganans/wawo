@@ -1,7 +1,6 @@
 #ifndef _WAWO_CONFIG_CONFIG_H_
 #define _WAWO_CONFIG_CONFIG_H_
 
-
 //split SYSLOG message into piece that less than 1024
 #ifndef WAWO_SPLIT_SYSLOG
 	#define WAWO_SPLIT_SYSLOG 1
@@ -12,7 +11,6 @@
 #endif
 
 //log level
-
 /** PLASE REFER TO loggerManager::LogLevels::LogLevel  */
 #ifndef WAWO_DEFAULT_LOG_LEVEL
 	#define WAWO_DEFAULT_LOG_LEVEL 3
