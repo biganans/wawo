@@ -646,8 +646,8 @@ namespace wawo { namespace net {
 				});
 				return;
 			}
-
-			if ((m_flag&F_WATCH_READ) && is_nonblocking()) {
+			WAWO_ASSERT(is_nonblocking());
+			if ((m_flag&F_WATCH_READ) ) {
 				m_flag &= ~(F_WATCH_READ | F_WATCH_READ_INFINITE);
 				TRACE_IOE("[socket][%s][end_read]unwatch IOE_READ", info().to_stdstring().c_str());
 				event_poller()->unwatch(IOE_READ, fd());
@@ -663,7 +663,7 @@ namespace wawo { namespace net {
 				});
 				return;
 			}
-
+			WAWO_ASSERT(is_nonblocking());
 			WAWO_ASSERT(is_listener());
 			event_poller()->watch(IOE_READ, fd(), std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1));
 		}

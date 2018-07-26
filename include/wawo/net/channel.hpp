@@ -50,8 +50,13 @@ namespace wawo { namespace net {
 			m_ch_close_future(NULL),
 			m_ctx(NULL),
 			m_errno(0)
-		{}
-		~channel() {}
+		{
+//			WAWO_INFO("channel()");
+		}
+
+		~channel() {
+//			WAWO_INFO("~channel()");
+		}
 
 		__WW_FORCE_INLINE WWRP<io_event_loop> const& event_poller() const {
 			return m_io_event_loop;

@@ -162,9 +162,12 @@ namespace wawo { namespace net { namespace handler {
 		{
 			WAWO_ASSERT(ctx != NULL);
 			_init();
+			DEBUG_STREAM("mux_stream()");
 		}
 
-		~mux_stream() {}
+		~mux_stream() {
+			DEBUG_STREAM("~mux_stream()");
+		}
 
 		void ch_set_read_buffer_size(u32_t size) {
 			ch_set_read_buffer_size(size, make_promise());
@@ -384,6 +387,7 @@ namespace wawo { namespace net { namespace handler {
 			m_state = SS_ESTABLISHED;
 			WAWO_ASSERT(m_dial_initializer != NULL);
 			m_dial_initializer(WWRP<channel>(this));
+			m_dial_initializer = NULL;
 		}
 
 		void _dial_failed() {
@@ -686,7 +690,6 @@ namespace wawo { namespace net { namespace handler {
 		E_MUX_CH_STREAM_ACCEPTED
 	};
 
-	class mux_stream;
 	typedef std::function<void(WWRP<mux> const& mux_)> fn_mux_evt_t;
 	typedef std::function<void(WWRP<mux_stream> const& s)> fn_mux_stream_accepted_t;
 
