@@ -293,20 +293,22 @@ namespace wawo { namespace net {
 
 			WAWO_ASSERT(m_state == S_CONNECTING);
 			WAWO_ASSERT(m_dial_promise != NULL);
+			WAWO_ASSERT(m_fn_dial_initializer !=NULL);
 			//set_success may cause close which may result in self set null
-			WWRP<channel_promise> _ch_p = m_dial_promise;
+			const WWRP<channel_promise> _ch_p = m_dial_promise;
+			const fn_channel_initializer _dial_initializer = m_fn_dial_initializer;
 			m_dial_promise = NULL;
+			m_fn_dial_initializer = NULL;
 			try {
-				_ch_p->set_success(code);
 				if (WAWO_LIKELY(code == wawo::OK)) {
-					WAWO_ASSERT(m_fn_dial_initializer != NULL);
-					m_fn_dial_initializer(WWRP<channel>(this));
-
-					m_fn_dial_initializer = NULL;
+					_dial_initializer(WWRP<channel>(this));
 					m_state = S_CONNECTED;
+
+					_ch_p->set_success(code);
 					channel::ch_fire_connected();
 					begin_read();
 				} else {
+					_ch_p->set_success(code);
 					ch_errno(code);
 					ch_close();
 				}
@@ -982,10 +984,9 @@ namespace wawo { namespace net {
 		}
 
 		inline void _ch_do_close_connecting_ch(WWRP<channel_promise> const& close_f) {
-			WAWO_ASSERT(m_fn_dial_initializer != NULL);
+			WAWO_ASSERT(m_fn_dial_initializer == NULL);
 			m_state = S_CLOSED;
 			end_write();//for connect action
-			m_fn_dial_initializer = NULL;
 			int rt = socket_base::close();
 			event_poller()->schedule([close_f, CH = WWRP<channel>(this), rt]() {
 				close_f->set_success(rt);

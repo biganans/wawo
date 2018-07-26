@@ -104,6 +104,7 @@ namespace wawo { namespace net { namespace handler {
 
 		WWRP<channel_promise> m_shutdown_write_promise;
 		WWRP<channel_promise> m_close_promise;
+		fn_channel_initializer m_dial_initializer;
 
 		u16_t m_flag;
 		u8_t m_state;
@@ -148,8 +149,22 @@ namespace wawo { namespace net { namespace handler {
 		}
 
 	public:
-		mux_stream(u32_t const& id, WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<mux> const& mux_);
-		~mux_stream();
+		mux_stream(u32_t const& id, WWRP<wawo::net::channel_handler_context> const& ctx) :
+			channel(ctx->event_poller()),
+			m_id(id),
+			m_wnd(WAWO_DEFAULT_MUX_STREAM_WND_SIZE),
+			m_ch_ctx(ctx),
+			m_entry_q_bytes(0),
+			m_flag(0),
+			m_state(SS_CLOSED),
+			m_fin_enqueue_done(false),
+			m_is_active(false)
+		{
+			WAWO_ASSERT(ctx != NULL);
+			_init();
+		}
+
+		~mux_stream() {}
 
 		void ch_set_read_buffer_size(u32_t size) {
 			ch_set_read_buffer_size(size, make_promise());
@@ -361,19 +376,39 @@ namespace wawo { namespace net { namespace handler {
 			_do_ch_flush_impl();
 		}
 
-		void _dial(fn_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise ) {
+		void _dial_ok() {
+			WAWO_ASSERT(m_ch_ctx != NULL);
+			WAWO_ASSERT(m_ch_ctx->event_poller()->in_event_loop());
 			WAWO_ASSERT(m_state == SS_CLOSED);
-			m_is_active= true;
-
+			m_is_active = true;
 			m_state = SS_ESTABLISHED;
-			initializer(WWRP<channel>(this));
-			mux_stream_frame syn_frame = make_frame_syn();
-			ch_promise->add_listener([CH = WWRP<channel>(this)](WWRP<wawo::net::channel_future> const& f) {
-				if (f->get() == wawo::OK) {
-					CH->ch_fire_connected();
-				}
+			WAWO_ASSERT(m_dial_initializer != NULL);
+			m_dial_initializer(WWRP<channel>(this));
+		}
+
+		void _dial_failed() {
+			WAWO_ASSERT(m_dial_initializer != NULL);
+			m_dial_initializer = NULL;
+		}
+
+		void _dial(fn_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise ) {
+			WWRP<channel_future> write_f = write_frame(make_frame_syn());
+			m_dial_initializer = initializer;
+
+			write_f->add_listener([S = WWRP<mux_stream>(this), ch_promise](WWRP<wawo::net::channel_future> const& f) {
+				int rt = f->get();
+				S->event_poller()->schedule([S,ch_promise,rt]() {
+					if (rt == wawo::OK) {
+						S->_dial_ok();
+						ch_promise->set_success(wawo::OK);
+						S->ch_fire_connected();
+					} else {
+						S->_dial_failed();
+						ch_promise->set_success(rt);
+						S->ch_close();
+					}
+				});
 			});
-			write_frame(syn_frame, ch_promise);
 		}
 
 		WWRP<wawo::net::channel_future> dial(fn_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise) {
@@ -451,8 +486,31 @@ namespace wawo { namespace net { namespace handler {
 			}
 		}
 
-		void _ch_do_close_read_write(WWRP<channel_promise> const& close_f);
-
+		void _ch_do_close_read_write(WWRP<channel_promise> const& close_f) {
+			WAWO_ASSERT(event_poller()->in_event_loop());
+			WAWO_ASSERT(m_state == SS_ESTABLISHED);
+			DEBUG_STREAM("[mux_stream][s%u]close mux_stream", m_id);
+			m_state = SS_CLOSED;
+			if (!(m_flag&F_READ_SHUTDOWN)) {
+				_ch_do_shutdown_read(NULL);
+			}
+			if (!(m_flag&F_WRITE_SHUTDOWN)) {
+				_ch_do_shutdown_write(m_shutdown_write_promise);//ALWAYS RETURN OK
+				m_shutdown_write_promise = NULL;
+			}
+			if (m_close_promise != NULL) {
+				event_poller()->schedule([CHP = m_close_promise]() {
+					CHP->set_success(wawo::OK);
+				});
+				m_close_promise = NULL;
+			}
+			event_poller()->schedule([close_f, CH = WWRP<channel>(this)]() {
+				if (close_f != NULL) {
+					close_f->set_success(wawo::OK);
+				}
+				CH->ch_fire_close(wawo::OK);
+			});
+		}
 		void ch_close_impl(WWRP<channel_promise> const& ch_promise) {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			if (m_state == SS_CLOSED) {
@@ -675,53 +733,48 @@ namespace wawo { namespace net { namespace handler {
 				}
 			}
 		}
-		*/
-
-
-		WWRP<channel_future> make_stream(u32_t id, fn_channel_initializer const& initializer) {
-			lock_guard<spin_mutex> lg(m_mutex);
-			if (m_ch_ctx == NULL) {
-				WWRP<channel_promise> f = wawo::make_ref<channel_promise>(nullptr);
-				io_event_loop_group::instance()->schedule([f]() {
-					f->set_success(wawo::E_INVALID_OPERATION);
-				});
-				return f;
+		
+*/
+		WWRP<channel_future> dial_stream(u32_t id, fn_channel_initializer const& initializer) {
+			int ec;
+			WWRP<mux_stream> S = open_stream(id,ec);
+			if (ec == wawo::OK) {
+				return S->dial(initializer);
 			}
-			WAWO_ASSERT(m_ch_ctx != NULL);
-			WWRP<mux_stream> S = wawo::make_ref<mux_stream>(id, m_ch_ctx, WWRP<mux>(this) );
-			m_stream_map.insert({ id, S });
-
-			WWRP<channel_future> f = S->dial(initializer);
-			f->add_listener([M=WWRP<mux>(this),id]( WWRP<wawo::net::channel_future> const& f ) {
-				int rt = f->get();
-				if (rt != wawo::OK) {
-					M->unmake_stream(id);
-				} else {
-					f->channel()->ch_close_future()->add_listener([M,id](WWRP<wawo::net::channel_future> const& f) {
-						M->unmake_stream(id);
-					});
-				}
-			});
+			WWRP<wawo::net::channel_promise> f = wawo::make_ref<wawo::net::channel_promise>(nullptr);
+			f->set_success(ec);
 			return f;
 		}
 
-		WWRP<channel_future> unmake_stream(u32_t id) {
+		WWRP<mux_stream> open_stream(u32_t id, int& ec) {
 			lock_guard<spin_mutex> lg(m_mutex);
-			WAWO_ASSERT(m_ch_ctx != NULL);
-			stream_map_t::iterator it = m_stream_map.find(id);
-			if (it == m_stream_map.end()) {
-				WWRP<channel_promise> f = wawo::make_ref<channel_promise>(nullptr);
-				io_event_loop_group::instance()->schedule([f]() {
-					f->set_success(wawo::E_CHANNEL_NOT_EXISTS);
-				});
-				return f;
+			ec = wawo::OK;
+			if (m_ch_ctx == NULL) {
+				ec = wawo::E_CHANNEL_CLOSED_ALREADY;
+				return NULL;
 			}
-			WWRP<channel_promise> f = it->second->make_promise();
-			m_stream_map.erase(it);
-			m_ch_ctx->event_poller()->schedule([f]() {
-				f->set_success(wawo::OK);
+			stream_map_t::iterator it = m_stream_map.find(id);
+			if (it != m_stream_map.end()) {
+				ec = wawo::E_CHANNEL_EXISTS;
+				return NULL;
+			}
+		
+			WWRP<mux_stream> S = wawo::make_ref<mux_stream>(id, m_ch_ctx);
+			m_stream_map.insert({ id, S });
+			DEBUG_STREAM("[mux][s%u]insert stream", id);
+			S->ch_close_future()->add_listener([M=WWRP<mux>(this), id](WWRP<wawo::net::channel_future> const& f) {
+				M->close_stream(id);
+				(void)f;
 			});
-			return f;
+			return S;
+		}
+
+		void close_stream(u32_t id) {
+			lock_guard<spin_mutex> lg(m_mutex);
+			WAWO_ASSERT(id > 0);
+			::size_t c = m_stream_map.erase(id);
+			DEBUG_STREAM("[mux][s%u]erase stream, erase count: %d", id, c );
+			(void)c;
 		}
 	};
 }}}

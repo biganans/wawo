@@ -16,50 +16,6 @@ namespace wawo { namespace net { namespace handler {
 		});
 	}
 
-	mux_stream::mux_stream(u32_t const& id, WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<mux> const& mux_) :
-		channel(ctx->event_poller()),
-		m_id(id),
-		m_mux(mux_),
-		m_wnd(WAWO_DEFAULT_MUX_STREAM_WND_SIZE),
-		m_ch_ctx(ctx),
-		m_entry_q_bytes(0),
-		m_flag(0),
-		m_state(SS_CLOSED),
-		m_fin_enqueue_done(false),
-		m_is_active(false)
-	{
-		WAWO_ASSERT(ctx != NULL);
-		_init();
-	}
-
-	mux_stream::~mux_stream() {}
-
-	void mux_stream::_ch_do_close_read_write(WWRP<channel_promise> const& close_f) {
-		WAWO_ASSERT(event_poller()->in_event_loop());
-		WAWO_ASSERT(m_state == SS_ESTABLISHED);
-		DEBUG_STREAM("[mux_stream][s%u]close mux_stream", m_id);
-		m_state = SS_CLOSED;
-		if (!(m_flag&F_READ_SHUTDOWN)) {
-			_ch_do_shutdown_read(NULL);
-		}
-		if (!(m_flag&F_WRITE_SHUTDOWN)) {
-			_ch_do_shutdown_write(m_shutdown_write_promise);//ALWAYS RETURN OK
-			m_shutdown_write_promise = NULL;
-		}
-		if (m_close_promise != NULL) {
-			event_poller()->schedule([CHP = m_close_promise]() {
-				CHP->set_success(wawo::OK);
-			});
-			m_close_promise = NULL;
-		}
-		event_poller()->schedule([close_f, CH = WWRP<channel>(this)]() {
-			if (close_f != NULL) {
-				close_f->set_success(wawo::OK);
-			}
-			CH->ch_fire_close(wawo::OK);
-		});
-	}
-
 	mux::mux():m_last_check_time(0)
 	{
 	}
@@ -83,24 +39,14 @@ namespace wawo { namespace net { namespace handler {
 		WWRP<mux_stream> s;
 		if (flag == mux_stream_frame_flag::T_SYN ) {
 			WAWO_ASSERT(income->len() == 0);
-			{
-				lock_guard<spin_mutex> lg(m_mutex);
-				_stream_close_check_();
-
-				typename stream_map_t::iterator it = m_stream_map.find(id);
-				if (it != m_stream_map.end() ) {
-					WAWO_WARN("[mux][s%u][syn]stream exists, reply rst", id);
-					stream_snd_rst( ctx, id );
-					return;
-				}
-
-				s = wawo::make_ref<mux_stream>(id, ctx );
-				s->m_state = SS_ESTABLISHED;
-				m_stream_map.insert({id, s});
-
-				DEBUG_STREAM("[mux][s%u]stream insert (by syn)", id);
+			int ec;
+			s = open_stream(id, ec);
+			if (ec != wawo::OK) {
+				WAWO_WARN("[mux][s%u][syn]accept stream failed: %d", id, ec );
+				stream_snd_rst(ctx, id);
+				return;
 			}
-
+			s->m_state = SS_ESTABLISHED;
 			invoke<fn_mux_stream_accepted_t>(E_MUX_CH_STREAM_ACCEPTED,s);
 			s->ch_fire_connected();
 			return;
@@ -146,6 +92,8 @@ namespace wawo { namespace net { namespace handler {
 		lock_guard<spin_mutex> lg(m_mutex);
 		stream_map_t::iterator it = m_stream_map.begin();
 		while (it != m_stream_map.end()) {
+			//@TODO, we have to check read_shutdown,then do flush
+			it->second->ch_errno(-1);
 			it->second->ch_close();
 			DEBUG_STREAM("[mux][s%u][mux_close]mux closed, close all mux_stream", it->second->ch_id() );
 			++it;
