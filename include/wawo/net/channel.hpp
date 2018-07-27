@@ -231,17 +231,11 @@ public: \
 
 		virtual void ch_set_nodelay(WWRP<channel_promise> const& ch_promise) = 0;
 
-		virtual void begin_read(u8_t const& async_flag = 0, fn_io_event const& fn_read = NULL) {
-			(void)async_flag;
-			(void)fn_read;
-		}
-		virtual void end_read() {}
+		virtual void begin_read(u8_t const& async_flag = 0, fn_io_event const& fn_read = NULL) = 0;
+		virtual void end_read() = 0;
 
-		virtual void begin_write(u8_t const& async_flag = 0, fn_io_event const& fn_write = NULL) {
-			(void)async_flag;
-			(void)fn_write;
-		}
-		virtual void end_write() {}
+		virtual void begin_write(fn_io_event const& fn_write = NULL) = 0;
+		virtual void end_write() = 0;
 
 		virtual bool ch_is_active() const = 0;
 	};

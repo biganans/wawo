@@ -26,18 +26,22 @@ namespace wawo { namespace net { namespace handler {
 	void mux::read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income) {
 	
 		WAWO_ASSERT(income != NULL);
-		WAWO_ASSERT(income->len() >= sizeof(mux_stream_id_t) + sizeof(mux_stream_frame_flag_t));
+		WAWO_ASSERT(income->len() >= mux_stream_frame_header_len);
 		mux_stream_id_t id = income->read<mux_stream_id_t>();
-		WAWO_ASSERT(id != 0);
 		mux_stream_frame_flag_t flag = income->read<mux_stream_frame_flag_t>();
+		int32_t wnd = income->read<int32_t>();
+		u32_t len = income->read<u32_t>();
 
-		if (flag >= mux_stream_frame_flag::T_MUX_STREAM_MESSAGE_TYPE_MAX) {
+		if (flag >= mux_stream_frame_flag::FRAME_MUX_STREAM_MESSAGE_TYPE_MAX) {
 			DEBUG_STREAM("[muxs][s%u][rst]invalid stream message type, ignore", id);
 			return;
 		}
+		WAWO_ASSERT(id > 0);
+		WAWO_ASSERT(len >= 0);
+		WAWO_ASSERT(len == income->len());
 
 		WWRP<mux_stream> s;
-		if (flag == mux_stream_frame_flag::T_SYN ) {
+		if (flag == mux_stream_frame_flag::FRAME_SYN ) {
 			WAWO_ASSERT(income->len() == 0);
 			int ec;
 			s = open_stream(id, ec);
@@ -46,9 +50,15 @@ namespace wawo { namespace net { namespace handler {
 				stream_snd_rst(ctx, id);
 				return;
 			}
+			WAWO_ASSERT(wnd > 0);
+			s->m_snd_wnd = wnd;
+			s->m_rcv_wnd = wnd;
+			s->m_rcv_data_incre = wnd;
 			s->m_state = SS_ESTABLISHED;
-			invoke<fn_mux_stream_accepted_t>(E_MUX_CH_STREAM_ACCEPTED,s);
+
+			invoke<fn_mux_stream_accepted_t>(E_MUX_CH_STREAM_ACCEPTED, s );
 			s->ch_fire_connected();
+			s->begin_read();
 			return;
 		}
 
@@ -56,7 +66,7 @@ namespace wawo { namespace net { namespace handler {
 			lock_guard<spin_mutex> lg(m_mutex);
 			typename stream_map_t::iterator it = m_stream_map.find(id);
 			if (it == m_stream_map.end()) {
-				if (flag == mux_stream_frame_flag::T_RST) {
+				if (flag == mux_stream_frame_flag::FRAME_RST) {
 					DEBUG_STREAM("[mux][s%u][rst]stream not found, ignore", id);
 					return;
 				}
@@ -70,7 +80,7 @@ namespace wawo { namespace net { namespace handler {
 		}
 
 		WAWO_ASSERT(s != NULL);
-		s->arrive_frame({flag, income });
+		s->arrive_frame(flag, wnd, income );
 	}
 
 	//@TODO, flush all stream up and down, then do close
