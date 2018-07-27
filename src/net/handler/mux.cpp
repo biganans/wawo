@@ -4,6 +4,8 @@ namespace wawo { namespace net { namespace handler {
 
 	void stream_snd_rst(WWRP<wawo::net::channel_handler_context> const& ctx, mux_stream_id_t id) {
 		mux_stream_frame f = make_frame_rst();
+		f.data->write_left<u32_t>(0);
+		f.data->write_left<int32_t>(0);
 		f.data->write_left<mux_stream_frame_flag_t>(f.flag);
 		f.data->write_left<mux_stream_id_t>(id);
 
@@ -53,7 +55,7 @@ namespace wawo { namespace net { namespace handler {
 			WAWO_ASSERT(wnd > 0);
 			s->m_snd_wnd = wnd;
 			s->m_rcv_wnd = wnd;
-			s->m_rcv_data_incre = wnd;
+			s->m_rcv_data_incre = 0;
 			s->m_state = SS_ESTABLISHED;
 
 			invoke<fn_mux_stream_accepted_t>(E_MUX_CH_STREAM_ACCEPTED, s );
