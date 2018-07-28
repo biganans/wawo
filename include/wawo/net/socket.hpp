@@ -163,13 +163,12 @@ namespace wawo { namespace net {
 			}
 
 			WWRP<socket> so = wawo::make_ref<socket>(soaddr.so_address.family(), soaddr.so_type, soaddr.so_proto);
-			WWRP<channel_promise> dial_future = so->make_promise();
+			WWRP<wawo::net::channel_future> dial_future = so->_dial(soaddr.so_address, initializer, cfg);
 			dial_future->add_listener([](WWRP<channel_future> f) {
 				if (f->get() != wawo::OK) {
 					f->channel()->ch_close();
 				}
 			});
-			so->_dial(soaddr.so_address, initializer, dial_future, cfg);
 			return dial_future;
 		}
 
@@ -303,17 +302,17 @@ namespace wawo { namespace net {
 				if (WAWO_LIKELY(code == wawo::OK)) {
 					_dial_initializer(WWRP<channel>(this));
 					m_state = S_CONNECTED;
-
 					_ch_p->set_success(code);
 					channel::ch_fire_connected();
 					begin_read();
 				} else {
 					_ch_p->set_success(code);
-					ch_errno(code);
-					ch_close();
 				}
 			} catch (...) {
-				WAWO_ERR("[#%d]accept new fd exception, fd code: %d, errno: %d", fd(), code, wawo::socket_get_last_errno());
+				int ec = wawo::socket_get_last_errno();
+				WAWO_ERR("[#%d]new fd connected with exception, fd code: %d, errno: %d", fd(), code, wawo::socket_get_last_errno());
+				WAWO_ASSERT(ec != wawo::OK);
+				_ch_p->set_success(ec);
 			}
 		}
 
@@ -350,6 +349,7 @@ namespace wawo { namespace net {
 
 		void __cb_async_accept( async_io_result const& r ) {
 			WAWO_ASSERT(m_fn_accept_initializer != NULL);
+
 			int ec = r.v.code;
 
 #ifdef WAWO_IO_MODE_IOCP

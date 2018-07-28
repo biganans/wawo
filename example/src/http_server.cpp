@@ -34,14 +34,18 @@ public:
 		WWRP<wawo::packet> outp;
 		resp->encode(outp);
 
+//		WAWO_INFO("write begin");
 		WWRP<wawo::net::channel_future> f_write = ctx->write(outp);
-		//f_write->add_listener([](WWRP<wawo::net::channel_future> const& f) {
-		//	WAWO_ASSERT(f->get() == wawo::OK);
-			//WAWO_INFO("write rt: %d", f->get());
-		//});
+		f_write->add_listener([](WWRP<wawo::net::channel_future> const& f) {
+//			WAWO_INFO("write done: %d", f->get());
+			WAWO_ASSERT(f->get() == wawo::OK);
+		});
+//		WAWO_INFO("write rt: %d", f->get());
+
 //		f_write->wait();
 
 		if (close_after_write) {
+//			WAWO_INFO("ctx close: %d", ctx->ch->ch_id() );
 			//WAWO_INFO("close fd: %d", ctx->ch->ch_id() );
 			ctx->close();
 		}

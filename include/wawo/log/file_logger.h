@@ -8,10 +8,10 @@ namespace wawo { namespace log {
 
 	public:
 
-		file_logger(wawo::len_cstr const& logFile);
+		file_logger(std::string const& log_file );
 		~file_logger();
 
-		void write( LogLevelMask const& level, char const* const log, wawo::size_t const& len ) ;
+		void write( log_mask const& mask, char const* const log, wawo::size_t const& len ) ;
 
 	private:
 		FILE* m_fp;

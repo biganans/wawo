@@ -11,7 +11,7 @@ namespace wawo { namespace log {
 		console_logger();
 		~console_logger();
 
-		void write( logger_abstract::LogLevelMask const& level, char const* const log, wawo::size_t const& len ) ;
+		void write( log_mask const& mask, char const* const log, wawo::size_t const& len ) ;
 	};
 }}
 

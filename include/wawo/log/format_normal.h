@@ -7,9 +7,8 @@
 namespace wawo { namespace log {
 	class format_normal: public format_interface {
 	public:
-		int Format( char* const buffer, u32_t const& size, char const* const format , va_list valist );
+		int format( char* const buffer, u32_t const& size, char const* const format , va_list valist );
 	};
-
 }}
 
 #endif

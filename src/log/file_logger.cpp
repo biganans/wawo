@@ -6,14 +6,14 @@
 
 namespace wawo { namespace log {
 
-	file_logger::file_logger(wawo::len_cstr const& logFile) :
+	file_logger::file_logger(std::string const& log_file ) :
 		logger_abstract(),
 		m_fp(NULL)
 	{
-		m_fp = fopen( logFile.cstr , "a+" );
+		m_fp = fopen(log_file.c_str() , "a+" );
 		if( m_fp == NULL ) {
 			char err_msg[1024] = {0};
-			snprintf(err_msg, 1024,"fopen(%s)=%d", logFile.cstr, wawo::get_last_errno() );
+			snprintf(err_msg, 1024,"fopen(%s)=%d", log_file.c_str(), wawo::get_last_errno() );
 			WAWO_THROW(err_msg);
 		}
 	}
@@ -24,23 +24,9 @@ namespace wawo { namespace log {
 		}
 	}
 
-	void file_logger::write( LogLevelMask const& level, char const* const log, wawo::size_t const& len ) {
-
-		WAWO_ASSERT(TestLevel(level));
-
-		char head_buffer[128] = {0};
-		char log_char = get_log_level_char( level );
-
-		len_cstr local_time_str;
-		wawo::time::curr_localtime_str(local_time_str);
-
-		sprintf( head_buffer, "[%s][%c]", local_time_str.cstr, log_char );
-
-		fwrite( head_buffer,sizeof(char), strlen(head_buffer), m_fp );
+	void file_logger::write( log_mask const& mask, char const* const log, wawo::size_t const& len ) {
+		WAWO_ASSERT(test_mask(mask));
 		fwrite( log,sizeof(char), len, m_fp );
-
-		fputs("\n", m_fp);
 		fflush(m_fp);
 	}
-
 }}

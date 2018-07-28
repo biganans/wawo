@@ -87,7 +87,7 @@ namespace wawo { namespace signal {
 	int signal_manager::_RegisterCtrlEventHandler() {
 
 		if( SetConsoleCtrlHandler( (PHANDLER_ROUTINE) signal_manager::CtrlEvent_Handler , TRUE ) == FALSE ) {
-			WAWO_CORE( "[signal_manager]SetConsoleCtrlHandler failed, errno: %d", GetLastError() );
+			WAWO_ERR( "[signal_manager]SetConsoleCtrlHandler failed, errno: %d", GetLastError() );
 			return -1;
 		}
 
@@ -96,7 +96,7 @@ namespace wawo { namespace signal {
 	int signal_manager::_UnRegisterCtrlEventHandler() {
 
 		if (SetConsoleCtrlHandler((PHANDLER_ROUTINE)signal_manager::CtrlEvent_Handler, false) == FALSE) {
-			WAWO_CORE("[signal_manager]SetConsoleCtrlHandler failed, errno: %d", GetLastError());
+			WAWO_ERR("[signal_manager]SetConsoleCtrlHandler failed, errno: %d", GetLastError());
 			return -1;
 		}
 

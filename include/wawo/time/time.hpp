@@ -98,7 +98,7 @@ namespace wawo { namespace time {
 #endif
 	}
 
-	inline void to_localtime_str( struct timeval const&tv, len_cstr& lcstr ) {
+	inline void to_localtime_str( struct timeval const&tv, std::string& lcstr ) {
 		char buf[] = "1970-01-01 00:00:00.000000"; //our time format
 
 		const static char* _fmt_seconds = "%Y-%m-%d %H:%M:%S.000";
@@ -116,14 +116,15 @@ namespace wawo { namespace time {
 		WAWO_ASSERT( strlen(buf) == 26 );
 		strftime(buf, sizeof(buf), _fmt_seconds, &timeinfo );
 		snprintf( (char*)(&buf[0] + 20), 6, _fmt_mseconds , (int) (tv.tv_usec/1000) );
+		WAWO_ASSERT(strlen(buf) == 23);
 
-		lcstr = len_cstr(buf);
+		lcstr = std::string(buf,23);
 	}
 
-	inline void curr_localtime_str(len_cstr& lcstr) {
+	inline void curr_localtime_str(std::string& str ) {
 		struct timeval tv ;
 		time_of_day(tv,NULL);
-		to_localtime_str(tv,lcstr);
+		to_localtime_str(tv, str);
 	}
 }}
 

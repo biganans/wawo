@@ -49,7 +49,7 @@ namespace wawo {
 		void init_log() {
 			WWRP<wawo::log::logger_abstract> fileLogger;
 			fileLogger = wawo::make_ref<wawo::log::file_logger>("./wawo.log");
-			fileLogger->SetLevel(WAWO_FILE_LOGGER_LEVEL);
+			fileLogger->set_mask_by_level(WAWO_FILE_LOGGER_LEVEL);
 			wawo::log::logger_manager::instance()->add_logger(fileLogger);
 		}
 

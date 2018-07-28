@@ -191,8 +191,6 @@ namespace wawo { namespace net {
 		} else {
 			event_poller()->schedule([ch_promise, rt, CH = WWRP<channel>(this)]() {
 				ch_promise->set_success(rt);
-				CH->ch_errno(rt);
-				CH->ch_close();
 			});
 		}
 	}
