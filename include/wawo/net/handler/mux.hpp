@@ -39,7 +39,7 @@ namespace wawo { namespace net { namespace handler {
 	struct mux_stream_frame_header {
 		mux_stream_id_t id;
 		mux_stream_frame_flag_t flag;
-		int32_t wnd;
+		u32_t wnd;
 		u32_t len;
 	};
 	static const u8_t mux_stream_frame_header_len = sizeof(mux_stream_id_t) + sizeof(mux_stream_frame_flag_t) + sizeof(int32_t) + sizeof(u32_t);
@@ -57,7 +57,7 @@ namespace wawo { namespace net { namespace handler {
 		SS_ESTABLISHED,	//read/write ok
 	};
 
-	#define WAWO_MUX_STREAM_DEFAULT_RVC_SIZE (96*1024)
+	#define WAWO_MUX_STREAM_DEFAULT_RVC_SIZE (256*1024)
 	struct mux_stream_frame {
 		mux_stream_frame_flag_t flag;
 		WWRP<wawo::packet> data;
@@ -374,10 +374,11 @@ namespace wawo { namespace net { namespace handler {
 				//encoding , and sending
 				if ( (f.flag&FRAME_ENCODED) == 0) {
 					f.data->write_left<u32_t>(f.data->len());
-					f.data->write_left<int32_t>(m_rcv_data_incre);
+					f.data->write_left<u32_t>(m_rcv_data_incre);
 					f.data->write_left<mux_stream_frame_flag_t>(f.flag);
 					f.data->write_left<mux_stream_id_t>(m_id);
 					f.flag |= FRAME_ENCODED;
+					DEBUG_STREAM("[muxs][s%u]rewind m_rcv_data_incre from: %u to 0", m_id, m_rcv_data_incre);
 					m_rcv_data_incre = 0; //rewind wnd incre
 				}
 
@@ -662,7 +663,7 @@ namespace wawo { namespace net { namespace handler {
 			return (m_is_active == true) ;
 		}
 
-		inline void arrive_frame(mux_stream_frame_flag_t flag,int32_t wnd, WWRP<wawo::packet> const& data ) {
+		inline void arrive_frame(mux_stream_frame_flag_t flag,u32_t wnd, WWRP<wawo::packet> const& data ) {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			switch (flag) {
 			case mux_stream_frame_flag::FRAME_DATA:
@@ -703,30 +704,25 @@ _BEGIN:
 			case mux_stream_frame_flag::FRAME_RST:
 			{
 				DEBUG_STREAM("[muxs][s%u][rst]recv, force close", ch_id());
+				ch_errno(-2);
 				ch_close();
 			}
 			break;
 			}
 			//check wnd
-			DEBUG_STREAM("[muxs][s%u][wndupdate] old: %u, add: %u, new: %u", ch_id(), m_snd_wnd,wnd, m_snd_wnd+wnd);
-			m_snd_wnd += wnd;
-			if ((wnd>0)&&(m_flag&F_WRITE_BLOCKED)) {
-
-				//if (m_entry_q.size()) {
-				//	WAWO_ASSERT(m_entry_q_bytes > 0);
-				//	WAWO_ASSERT(m_flag&F_WATCH_WRITE);
-					//wait next outlet promise set
-				//} else {
-					//manual unchoke
+			if (wnd>0) {
+				m_snd_wnd += wnd;
+				DEBUG_STREAM("[muxs][s%u][wndupdate] old: %u, add: %u, new: %u", ch_id(), m_snd_wnd, wnd, m_snd_wnd + wnd);
+				if ((m_flag&F_WRITE_BLOCKED)) {
 					m_flag &= ~F_WRITE_BLOCKED;
 					event_poller()->schedule([CH = WWRP<channel>(this)]() {
 						CH->ch_fire_write_unblock();
 					});
-				//}
+				}
 			}
 
 			if (m_state == SS_ESTABLISHED && (m_rcv_data_incre>0) && (m_entry_q.size()==0) ) {
-				DEBUG_STREAM("[muxs][s%u]push uwnd by arrive", m_id);
+				//DEBUG_STREAM("[muxs][s%u]push uwnd by arrive, incre: %u", m_id, m_rcv_data_incre );
 				__push_frame(make_frame_uwnd(), make_promise());
 			}
 		}

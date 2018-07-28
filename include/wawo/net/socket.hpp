@@ -890,7 +890,9 @@ namespace wawo { namespace net {
 						end_write();
 						if (m_flag&F_WRITE_BLOCKED) {
 							m_flag &= ~F_WRITE_BLOCKED;
-							ch_fire_write_unblock();
+							event_poller()->schedule([ch = WWRP<channel>(this)](){
+								ch->ch_fire_write_unblock();
+							});
 						}
 					}
 				}
