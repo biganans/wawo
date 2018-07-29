@@ -116,6 +116,7 @@ namespace wawo { namespace net { namespace handler {
 		u8_t m_state;
 		bool m_fin_enqueue_done;
 		bool m_is_active;
+		bool m_ch_ctx_write_blocked;
 
 		void _init() {
 			channel::ch_fire_open();
@@ -155,7 +156,8 @@ namespace wawo { namespace net { namespace handler {
 			m_flag(0),
 			m_state(SS_CLOSED),
 			m_fin_enqueue_done(false),
-			m_is_active(false)
+			m_is_active(false),
+			m_ch_ctx_write_blocked(false)
 		{
 			WAWO_ASSERT(ctx != NULL);
 			_init();
@@ -291,8 +293,18 @@ namespace wawo { namespace net { namespace handler {
 		}
 
 		void _ch_write_block_check() {
-			WAWO_ASSERT(!"TODO");
+			//WAWO_ASSERT(!"TODO");
 			//@todo plan a timer, if the send failed, we'll close this channel for a write timeout errno
+			WAWO_ASSERT(m_ch_ctx_write_blocked == false);
+			m_ch_ctx_write_blocked = true;
+		}
+
+		void _ch_write_unblock_check() {
+			//if we have any outlets, just flush
+			if (m_ch_ctx_write_blocked == true) {
+				m_ch_ctx_write_blocked = false;
+				ch_flush_impl();
+			}
 		}
 
 		void _ch_flush_done( async_io_result const& r ) {
@@ -377,7 +389,7 @@ namespace wawo { namespace net { namespace handler {
 					f.data->write_left<mux_stream_frame_flag_t>(f.flag);
 					f.data->write_left<mux_stream_id_t>(m_id);
 					f.flag |= FRAME_ENCODED;
-					DEBUG_STREAM("[muxs][s%u]rewind m_rcv_data_incre from: %u to 0", m_id, m_rcv_data_incre);
+					//DEBUG_STREAM("[muxs][s%u]rewind m_rcv_data_incre from: %u to 0", m_id, m_rcv_data_incre);
 					m_rcv_data_incre = 0; //rewind wnd incre
 				}
 
@@ -393,7 +405,9 @@ namespace wawo { namespace net { namespace handler {
 		}
 
 		void ch_flush_impl() {
-			_do_ch_flush_impl();
+			if (m_ch_ctx_write_blocked == false) {
+				_do_ch_flush_impl();
+			}
 		}
 
 		void _dial_ok() {
@@ -581,11 +595,10 @@ namespace wawo { namespace net { namespace handler {
 				return;
 			}
 
-			if (m_flag&F_WATCH_WRITE) {
+			if (m_flag&F_WATCH_WRITE || m_ch_ctx_write_blocked == true) {
 				m_flag |= F_CLOSING;
 				WAWO_ASSERT(m_fin_enqueue_done == true);
 				WAWO_ASSERT(m_entry_q.size() != 0);
-				WAWO_ASSERT(m_flag&F_WATCH_WRITE);
 				return;
 			}
 
@@ -701,7 +714,7 @@ _BEGIN:
 			break;
 			case mux_stream_frame_flag::FRAME_UWND:
 			{
-				DEBUG_STREAM("[muxs][s%u][uwnd]incre: %u", ch_id(), wnd );
+				//DEBUG_STREAM("[muxs][s%u][uwnd]incre: %u", ch_id(), wnd );
 			}
 			break;
 			case mux_stream_frame_flag::FRAME_RST:
@@ -715,7 +728,7 @@ _BEGIN:
 			//check wnd
 			if (wnd>0) {
 				m_snd_wnd += wnd;
-				DEBUG_STREAM("[muxs][s%u][wndupdate] old: %u, add: %u, new: %u", ch_id(), m_snd_wnd, wnd, m_snd_wnd + wnd);
+				//DEBUG_STREAM("[muxs][s%u][wndupdate] old: %u, add: %u, new: %u", ch_id(), m_snd_wnd, wnd, m_snd_wnd + wnd);
 				if ((m_flag&F_WRITE_BLOCKED)) {
 					m_flag &= ~F_WRITE_BLOCKED;
 					event_poller()->schedule([CH = WWRP<channel>(this)]() {
@@ -754,6 +767,9 @@ _BEGIN:
 		u64_t m_last_check_time;
 
 		WWRP<wawo::net::channel_handler_context> m_ch_ctx;
+
+		std::queue<WWRP<packet>> m_outlets;//only for rst
+		bool m_replying_rst;
 	public:
 		mux();
 		virtual ~mux();
@@ -764,12 +780,52 @@ _BEGIN:
 		void connected(WWRP<wawo::net::channel_handler_context> const& ctx);
 		void closed(WWRP<wawo::net::channel_handler_context> const& ctx);
 
-		void write_block(WWRP<channel_handler_context> const& ctx) {
-			WAWO_ASSERT(!"TODO");
+		void write_unblock(WWRP<channel_handler_context> const& ctx) {
+			lock_guard<spin_mutex> lg(m_mutex);
+			stream_map_t::iterator it = m_stream_map.begin();
+			while (it != m_stream_map.end()) {
+				it->second->event_poller()->schedule([s = it->second](){
+					s->_ch_write_unblock_check();
+				});
+				++it;
+			}
+			if (!m_replying_rst && m_outlets.size()) {
+				flush_outlets();
+			}
+			ctx->fire_write_unblock();
 		}
 
-		void write_unblock(WWRP<channel_handler_context> const& ctx) {
-			WAWO_ASSERT(!"TODO");
+		void flush_done(int code ) {
+			WAWO_ASSERT(m_replying_rst == true);
+			m_replying_rst = false;
+			WAWO_ASSERT(m_outlets.size());
+			if (code == wawo::OK) {
+				m_outlets.pop();
+				if(m_outlets.size()) {
+					flush_outlets();
+				}
+			} else if (code == wawo::E_CHANNEL_WRITE_BLOCK) {
+			}
+			else {
+				m_ch_ctx->close();
+			}
+		}
+
+		void push_outlet(WWRP<wawo::packet> const& outlet) {
+			m_outlets.push(outlet);
+			if (!m_replying_rst) {
+				flush_outlets();
+			}
+		}
+
+		void flush_outlets() {
+			WAWO_ASSERT(m_replying_rst == false );
+			m_replying_rst = true;
+			WAWO_ASSERT(m_outlets.size());
+			WWRP<wawo::net::channel_future> write_f = m_ch_ctx->write(m_outlets.front());
+			write_f->add_listener([M=WWRP<mux>(this)](WWRP<wawo::net::channel_future> const& f) {
+				M->flush_done(f->get());
+			});
 		}
 
 		WWRP<channel_future> dial_stream(u32_t id, fn_channel_initializer const& initializer) {

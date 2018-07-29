@@ -240,9 +240,7 @@ namespace wawo {namespace net {namespace handler {
 		}
 
 		void handshake_make_hello_packet(WWRP<packet>& hello) {
-
 			WAWO_ASSERT(hello == NULL);
-
 			if (m_cookie != NULL) {
 				WAWO_ASSERT(sizeof(DH_Context) == m_cookie_size);
 				::memcpy(&m_context, m_cookie, m_cookie_size);

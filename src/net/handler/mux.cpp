@@ -2,23 +2,7 @@
 
 namespace wawo { namespace net { namespace handler {
 
-	void stream_snd_rst(WWRP<wawo::net::channel_handler_context> const& ctx, mux_stream_id_t id) {
-		mux_stream_frame f = make_frame_rst();
-		f.data->write_left<u32_t>(0);
-		f.data->write_left<u32_t>(0);
-		f.data->write_left<mux_stream_frame_flag_t>(f.flag);
-		f.data->write_left<mux_stream_id_t>(id);
-
-		WWRP<wawo::net::channel_future> write_f = ctx->write(f.data);
-		write_f->add_listener([]( WWRP<wawo::net::channel_future> const& f ) {
-			int rt = f->get();
-			if (rt == wawo::E_CHANNEL_WRITE_BLOCK) {
-				WAWO_ASSERT(!"WE NEED A TIMER");
-			}
-		});
-	}
-
-	mux::mux():m_last_check_time(0)
+	mux::mux():m_last_check_time(0), m_replying_rst(false)
 	{
 	}
 
@@ -28,6 +12,8 @@ namespace wawo { namespace net { namespace handler {
 	void mux::read(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& income) {
 	
 		WAWO_ASSERT(income != NULL);
+		WAWO_ASSERT(ctx == m_ch_ctx);
+
 		WAWO_ASSERT(income->len() >= mux_stream_frame_header_len);
 		mux_stream_id_t id = income->read<mux_stream_id_t>();
 		mux_stream_frame_flag_t flag = income->read<mux_stream_frame_flag_t>();
@@ -49,7 +35,14 @@ namespace wawo { namespace net { namespace handler {
 			s = open_stream(id, ec);
 			if (ec != wawo::OK) {
 				WAWO_WARN("[mux][s%u][syn]accept stream failed: %d", id, ec );
-				stream_snd_rst(ctx, id);
+
+				mux_stream_frame f = make_frame_rst();
+				f.data->write_left<u32_t>(0);
+				f.data->write_left<u32_t>(0);
+				f.data->write_left<mux_stream_frame_flag_t>(f.flag);
+				f.data->write_left<mux_stream_id_t>(id);
+				push_outlet(f.data);
+
 				return;
 			}
 			WAWO_ASSERT(wnd > 0);
@@ -74,7 +67,12 @@ namespace wawo { namespace net { namespace handler {
 				}
 
 				DEBUG_STREAM("[mux][s%u][%u]stream not found, reply rst, len: %u", id, flag, income->len() );
-				stream_snd_rst(ctx,id);
+				mux_stream_frame f = make_frame_rst();
+				f.data->write_left<u32_t>(0);
+				f.data->write_left<u32_t>(0);
+				f.data->write_left<mux_stream_frame_flag_t>(f.flag);
+				f.data->write_left<mux_stream_id_t>(id);
+				push_outlet(f.data);
 				return;
 			}
 

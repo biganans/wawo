@@ -323,8 +323,17 @@ namespace wawo { namespace net {
 		int get_tos(u8_t& tos) const;
 		int set_tos(u8_t const& tos);
 
-		wawo::u32_t send(byte_t const* const buffer, wawo::u32_t const& size, int& ec_o, int const& flag = 0);
-		wawo::u32_t recv(byte_t* const buffer_o, wawo::u32_t const& size, int& ec_o, int const& flag = 0);
+		inline wawo::u32_t send(byte_t const* const buffer, wawo::u32_t const& size, int& ec_o, int const& flag = 0) {
+			WAWO_ASSERT(buffer != NULL);
+			WAWO_ASSERT(size > 0);
+			return m_fn_send(m_fd, buffer, size, ec_o, flag);
+		}
+		inline wawo::u32_t recv(byte_t* const buffer_o, wawo::u32_t const& size, int& ec_o, int const& flag = 0) {
+			WAWO_ASSERT(buffer_o != NULL);
+			WAWO_ASSERT(size > 0);
+			return m_fn_recv(m_fd, buffer_o, size, ec_o, flag);
+		}
+
 		wawo::u32_t sendto(byte_t const* const buff, wawo::u32_t const& size, const address& addr, int& ec_o, int const& flag = 0);
 		wawo::u32_t recvfrom(byte_t* const buff_o, wawo::u32_t const& size, address& addr, int& ec_o);
 	};

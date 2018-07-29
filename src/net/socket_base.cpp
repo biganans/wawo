@@ -622,16 +622,4 @@ namespace wawo { namespace net {
 			*/
 			return m_fn_recvfrom(m_fd, buffer_o, size, addr_o, ec_o,0);
 		}
-
-		wawo::u32_t socket_base::send(byte_t const* const buffer, wawo::u32_t const& len, int& ec_o, int const& flag) {
-			WAWO_ASSERT(buffer != NULL);
-			WAWO_ASSERT(len > 0);
-			return m_fn_send(m_fd, buffer, len, ec_o, flag);
-		}
-
-		wawo::u32_t socket_base::recv(byte_t* const buffer_o, wawo::u32_t const& size, int& ec_o, int const& flag) {
-			WAWO_ASSERT(buffer_o != NULL);
-			WAWO_ASSERT(size > 0);
-			return m_fn_recv(m_fd, buffer_o, size, ec_o, flag);
-		}
 }}
