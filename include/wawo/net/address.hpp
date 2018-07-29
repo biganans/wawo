@@ -83,8 +83,10 @@ namespace wawo { namespace net {
 		0
 	};
 
-	typedef unsigned long ipv4_t;
+	typedef unsigned int ipv4_t;
 	typedef unsigned short port_t;
+	static_assert(sizeof(ipv4_t) == 4, "ipv4_t size assert failed");
+	static_assert(sizeof(port_t) == 2, "port_t size assert failed");
 
 	enum AddrInfoFilter {
 		AIF_ALL			= 0x0, //return all
