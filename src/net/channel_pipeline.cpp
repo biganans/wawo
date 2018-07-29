@@ -7,12 +7,12 @@ namespace wawo { namespace net {
 		m_ch(ch_),
 		m_io_event_loop(ch_->event_poller())
 	{
-		WAWO_INFO("channel_pipeline::channel_pipeline()");
+		TRACE_CH_OBJECT("channel_pipeline::channel_pipeline()");
 	}
 
 	channel_pipeline::~channel_pipeline()
 	{
-		WAWO_INFO("channel_pipeline::~channel_pipeline()");
+		TRACE_CH_OBJECT("channel_pipeline::~channel_pipeline()");
 	}
 
 	void channel_pipeline::init()

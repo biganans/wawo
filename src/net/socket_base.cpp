@@ -66,7 +66,7 @@ namespace wawo { namespace net {
 			_socket_fn_init();
 			WAWO_ASSERT(fd != wawo::E_INVALID_SOCKET );
 
-			WAWO_TRACE_SOCKET("[socket_base][%s]socket_base::socket_base(), new connected address: %p", info().to_stdstring().c_str(), this);
+			TRACE_CH_OBJECT("[socket_base][%s]socket_base::socket_base(), new connected address: %p", info().to_stdstring().c_str(), this);
 		}
 
 		socket_base::socket_base(s_family const& family, s_type const& sockt, s_protocol const& proto) :
@@ -88,11 +88,11 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(proto < P_UNKNOWN);
 
 			_socket_fn_init();
-			WAWO_INFO("[socket_base][%s]socket_base::socket_base(), dummy socket, address: %p", info().to_stdstring().c_str(), this);
+			TRACE_CH_OBJECT("[socket_base][%s]socket_base::socket_base(), dummy socket, address: %p", info().to_stdstring().c_str(), this);
 		}
 
 		socket_base::~socket_base() {
-			WAWO_INFO("[socket_base][%s]socket_base::~socket_base(),address: %p", info().to_stdstring().c_str(), this);
+			TRACE_CH_OBJECT("[socket_base][%s]socket_base::~socket_base(),address: %p", info().to_stdstring().c_str(), this);
 		}
 
 		int socket_base::_cfg_reuseaddr(bool onoff) {

@@ -159,11 +159,11 @@ namespace wawo { namespace net { namespace handler {
 		{
 			WAWO_ASSERT(ctx != NULL);
 			_init();
-			DEBUG_STREAM("mux_stream::mux_stream()");
+			TRACE_CH_OBJECT("mux_stream::mux_stream()");
 		}
 
 		~mux_stream() {
-			DEBUG_STREAM("mux_stream::~mux_stream()");
+			TRACE_CH_OBJECT("mux_stream::~mux_stream()");
 		}
 
 		void ch_set_read_buffer_size(u32_t size) {
@@ -660,6 +660,11 @@ namespace wawo { namespace net { namespace handler {
 		bool ch_is_active() const {
 			return (m_is_active == true) ;
 		}
+		inline void _update_rcv_data_incre() {
+			if (m_entry_q.size() == 0) {
+				__push_frame(make_frame_uwnd(),make_promise());
+			}
+		}
 
 		inline void arrive_frame(mux_stream_frame_flag_t flag,u32_t wnd, WWRP<wawo::packet> const& data ) {
 			WAWO_ASSERT(event_poller()->in_event_loop());
@@ -719,9 +724,10 @@ _BEGIN:
 				}
 			}
 
-			if (m_state == SS_ESTABLISHED && (m_rcv_data_incre>0) && (m_entry_q.size()==0) ) {
-				//DEBUG_STREAM("[muxs][s%u]push uwnd by arrive, incre: %u", m_id, m_rcv_data_incre );
-				__push_frame(make_frame_uwnd(), make_promise());
+			if (m_state == SS_ESTABLISHED && (m_rcv_data_incre>0) ) {
+				event_poller()->schedule([s=WWRP<mux_stream>(this)]() {
+					s->_update_rcv_data_incre();
+				});
 			}
 		}
 	};
