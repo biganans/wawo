@@ -111,7 +111,6 @@ namespace wawo { namespace net { namespace handler {
 		WWRP<channel_promise> m_shutdown_write_promise;
 		WWRP<channel_promise> m_close_promise;
 		fn_channel_initializer m_dial_initializer;
-		WWRP<channel_promise> m_dial_promise;
 
 		u16_t m_flag;
 		u8_t m_state;
@@ -160,11 +159,11 @@ namespace wawo { namespace net { namespace handler {
 		{
 			WAWO_ASSERT(ctx != NULL);
 			_init();
-			DEBUG_STREAM("mux_stream()");
+			DEBUG_STREAM("mux_stream::mux_stream()");
 		}
 
 		~mux_stream() {
-			DEBUG_STREAM("~mux_stream()");
+			DEBUG_STREAM("mux_stream::~mux_stream()");
 		}
 
 		void ch_set_read_buffer_size(u32_t size) {
@@ -419,7 +418,6 @@ namespace wawo { namespace net { namespace handler {
 			m_rcv_wnd = WAWO_MUX_STREAM_DEFAULT_RVC_SIZE;
 			m_rcv_data_incre = m_rcv_wnd;
 			m_dial_initializer = initializer;
-			m_dial_promise = ch_promise;
 
 			WWRP<channel_future> write_f = write_frame(make_frame_syn());
 			write_f->add_listener([s=WWRP<mux_stream>(this), ch_promise](WWRP<wawo::net::channel_future> const& f) {
