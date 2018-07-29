@@ -55,12 +55,12 @@ namespace wawo {
 
 			wawo::u32_t _len = len();
 			wawo::u32_t new_left = m_read_idx + PACK_INCREMENT_LEFT_SIZE;
+			m_write_idx += PACK_INCREMENT_LEFT_SIZE;
 
 			if ((new_left != m_read_idx) && _len > 0) {
 				::memmove(m_buffer + new_left, m_buffer + m_read_idx, _len);
-				m_write_idx += PACK_INCREMENT_LEFT_SIZE;
-				m_read_idx = new_left;
 			}
+			m_read_idx = new_left;
 		}
 
 		inline void _extend_rightbuffer_capacity__() {
@@ -110,8 +110,7 @@ namespace wawo {
 			m_write_idx(0)
 		{
 			_init_buffer(m_left_capacity, m_right_capacity);
-
-			write_left(buffer, len);
+			write(buffer, len);
 		}
 
 		~packet() {
