@@ -425,22 +425,30 @@ namespace wawo {
 
 	inline len_cstr	to_string(i64_t const& int64) {
 		char tmp[32] = {0};
-		snprintf(tmp, sizeof(tmp)/sizeof(tmp[0]), "%lld", int64 );
+		int rt = snprintf(tmp, sizeof(tmp)/sizeof(tmp[0]), "%lld", int64 );
+		(void)rt;
+		WAWO_ASSERT(rt > 0 && rt < 32);
 		return len_cstr(tmp,wawo::strlen(tmp));
 	}
 	inline len_cstr	to_string(u64_t const& uint64) {
 		char tmp[32] = { 0 };
-		snprintf(tmp, sizeof(tmp) / sizeof(tmp[0]), "%llu", uint64);
+		int rt = snprintf(tmp, sizeof(tmp) / sizeof(tmp[0]), "%llu", uint64);
+		(void)rt;
+		WAWO_ASSERT(rt > 0 && rt < 32);
 		return len_cstr(tmp, wawo::strlen(tmp));
 	}
 	inline len_cstr	to_string(i32_t const& int32) {
 		char tmp[32] = { 0 };
-		snprintf(tmp, sizeof(tmp) / sizeof(tmp[0]), "%d", int32);
+		int rt = snprintf(tmp, sizeof(tmp) / sizeof(tmp[0]), "%d", int32);
+		(void)rt;
+		WAWO_ASSERT(rt > 0 && rt < 32);
 		return len_cstr(tmp, wawo::strlen(tmp));
 	}
 	inline len_cstr	to_string(u32_t const& uint32) {
 		char tmp[32] = { 0 };
-		snprintf(tmp, sizeof(tmp) / sizeof(tmp[0]), "%u", uint32);
+		int rt =snprintf(tmp, sizeof(tmp) / sizeof(tmp[0]), "%u", uint32);
+		(void)rt;
+		WAWO_ASSERT(rt > 0 && rt < 32);
 		return len_cstr(tmp, wawo::strlen(tmp));
 	}
 

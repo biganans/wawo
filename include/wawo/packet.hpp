@@ -9,7 +9,7 @@
 #define PACK_MALLOC_H_RESERVER  WAWO_MALLOC_H_RESERVE
 
 
-#define PACK_MIN_LEFT_CAPACITY (128)
+#define PACK_MIN_LEFT_CAPACITY (4)
 #define PACK_MAX_LEFT_CAPACITY (1024*1024*8)
 #define PACK_MIN_RIGHT_CAPACITY (256)
 #define PACK_MAX_RIGHT_CAPACITY (1024*1024*64)
@@ -40,7 +40,7 @@ namespace wawo {
 		wawo::u32_t	m_write_idx; //write index
 
 	private:
-		inline wawo::u32_t _capacity() const {
+		__WW_FORCE_INLINE wawo::u32_t _capacity() const {
 			return m_left_capacity + m_right_capacity;
 		}
 
@@ -53,14 +53,19 @@ namespace wawo {
 			WAWO_ALLOC_CHECK(_newbuffer, _capacity());
 			m_buffer = _newbuffer;
 
-			wawo::u32_t _len = len();
-			wawo::u32_t new_left = m_read_idx + PACK_INCREMENT_LEFT_SIZE;
-			m_write_idx += PACK_INCREMENT_LEFT_SIZE;
+			const wawo::u32_t new_left = m_read_idx + PACK_INCREMENT_LEFT_SIZE;
+			if (m_read_idx == m_write_idx) {
+				m_read_idx = new_left;
+				m_write_idx = new_left;
+				return;
+			}
 
-			if ((new_left != m_read_idx) && _len > 0) {
+			wawo::u32_t _len = len();
+			if (_len>0) {
 				::memmove(m_buffer + new_left, m_buffer + m_read_idx, _len);
 			}
 			m_read_idx = new_left;
+			m_write_idx += _len;
 		}
 
 		inline void _extend_rightbuffer_capacity__() {
@@ -130,7 +135,7 @@ namespace wawo {
 			return m_buffer + m_write_idx;
 		}
 
-		inline wawo::u32_t len() const {
+		__WW_FORCE_INLINE wawo::u32_t len() const {
 			WAWO_ASSERT( m_write_idx >= m_read_idx );
 			return m_write_idx - m_read_idx ;
 		}
@@ -142,9 +147,7 @@ namespace wawo {
 		}
 
 		inline void reset() {
-			WAWO_ASSERT( m_left_capacity > 0 );
-			WAWO_ASSERT( m_left_capacity < PACK_MAX_LEFT_CAPACITY );
-
+			WAWO_ASSERT( (m_left_capacity>0) && (m_left_capacity < PACK_MAX_LEFT_CAPACITY) );
 			m_read_idx = m_write_idx = m_left_capacity ;
 		}
 
@@ -154,6 +157,7 @@ namespace wawo {
 			}
 
 			m_read_idx -= len;
+			WAWO_ASSERT(m_read_idx >= 0);
 			::memcpy( m_buffer + m_read_idx, buffer, len) ;
 			return this ;
 		}
@@ -207,7 +211,7 @@ namespace wawo {
 
 		inline wawo::u32_t read( byte_t* const target, wawo::u32_t const& len_ ) {
 			WAWO_ASSERT( (m_buffer != NULL) );
-			WAWO_ASSERT(target != NULL );
+			if ((target == NULL) || len_ == 0) { return 0; }
 			const wawo::u32_t c = (len() > len_ ? len_ : len());
 			::memcpy(target, m_buffer+m_read_idx, c );
 			m_read_idx += c;
@@ -232,9 +236,9 @@ namespace wawo {
 		wawo::u32_t peek( byte_t* const buffer, wawo::u32_t const& len_ ) const {
 			WAWO_ASSERT( (m_buffer != NULL) );
 			WAWO_ASSERT(buffer != NULL);
+			if ((buffer == NULL) || len_ == 0) { return 0; }
 
 			wawo::u32_t can_peek_size = len_ >= len() ? len() : len_;
-
 			::memcpy(buffer, m_buffer+m_read_idx, can_peek_size);
 			return can_peek_size;
 		}

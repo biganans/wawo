@@ -53,15 +53,17 @@ namespace wawo { namespace log {
 
 		virtual ~logger_abstract() {}
 
-		const inline static int translate_to_mask_from_level( int const& level_int ) {
+		const inline static int translate_to_mask_from_level( u8_t const& level_int ) {
 			const static int log_level_mask_config[LOG_LEVEL_MAX] = {
 				LOG_LEVELS_ERR,
 				LOG_LEVELS_WARN,
 				LOG_LEVELS_INFO,
 				LOG_LEVELS_DEBUG
 			};
-			WAWO_ASSERT( level_int < LOG_LEVEL_MAX );
-			return log_level_mask_config[level_int];
+			if (level_int < LOG_LEVEL_MAX) {
+				return log_level_mask_config[level_int];
+			}
+			return log_level_mask_config[WAWO_DEFAULT_LOG_LEVEL];
 		}
 
 		void add_mask( int const& mask /*level mask set*/) {
@@ -72,7 +74,7 @@ namespace wawo { namespace log {
 			m_level_masks &= ~masks;
 		}
 
-		inline void set_mask_by_level( int const& level ) {
+		inline void set_mask_by_level( u8_t const& level ) {
 			m_level_masks = translate_to_mask_from_level(level) ;
 		}
 		inline void reset_masks() {

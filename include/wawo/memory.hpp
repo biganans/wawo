@@ -11,11 +11,10 @@ namespace wawo {
 		memory_alloc_failed(wawo::size_t const& size, const char* const file, const int line, const char* const func ) :
 			exception(wawo::get_last_errno(), "", file,line,func, true)
 		{
-			char tmp[128] = { 0 };
-			snprintf(tmp, 128, "memory alloc failed, alloc size: %zu", size);
-			::size_t _len = ::strlen(tmp);
-			::memcpy(message, tmp, _len);
-			*(message + _len) = '\0';
+			::memset(message,0, WAWO_EXCEPTION_MESSAGE_LENGTH_LIMIT);
+			int rt = snprintf(message, WAWO_EXCEPTION_MESSAGE_LENGTH_LIMIT, "memory alloc failed, alloc size: %zu", size);
+			WAWO_ASSERT((rt>0) && (rt<WAWO_EXCEPTION_MESSAGE_LENGTH_LIMIT));
+			(void)rt;
 		}
 	};
 }

@@ -115,9 +115,10 @@ namespace wawo { namespace time {
 
 		WAWO_ASSERT( strlen(buf) == 26 );
 		strftime(buf, sizeof(buf), _fmt_seconds, &timeinfo );
-		snprintf( (char*)(&buf[0] + 20), 6, _fmt_mseconds , (int) (tv.tv_usec/1000) );
+		int rt = snprintf( (char*)(&buf[0] + 20), 6, _fmt_mseconds , (int) (tv.tv_usec/1000) );
+		(void)rt;
+		WAWO_ASSERT(rt == 3);
 		WAWO_ASSERT(strlen(buf) == 23);
-
 		lcstr = std::string(buf,23);
 	}
 

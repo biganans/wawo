@@ -232,8 +232,10 @@ namespace wawo {namespace net {namespace handler {
 		}
 
 		void handshake_assign_cookie(void const* const cookie, u32_t const& size) {
-			WAWO_ASSERT(cookie != NULL);
-			m_cookie = (void*)::malloc(m_cookie_size);
+			if (cookie == NULL || size == 0) {
+				WAWO_THROW("invalid handshake cookie");
+			}
+			m_cookie = (void*)::malloc(size);
 			WAWO_ALLOC_CHECK(m_cookie, m_cookie_size);
 			::memcpy(m_cookie, cookie, size);
 			m_cookie_size = size;

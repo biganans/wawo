@@ -215,8 +215,9 @@ namespace wawo { namespace security {
 		~xxtea() {}
 
 		void set_key(byte_t const* const k, wawo::u32_t const& klen) {
-			WAWO_ASSERT( k != NULL );
-			WAWO_ASSERT( klen > 0 );
+			if (k == NULL || klen == 0) {
+				WAWO_THROW("invalid xxtea key");
+			}
 			::memcpy(m_key, k, klen );
 			::memset(m_key + klen, 'z', sizeof(m_key) - klen);
 		}

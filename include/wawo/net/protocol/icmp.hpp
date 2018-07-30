@@ -167,7 +167,7 @@ namespace wawo { namespace net { namespace protocol { namespace ipv4 {
 			{
 				reply.seq	= echo.seq;
 				reply.RTT	= (wawo::u32_t)(now - echo.ts);
-				reply.bytes = sizeof(echo.ts)*sizeof(byte_t);
+				reply.bytes = sizeof(echo.ts);
 				reply.TTL = wawo::bytes_helper::read_u8(recv_buffer+8);
 			}
 
