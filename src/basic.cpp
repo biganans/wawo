@@ -64,26 +64,32 @@ namespace wawo {
 //	WCHAR wcharAssertBuf[(sizeof(assertBuf)  + 1) * 2];
 //#endif
 
-	#define _ERR_MSG_MAX_LEN 1024
+	#define _ASSERT_INFO_MAX_LEN 512
+	#define _ASSERT_MSG_MAX_LEN 512
+	#define _ASSERT_MSG_TOTAL_LEN (_ASSERT_INFO_MAX_LEN+_ASSERT_MSG_MAX_LEN)
 	void assert_failed(const char* check, const char* file , int line , const char* function, ... )
 	{
-		char _message[_ERR_MSG_MAX_LEN] = {0};
+		char _info[_ASSERT_INFO_MAX_LEN] = {0};
 		va_list argp;
 		va_start(argp, function);
 		char* fmt = va_arg(argp, char*);
-		vsnprintf(_message, _ERR_MSG_MAX_LEN,fmt, argp);
+		int i = vsnprintf(_info, _ASSERT_INFO_MAX_LEN,fmt,argp);
 		va_end(argp);
 
-		if (wawo::strlen(_message) == 0) {
-			wawo::strcpy(_message, "no info attached");
+		if ( (i<0) || i>_ASSERT_INFO_MAX_LEN) {
+			throw wawo::exception(i, "assert: call vsnprintf failed", file, line, function);
 		}
 
-		char _assert_buf[_ERR_MSG_MAX_LEN + 1024] = {0};
-		int c = snprintf(_assert_buf, _ERR_MSG_MAX_LEN + 1024, "assert failed : %s, \nInfo: %s\nFile : %s\nLine : %d\nFunction : %s",
-			check, _message, file, line, function);
+		if (i == 0) {
+			static const char* _no_info_attached = "no info";
+			wawo::strncpy(_info, _no_info_attached, wawo::strlen(_no_info_attached));
+		}
+		char _message[_ASSERT_MSG_TOTAL_LEN] = { 0 };
+		int c = snprintf(_message+i, _ASSERT_MSG_TOTAL_LEN, "assert: %s, info: %s\nfile : %s\nline : %d\nfunc : %s",
+			check, _info, file, line, function);
 
-		if (c < 0) {
-			throw wawo::exception(wawo::get_last_errno(), "assert check format failed", file, line, function);
+		if ( (c<0) || c>(_ASSERT_MSG_TOTAL_LEN)) {
+			throw wawo::exception(wawo::get_last_errno(), "assert: format failed", file, line, function);
 		}
 
 #if defined(WAWO_ISWIN) && defined(WAWO_USE_MESSAGE_BOX)
@@ -93,7 +99,7 @@ namespace wawo {
 		ret = MessageBox(GetActiveWindow(), wcharAssertBuf, L"AssertMsg", MB_OKCANCEL|MB_ICONERROR);
 		if (ret > 1) __asm int 3;
 #else
-		throw wawo::exception( wawo::get_last_errno(), _assert_buf, file, line, function );
+		throw wawo::exception( wawo::get_last_errno(), _message, file, line, function );
 #endif
 	}
 }

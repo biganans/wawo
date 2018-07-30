@@ -166,8 +166,8 @@ namespace wawo {
 	}
 
 	inline char* strncpy(char* const dst, char const* const src, wawo::size_t const& length) {
-		wawo::size_t src_len = wawo::strlen(src);
-		wawo::size_t copy_length = (src_len>length)?length:src_len;
+		const wawo::size_t src_len = wawo::strlen(src);
+		const wawo::size_t copy_length = (src_len>length)?length:src_len;
 		::memcpy(dst,src,copy_length*sizeof(char));
 		*(dst+length) = '\0';
 		return dst;
