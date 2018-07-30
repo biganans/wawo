@@ -508,15 +508,17 @@ namespace wawo { namespace net { namespace handler {
 				return;
 			}
 
+			if (m_fin_enqueue_done == false) {
+				WAWO_ASSERT(m_fin_enqueue_done == false);
+				m_fin_enqueue_done = true;
+				DEBUG_STREAM("[mux_stream][s%u]write fin by shutdown_write", m_id);
+				__push_frame(make_frame_fin(), make_promise());
+			}
+
 			WAWO_ASSERT(m_shutdown_write_promise == NULL);
 			WAWO_ASSERT(ch_promise != NULL);
-
-			WAWO_ASSERT(m_fin_enqueue_done == false);
-			m_fin_enqueue_done = true;
-			DEBUG_STREAM("[mux_stream][s%u]write fin by shutdown_write", m_id);
-			m_flag |= F_WRITE_SHUTDOWNING;
 			m_shutdown_write_promise = ch_promise;
-			__push_frame( make_frame_fin(),make_promise() );
+			m_flag |= F_WRITE_SHUTDOWNING;
 		}
 
 		void _ch_do_close_read_write(WWRP<channel_promise> const& close_f) {
@@ -531,6 +533,7 @@ namespace wawo { namespace net { namespace handler {
 				_ch_do_shutdown_write(m_shutdown_write_promise);//ALWAYS RETURN OK
 				m_shutdown_write_promise = NULL;
 			}
+			WAWO_ASSERT(m_shutdown_write_promise == NULL);
 
 			while (m_entry_q.size()) {
 				const mux_stream_outbound_entry& f_entry = m_entry_q.front();
