@@ -12,7 +12,7 @@
 #include <wawo/event_trigger.hpp>
 #include <map>
 
-#define ENABLE_DEBUG_STREAM 1
+//#define ENABLE_DEBUG_STREAM 1
 #ifdef ENABLE_DEBUG_STREAM
 	#define DEBUG_STREAM WAWO_INFO
 #else

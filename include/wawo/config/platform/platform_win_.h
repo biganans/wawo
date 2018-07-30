@@ -8,7 +8,7 @@
 #ifdef FD_SETSIZE //disable warning
 	#undef FD_SETSIZE
 #endif
-#define FD_SETSIZE 2048 //will only affact MODE_SELECT
+#define FD_SETSIZE 1024 //will only affact MODE_SELECT
 
 //#ifndef SOCKET
 //typedef int SOCKET ;

@@ -13,6 +13,10 @@ namespace wawo { namespace net { namespace impl {
 	class select:
 		public poller_abstract
 	{
+		fd_set m_fds_r;
+		fd_set m_fds_w;
+		fd_set m_fds_e;
+
 		SOCKET m_signalfds[2];
 		public:
 			select():
@@ -87,14 +91,10 @@ namespace wawo { namespace net { namespace impl {
 #pragma warning(disable:4389)
 		void do_poll() {
 
-			fd_set fds_r;
-			FD_ZERO(&fds_r);
+			FD_ZERO(&m_fds_r);
+			FD_ZERO(&m_fds_w);
+			FD_ZERO(&m_fds_e);
 
-			fd_set fds_w;
-			FD_ZERO(&fds_w);
-
-			fd_set fds_ex;
-			FD_ZERO(&fds_ex);
 			SOCKET max_fd_v = wawo::E_INVALID_SOCKET;
 
 			poller_ctx_map::iterator it = m_ctxs.begin();
@@ -102,18 +102,18 @@ namespace wawo { namespace net { namespace impl {
 				WWRP<poller_ctx> const& ctx = it->second ;
 				if(ctx->flag&IOE_READ) {
 					//TRACE_IOE("[select]check read evt for: %d", ctx->fd );
-					FD_SET((ctx->fd), &fds_r);
+					FD_SET((ctx->fd), &m_fds_r);
 					if (ctx->fd > max_fd_v) {
 						max_fd_v = ctx->fd;
 					}
 				}
 
 				if(ctx->flag&IOE_WRITE && ctx->fn[IOE_SLOT_WRITE] != NULL ) {
-					FD_SET(ctx->fd, &fds_w);
+					FD_SET(ctx->fd, &m_fds_w);
 					if (ctx->fd > max_fd_v) {
 						max_fd_v = ctx->fd;
 					}
-					FD_SET((ctx->fd), &fds_ex);
+					FD_SET((ctx->fd), &m_fds_e);
 					if (ctx->fd > max_fd_v) {
 						max_fd_v = ctx->fd;
 					}
@@ -121,8 +121,9 @@ namespace wawo { namespace net { namespace impl {
 				
 				++it;
 			}
-			_select(max_fd_v, fds_r, fds_w,fds_ex );
+			_select(max_fd_v, m_fds_r, m_fds_w,m_fds_e );
 		}
+
 		inline void _select(SOCKET const& max_fd_v, fd_set& fds_r, fd_set& fds_w, fd_set& fds_ex) {
 			timeval _tv = { 0,0 };
 			timeval* tv;

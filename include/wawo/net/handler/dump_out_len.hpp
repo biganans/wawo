@@ -15,7 +15,7 @@ namespace wawo {namespace net {namespace handler {
 public:
 	void write(WWRP<wawo::net::channel_handler_context> const& ctx, WWRP<wawo::packet> const& outlet, WWRP<channel_promise> const& ch_promise)
 	{
-		WAWO_INFO(">>> len: %u", outlet->len());
+//		WAWO_INFO(">>> len: %u", outlet->len());
 		ctx->write(outlet, ch_promise);
 	}
 };

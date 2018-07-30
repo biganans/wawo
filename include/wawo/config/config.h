@@ -113,6 +113,6 @@
 	#define TRACE_CH_OBJECT(...)
 #endif
 
-
+#define ENABLE_DEBUG_MEMORY_ALLOC
 
 #endif // end for _CONFIG_WAWO_CONFIG_H_

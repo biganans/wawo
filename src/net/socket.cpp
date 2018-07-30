@@ -10,8 +10,8 @@ namespace wawo { namespace net {
 		m_trb = (byte_t*) ::malloc( sizeof(byte_t)*m_cfg.buffer.rcv_size ) ;
 		WAWO_CONDITION_CHECK( m_trb != NULL );
 
-#ifdef _DEBUG
-		::memset( m_trb, 'i', m_cfg.buffer.rcv_size );
+#ifdef ENABLE_DEBUG_MEMORY_ALLOC
+		::memset( m_trb, 's', m_cfg.buffer.rcv_size );
 #endif
 	}
 

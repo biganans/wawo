@@ -35,8 +35,8 @@ namespace wawo {
 				WAWO_ASSERT((m_capacity - 1) >= MIN_RING_BUFFER_SIZE && (m_capacity - 1) <= MAX_RING_BUFFER_SIZE);
 				m_buffer = (byte_t*)::malloc((m_capacity) * sizeof(byte_t));
 				WAWO_ALLOC_CHECK(m_buffer, (m_capacity) * sizeof(byte_t));
-#ifdef _DEBUG
-				::memset(m_buffer, 'i', m_capacity);
+#ifdef ENABLE_DEBUG_MEMORY_ALLOC
+				::memset(m_buffer, 'r', m_capacity);
 #endif
 			}
 		}

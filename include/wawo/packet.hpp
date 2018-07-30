@@ -84,8 +84,8 @@ namespace wawo {
 			m_buffer = (byte_t*)::malloc(sizeof(byte_t) * _capacity());
 			WAWO_ALLOC_CHECK(m_buffer, sizeof(byte_t) * _capacity());
 
-#ifdef _DEBUG
-			::memset(m_buffer, 'w', _capacity());
+#ifdef ENABLE_DEBUG_MEMORY_ALLOC
+			::memset(m_buffer, 'p', _capacity());
 #endif
 		}
 
