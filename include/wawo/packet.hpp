@@ -9,7 +9,7 @@
 #define PACK_MALLOC_H_RESERVER  WAWO_MALLOC_H_RESERVE
 
 
-#define PACK_MIN_LEFT_CAPACITY (4)
+#define PACK_MIN_LEFT_CAPACITY (128)
 #define PACK_MAX_LEFT_CAPACITY (1024*1024*8)
 #define PACK_MIN_RIGHT_CAPACITY (256)
 #define PACK_MAX_RIGHT_CAPACITY (1024*1024*64)
@@ -34,9 +34,8 @@ namespace wawo {
 		byte_t* m_buffer;
 
 		wawo::u32_t	m_left_capacity;
-		wawo::u32_t	m_read_idx; //read index
-
 		wawo::u32_t	m_right_capacity; //the total buffer size
+		wawo::u32_t	m_read_idx; //read index
 		wawo::u32_t	m_write_idx; //write index
 
 	private:
@@ -54,18 +53,12 @@ namespace wawo {
 			m_buffer = _newbuffer;
 
 			const wawo::u32_t new_left = m_read_idx + PACK_INCREMENT_LEFT_SIZE;
-			if (m_read_idx == m_write_idx) {
-				m_read_idx = new_left;
-				m_write_idx = new_left;
-				return;
-			}
-
 			wawo::u32_t _len = len();
 			if (_len>0) {
 				::memmove(m_buffer + new_left, m_buffer + m_read_idx, _len);
 			}
 			m_read_idx = new_left;
-			m_write_idx += _len;
+			m_write_idx = m_read_idx+_len;
 		}
 
 		inline void _extend_rightbuffer_capacity__() {

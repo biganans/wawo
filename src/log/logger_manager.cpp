@@ -121,7 +121,7 @@ namespace wawo { namespace log {
 			m_log_buffer[m_logBufferIdx] = std::string(log_buffer, size ) ;
 
 #ifdef _DEBUG
-			m_logBuffer[m_logBufferIdx] += __traceInfo;
+			m_log_buffer[m_logBufferIdx] += __traceInfo;
 #endif
 			m_log_buffer_mask[m_logBufferIdx] = mask;
 			m_logBufferIdx ++ ;

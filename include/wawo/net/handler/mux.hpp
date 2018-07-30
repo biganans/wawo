@@ -344,7 +344,7 @@ namespace wawo { namespace net { namespace handler {
 						});
 					}
 
-					if (m_flag&F_CLOSING) {
+					if ((m_flag&F_CLOSING)&&(m_state == SS_ESTABLISHED)) {
 						DEBUG_STREAM("[mux_stream][s%u]_ch_do_close_read_write by F_CLOSING", m_id);
 						_ch_do_close_read_write(NULL);
 					} else if ( (m_flag&F_WRITE_SHUTDOWNING) && (m_flag&F_WRITE_SHUTDOWN) == 0) {
