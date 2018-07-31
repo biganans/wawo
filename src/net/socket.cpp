@@ -71,17 +71,17 @@ namespace wawo { namespace net {
 		return wawo::OK;
 	}
 
-	WWRP<channel_future> socket::_listen_on(address const& addr, fn_channel_initializer const& fn_accepted, socket_cfg const& cfg, socket_cfg const& child_cfg, int const& backlog) {
+	WWRP<channel_future> socket::listen_on(address const& addr, fn_channel_initializer const& fn_accepted, socket_cfg const& cfg, socket_cfg const& child_cfg, int const& backlog) {
 		WWRP<channel_promise> ch_p = make_promise();
-		_listen_on(addr,fn_accepted,ch_p,cfg,child_cfg, backlog);
+		listen_on(addr,fn_accepted,ch_p,cfg,child_cfg, backlog);
 		return ch_p;
 	}
 
-	void socket::_listen_on(address const& addr, fn_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise, socket_cfg const& cfg, socket_cfg const& child_cfg, int const& backlog ) {
+	void socket::listen_on(address const& addr, fn_channel_initializer const& fn_accepted, WWRP<channel_promise> const& ch_promise, socket_cfg const& cfg, socket_cfg const& child_cfg, int const& backlog ) {
 		if (!event_poller()->in_event_loop()) {
 			WWRP<socket> _this(this);
 			event_poller()->execute([_this, addr, fn_accepted, ch_promise,cfg, child_cfg, backlog]() ->void {
-				_this->_listen_on(addr, fn_accepted, ch_promise, cfg, child_cfg, backlog);
+				_this->listen_on(addr, fn_accepted, ch_promise, cfg, child_cfg, backlog);
 			});
 			return;
 		}
@@ -132,17 +132,17 @@ namespace wawo { namespace net {
 
 	}
 
-	WWRP<channel_future> socket::_dial(address const& addr, fn_channel_initializer const& initializer, socket_cfg const& cfg) {
+	WWRP<channel_future> socket::dial(address const& addr, fn_channel_initializer const& initializer, socket_cfg const& cfg) {
 		WWRP<channel_promise> f = make_promise();
-		_dial(addr,initializer, f, cfg);
+		dial(addr,initializer,f,cfg);
 		return f;
 	}
 
-	void socket::_dial(address const& addr, fn_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise, socket_cfg const& cfg) {
+	void socket::dial(address const& addr, fn_channel_initializer const& initializer, WWRP<channel_promise> const& ch_promise, socket_cfg const& cfg) {
 		if (!event_poller()->in_event_loop()) {
 			WWRP<socket> _this(this);
 			event_poller()->execute([_this, addr, initializer, ch_promise, cfg]() ->void {
-				_this->_dial(addr, initializer, ch_promise, cfg);
+				_this->dial(addr, initializer, ch_promise, cfg);
 			});
 			return;
 		}

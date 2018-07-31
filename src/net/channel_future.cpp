@@ -7,6 +7,10 @@ namespace wawo { namespace net {
 	{}
 	channel_future::~channel_future()
 	{}
-	WWRP<wawo::net::channel> channel_future::channel() { return m_ch; }
+	WWRP<wawo::net::channel> const& channel_future::channel() const { return m_ch; }
+	void channel_future::attach_channel(WWRP<wawo::net::channel> const& ch) {
+		WAWO_ASSERT(m_ch == NULL);
+		m_ch = ch;
+	}
 	void channel_future::reset() { m_ch = NULL; }
 }}

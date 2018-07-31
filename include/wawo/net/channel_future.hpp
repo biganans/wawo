@@ -6,24 +6,26 @@
 namespace wawo { namespace net {
 
 	class channel;
+	class channel_future;
+
+	typedef std::function<void(WWRP<channel_future> const& f)> fn_channel_future_complete;
 	class channel_future:
 		public wawo::future<int>
 	{
 		WWRP<wawo::net::channel> m_ch;
-		typedef std::function<void(WWRP<channel_future> const& f)> fn_operation_complete;
 
 	public:
 		channel_future(WWRP<wawo::net::channel> const& ch);
 		virtual ~channel_future();
-		WWRP<wawo::net::channel> channel();
-
+		WWRP<wawo::net::channel> const& channel() const;	
+		void attach_channel(WWRP<wawo::net::channel> const& ch);
 		void reset();
 		
 		template<class _Callable
-			, class = typename std::enable_if<std::is_convertible<_Callable, fn_operation_complete>::value>::type>
+			, class = typename std::enable_if<std::is_convertible<_Callable, fn_channel_future_complete>::value>::type>
 		inline int add_listener(_Callable&& _callee)
 		{
-			return future<int>::add_listener<fn_operation_complete>(std::forward<_Callable>(_callee), WWRP<channel_future>(this));
+			return future<int>::add_listener<fn_channel_future_complete>(std::forward<_Callable>(_callee), WWRP<channel_future>(this));
 		}
 	};
 
