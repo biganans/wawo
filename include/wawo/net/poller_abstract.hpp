@@ -110,7 +110,7 @@ namespace wawo { namespace net {
 		static inline void ctxs_cancel_all(poller_ctx_map& ctx_map ) {
 			poller_ctx_map::iterator it = ctx_map.begin();
 			while (it != ctx_map.end()) {
-				WWRP<poller_ctx> const& ctx = it->second ;
+				WWRP<poller_ctx> ctx = it->second ;
 				++it;
 
 				if (ctx->fd > 0) {
