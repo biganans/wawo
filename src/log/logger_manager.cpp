@@ -150,8 +150,9 @@ namespace wawo { namespace log {
 			va_end(valist);
 
 			WAWO_ASSERT(fmtsize != -1 );
-			WAWO_ASSERT(snwrite < (LOG_BUFFER_SIZE_MAX - idx_fmt));
+			WAWO_ASSERT(fmtsize < (LOG_BUFFER_SIZE_MAX - idx_fmt));
 			idx_fmt += fmtsize;
+			WAWO_ASSERT(idx_fmt < LOG_BUFFER_SIZE_MAX);
 
 #ifdef _DEBUG
 			wawo::size_t length = wawo::strlen(__traceInfo)+5;
@@ -164,7 +165,6 @@ namespace wawo { namespace log {
 				idx_fmt += tsnsize;
 			}
 #endif
-			WAWO_ASSERT(idx_fmt < LOG_BUFFER_SIZE_MAX);
 			if (idx_fmt == (LOG_BUFFER_SIZE_MAX - 1)) {
 				log_buffer[LOG_BUFFER_SIZE_MAX-4] = '.';
 				log_buffer[LOG_BUFFER_SIZE_MAX-3] = '.';
