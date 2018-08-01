@@ -106,7 +106,7 @@
 	#define TRACE_IOE(...)
 #endif
 
-//#define ENABLE_TRACE_CH_OBJECT
+#define ENABLE_TRACE_CH_OBJECT
 #ifdef ENABLE_TRACE_CH_OBJECT
 	#define TRACE_CH_OBJECT WAWO_INFO
 #else
