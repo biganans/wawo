@@ -73,7 +73,7 @@ namespace wawo {
 			return false ;
 		}
 
-		template <class T>
+		template <class T, class endian=wawo::bytes_helper::big_endian>
 		inline T read() {
 			WAWO_ASSERT( m_buffer != NULL );
 #ifdef _DEBUG
@@ -87,7 +87,7 @@ namespace wawo {
 			WAWO_ASSERT( rnbytes == sizeof(T) );
 			(void)rnbytes;
 
-			return wawo::bytes_helper::read_impl( tmp, wawo::bytes_helper::type<T>() );
+			return endian::read_impl( tmp, wawo::bytes_helper::type<T>() );
 		}
 
 		template <class T>

@@ -156,7 +156,7 @@ namespace wawo {
 		}
 
 		//would result in memmove if left space is not enough
-		template <class T>
+		template <class T, class endian=wawo::bytes_helper::big_endian>
 		packet* write_left(T const& t) {
 			wawo::u32_t to_write_length = sizeof(T) ;
 			while ( to_write_length > (left_left_capacity()) ) {
@@ -164,21 +164,21 @@ namespace wawo {
 			}
 
 			m_read_idx -= sizeof(T);
-			wawo::u32_t wnbytes = wawo::bytes_helper::write_impl(t, (m_buffer + m_read_idx) );
+			wawo::u32_t wnbytes = endian::write_impl(t, (m_buffer + m_read_idx) );
 			WAWO_ASSERT( wnbytes == sizeof(T) );
 
 			(void)wnbytes;
 			return this;
 		}
 
-		template <class T>
+		template <class T, class endian=wawo::bytes_helper::big_endian>
 		inline packet* write(T const& t) {
 			wawo::u32_t to_write_length = sizeof(T) ;
 			while ( to_write_length > (left_right_capacity()) ) {
 				_extend_rightbuffer_capacity__();
 			}
 
-			m_write_idx += wawo::bytes_helper::write_impl(t, (m_buffer + m_write_idx) );
+			m_write_idx += endian::write_impl(t, (m_buffer + m_write_idx) );
 			return this;
 		}
 
@@ -192,12 +192,12 @@ namespace wawo {
 			return this ;
 		}
 
-		template <class T>
+		template <class T, class endian=wawo::bytes_helper::big_endian>
 		inline T read() {
 			WAWO_ASSERT( (m_buffer != NULL) );
 			WAWO_ASSERT( sizeof(T) <= len() );
 
-			T t = wawo::bytes_helper::read_impl( m_buffer + m_read_idx, wawo::bytes_helper::type<T>() );
+			T t = endian::read_impl( m_buffer + m_read_idx, wawo::bytes_helper::type<T>() );
 			m_read_idx += sizeof(T);
 			return t;
 		}
