@@ -14,7 +14,7 @@ namespace wawo {
 			template <class T, class InIt>
 			static inline T read_impl(InIt const& start, type<T>) {
 				T ret = 0;
-				for (int i = 0; i < sizeof(T); ++i) {
+				for (::size_t i = 0; i < sizeof(T); ++i) {
 					ret <<= 8;
 					ret |= static_cast<u8_t>(*(start + i));
 				}
@@ -23,7 +23,7 @@ namespace wawo {
 			template <class T, class OutIt>
 			static inline wawo::u32_t write_impl(T const& val, OutIt const& start_addr) {
 				wawo::u32_t write_idx = 0;
-				for (int i = (sizeof(T) - 1); i >= 0; --i) {
+				for (::size_t i = (sizeof(T) - 1); i >= 0; --i) {
 					*(start_addr + write_idx++) = ((val >> (i * 8)) & 0xff);
 				}
 				return write_idx;
@@ -34,7 +34,7 @@ namespace wawo {
 			template <class T, class InIt>
 			static inline T read_impl(InIt const& start, type<T>) {
 				T ret = 0;
-				for (int i = sizeof(T)-1; i >= 0; -i) {
+				for (::size_t i = (sizeof(T) - 1); i >= 0; --i) {
 					ret <<= 8;
 					ret |= static_cast<u8_t>(*(start + i));
 				}
@@ -44,7 +44,7 @@ namespace wawo {
 			template <class T, class OutIt>
 			static inline wawo::u32_t write_impl(T const& val, OutIt const& start_addr) {
 				wawo::u32_t write_idx = 0;
-				for (int i = 0 ; i <sizeof(T); ++i) {
+				for (::size_t i = 0 ; i <sizeof(T); ++i) {
 					*(start_addr + write_idx++) = ((val >> (i * 8)) & 0xff);
 				}
 				return write_idx;

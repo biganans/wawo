@@ -178,7 +178,7 @@ namespace wawo {
 				_extend_rightbuffer_capacity__();
 			}
 
-			m_write_idx += endian::write_impl(t, (m_buffer + m_write_idx) );
+			m_write_idx += typename endian::write_impl(t, (m_buffer + m_write_idx) );
 			return this;
 		}
 
