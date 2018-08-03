@@ -90,12 +90,12 @@ namespace wawo {
 			return endian::read_impl( tmp, wawo::bytes_helper::type<T>() );
 		}
 
-		template <class T>
+		template <class T,class endian=wawo::bytes_helper::big_endian>
 		inline bool try_read(T& t) {
 			if( count() < sizeof(T) ) {
 				return false;
 			}
-			return (t = read<T>()), true ;
+			return (t = read<T, endian>()), true ;
 		}
 
 		inline void skip( wawo::u32_t const& s ) {

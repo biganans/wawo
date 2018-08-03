@@ -217,12 +217,12 @@ namespace wawo {
 			m_read_idx += len_;
 		}
 
-		template <class T>
+		template <class T,class endian=wawo::bytes_helper::big_endian>
 		inline T peek() const {
 			WAWO_ASSERT( (m_buffer != NULL) );
 			WAWO_ASSERT( sizeof(T) <= len() );
 
-			T t = wawo::bytes_helper::read_impl( m_buffer + m_read_idx, wawo::bytes_helper::type<T>() );
+			T t = endian::read_impl( m_buffer + m_read_idx, wawo::bytes_helper::type<T>() );
 			return t;
 		}
 
