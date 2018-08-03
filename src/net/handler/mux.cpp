@@ -1,6 +1,8 @@
 #include <wawo/net/handler/mux.hpp>
 
 namespace wawo { namespace net { namespace handler {
+	static std::atomic<int> __stream_id_{ 1 };
+	int mux_make_stream_id() {return wawo::atomic_increment(&__stream_id_) % 0x7FFFFFFF; }
 
 	mux::mux():m_last_check_time(0), m_replying_rst(false)
 	{

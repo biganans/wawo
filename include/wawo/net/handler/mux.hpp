@@ -44,8 +44,7 @@ namespace wawo { namespace net { namespace handler {
 	};
 	static const u8_t mux_stream_frame_header_len = sizeof(mux_stream_id_t) + sizeof(mux_stream_frame_flag_t) + sizeof(int32_t) + sizeof(u32_t);
 
-	static std::atomic<int> __stream_id_{1};
-	inline static int mux_make_stream_id() {return wawo::atomic_increment(&__stream_id_)%0x7FFFFFFF;}
+	extern int mux_make_stream_id(); 
 
 	enum mux_stream_flag {
 //		F_STREAM_READ_CHOKED = (1<<WAWO_CHANNEL_CUSTOM_FLAG_BEGIN),
