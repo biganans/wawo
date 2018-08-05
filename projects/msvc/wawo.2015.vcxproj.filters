@@ -25,9 +25,6 @@
     <Filter Include="Header Files\wawo\config">
       <UniqueIdentifier>{dcd09b86-efb6-4fd9-b7f4-15064670e090}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\wawo\env">
-      <UniqueIdentifier>{635b0c7e-9328-4895-b081-d4ea0f4bf078}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\wawo\log">
       <UniqueIdentifier>{e6f5b3f5-c359-4dce-be1e-aec20ee4d30d}</UniqueIdentifier>
     </Filter>
@@ -96,6 +93,9 @@
     </Filter>
     <Filter Include="Header Files\wawo\net\poller_impl">
       <UniqueIdentifier>{f51c6c6c-4b98-498e-8042-5e0d0febe1fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wawo\env_impl">
+      <UniqueIdentifier>{3789043e-2e2d-408a-be42-50c55baa4f7c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -220,15 +220,6 @@
     </ClInclude>
     <ClInclude Include="..\..\include\wawo\context\fcontext.hpp">
       <Filter>Header Files\wawo\context</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\env\env.hpp">
-      <Filter>Header Files\wawo\env</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\env\env_impl_gnu.hpp">
-      <Filter>Header Files\wawo\env</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\wawo\env\env_impl_win32.hpp">
-      <Filter>Header Files\wawo\env</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\wawo\log\console_logger.h">
       <Filter>Header Files\wawo\log</Filter>
@@ -469,6 +460,15 @@
     </ClInclude>
     <ClInclude Include="..\..\3rd\stack_walker\StackWalker.h">
       <Filter>3rd\stack_walker</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\env.hpp">
+      <Filter>Header Files\wawo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\env_impl\gnu.hpp">
+      <Filter>Header Files\wawo\env_impl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\wawo\env_impl\win32.hpp">
+      <Filter>Header Files\wawo\env_impl</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

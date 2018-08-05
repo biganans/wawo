@@ -8,7 +8,7 @@
 	#include <wawo/net/winsock_helper.hpp>
 #endif
 
-//#define WAWO_ENABLE_TRACE_SOCKET_API
+#define WAWO_ENABLE_TRACE_SOCKET_API
 #ifdef WAWO_ENABLE_TRACE_SOCKET_API
 	#define WAWO_TRACE_SOCKET_API WAWO_INFO
 #else
