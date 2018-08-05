@@ -99,7 +99,7 @@
 //#define ENABLE_WEBSOCKET
 
 
-//#define ENABLE_TRACE_IOE
+#define ENABLE_TRACE_IOE
 #ifdef ENABLE_TRACE_IOE
 	#define TRACE_IOE WAWO_INFO
 #else
