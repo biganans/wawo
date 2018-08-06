@@ -605,6 +605,7 @@ namespace wawo { namespace net { namespace handler {
 				return;
 			}
 
+			DEBUG_STREAM("[mux_stream][s%u][%u]ch_close_impl begin", m_id, m_flag );
 			WAWO_ASSERT(m_state == SS_ESTABLISHED);
 			if ((m_flag&(F_WRITE_ERROR)) != 0) {
 				WAWO_ASSERT(ch_get_errno() != wawo::OK);
@@ -649,6 +650,7 @@ namespace wawo { namespace net { namespace handler {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			if (m_state != SS_CLOSED && (m_flag&(F_READWRITE_SHUTDOWN)) == F_READWRITE_SHUTDOWN) {
 				event_poller()->schedule([CH=WWRP<channel>(this)]() {
+					DEBUG_STREAM("[mux_stream][s%u]__rdwr_shutdown_check trigger ch_close()", CH->ch_id() );
 					CH->ch_close();
 				});
 			}
@@ -720,6 +722,7 @@ namespace wawo { namespace net { namespace handler {
 			switch (flag) {
 			case mux_stream_frame_flag::FRAME_DATA:
 			{
+				DEBUG_STREAM("[muxs][s%u][data]recv, len: %u", ch_id(), data->len() );
 				if (m_flag&F_READ_SHUTDOWN) {
 					m_rcv_data_incre += data->len();
 					DEBUG_STREAM("[muxs][s%u][data]nbytes, but stream read closed,ignore data", m_id, data->len());
@@ -751,6 +754,7 @@ _BEGIN:
 			case mux_stream_frame_flag::FRAME_UWND:
 			{
 				WAWO_ASSERT(wnd > 0);
+				DEBUG_STREAM("[muxs][s%u][uwnd]recv", ch_id(), wnd );
 			}
 			break;
 			case mux_stream_frame_flag::FRAME_RST:
@@ -781,7 +785,7 @@ _BEGIN:
 			}
 #ifdef ENABLE_DEBUG_STREAM
 			else {
-				DEBUG_STREAM("[muxs][s%u][m_rcv_data_incre, ignore] %u", ch_id(), m_rcv_data_incre);
+				DEBUG_STREAM("[muxs][s%u][%d][m_rcv_data_incre, ignore] %u", ch_id(), m_state, m_rcv_data_incre);
 			}
 #endif
 		}
