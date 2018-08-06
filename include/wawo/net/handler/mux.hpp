@@ -390,6 +390,12 @@ namespace wawo { namespace net { namespace handler {
 					continue;
 				}
 
+				if (f.flag == FRAME_UWND && m_rcv_data_incre == 0) {
+					WAWO_ASSERT(f.data->len() == 0);
+					m_entry_q.pop();
+					continue;
+				}
+
 				//encoding , and sending
 				if ( (f.flag&FRAME_ENCODED) == 0) {
 					f.data->write_left<u32_t>(f.data->len());
@@ -397,7 +403,12 @@ namespace wawo { namespace net { namespace handler {
 					f.data->write_left<mux_stream_frame_flag_t>(f.flag);
 					f.data->write_left<mux_stream_id_t>(m_id);
 					f.flag |= FRAME_ENCODED;
-					//DEBUG_STREAM("[muxs][s%u]rewind m_rcv_data_incre from: %u to 0", m_id, m_rcv_data_incre);
+
+#ifdef ENABLE_DEBUG_STREAM
+					if (m_rcv_data_incre > 0) {
+						DEBUG_STREAM("[muxs][s%u]rewind m_rcv_data_incre from: %u to 0", m_id, m_rcv_data_incre);
+					}
+#endif
 					m_rcv_data_incre = 0; //rewind wnd incre
 				}
 
@@ -714,8 +725,8 @@ _BEGIN:
 					m_incomes_buffer_q.pop();
 					goto _BEGIN;
 				}
-				ch_read(data);
 				m_rcv_data_incre += data->len();
+				ch_read(data);
 			}
 			break;
 			case mux_stream_frame_flag::FRAME_FIN:
@@ -726,7 +737,7 @@ _BEGIN:
 			break;
 			case mux_stream_frame_flag::FRAME_UWND:
 			{
-				//DEBUG_STREAM("[muxs][s%u][uwnd]incre: %u", ch_id(), wnd );
+				WAWO_ASSERT(wnd > 0);
 			}
 			break;
 			case mux_stream_frame_flag::FRAME_RST:
@@ -739,8 +750,8 @@ _BEGIN:
 			}
 			//check wnd
 			if (wnd>0) {
+				DEBUG_STREAM("[muxs][s%u][wndupdate] old: %u, add: %u, new: %u", ch_id(), m_snd_wnd, wnd, m_snd_wnd);
 				m_snd_wnd += wnd;
-				//DEBUG_STREAM("[muxs][s%u][wndupdate] old: %u, add: %u, new: %u", ch_id(), m_snd_wnd, wnd, m_snd_wnd + wnd);
 				if ((m_flag&F_WRITE_BLOCKED)) {
 					m_flag &= ~F_WRITE_BLOCKED;
 					event_poller()->schedule([CH = WWRP<channel>(this)]() {
@@ -750,10 +761,16 @@ _BEGIN:
 			}
 
 			if (m_state == SS_ESTABLISHED && (m_rcv_data_incre>0) ) {
+				DEBUG_STREAM("[muxs][s%u][m_rcv_data_incre] %u", ch_id(), m_rcv_data_incre );
 				event_poller()->schedule([s=WWRP<mux_stream>(this)]() {
 					s->_update_rcv_data_incre();
 				});
 			}
+#ifdef ENABLE_DEBUG_STREAM
+			else {
+				DEBUG_STREAM("[muxs][s%u][m_rcv_data_incre, ignore] %u", ch_id(), m_rcv_data_incre);
+			}
+#endif
 		}
 	};
 

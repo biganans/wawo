@@ -158,7 +158,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		WWRP<wawo::packet> body;
 
 		url_fields urlfields;
-		bool is_header_contain_connection_close;
+//		bool is_header_contain_connection_close;
 
 		void encode( WWRP<wawo::packet>& out );
 	};
