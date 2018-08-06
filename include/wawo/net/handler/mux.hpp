@@ -269,6 +269,19 @@ namespace wawo { namespace net { namespace handler {
 				return;
 			}
 
+			/*
+			 * TO BE OPT
+			const u32_t frame_data_len = frame.data->len();
+			if (frame_data_len > (m_snd_wnd << 1)) {
+				event_poller()->schedule([ch_promise, CH = WWRP<channel>(this)]() {
+					ch_promise->set_success(wawo::E_CHANNEL_WRITE_OUTLET_TOO_LARGE);
+				});
+				return;
+			}
+			*/
+
+			//for m_entry_q_bytes == 0, we permit the first large one
+			
 			if ((frame.flag&FRAME_DATA) && m_entry_q_bytes + frame.data->len() > m_snd_wnd) {
 				m_flag |= F_WRITE_BLOCKED;
 				DEBUG_STREAM("[muxs][s%u]stream write block, set block,m_snd_wnd: %u, queue bytes: %u, incoming: %u", m_id, m_snd_wnd, m_entry_q_bytes, frame.data->len());

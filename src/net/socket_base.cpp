@@ -173,7 +173,6 @@ namespace wawo { namespace net {
 			} else {
 				rt = set_snd_buffer_size(cfg.snd_size);
 				WAWO_RETURN_V_IF_MATCH(rt, rt < 0);
-				m_cfg.buffer.snd_size = cfg.snd_size;
 			}
 
 			if (cfg.rcv_size == 0) {
@@ -183,7 +182,6 @@ namespace wawo { namespace net {
 			} else {
 				rt = set_rcv_buffer_size(cfg.rcv_size);
 				WAWO_RETURN_V_IF_MATCH(rt, rt < 0);
-				m_cfg.buffer.rcv_size = cfg.rcv_size;
 			}
 			return wawo::OK;
 		}

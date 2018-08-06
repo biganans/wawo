@@ -780,9 +780,20 @@ namespace wawo { namespace net {
 				return;
 			}
 
-			if (m_noutbound_bytes + outlet->len()>m_cfg.buffer.snd_size ) {
+			const u32_t outlen_len = outlet->len();
+			if ( WAWO_UNLIKELY(outlen_len > (m_cfg.buffer.snd_size<<1)) ) {
+				event_poller()->schedule([ch_promise, CH = WWRP<channel>(this)]() {
+					ch_promise->set_success(wawo::E_CHANNEL_WRITE_OUTLET_TOO_LARGE);
+				});
+				return;
+			}
+
+			//for m_entry_q_bytes == 0, we permit the first large one
+			if ((m_noutbound_bytes != 0) && (m_noutbound_bytes + outlen_len>m_cfg.buffer.snd_size)) {
 				m_flag |= F_WRITE_BLOCKED;
-				event_poller()->schedule([ch_promise,CH=WWRP<channel>(this)]() {
+				WAWO_ASSERT(m_noutbound_bytes > 0);
+				WAWO_ASSERT(m_flag&F_WATCH_WRITE);
+				event_poller()->schedule([ch_promise, CH = WWRP<channel>(this)]() {
 					ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
 					CH->ch_fire_write_block();
 				});
@@ -792,7 +803,7 @@ namespace wawo { namespace net {
 				outlet,
 				ch_promise
 			});
-			m_noutbound_bytes += outlet->len();
+			m_noutbound_bytes += outlen_len;
 			if(m_flag&F_WATCH_WRITE) {
 				return;
 			}
