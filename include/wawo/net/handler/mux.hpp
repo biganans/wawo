@@ -750,7 +750,7 @@ _BEGIN:
 			}
 			//check wnd
 			if (wnd>0) {
-				DEBUG_STREAM("[muxs][s%u][wndupdate] old: %u, add: %u, new: %u", ch_id(), m_snd_wnd, wnd, m_snd_wnd);
+				DEBUG_STREAM("[muxs][s%u][wndupdate] old: %u, add: %u, new: %u", ch_id(), m_snd_wnd, wnd, m_snd_wnd+wnd);
 				m_snd_wnd += wnd;
 				if ((m_flag&F_WRITE_BLOCKED)) {
 					m_flag &= ~F_WRITE_BLOCKED;
