@@ -6,8 +6,7 @@
 namespace wawo {
 
 	namespace bytes_helper {
-		//big endian 0x01020304 => 01 02 03 04 (in memory pane, from left -> right, addr incre)
-		
+		//big endian 0x01020304 => 01 02 03 04 (most significant first)		
 		template <class T> struct type{};
 
 		struct big_endian {
@@ -23,7 +22,7 @@ namespace wawo {
 			template <class T, class OutIt>
 			static inline wawo::u32_t write_impl(T const& val, OutIt const& start_addr) {
 				wawo::u32_t write_idx = 0;
-				for (::size_t i = (sizeof(T) - 1); i >= 0; --i) {
+				for (::size_t i = (sizeof(T) - 1); i != ~0; --i) {
 					*(start_addr + write_idx++) = ((val >> (i * 8)) & 0xff);
 				}
 				return write_idx;
@@ -34,7 +33,7 @@ namespace wawo {
 			template <class T, class InIt>
 			static inline T read_impl(InIt const& start, type<T>) {
 				T ret = 0;
-				for (::size_t i = (sizeof(T) - 1); i >= 0; --i) {
+				for (::size_t i = (sizeof(T) - 1); i != ~0; --i) {
 					ret <<= 8;
 					ret |= static_cast<u8_t>(*(start + i));
 				}

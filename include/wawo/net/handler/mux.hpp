@@ -12,7 +12,7 @@
 #include <wawo/event_trigger.hpp>
 #include <map>
 
-//#define ENABLE_DEBUG_STREAM 1
+#define ENABLE_DEBUG_STREAM 1
 #ifdef ENABLE_DEBUG_STREAM
 	#define DEBUG_STREAM WAWO_INFO
 #else
@@ -135,6 +135,16 @@ namespace wawo { namespace net { namespace handler {
 			DEBUG_STREAM("[muxs][s%u]_ch_do_shutdown_write", m_id );
 			WAWO_ASSERT((m_flag&F_WRITE_SHUTDOWN) == 0);
 			m_flag |= F_WRITE_SHUTDOWN;
+
+			//LAST CHANCE
+			if (m_flag&F_WRITE_BLOCKED) {
+				m_flag &= ~F_WRITE_BLOCKED;
+				DEBUG_STREAM("[muxs][s%u]stream write unblock, m_snd_wnd: %u", m_id, m_snd_wnd);
+				event_poller()->schedule([CH = WWRP<channel>(this)]() {
+					CH->ch_fire_write_unblock();
+				});
+			}
+
 			event_poller()->schedule([ch_p,CH=WWRP<channel>(this)]() {
 				if (ch_p != NULL) {
 					ch_p->set_success(wawo::OK);
@@ -335,14 +345,6 @@ namespace wawo { namespace net { namespace handler {
 				if (m_entry_q.size()) {
 					ch_flush_impl();
 				} else {
-					if (m_flag&F_WRITE_BLOCKED) {
-						m_flag &= ~F_WRITE_BLOCKED;
-						DEBUG_STREAM("[muxs][s%u]stream write unblock, m_snd_wnd: %u",m_id, m_snd_wnd);
-						event_poller()->schedule([CH = WWRP<channel>(this)]() {
-							CH->ch_fire_write_unblock();
-						});
-					}
-
 					if ((m_flag&F_CLOSING)&&(m_state == SS_ESTABLISHED)) {
 						DEBUG_STREAM("[mux_stream][s%u]_ch_do_close_read_write by F_CLOSING", m_id);
 						_ch_do_close_read_write(NULL);
@@ -353,6 +355,13 @@ namespace wawo { namespace net { namespace handler {
 						m_shutdown_write_promise = NULL;
 						__rdwr_shutdown_check();
 					} else {
+						if (m_flag&F_WRITE_BLOCKED) {
+							m_flag &= ~F_WRITE_BLOCKED;
+							DEBUG_STREAM("[muxs][s%u]stream write unblock, m_snd_wnd: %u", m_id, m_snd_wnd);
+							event_poller()->schedule([CH = WWRP<channel>(this)]() {
+								CH->ch_fire_write_unblock();
+							});
+						}
 					}
 				}
 			} else if(_errno == wawo::E_CHANNEL_WRITE_BLOCK) {
@@ -555,6 +564,7 @@ namespace wawo { namespace net { namespace handler {
 				});
 				m_close_promise = NULL;
 			}
+
 			event_poller()->schedule([close_f, CH = WWRP<channel>(this)]() {
 				if (close_f != NULL) {
 					close_f->set_success(wawo::OK);

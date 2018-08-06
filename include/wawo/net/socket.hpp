@@ -281,6 +281,14 @@ namespace wawo { namespace net {
 				}
 				CH->ch_fire_write_shutdowned();
 			});
+
+			//FOR CALL COMPATIBLE OUTSIDE
+			if (m_flag&F_WRITE_BLOCKED) {
+				m_flag &= ~F_WRITE_BLOCKED;
+				event_poller()->schedule([ch = WWRP<channel>(this)](){
+					ch->ch_fire_write_unblock();
+				});
+			}
 		}
 
 		inline void __cb_async_connect(async_io_result const& r) {
