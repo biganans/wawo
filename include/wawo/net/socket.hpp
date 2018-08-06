@@ -265,6 +265,8 @@ namespace wawo { namespace net {
 		inline void _ch_do_shutdown_write(WWRP<channel_promise> const& f) {
 			WAWO_ASSERT((m_flag&F_WRITE_SHUTDOWN) == 0);
 			while (m_outbound_entry_q.size()) {
+				WAWO_ASSERT(m_flag&F_WRITE_ERROR);
+				WAWO_ASSERT(ch_get_errno() != 0);
 				socket_outbound_entry& entry = m_outbound_entry_q.front();
 				m_noutbound_bytes -= entry.data->len();
 				event_poller()->schedule([entry]() {
