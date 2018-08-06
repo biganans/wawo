@@ -189,9 +189,9 @@
     <ClInclude Include="..\..\include\wawo\constants.h" />
     <ClInclude Include="..\..\include\wawo\context\fcontext.hpp" />
     <ClInclude Include="..\..\include\wawo\core.hpp" />
-    <ClInclude Include="..\..\include\wawo\env\env.hpp" />
-    <ClInclude Include="..\..\include\wawo\env\env_impl_gnu.hpp" />
-    <ClInclude Include="..\..\include\wawo\env\env_impl_win32.hpp" />
+    <ClInclude Include="..\..\include\wawo\env.hpp" />
+    <ClInclude Include="..\..\include\wawo\env_impl\gnu.hpp" />
+    <ClInclude Include="..\..\include\wawo\env_impl\win32.hpp" />
     <ClInclude Include="..\..\include\wawo\event_trigger.hpp" />
     <ClInclude Include="..\..\include\wawo\exception.hpp" />
     <ClInclude Include="..\..\include\wawo\future.hpp" />

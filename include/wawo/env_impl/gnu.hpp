@@ -10,7 +10,7 @@
 #include <vector>
 #include <wawo/net/address.hpp>
 
-namespace wawo { namespace env {
+namespace wawo { namespace env_impl {
 
 	class env_impl {
 
