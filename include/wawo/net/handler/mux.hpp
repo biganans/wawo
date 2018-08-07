@@ -797,6 +797,7 @@ _BEGIN:
 		E_MUX_CH_STREAM_ACCEPTED
 	};
 
+	class mux;
 	typedef std::function<void(WWRP<mux> const& mux_)> fn_mux_evt_t;
 	typedef std::function<void(WWRP<mux_stream> const& s)> fn_mux_stream_accepted_t;
 

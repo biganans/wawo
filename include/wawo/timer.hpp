@@ -27,12 +27,13 @@ namespace wawo {
 		T_REPEAT
 	};
 
-	class timer : public wawo::ref_base
+	class timer:
+		public wawo::ref_base
 	{
-		typedef std::function<void(WWRP<wawo::ref_base> const&, WWRP<timer> const&)> _timer_fx_t;
+		typedef std::function<void(WWRP<timer> const&, WWRP<wawo::ref_base> const& )> _timer_fx_t;
 	public:
-		WWRP<wawo::ref_base> cookie;
 		_timer_fx_t callee;
+		WWRP<wawo::ref_base> cookie;
 		std::chrono::nanoseconds delay;
 		std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> expire;
 		timer_state s;
@@ -40,19 +41,19 @@ namespace wawo {
 
 		template <class _Fx, class... _Args>
 		timer(std::chrono::nanoseconds const& delay_, bool repeat, WWRP<wawo::ref_base> const& cookie_, _Fx&& func, _Args&&... args ):
-			cookie(cookie_),
 			callee(std::forward<_timer_fx_t>(std::bind(std::forward<_Fx>(func), std::forward<_Args>(args)..., std::placeholders::_1, std::placeholders::_2))),
+			cookie(cookie_),
 			delay(delay_),
 			expire(std::chrono::steady_clock::now()+delay),
 			s(S_IDLE),
-			t( repeat?T_REPEAT:T_ONESHOT)
+			t(repeat?T_REPEAT:T_ONESHOT)
 		{
 		}
 
 		template <class _Fx, class... _Args>
 		timer(std::chrono::nanoseconds const& delay_, WWRP<wawo::ref_base> const& cookie_, _Fx&& func, _Args&&... args):
-			cookie(cookie_),
 			callee(std::forward<_timer_fx_t>(std::bind(std::forward<_Fx>(func), std::forward<_Args>(args)..., std::placeholders::_1, std::placeholders::_2))),
+			cookie(cookie_),
 			delay(delay_),
 			expire(std::chrono::steady_clock::now() + delay),
 			s(S_IDLE),
@@ -60,28 +61,31 @@ namespace wawo {
 		{
 		}
 
-		template <class _Fx
-			, class = typename std::enable_if<std::is_convertible<_Fx, _timer_fx_t>::value>::type>
-			timer(std::chrono::nanoseconds const& delay_, bool repeat, WWRP<wawo::ref_base> const& cookie_, _Fx&& func) :
+		template <class _Callable
+			, class = typename std::enable_if<std::is_convertible<_Callable, _timer_fx_t>::value>::type>
+			timer(std::chrono::nanoseconds const& delay_, bool repeat, WWRP<wawo::ref_base> const& cookie_, _Callable&& callee_) :
+			callee(std::forward<std::remove_reference<_timer_fx_t>::type>(callee_)),
 			cookie(cookie_),
-			callee(std::forward<_timer_fx_t>(func)),
 			delay(delay_),
 			expire(std::chrono::steady_clock::now() + delay),
 			s(S_IDLE),
 			t(repeat? T_REPEAT : T_ONESHOT)
 		{
+			static_assert(std::is_class<std::remove_reference<_Callable>>::value, "_Callable must be lambda or std::function type");
 		}
 
-		template <class _Fx
-			, class=typename std::enable_if<std::is_convertible<_Fx,_timer_fx_t>::value>::type>
-		timer(std::chrono::nanoseconds const& delay_, WWRP<wawo::ref_base> const& cookie_, _Fx&& func):
+		template <class _Callable
+			, class=typename std::enable_if<std::is_convertible<_Callable,_timer_fx_t>::value>::type>
+		timer(std::chrono::nanoseconds const& delay_, WWRP<wawo::ref_base> const& cookie_, _Callable&& callee_ ):
+			callee(std::forward<std::remove_reference<_timer_fx_t>::type>(callee_)),
 			cookie(cookie_),
-			callee(std::forward<_timer_fx_t>(func)),
 			delay(delay_),
 			expire(std::chrono::steady_clock::now() + delay),
 			s(S_IDLE),
 			t(T_ONESHOT)
-		{}
+		{
+			static_assert(std::is_class<std::remove_reference<_Callable>>::value, "_Callable must be lambda or std::function type");
+		}
 	};
 
 	inline bool operator < (WWRP<timer> const& l, WWRP<timer> const& r) {
@@ -240,10 +244,6 @@ namespace wawo {
 						}
 						m_tq.pop();
 					}
-
-					if (m_heap->empty()) {
-						return;
-					}
 				}
 				while (!m_heap->empty()) {
 					WWRP<timer>& t = m_heap->front();
@@ -254,7 +254,7 @@ namespace wawo {
 						case timer_state::S_STARTED:
 						{
 							t->s = timer_state::S_EXPIRED;
-							t->callee(t->cookie, t);
+							t->callee(t, t->cookie);
 							if (t->t == timer_type::T_REPEAT) {
 								t->expire = std::chrono::steady_clock::now() + t->delay;
 								lock_guard<spin_mutex> __lg(m_mutex_tq);
@@ -264,7 +264,7 @@ namespace wawo {
 						break;
 						case timer_state::S_CANCELED:
 						{
-							t->callee(t->cookie, t);
+							t->callee(t, t->cookie);
 						}
 						break;
 						default:
