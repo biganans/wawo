@@ -18,8 +18,7 @@ namespace wawo {
 	enum timer_state {
 		S_IDLE,
 		S_STARTED,
-		S_EXPIRED,
-		S_CANCELED
+		S_EXPIRED
 	};
 
 	enum timer_type {
@@ -27,84 +26,119 @@ namespace wawo {
 		T_REPEAT
 	};
 
+	/*
+	 * @note
+	 * it is a pure impl for stopwatch and repeatable stopwatch
+	 * do not make your business depend on timer's life cycle management
+	 *
+	 * expire == zero() mean stoped
+
+	 * @design consideration
+	 * self managed thread update
+	 * non self managed thread update
+
+	 * @impl consideration
+	 * 1,start new timer on timer thread is available [circle lock check and etc]
+	 * 2,timer thread waken up notification on the following situation
+	 *		a), new timer wait exceed current wait time
+	 *		b), new timer wait less than current wait time
+	 * 3,current timer thread should be terminated if no new timer started
+	 * 4,must launch new thread when current thread is not running at the moment
+	 * 5,timer thread could be interrupted at any given time [ie, interrupt wait state when process exit]
+	 * 
+	 */
+
+	typedef std::chrono::steady_clock::duration timer_duration_t;
+	typedef std::chrono::steady_clock::time_point timer_timepoint_t;
+	typedef std::chrono::steady_clock timer_clock_t;
+
+	const timer_timepoint_t _TIMER_TP_INFINITE = timer_timepoint_t() + timer_duration_t(~0);
+
 	class timer:
 		public wawo::ref_base
 	{
-		typedef std::function<void(WWRP<timer> const&, WWRP<wawo::ref_base> const& )> _timer_fx_t;
-	public:
-		_timer_fx_t callee;
+		typedef std::function<void(WWRP<timer> const&, WWRP<wawo::ref_base> const& )> _fn_timer_t;
+		_fn_timer_t callee;
 		WWRP<wawo::ref_base> cookie;
-		std::chrono::nanoseconds delay;
-		std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> expire;
-		timer_state s;
-		timer_type t;
+		timer_duration_t delay;
+		timer_timepoint_t expire;
+		timer_type type;
+		timer_state state;
 
-		template <class _Fx, class... _Args>
-		timer(std::chrono::nanoseconds const& delay_, bool repeat, WWRP<wawo::ref_base> const& cookie_, _Fx&& func, _Args&&... args ):
+		friend bool operator < (WWRP<timer> const& l, WWRP<timer> const& r);
+		friend bool operator > (WWRP<timer> const& l, WWRP<timer> const& r);
+		friend bool operator == (WWRP<timer> const& l, WWRP<timer> const& r);
+
+		friend struct timer_less;
+		friend struct timer_greater;
+		friend class timer_manager;
+	public:
+		template <class dur, class _Fx, class... _Args>
+		timer(dur const& delay_, bool repeat, WWRP<wawo::ref_base> const& cookie_, _Fx&& func, _Args&&... args ):
 			callee(std::forward<_timer_fx_t>(std::bind(std::forward<_Fx>(func), std::forward<_Args>(args)..., std::placeholders::_1, std::placeholders::_2))),
 			cookie(cookie_),
 			delay(delay_),
-			expire(std::chrono::steady_clock::now()+delay),
-			s(S_IDLE),
-			t(repeat?T_REPEAT:T_ONESHOT)
+			expire(timer_timepoint_t()),
+			type(repeat ? T_REPEAT : T_ONESHOT),
+			state(S_IDLE)
 		{
 		}
 
-		template <class _Fx, class... _Args>
-		timer(std::chrono::nanoseconds const& delay_, WWRP<wawo::ref_base> const& cookie_, _Fx&& func, _Args&&... args):
+		template <class dur, class _Fx, class... _Args>
+		timer(dur const& delay_, WWRP<wawo::ref_base> const& cookie_, _Fx&& func, _Args&&... args):
 			callee(std::forward<_timer_fx_t>(std::bind(std::forward<_Fx>(func), std::forward<_Args>(args)..., std::placeholders::_1, std::placeholders::_2))),
 			cookie(cookie_),
 			delay(delay_),
-			expire(std::chrono::steady_clock::now() + delay),
-			s(S_IDLE),
-			t(T_ONESHOT)
+			expire(timer_timepoint_t()),
+			type(T_ONESHOT),
+			state(S_IDLE)
 		{
 		}
 
-		template <class _Callable
-			, class = typename std::enable_if<std::is_convertible<_Callable, _timer_fx_t>::value>::type>
-			timer(std::chrono::nanoseconds const& delay_, bool repeat, WWRP<wawo::ref_base> const& cookie_, _Callable&& callee_) :
-			callee(std::forward<std::remove_reference<_timer_fx_t>::type>(callee_)),
+		template <class dur, class _Callable
+			, class = typename std::enable_if<std::is_convertible<_Callable, _fn_timer_t>::value>::type>
+			timer(dur const& delay_, bool repeat, WWRP<wawo::ref_base> const& cookie_, _Callable&& callee_) :
+			callee(std::forward<std::remove_reference<_fn_timer_t>::type>(callee_)),
 			cookie(cookie_),
 			delay(delay_),
-			expire(std::chrono::steady_clock::now() + delay),
-			s(S_IDLE),
-			t(repeat? T_REPEAT : T_ONESHOT)
+			expire(timer_timepoint_t()),
+			type(repeat ? T_REPEAT : T_ONESHOT),
+			state(S_IDLE)
 		{
 			static_assert(std::is_class<std::remove_reference<_Callable>>::value, "_Callable must be lambda or std::function type");
 		}
 
-		template <class _Callable
-			, class=typename std::enable_if<std::is_convertible<_Callable,_timer_fx_t>::value>::type>
-		timer(std::chrono::nanoseconds const& delay_, WWRP<wawo::ref_base> const& cookie_, _Callable&& callee_ ):
-			callee(std::forward<std::remove_reference<_timer_fx_t>::type>(callee_)),
+		template <class dur, class _Callable
+			, class=typename std::enable_if<std::is_convertible<_Callable, _fn_timer_t>::value>::type>
+		timer(dur const& delay_, WWRP<wawo::ref_base> const& cookie_, _Callable&& callee_ ):
+			callee(std::forward<std::remove_reference<_fn_timer_t>::type>(callee_)),
 			cookie(cookie_),
 			delay(delay_),
-			expire(std::chrono::steady_clock::now() + delay),
-			s(S_IDLE),
-			t(T_ONESHOT)
+			expire(timer_timepoint_t()),
+			type(T_ONESHOT),
+			state(S_IDLE)
 		{
 			static_assert(std::is_class<std::remove_reference<_Callable>>::value, "_Callable must be lambda or std::function type");
 		}
 	};
 
 	inline bool operator < (WWRP<timer> const& l, WWRP<timer> const& r) {
-		return l->delay < r->delay;
+		return l->expire < r->expire;
 	}
 
 	inline bool operator > (WWRP<timer> const& l, WWRP<timer> const& r) {
-		return l->delay > r->delay;
+		return l->expire > r->expire;
 	}
 
 	inline bool operator == (WWRP<timer> const& l, WWRP<timer> const& r) {
-		return l->delay == r->delay;
+		return l->expire == r->expire;
 	}
 
 	struct timer_less
 	{
 		inline bool operator()(WWRP<timer> const& l, WWRP<timer> const& r)
 		{
-			return l->delay < r->delay;
+			return l->expire < r->expire;
 		}
 	};
 
@@ -112,23 +146,23 @@ namespace wawo {
 	{
 		inline bool operator()(WWRP<timer> const& l, WWRP<timer> const& r)
 		{
-			return l->delay > r->delay;
+			return l->expire > r->expire;
 		}
 	};
 
 	class timer_manager
 	{
-		enum timer_op {
-			OP_ADD,
-			OP_CANCEL
+		enum timer_op_code {
+			OP_START,
+			OP_STOP
 		};
 
-		struct timer_ {
-			timer_op _op;
-			WWRP<timer> _timer;
+		struct timer_op {
+			timer_op_code code;
+			WWRP<timer> tm;
 		};
 
-		typedef std::queue<timer_> _timer_queue;
+		typedef std::queue<timer_op> _timer_queue;
 		typedef wawo::binary_heap< WWRP<timer>, wawo::timer_less > _timer_heaper_t;
 
 		wawo::mutex m_mutex;
@@ -139,14 +173,16 @@ namespace wawo {
 		wawo::spin_mutex m_mutex_tq;
 		_timer_queue m_tq;
 
+		std::thread::id m_th_id;
+
+		timer_timepoint_t m_nexpire;
 		bool m_has_own_run_th;
 		bool m_th_break;
-		bool m_in_callee_poller;
 		bool m_in_wait;
+		
 
-		void _check_start() {
+		void __check_th() {
 			WAWO_ASSERT(m_has_own_run_th);
-			if (m_in_callee_poller) { return; }//same thread...skip lock
 			lock_guard<mutex> lg(m_mutex);
 			if (m_th != NULL && m_th_break != true) {
 				//interrupt wait state
@@ -163,11 +199,14 @@ namespace wawo {
 			m_th_break = false;
 		}
 
+		void __check_wait() {
+			if (std::this_thread::get_id() == m_th_id) { return; }//same thread...skip lock
+
+		}
 	public:
-		timer_manager(bool has_own_th = true ):
-			m_has_own_run_th(has_own_th),
+		timer_manager( std::thread::id tid = std::thread::id() ):
+			m_has_own_run_th(tid == std::thread::id()),
 			m_th_break(true),
-			m_in_callee_poller(false),
 			m_in_wait(false)
 		{
 			m_heap = wawo::make_ref<_timer_heaper_t>();
@@ -179,108 +218,147 @@ namespace wawo {
 				m_th->interrupt();
 				m_th->join();
 			}
+			WAWO_WARN("[timer]cancel task count: %u", m_heap->size());
 			while (!m_heap->empty()) {
 				m_heap->pop();
 			}
 		}
 
 		void start(WWRP<timer> const& t) {
-			{
-				lock_guard<spin_mutex> lg(m_mutex_tq);
-				WAWO_ASSERT(t != NULL);
-				WAWO_ASSERT(t->delay.count() >= 0);
-				m_tq.push({ OP_ADD,t });
-			}
+			lock_guard<mutex> lg(m_mutex);
+			WAWO_ASSERT(t != NULL);
+			WAWO_ASSERT(t->delay >= timer_duration_t(0) && (t->delay != timer_duration_t(~0)) );
+			WAWO_ASSERT(t->expire == timer_timepoint_t());
+			m_tq.push({ OP_START,t });
 
-			if (m_has_own_run_th){
-				_check_start();
+			if (m_has_own_run_th && ){
+				__check_self_th();
 			}
 		}
 
 		void stop(WWRP<timer> const& t) {
 			lock_guard<spin_mutex> lg(m_mutex_tq);
 			WAWO_ASSERT(t != NULL);
-			m_tq.push({ OP_CANCEL,t });
+			m_tq.push({ OP_STOP,t });
 			WAWO_ASSERT(m_th != NULL);
 		}
 
 		void _run() {
 			WAWO_ASSERT(m_th != NULL);
-			while (1) {
+			{
 				unique_lock<mutex> ulg(m_mutex);
-				std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> nexpire;
-				m_in_callee_poller = true;
-				update(nexpire);
-				m_in_callee_poller = false;
-				if ( nexpire.time_since_epoch().count() > 0) {
-					m_in_wait = true;
-					m_cond.wait_until<std::chrono::steady_clock, std::chrono::nanoseconds>(ulg, nexpire );
-					m_in_wait = false;
-				} else {
-					m_th_break = true;
-					break;
-				}
+				WAWO_ASSERT(m_th_id == std::thread::id());
+				m_th_id = std::thread::id();
 			}
-			m_heap->reserve(4096);
-		}
-
-		inline void update(std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds>& nexpire) {
 			while (true) {
-				{
-					lock_guard<spin_mutex> _lgtq(m_mutex_tq);
-					std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds> now = std::chrono::steady_clock::now();
-					while (!m_tq.empty()) {
-						timer_& t = m_tq.front();
-						WAWO_ASSERT(t._timer->delay.count() >= 0);
-						if (t._op == OP_CANCEL) {
-							WAWO_ASSERT(t._timer->s == timer_state::S_STARTED || t._timer->s == timer_state::S_EXPIRED);
-							t._timer->s = timer_state::S_CANCELED;
-						}
-						else {
-							if (t._timer->s != timer_state::S_CANCELED) {
-								t._timer->s = timer_state::S_STARTED;
-								m_heap->push(std::move(t._timer));
-							}
-						}
-						m_tq.pop();
-					}
-				}
-				while (!m_heap->empty()) {
-					WWRP<timer>& t = m_heap->front();
-					const std::chrono::nanoseconds tdiff = (std::chrono::steady_clock::now() - t->expire);
-					if (tdiff.count() >= 0) {
-						switch (t->s)
-						{
-						case timer_state::S_STARTED:
-						{
-							t->s = timer_state::S_EXPIRED;
-							t->callee(t, t->cookie);
-							if (t->t == timer_type::T_REPEAT) {
-								t->expire = std::chrono::steady_clock::now() + t->delay;
-								lock_guard<spin_mutex> __lg(m_mutex_tq);
-								m_tq.push({ OP_ADD, t });
-							}
-						}
-						break;
-						case timer_state::S_CANCELED:
-						{
-							t->callee(t, t->cookie);
-						}
-						break;
-						default:
-						{}
-						break;
-						}
-						m_heap->pop();
-					} else {
-						nexpire = t->expire;
-						return;
-					}
-				}
 				try {
 					wawo::this_thread::__interrupt_check_point();
 				} catch (...) {
 					return;
+				}
+				update(m_nexpire);
+				/*
+				if (m_nexpire == timer_timepoint_t() + timer_duration_t(~0)) {
+
+					wawo::lock_guard<wawo::spin_mutex> lgtq(m_mutex_tq);
+					if(m_tq.empty())
+					//no timer left
+					m_th_id = std::thread::id();//clear tid
+					m_th_break = true;
+					break;
+				}
+				*/
+				if (m_nexpire.time_since_epoch().count() != 0) {
+					//double check
+					unique_lock<mutex> ulg(m_mutex);
+					if (m_tq.empty()) {
+						m_in_wait = true;
+						if (m_nexpire == _TIMER_TP_INFINITE) {
+							m_cond.wait(ulg);
+						} else {
+							m_cond.wait_until<timer_clock_t, timer_duration_t>(ulg, m_nexpire);
+						}
+						m_in_wait = false;
+					}
+				}
+			}
+			m_heap->reserve(1024);
+		}
+
+		/*
+		 * @note
+		 * 1, if m_tq is not empty, check one by one ,
+		 *		a) OP_START -> tm update expire and state, push heap, pop from tq
+		 *		b) OP_STOP -> set expire to timepoint::zero(), pop from tq
+		 * 2, check the first heap element and see whether it is expired
+		 *		a) if expire == timepoint::zero(), ignore and pop, continue
+		 *		b) if expire time reach, call callee, check REPEAT and push to tq if necessary, pop
+		 */
+		inline void update(timer_timepoint_t& nexpire) {
+			{
+				unique_lock<mutex> ulg(m_mutex);
+				while (m_tq.empty()) {
+					m_in_wait = true;
+					if (!m_has_own_run_th) {
+						nexpire = m_nexpire;
+					} else {
+						if (m_nexpire == _TIMER_TP_INFINITE) {
+							m_cond.wait(ulg);
+						}
+						else {
+							m_cond.wait_until<timer_clock_t, timer_duration_t>(ulg, m_nexpire);
+						}
+						m_in_wait = false;
+					}
+				}
+				WAWO_ASSERT(m_tq.size());
+				while (!m_tq.empty()) {
+					timer_op& op = m_tq.front();
+					WWRP<timer>& tm = op.tm;
+					WAWO_ASSERT(tm->delay.count() >= 0);
+					switch (op.code) {
+					case OP_START:
+						{
+							tm->expire = timer_clock_t::now() + tm->delay;
+							tm->state = S_STARTED;
+							m_heap->push(std::move(tm));
+						}
+						break;
+					case OP_STOP:
+						{
+							tm->expire = timer_timepoint_t();
+						}
+						break;
+					}
+					m_tq.pop();
+				}
+			}
+			while (!m_heap->empty()) {
+				WWRP<timer>& tm = m_heap->front();
+				if (tm->expire == timer_timepoint_t()) {
+					m_heap->pop();
+					continue;
+				} else if(timer_clock_t::now() < tm->expire) {
+					nexpire = tm->expire;
+					goto _recalc_nexpire;
+				} else {
+					WAWO_ASSERT(tm->state == timer_state::S_STARTED);
+					tm->callee(tm, tm->cookie);
+					if (tm->type == timer_type::T_REPEAT) {
+						lock_guard<spin_mutex> __lg(m_mutex_tq);
+						m_tq.push({ OP_START, tm });
+					} else {
+						tm->state = timer_state::S_EXPIRED;
+					}
+					m_heap->pop();
+				}
+			}
+			nexpire = timer_timepoint_t() + timer_duration_t(~0);
+		_recalc_nexpire:
+			{//double check 
+				lock_guard<spin_mutex> _lgtq(m_mutex_tq);
+				if (m_tq.size() != 0) {
+					nexpire = timer_clock_t::now();
 				}
 			}
 		}
