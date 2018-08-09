@@ -223,7 +223,7 @@ namespace wawo { namespace net { namespace impl {
 			WAWO_ASSERT(m_handle > 0);
 			int ec = 0;
 			DWORD dwWaitMicro = _before_wait();
-			if (dwWaitMicro == -1) {
+			if (dwWaitMicro == ~0) {
 				dwWaitMicro = INFINITE;
 			} else {
 				dwWaitMicro = dwWaitMicro/1000;

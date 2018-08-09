@@ -41,7 +41,8 @@ namespace wawo {
 	typedef std::chrono::steady_clock::time_point timer_timepoint_t;
 	typedef std::chrono::steady_clock timer_clock_t;
 
-	const timer_timepoint_t _TIMER_TP_INFINITE = timer_timepoint_t() + timer_duration_t(~0);
+	const timer_duration_t _TIMER_DURATION_INFINITE = timer_duration_t(~0);
+	const timer_timepoint_t _TIMER_TP_INFINITE = timer_timepoint_t() + _TIMER_DURATION_INFINITE;
 
 	class timer:
 		public wawo::ref_base
@@ -120,7 +121,7 @@ namespace wawo {
 		WWRP<_timer_heaper_t> m_heap;
 		_timer_queue m_tq;
 
-		timer_timepoint_t m_nexpire;
+		timer_duration_t m_ndelay;
 		bool m_has_own_run_th;
 		bool m_th_break;
 		bool m_in_wait;
@@ -170,7 +171,7 @@ namespace wawo {
 			lock_guard<mutex> lg(m_mutex);
 			WAWO_ASSERT(t != NULL);
 			WAWO_ASSERT(t->delay >= timer_duration_t(0) && (t->delay != timer_duration_t(~0)));
-			WAWO_ASSERT(t->expire == timer_timepoint_t());
+//			WAWO_ASSERT(t->expire == timer_timepoint_t());
 			m_tq.push(t);
 			if (m_has_own_run_th) {
 				__check_th_and_wait();
@@ -181,7 +182,7 @@ namespace wawo {
 			lock_guard<mutex> lg(m_mutex);
 			WAWO_ASSERT(t != NULL);
 			WAWO_ASSERT(t->delay >= timer_duration_t(0) && (t->delay != timer_duration_t(~0)) );
-			WAWO_ASSERT(t->expire == timer_timepoint_t());
+//			WAWO_ASSERT(t->expire == timer_timepoint_t());
 			m_tq.push(std::forward<WWRP<timer>>(t));
 			if (m_has_own_run_th) {
 				__check_th_and_wait();
@@ -196,16 +197,16 @@ namespace wawo {
 				WAWO_ASSERT(m_th_break == false);
 			}
 			while (true) {
-				update(m_nexpire);
+				update(m_ndelay);
 				unique_lock<mutex> ulg(m_mutex);
 				if (m_tq.size() == 0) {
 					//exit this thread
-					if (m_nexpire == _TIMER_TP_INFINITE) {
+					if (m_ndelay == _TIMER_DURATION_INFINITE) {
 						m_th_break = true;
 						break;
 					} else {
 						m_in_wait = true;
-						m_cond.wait_until<timer_clock_t, timer_duration_t>(ulg, m_nexpire);
+						m_cond.wait_for(ulg, m_ndelay);
 						m_in_wait = false;
 					}
 				}
@@ -215,15 +216,14 @@ namespace wawo {
 		/*
 		 * @note
 		 * 1, if m_tq is not empty, check one by one ,
-		 *		a) OP_START -> tm update expire and state, push heap, pop from tq
-		 *		b) OP_STOP -> set expire to timepoint::zero(), pop from tq
+		 *		a) tm update expire and state, push heap, pop from tq
 		 * 2, check the first heap element and see whether it is expired
 		 *		a) if expire == timepoint::zero(), ignore and pop, continue
 		 *		b) if expire time reach, call callee, check REPEAT and push to tq if necessary, pop
 		 * @param nexpire, next expire timepoint
 		 *		a) updated on every frame when heap get updated (on both pop and push operation)
 		 */
-		inline void update(timer_timepoint_t& nexpire) {
+		inline void update(timer_duration_t& ndelay) {
 			{
 				unique_lock<mutex> ulg(m_mutex);
 				while (!m_tq.empty()) {
@@ -238,9 +238,9 @@ namespace wawo {
 				WWRP<timer>& tm = m_heap->front();
 				WAWO_ASSERT(tm->expire != timer_timepoint_t());
 				WAWO_ASSERT(tm->expire != _TIMER_TP_INFINITE);
-				
-				if(timer_clock_t::now() < tm->expire) {
-					nexpire = tm->expire;
+				const timer_timepoint_t now = timer_clock_t::now();
+				if(now<tm->expire) {
+					ndelay = tm->expire - now;
 					goto _recalc_nexpire;
 				} else {
 					tm->callee(tm, tm->cookie);
@@ -248,12 +248,12 @@ namespace wawo {
 				}
 			}
 			//wait infinite
-			nexpire = timer_timepoint_t() + timer_duration_t(~0);
+			ndelay = _TIMER_DURATION_INFINITE;
 		_recalc_nexpire:
 			{//double check, and recalc wait time
 				unique_lock<mutex> ulg(m_mutex);
 				if (m_tq.size() != 0) {
-					nexpire = timer_clock_t::now();
+					ndelay = timer_duration_t();
 				}
 			}
 		}

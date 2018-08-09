@@ -71,25 +71,40 @@ namespace wawo { namespace net {
 			m_tq_standby->push(f);
 			__wait_check();
 		}
+		inline void start_timer(WWRP<wawo::timer>&& t) {
+			m_tm->start(std::forward<WWRP<wawo::timer>>(t));
+			__wait_check();
+		}
+		inline void start_timer(WWRP<wawo::timer> const& t) {
+			m_tm->start(t);
+			__wait_check();
+		}
 
 		void cond_wait() {
 			lock_guard<spin_mutex> lg(m_tq_mtx);
 			if (m_tq_standby->size() == 0) {
 				m_wait_t = W_COND;
-				m_cond.no_interrupt_wait_for<spin_mutex>(m_tq_mtx, std::chrono::microseconds(1024));
+				m_cond.no_interrupt_wait_for<spin_mutex>(m_tq_mtx, std::chrono::microseconds(500));
 				m_wait_t = W_NOWAIT;
 			}
 		}
 
 		//0,	NO WAIT
 		//-1,	INFINITE WAIT
-		//>0,	WAIT MICROSECOND
-		inline int _before_wait() {
+		//>0,	WAIT nanosecond
+		inline long long _before_wait() {
+			WAWO_ASSERT(m_tm != NULL);
+			wawo::timer_duration_t ndelay;
+			m_tm->update(ndelay);
+			if (ndelay == wawo::timer_duration_t()) {
+				return 0;
+			}
+
 			lock_guard<spin_mutex> lg(m_tq_mtx);
 			WAWO_ASSERT(m_wait_t == W_NOWAIT);
 			if (m_tq_standby->size() == 0) {
 				m_wait_t = W_CUSTOM;
-				return -1;
+				return ndelay.count();
 			}
 			return 0;
 		}
@@ -100,17 +115,9 @@ namespace wawo { namespace net {
 		}
 		virtual void interrupt_wait() { WAWO_ASSERT(!"NOT IMPLEMENTED"); }
 
-		inline bool in_event_loop() const {
+		__WW_FORCE_INLINE bool in_event_loop() const {
 			return std::this_thread::get_id() == m_tid;
 		}
-
-		inline void start_timer(WWRP<wawo::timer>&& t) {
-			m_tm->start(std::forward<WWRP<wawo::timer>>(t));
-		}
-
-		//inline void stop_timer(WWRP<wawo::timer> const& t) {
-		//	m_tm->stop(t);
-		//}
 
 		virtual void init() {
 			m_tid = std::this_thread::get_id();
