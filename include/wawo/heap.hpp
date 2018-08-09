@@ -9,7 +9,7 @@
 #define BHEAP_L(i) ((i<<1)+1)
 #define BHEAP_R(i) ((i<<1)+2)
 
-#define DEFAULT_BHEAP_CAPACITY 4096
+#define DEFAULT_BHEAP_CAPACITY 1024
 
 namespace wawo {
 

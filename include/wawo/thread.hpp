@@ -206,7 +206,7 @@ _VARIADIC_EXPAND_0X(_THREAD_CONS, , , , )
 
 			std::thread* _THH_ = NULL;
 			try {
-				m_run_base_type = impl::_M_make_routine(std::bind(std::forward<_Callable>(__f), std::forward<_Args>(__args)...));
+				m_run_base_type = impl::_M_make_routine(std::bind(std::forward<std::remove_reference<_Callable>::type>(__f), std::forward<_Args>(__args)...));
 				_THH_ = new std::thread(&thread::__RUN_PROXY__, this);
 			} catch (...) {
 				WAWO_DELETE(m_thread_data);

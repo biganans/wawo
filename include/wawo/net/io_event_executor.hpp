@@ -104,12 +104,13 @@ namespace wawo { namespace net {
 			return std::this_thread::get_id() == m_tid;
 		}
 
-		inline void start_timer(WWRP<wawo::timer> const& t) {
-			m_tm->start(t);
+		inline void start_timer(WWRP<wawo::timer>&& t) {
+			m_tm->start(std::forward<WWRP<wawo::timer>>(t));
 		}
-		inline void stop_timer(WWRP<wawo::timer> const& t) {
-			m_tm->stop(t);
-		}
+
+		//inline void stop_timer(WWRP<wawo::timer> const& t) {
+		//	m_tm->stop(t);
+		//}
 
 		virtual void init() {
 			m_tid = std::this_thread::get_id();

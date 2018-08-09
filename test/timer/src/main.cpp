@@ -5,7 +5,14 @@
 #include <chrono>
 #include <vector>
 
-std::chrono::nanoseconds delay = std::chrono::nanoseconds(1000 * 10); //1s
+std::chrono::nanoseconds delay = std::chrono::nanoseconds(1000 * 10); //10 ns
+
+//#define ENABLE_TRACE_TICK
+#ifdef ENABLE_TRACE_TICK
+	#define TRACE_TICK WAWO_INFO
+#else
+	#define TRACE_TICK(...)
+#endif
 
 struct cookie : wawo::ref_base
 {
@@ -15,11 +22,11 @@ struct cookie : wawo::ref_base
 	cookie(int i_) :i(i_),j(0) {}
 };
 
+/*
 void spawn_repeat_timer(int);
-
 void repeat_timer_tick(WWRP<wawo::timer> const& t, WWRP<wawo::ref_base> const& cookie_) {
 	WWRP<cookie> c = wawo::static_pointer_cast<cookie>(cookie_);
-	WAWO_DEBUG("i: %d, j: %d", c->i , c->j );
+	TRACE_TICK("i: %d, j: %d", c->i , c->j );
 
 	if ( ++c->j>2) {
 		wawo::global_timer_manager::instance()->stop(t);
@@ -36,12 +43,12 @@ void spawn_repeat_timer(int i) {
 	WWRP<wawo::timer> t = wawo::make_ref<wawo::timer>(delay, true, c, std::bind(&repeat_timer_tick,std::placeholders::_1, std::placeholders::_2));
 	wawo::global_timer_manager::instance()->start(t);
 }
-
+*/
 void spawn_user_circle_timer(int i);
 void user_circle_tick(WWRP<wawo::timer> const& t, WWRP<wawo::ref_base> const& cookie_) {
 	WWRP<cookie> c = wawo::static_pointer_cast<cookie>(cookie_);
 
-	WAWO_DEBUG("i: %d, j: %d", c->i, c->j);
+	TRACE_TICK("i: %d, j: %d", c->i, c->j);
 	//if (c->i == 1000) {
 	//	wawo::signal::signal_manager::instance()->raise_signal(SIGINT);
 	//}
@@ -61,7 +68,7 @@ void spawn_user_circle_timer(int i) {
 void spawn_timer(int);
 void timer_tick(WWRP<wawo::timer> const& t, WWRP<wawo::ref_base> const& cookie_) {
 	WWRP<cookie> c = wawo::static_pointer_cast<cookie>(cookie_);
-	WAWO_DEBUG("i: %d, j: %d", c->i, c->j);
+	TRACE_TICK("i: %d, j: %d", c->i, c->j);
 }
 void spawn_timer(int i) {
 	WWRP<cookie> c = wawo::make_ref<cookie>(i);
@@ -102,7 +109,7 @@ public:
 	{}
 
 	void bar(WWRP<wawo::timer> const& t, WWRP<wawo::ref_base> const& cookie_) {
-		WAWO_DEBUG("%d", i);
+		TRACE_TICK("%d", i);
 	}
 };
 
@@ -118,7 +125,7 @@ void spawn_lambda_timer(int i) {
 	auto f = [c](WWRP<wawo::timer> const& t, WWRP<wawo::ref_base> const& cookie_) -> void {
 		WWRP<cookie> c_ = wawo::static_pointer_cast<cookie>(cookie_);
 		WAWO_ASSERT(c->i == c_->i);
-		WAWO_DEBUG("%d", c->i);
+		TRACE_TICK("%d", c->i);
 	};
 
 	WWRP<wawo::timer> t = wawo::make_ref<wawo::timer>(delay, c,f);
@@ -126,24 +133,28 @@ void spawn_lambda_timer(int i) {
 }
 
 void th_spawn_timer() {
+
 	while (1) {
 		int i = std::rand();
+		//spawn_repeat_timer(i);
+		//return;
+
 		if (i % 6 == 0) {
 			spawn_timer(i);
 		}
 		else if (i % 5 == 0) {
 			spawn_user_circle_timer(i);
 		}
-		else if(i%4 == 0){
-			spawn_repeat_timer(i);
-		}
+		//else if(i%4 == 0){
+		//	spawn_repeat_timer(i);
+		//}
 		else if (i % 3 == 0) {
 			spawn_lambda_timer(i);
 		}
 		else {
 			spawn_object_timer(i);
 		}
-
+		
 //		std::this_thread::yield();
 		wawo::this_thread::nsleep(1);
 	}
