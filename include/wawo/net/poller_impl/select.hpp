@@ -133,8 +133,8 @@ namespace wawo { namespace net { namespace impl {
 			} else {
 				tv = &_tv;
 				if (wait_in_nano > 0) {
-					_tv.tv_sec = wait_in_nano / 1000000000ULL;
-					_tv.tv_usec = wait_in_nano % 1000000000ULL;
+					_tv.tv_sec = static_cast<long>(wait_in_nano / 1000000000ULL);
+					_tv.tv_usec = static_cast<long>(wait_in_nano % 1000000000ULL)/1000;
 				}
 			}
 			const bool bLastWait = (wait_in_nano != 0);

@@ -7,7 +7,7 @@
 
 std::chrono::nanoseconds delay = std::chrono::nanoseconds(1000 * 10); //10 ns
 
-//#define ENABLE_TRACE_TICK
+#define ENABLE_TRACE_TICK
 #ifdef ENABLE_TRACE_TICK
 	#define TRACE_TICK WAWO_INFO
 #else
@@ -53,14 +53,14 @@ void user_circle_tick(WWRP<wawo::timer> const& t, WWRP<wawo::ref_base> const& co
 	//	wawo::signal::signal_manager::instance()->raise_signal(SIGINT);
 	//}
 
-	if (std::rand() & 0x01) {
+	//if (std::rand() & 0x01) {
 		spawn_user_circle_timer(++c->i);
-	}
+	//}
 }
 
 void spawn_user_circle_timer(int i) {
 	WWRP<cookie> c = wawo::make_ref<cookie>(i);
-	WWRP<wawo::timer> t = wawo::make_ref<wawo::timer>(delay, c, std::bind(&user_circle_tick, std::placeholders::_1, std::placeholders::_2));
+	WWRP<wawo::timer> t = wawo::make_ref<wawo::timer>(std::chrono::seconds(1), c, std::bind(&user_circle_tick, std::placeholders::_1, std::placeholders::_2));
 	wawo::global_timer_manager::instance()->start(t);
 }
 
@@ -73,7 +73,7 @@ void timer_tick(WWRP<wawo::timer> const& t, WWRP<wawo::ref_base> const& cookie_)
 void spawn_timer(int i) {
 	WWRP<cookie> c = wawo::make_ref<cookie>(i);
 //	WWRP<wawo::timer> t = wawo::make_ref<wawo::timer>(delay, c, std::bind(&timer_tick,std::placeholders::_1, std::placeholders::_2));
-	WWRP<wawo::timer> t = wawo::make_ref<wawo::timer>(delay, c, &timer_tick);
+	WWRP<wawo::timer> t = wawo::make_ref<wawo::timer>(std::chrono::seconds(1), c, &timer_tick);
 	wawo::global_timer_manager::instance()->start(t);
 }
 struct foo
@@ -136,9 +136,9 @@ void th_spawn_timer() {
 
 	while (1) {
 		int i = std::rand();
-		//spawn_repeat_timer(i);
-		//return;
-
+		spawn_user_circle_timer(i);
+		return;
+		/*
 		if (i % 6 == 0) {
 			spawn_timer(i);
 		}
@@ -154,7 +154,7 @@ void th_spawn_timer() {
 		else {
 			spawn_object_timer(i);
 		}
-		
+		*/
 //		std::this_thread::yield();
 		wawo::this_thread::nsleep(1);
 	}

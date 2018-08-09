@@ -167,26 +167,28 @@ namespace wawo {
 			}
 		}
 
-		void start(WWRP<timer> const& t) {
+		timer_timepoint_t start(WWRP<timer> const& t) {
 			lock_guard<mutex> lg(m_mutex);
 			WAWO_ASSERT(t != NULL);
 			WAWO_ASSERT(t->delay >= timer_duration_t(0) && (t->delay != timer_duration_t(~0)));
-//			WAWO_ASSERT(t->expire == timer_timepoint_t());
+			t->expire = timer_clock_t::now() + t->delay;
 			m_tq.push(t);
 			if (m_has_own_run_th) {
 				__check_th_and_wait();
 			}
+			return t->expire;
 		}
 
-		void start(WWRP<timer>&& t) {
+		timer_timepoint_t start(WWRP<timer>&& t) {
 			lock_guard<mutex> lg(m_mutex);
 			WAWO_ASSERT(t != NULL);
 			WAWO_ASSERT(t->delay >= timer_duration_t(0) && (t->delay != timer_duration_t(~0)) );
-//			WAWO_ASSERT(t->expire == timer_timepoint_t());
+			t->expire = timer_clock_t::now() + t->delay;
 			m_tq.push(std::forward<WWRP<timer>>(t));
 			if (m_has_own_run_th) {
 				__check_th_and_wait();
 			}
+			return t->expire;
 		}
 
 		void _run() {
@@ -229,7 +231,7 @@ namespace wawo {
 				while (!m_tq.empty()) {
 					WWRP<timer>& tm = m_tq.front();
 					WAWO_ASSERT(tm->delay.count() >= 0);
-					tm->expire = timer_clock_t::now() + tm->delay;
+					WAWO_ASSERT(tm->expire > timer_timepoint_t() );
 					m_heap->push(std::move(tm));
 					m_tq.pop();
 				}
