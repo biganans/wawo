@@ -17,7 +17,7 @@ namespace wawo {
 
 	/*
 	 * @note
-	 * it is a pure impl for stopwatch and repeatable stopwatch
+	 * it is a pure impl for stopwatch
 	 * do not make your business depend on timer's life cycle management
 	 *
 	 * expire == zero() mean stoped
@@ -32,7 +32,7 @@ namespace wawo {
 	 *		a), new timer wait exceed current wait time
 	 *		b), new timer wait less than current wait time
 	 * 3,current timer thread should be terminated if no new timer started
-	 * 4,must launch new thread when current thread is not running at the moment
+	 * 4,must launch new thread when current thread is not running at the moment of new timer planed
 	 * 5,timer thread could be interrupted at any given time [ie, interrupt wait state when process exit]
 	 * 
 	 */
@@ -183,7 +183,6 @@ namespace wawo {
 			WAWO_ASSERT(t->delay >= timer_duration_t(0) && (t->delay != timer_duration_t(~0)) );
 			WAWO_ASSERT(t->expire == timer_timepoint_t());
 			m_tq.push(std::forward<WWRP<timer>>(t));
-
 			if (m_has_own_run_th) {
 				__check_th_and_wait();
 			}
