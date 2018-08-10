@@ -451,7 +451,7 @@ namespace wawo { namespace net {
 			}
 #else
 			while(ec == wawo::OK) {
-				if (WAWO_UNLIKELY(m_flag&F_READ_SHUTDOWN)) { return; }
+				if (WAWO_UNLIKELY(m_flag&(F_READ_SHUTDOWN|F_CLOSING/*ignore the left read buffer, cuz we're closing it*/))) { return; }
 				wawo::u32_t nbytes = socket_base::recv(m_trb, m_cfg.buffer.rcv_size, ec);
 				if (WAWO_LIKELY(nbytes>0)) {
 					WWRP<packet> p = wawo::make_ref<packet>(nbytes);

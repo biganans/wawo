@@ -82,6 +82,11 @@ namespace wawo {
 		}
 	};
 
+	template <class dur>
+	inline bool set_delay(dur const& delay_) {
+		delay = delay_;
+	}
+
 	inline bool operator < (WWRP<timer> const& l, WWRP<timer> const& r) {
 		return l->expire < r->expire;
 	}
