@@ -69,7 +69,7 @@ namespace wawo { namespace net {
 		}
 
 #ifdef WAWO_IO_MODE_IOCP
-		inline void IOCP_overlapped_call(u8_t const& flag, int const& fd, fn_overlapped_io_event const& fn_overlapped, fn_io_event const& fn) {
+		inline void IOCP_overlapped_call(u8_t const& flag, SOCKET const& fd, fn_overlapped_io_event const& fn_overlapped, fn_io_event const& fn) {
 			WAWO_ASSERT(fd > 0);
 			WWRP<io_event_loop> loop(this);
 			execute([loop, flag, fd, fn_overlapped, fn]() -> void {
@@ -91,7 +91,7 @@ namespace wawo { namespace net {
 		virtual void do_unwatch(u8_t const& flag, SOCKET const& fd) = 0;
 
 #ifdef WAWO_IO_MODE_IOCP
-		virtual void do_IOCP_overlapped_call( u8_t const& flag, int const& fd, fn_overlapped_io_event const& fn_overlapped, fn_io_event const& fn) = 0;
+		virtual void do_IOCP_overlapped_call( u8_t const& flag, SOCKET const& fd, fn_overlapped_io_event const& fn_overlapped, fn_io_event const& fn) = 0;
 #endif
 	};
 

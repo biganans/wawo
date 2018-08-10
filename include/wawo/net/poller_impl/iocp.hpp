@@ -389,7 +389,7 @@ namespace wawo { namespace net { namespace impl {
 			}
 		}
 
-		void do_IOCP_overlapped_call(u8_t const& flag, int const& fd, fn_overlapped_io_event const& fn_overlapped, fn_io_event const& fn) {
+		void do_IOCP_overlapped_call(u8_t const& flag, SOCKET const& fd, fn_overlapped_io_event const& fn_overlapped, fn_io_event const& fn) {
 			iocp_ctxs_map::iterator it = m_ctxs.find(fd);
 			WAWO_ASSERT(it != m_ctxs.end());
 			WWSP<iocp_ctxs> _iocp_ctxs = it->second;

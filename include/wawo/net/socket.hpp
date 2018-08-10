@@ -385,7 +385,7 @@ namespace wawo { namespace net {
 				address laddr(*laddr_in);
 
 				if (raddr_in == laddr_in) {
-					WAWO_CLOSE_SOCKET(r.v.fd);
+					WAWO_CLOSE_SOCKET(r.fd);
 				} else {
 					WAWO_ASSERT(laddr.port() == m_laddr.port());
 					WAWO_ASSERT(raddr_in->sin_family == OS_DEF_family[m_family]);
@@ -525,7 +525,7 @@ namespace wawo { namespace net {
 			return __IOCP_CALL_IMPL_WSASocket();
 		}
 
-		inline int __IOCP_CALL_IMPL_WSASocket() {
+		inline SOCKET __IOCP_CALL_IMPL_WSASocket() {
 			return ::WSASocketW( OS_DEF_family[m_family], OS_DEF_sock_type[m_type], OS_DEF_protocol[m_protocol], NULL, 0, WSA_FLAG_OVERLAPPED);
 		}
 

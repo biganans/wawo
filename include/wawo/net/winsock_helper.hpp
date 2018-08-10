@@ -85,7 +85,7 @@ namespace wawo { namespace net {
 			::WSACleanup();
 		}
 
-		inline void* load_api_ex_address(winsock_api_ex id) {
+		__WW_FORCE_INLINE void* load_api_ex_address(winsock_api_ex id) {
 			return m_api_address[id];
 		}
 	};
