@@ -71,7 +71,7 @@ namespace wawo { namespace net {
 
 			if (flag&IOE_READ) {
 				ctx->flag |= IOE_READ;
-				TRACE_IOE("[io_event_loop][#%d]watch IOE_READ", ctx->fd);
+				WAWO_TRACE_IOE("[io_event_loop][#%d]watch IOE_READ", ctx->fd);
 #ifdef _DEBUG
 				WAWO_ASSERT(ctx->fn[IOE_SLOT_READ] == NULL);
 #endif
@@ -80,7 +80,7 @@ namespace wawo { namespace net {
 
 			if (flag&IOE_WRITE) {
 				ctx->flag |= IOE_WRITE;
-				TRACE_IOE("[io_event_loop][#%d]watch IOE_WRITE", ctx->fd);
+				WAWO_TRACE_IOE("[io_event_loop][#%d]watch IOE_WRITE", ctx->fd);
 #ifdef _DEBUG
 				WAWO_ASSERT(ctx->fn[IOE_SLOT_WRITE] == NULL);
 #endif
@@ -91,7 +91,7 @@ namespace wawo { namespace net {
 		inline void ctx_update_for_unwatch(WWRP<poller_ctx>& ctx, u8_t const& flag)
 		{
 			if ((flag&IOE_READ) && (ctx->flag)&flag) {
-				TRACE_IOE("[io_event_loop][#%d]unwatch IOE_READ", ctx->fd);
+				WAWO_TRACE_IOE("[io_event_loop][#%d]unwatch IOE_READ", ctx->fd);
 				ctx->flag &= ~(IOE_READ);
 #ifdef _DEBUG
 				ctx->fn[IOE_SLOT_READ] = NULL;
@@ -99,7 +99,7 @@ namespace wawo { namespace net {
 			}
 
 			if ((flag&IOE_WRITE) && (ctx->flag)&flag) {
-				TRACE_IOE("[io_event_loop][#%d]unwatch IOE_WRITE", ctx->fd);
+				WAWO_TRACE_IOE("[io_event_loop][#%d]unwatch IOE_WRITE", ctx->fd);
 				ctx->flag &= ~(IOE_WRITE);
 #ifdef _DEBUG
 				ctx->fn[IOE_SLOT_WRITE] = NULL;

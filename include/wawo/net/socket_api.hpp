@@ -120,7 +120,7 @@ namespace wawo { namespace net { namespace socket_api {
 						continue;
 					}
 					else {
-						WAWO_ERR("[wawo::net::send][#%d]send failed, error code: <%d>", fd, ec);
+						WAWO_TRACE_SOCKET_API("[wawo::net::send][#%d]send failed: %d", fd, ec);
 						ec_o = ec;
 						break;
 					}
@@ -162,7 +162,7 @@ namespace wawo { namespace net { namespace socket_api {
 					else {
 						WAWO_ASSERT(ec != wawo::OK);
 						ec_o = ec;
-						WAWO_ERR("[wawo::net::recv][#%d]recv error, errno: %d", fd, ec);
+						WAWO_TRACE_SOCKET_API("[wawo::net::recv][#%d]recv: %d", fd, ec);
 						break;
 					}
 				}
@@ -206,7 +206,7 @@ namespace wawo { namespace net { namespace socket_api {
 					continue;
 				}
 				else {
-					WAWO_ERR("[wawo::net::sendto][#%d]send failed, error code: <%d>", fd, send_ec);
+					WAWO_TRACE_SOCKET_API("[wawo::net::sendto][#%d]send failed, error code: %d", fd, send_ec);
 					ec_o = WAWO_NEGATIVE(send_ec);
 				}
 				break;
@@ -243,7 +243,7 @@ namespace wawo { namespace net { namespace socket_api {
 				}
 				else {
 					ec_o = WAWO_NEGATIVE(_ern);
-					WAWO_ERR("[wawo::net::recvfrom][#%d]recvfrom, ERROR: %d", fd, _ern);
+					WAWO_TRACE_SOCKET_API("[wawo::net::recvfrom][#%d]recvfrom, ERROR: %d", fd, _ern);
 				}
 
 				r_total = 0;
@@ -493,7 +493,7 @@ namespace wawo { namespace net { namespace socket_api {
 					}
 					else {
 						ec_o = WAWO_NEGATIVE(r);
-						WAWO_ERR("[wawo::net::wcp_socket::recv][#%d]recv error, errno: %d", fd, r);
+						WAWO_TRACE_SOCKET_API("[wawo::net::wcp_socket::recv][#%d]recv error, errno: %d", fd, r);
 					}
 					break;
 				}

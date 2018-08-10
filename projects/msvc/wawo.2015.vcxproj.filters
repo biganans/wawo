@@ -431,9 +431,6 @@
     <ClInclude Include="..\..\include\wawo\thread_run_object_abstract.hpp">
       <Filter>Header Files\wawo</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\wawo\ticker.hpp">
-      <Filter>Header Files\wawo</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\wawo\tls.hpp">
       <Filter>Header Files\wawo</Filter>
     </ClInclude>

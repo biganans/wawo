@@ -12,13 +12,6 @@
 #include <wawo/event_trigger.hpp>
 #include <map>
 
-#define ENABLE_DEBUG_STREAM 1
-#ifdef ENABLE_DEBUG_STREAM
-	#define DEBUG_STREAM WAWO_INFO
-#else
-	#define DEBUG_STREAM(...)
-#endif
-
 namespace wawo { namespace net { namespace handler {
 
 	enum mux_stream_frame_flag {
@@ -132,14 +125,14 @@ namespace wawo { namespace net { namespace handler {
 			});
 		}
 		inline void _ch_do_shutdown_write(WWRP<channel_promise> const& ch_p) {
-			DEBUG_STREAM("[muxs][s%u]_ch_do_shutdown_write", m_id );
+			WAWO_TRACE_STREAM("[muxs][s%u]_ch_do_shutdown_write", m_id );
 			WAWO_ASSERT((m_flag&F_WRITE_SHUTDOWN) == 0);
 			m_flag |= F_WRITE_SHUTDOWN;
 
 			//LAST CHANCE
 			if (m_flag&F_WRITE_BLOCKED) {
 				m_flag &= ~F_WRITE_BLOCKED;
-				DEBUG_STREAM("[muxs][s%u]stream write unblock, m_snd_wnd: %u", m_id, m_snd_wnd);
+				WAWO_TRACE_STREAM("[muxs][s%u]stream write unblock, m_snd_wnd: %u", m_id, m_snd_wnd);
 				event_poller()->schedule([CH = WWRP<channel>(this)]() {
 					CH->ch_fire_write_unblock();
 				});
@@ -170,11 +163,11 @@ namespace wawo { namespace net { namespace handler {
 		{
 			WAWO_ASSERT(ctx != NULL);
 			_init();
-			TRACE_CH_OBJECT("mux_stream::mux_stream()");
+			WAWO_TRACE_CH_OBJECT("[s%u]mux_stream::mux_stream()", m_id );
 		}
 
 		~mux_stream() {
-			TRACE_CH_OBJECT("mux_stream::~mux_stream()");
+			WAWO_TRACE_CH_OBJECT("[s%u]mux_stream::~mux_stream()",m_id);
 		}
 
 		void ch_set_read_buffer_size(u32_t size) {
@@ -227,7 +220,7 @@ namespace wawo { namespace net { namespace handler {
 			return m_rcv_wnd;
 		}
 		int _ch_set_write_buffer_size(u32_t size) {
-			DEBUG_STREAM("muxs[s%u]update write buffer from: %u to: %u", m_id, m_snd_wnd, size);
+			WAWO_TRACE_STREAM("muxs[s%u]update write buffer from: %u to: %u", m_id, m_snd_wnd, size);
 //			m_snd_wnd = size;
 			return wawo::OK;
 		}
@@ -262,7 +255,7 @@ namespace wawo { namespace net { namespace handler {
 			}
 
 			if ( (frame.flag&FRAME_DATA) && (m_flag&F_WRITE_BLOCKED) ) {
-				DEBUG_STREAM("[muxs][s%u]stream write block, in block,m_snd_wnd: %u, queue bytes: %u, incoming: %u", m_id, m_snd_wnd, m_entry_q_bytes, frame.data->len());
+				WAWO_TRACE_STREAM("[muxs][s%u]stream write block, in block,m_snd_wnd: %u, queue bytes: %u, incoming: %u", m_id, m_snd_wnd, m_entry_q_bytes, frame.data->len());
 				event_poller()->schedule([ch_promise]() {
 					ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
 				});
@@ -284,7 +277,7 @@ namespace wawo { namespace net { namespace handler {
 			
 			if ((frame.flag&FRAME_DATA) && m_entry_q_bytes + frame.data->len() > m_snd_wnd) {
 				m_flag |= F_WRITE_BLOCKED;
-				DEBUG_STREAM("[muxs][s%u]stream write block, set block,m_snd_wnd: %u, queue bytes: %u, incoming: %u", m_id, m_snd_wnd, m_entry_q_bytes, frame.data->len());
+				WAWO_TRACE_STREAM("[muxs][s%u]stream write block, set block,m_snd_wnd: %u, queue bytes: %u, incoming: %u", m_id, m_snd_wnd, m_entry_q_bytes, frame.data->len());
 				event_poller()->schedule([ch_promise,CH=WWRP<wawo::net::channel>(this)]() {
 					ch_promise->set_success(wawo::E_CHANNEL_WRITE_BLOCK);
 					CH->ch_fire_write_block();
@@ -359,10 +352,10 @@ namespace wawo { namespace net { namespace handler {
 					ch_flush_impl();
 				} else {
 					if ((m_flag&F_CLOSING)&&(m_state == SS_ESTABLISHED)) {
-						DEBUG_STREAM("[mux_stream][s%u]_ch_do_close_read_write by F_CLOSING", m_id);
+						WAWO_TRACE_STREAM("[mux_stream][s%u]_ch_do_close_read_write by F_CLOSING", m_id);
 						_ch_do_close_read_write(NULL);
 					} else if ( (m_flag&F_WRITE_SHUTDOWNING) && (m_flag&F_WRITE_SHUTDOWN) == 0) {
-						DEBUG_STREAM("[mux_stream][s%u]_ch_do_shutdown_write by F_WRITE_SHUTDOWNING", m_id);
+						WAWO_TRACE_STREAM("[mux_stream][s%u]_ch_do_shutdown_write by F_WRITE_SHUTDOWNING", m_id);
 						WAWO_ASSERT(m_shutdown_write_promise != NULL);
 						_ch_do_shutdown_write(m_shutdown_write_promise);
 						m_shutdown_write_promise = NULL;
@@ -370,7 +363,7 @@ namespace wawo { namespace net { namespace handler {
 					} else {
 						if (m_flag&F_WRITE_BLOCKED) {
 							m_flag &= ~F_WRITE_BLOCKED;
-							DEBUG_STREAM("[muxs][s%u]stream write unblock, m_snd_wnd: %u", m_id, m_snd_wnd);
+							WAWO_TRACE_STREAM("[muxs][s%u]stream write unblock, m_snd_wnd: %u", m_id, m_snd_wnd);
 							event_poller()->schedule([CH = WWRP<channel>(this)]() {
 								CH->ch_fire_write_unblock();
 							});
@@ -419,7 +412,7 @@ namespace wawo { namespace net { namespace handler {
 
 #ifdef ENABLE_DEBUG_STREAM
 					if (m_rcv_data_incre > 0) {
-						DEBUG_STREAM("[muxs][s%u]rewind m_rcv_data_incre from: %u to 0", m_id, m_rcv_data_incre);
+						WAWO_TRACE_STREAM("[muxs][s%u]rewind m_rcv_data_incre from: %u to 0", m_id, m_rcv_data_incre);
 					}
 #endif
 					m_rcv_data_incre = 0; //rewind wnd incre
@@ -507,7 +500,7 @@ namespace wawo { namespace net { namespace handler {
 				return;
 			}
 
-			DEBUG_STREAM("[mux][s%u]stream close read, left read packet: %u", ch_id(), m_incomes_buffer_q.size() );
+			WAWO_TRACE_STREAM("[mux][s%u]stream close read, left read packet: %u", ch_id(), m_incomes_buffer_q.size() );
 			_ch_do_shutdown_read(ch_promise);//always return wawo::OK
 			__rdwr_shutdown_check();
 		}
@@ -543,7 +536,7 @@ namespace wawo { namespace net { namespace handler {
 			if (m_fin_enqueue_done == false) {
 				WAWO_ASSERT(m_fin_enqueue_done == false);
 				m_fin_enqueue_done = true;
-				DEBUG_STREAM("[mux_stream][s%u]write fin by shutdown_write", m_id);
+				WAWO_TRACE_STREAM("[mux_stream][s%u]write fin by shutdown_write", m_id);
 				__push_frame(make_frame_fin(), make_promise());
 			}
 
@@ -556,7 +549,7 @@ namespace wawo { namespace net { namespace handler {
 		void _ch_do_close_read_write(WWRP<channel_promise> const& close_f) {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			WAWO_ASSERT(m_state == SS_ESTABLISHED);
-			DEBUG_STREAM("[mux_stream][s%u]close mux_stream", m_id);
+			WAWO_TRACE_STREAM("[mux_stream][s%u]close mux_stream", m_id);
 			m_state = SS_CLOSED;
 			if (!(m_flag&F_READ_SHUTDOWN)) {
 				_ch_do_shutdown_read(NULL);
@@ -571,7 +564,7 @@ namespace wawo { namespace net { namespace handler {
 				const mux_stream_outbound_entry& f_entry = m_entry_q.front();
 				const mux_stream_frame& f = f_entry.f;
 
-				DEBUG_STREAM("[muxs][s%u]write cancel, bytes: %u", m_id, f.data->len());
+				WAWO_TRACE_STREAM("[muxs][s%u]write cancel, bytes: %u", m_id, f.data->len());
 				if (f.flag&FRAME_DATA) {
 					m_entry_q_bytes -= f.data->len();
 				}
@@ -605,7 +598,7 @@ namespace wawo { namespace net { namespace handler {
 				return;
 			}
 
-			DEBUG_STREAM("[mux_stream][s%u][%u]ch_close_impl begin", m_id, m_flag );
+			WAWO_TRACE_STREAM("[mux_stream][s%u][%u]ch_close_impl begin", m_id, m_flag );
 			WAWO_ASSERT(m_state == SS_ESTABLISHED);
 			if ((m_flag&(F_WRITE_ERROR)) != 0) {
 				WAWO_ASSERT(ch_get_errno() != wawo::OK);
@@ -621,7 +614,7 @@ namespace wawo { namespace net { namespace handler {
 			}
 
 			if (m_fin_enqueue_done == false) {
-				DEBUG_STREAM("[mux_stream][s%u]write fin by close", m_id);
+				WAWO_TRACE_STREAM("[mux_stream][s%u]write fin by close", m_id);
 				WAWO_ASSERT((m_flag&F_CLOSING)==0);
 
 				m_fin_enqueue_done = true;
@@ -650,7 +643,7 @@ namespace wawo { namespace net { namespace handler {
 			WAWO_ASSERT(event_poller()->in_event_loop());
 			if (m_state != SS_CLOSED && (m_flag&(F_READWRITE_SHUTDOWN)) == F_READWRITE_SHUTDOWN) {
 				event_poller()->schedule([CH=WWRP<channel>(this)]() {
-					DEBUG_STREAM("[mux_stream][s%u]__rdwr_shutdown_check trigger ch_close()", CH->ch_id() );
+					WAWO_TRACE_STREAM("[mux_stream][s%u]__rdwr_shutdown_check trigger ch_close()", CH->ch_id() );
 					CH->ch_close();
 				});
 			}
@@ -666,7 +659,7 @@ namespace wawo { namespace net { namespace handler {
 			}
 			
 			if ( m_state == SS_ESTABLISHED && m_rcv_data_incre > 0 && m_entry_q.size() == 0) {
-				DEBUG_STREAM("[mux][s%u]push uwnd by begin read", m_id );
+				WAWO_TRACE_STREAM("[mux][s%u]push uwnd by begin read", m_id );
 				__push_frame(make_frame_uwnd(), make_promise());
 			}
 		}
@@ -722,16 +715,16 @@ namespace wawo { namespace net { namespace handler {
 			switch (flag) {
 			case mux_stream_frame_flag::FRAME_DATA:
 			{
-				DEBUG_STREAM("[muxs][s%u][data]recv, len: %u", ch_id(), data->len() );
+				WAWO_TRACE_STREAM("[muxs][s%u][data]recv, len: %u", ch_id(), data->len() );
 				if (m_flag&F_READ_SHUTDOWN) {
 					m_rcv_data_incre += data->len();
-					DEBUG_STREAM("[muxs][s%u][data]nbytes, but stream read closed,ignore data", m_id, data->len());
+					WAWO_TRACE_STREAM("[muxs][s%u][data]nbytes, but stream read closed,ignore data", m_id, data->len());
 					break;
 				}
 _BEGIN:
 				if (!(m_flag&F_WATCH_READ)) {
 					m_incomes_buffer_q.push(data);
-					DEBUG_STREAM("[muxs][s%u]incoming: %u, buffer to q", m_id, data->len());
+					WAWO_TRACE_STREAM("[muxs][s%u]incoming: %u, buffer to q", m_id, data->len());
 					break;
 				}
 				if (m_incomes_buffer_q.size()) {
@@ -747,19 +740,19 @@ _BEGIN:
 			break;
 			case mux_stream_frame_flag::FRAME_FIN:
 			{
-				DEBUG_STREAM("[muxs][s%u][fin]recv", ch_id());
+				WAWO_TRACE_STREAM("[muxs][s%u][fin]recv", ch_id());
 				ch_shutdown_read();
 			}
 			break;
 			case mux_stream_frame_flag::FRAME_UWND:
 			{
 				WAWO_ASSERT(wnd > 0);
-				DEBUG_STREAM("[muxs][s%u][uwnd]recv", ch_id(), wnd );
+				WAWO_TRACE_STREAM("[muxs][s%u][uwnd]recv", ch_id(), wnd );
 			}
 			break;
 			case mux_stream_frame_flag::FRAME_RST:
 			{
-				DEBUG_STREAM("[muxs][s%u][rst]recv, force close", ch_id());
+				WAWO_TRACE_STREAM("[muxs][s%u][rst]recv, force close", ch_id());
 				ch_errno(-2);
 				ch_close();
 			}
@@ -767,7 +760,7 @@ _BEGIN:
 			}
 			//check wnd
 			if (wnd>0) {
-				DEBUG_STREAM("[muxs][s%u][wndupdate] old: %u, add: %u, new: %u", ch_id(), m_snd_wnd, wnd, m_snd_wnd+wnd);
+				WAWO_TRACE_STREAM("[muxs][s%u][wndupdate] old: %u, add: %u, new: %u", ch_id(), m_snd_wnd, wnd, m_snd_wnd+wnd);
 				m_snd_wnd += wnd;
 				if ((m_flag&F_WRITE_BLOCKED)) {
 					m_flag &= ~F_WRITE_BLOCKED;
@@ -778,7 +771,7 @@ _BEGIN:
 			}
 
 			if (m_state == SS_ESTABLISHED && (m_rcv_data_incre>0) ) {
-				DEBUG_STREAM("[muxs][s%u][m_rcv_data_incre] %u", ch_id(), m_rcv_data_incre );
+				WAWO_TRACE_STREAM("[muxs][s%u][m_rcv_data_incre] %u", ch_id(), m_rcv_data_incre );
 				event_poller()->schedule([s=WWRP<mux_stream>(this)]() {
 					s->_update_rcv_data_incre();
 				});
@@ -903,7 +896,7 @@ _BEGIN:
 		
 			WWRP<mux_stream> S = wawo::make_ref<mux_stream>(id, m_ch_ctx);
 			m_stream_map.insert({ id, S });
-			DEBUG_STREAM("[mux][s%u]insert stream", id);
+			WAWO_TRACE_STREAM("[mux][s%u]insert stream", id);
 			S->ch_close_future()->add_listener([M=WWRP<mux>(this), id](WWRP<wawo::net::channel_future> const& f) {
 				M->close_stream(id);
 				(void)f;
@@ -915,7 +908,7 @@ _BEGIN:
 			lock_guard<spin_mutex> lg(m_mutex);
 			WAWO_ASSERT(id > 0);
 			::size_t c = m_stream_map.erase(id);
-			DEBUG_STREAM("[mux][s%u]erase stream, erase count: %d", id, c );
+			WAWO_TRACE_STREAM("[mux][s%u]erase stream, erase count: %d", id, c );
 			(void)c;
 		}
 	};

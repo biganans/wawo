@@ -633,12 +633,12 @@ namespace wawo { namespace net {
 			}
 
 			if (m_flag&F_WATCH_READ) {
-				TRACE_IOE("[socket][%s][begin_read]ignore for watch already", info().to_stdstring().c_str());
+				WAWO_TRACE_IOE("[socket][%s][begin_read]ignore for watch already", info().to_stdstring().c_str());
 				return;
 			}
 
 			if (m_flag&F_READ_SHUTDOWN) {
-				TRACE_IOE("[socket][%s][begin_read]cancel for rd shutdowned already", info().to_stdstring().c_str());
+				WAWO_TRACE_IOE("[socket][%s][begin_read]cancel for rd shutdowned already", info().to_stdstring().c_str());
 				if (fn_read != NULL) {
 					fn_read({ AIO_READ, m_fd, wawo::E_CHANNEL_READ_SHUTDOWN_ALREADY , 0 });
 				}
@@ -647,7 +647,7 @@ namespace wawo { namespace net {
 
 			const fn_io_event _fn_io = fn_read == NULL ? std::bind(&socket::__cb_async_read, WWRP<socket>(this), std::placeholders::_1): fn_read ;
 			m_flag |= (F_WATCH_READ | async_flag);
-			TRACE_IOE("[socket][%s][begin_read]watch IOE_READ", info().to_stdstring().c_str());
+			WAWO_TRACE_IOE("[socket][%s][begin_read]watch IOE_READ", info().to_stdstring().c_str());
 			event_poller()->watch(IOE_READ, fd(), _fn_io);
 		}
 
@@ -662,7 +662,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(is_nonblocking());
 			if ((m_flag&F_WATCH_READ) ) {
 				m_flag &= ~(F_WATCH_READ | F_WATCH_READ_INFINITE);
-				TRACE_IOE("[socket][%s][end_read]unwatch IOE_READ", info().to_stdstring().c_str());
+				WAWO_TRACE_IOE("[socket][%s][end_read]unwatch IOE_READ", info().to_stdstring().c_str());
 				event_poller()->unwatch(IOE_READ, fd());
 			}
 		}
@@ -692,7 +692,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(is_nonblocking());
 			if ((m_flag&F_WATCH_WRITE)) {
 				m_flag &= ~(F_WATCH_WRITE);
-				TRACE_IOE("[socket][%s][end_write]unwatch IOE_WRITE", info().to_stdstring().c_str());
+				WAWO_TRACE_IOE("[socket][%s][end_write]unwatch IOE_WRITE", info().to_stdstring().c_str());
 				event_poller()->unwatch(IOE_WRITE, fd());
 			}
 		}
@@ -713,7 +713,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(!(m_flag&F_WRITE_SHUTDOWN));
 			WAWO_ASSERT(!(m_flag&F_WATCH_WRITE));
 			m_flag |= F_WATCH_WRITE;
-			TRACE_IOE("[socket][%s][begin_connect]watch IOE_WRITE", info().to_stdstring().c_str() );
+			WAWO_TRACE_IOE("[socket][%s][begin_connect]watch IOE_WRITE", info().to_stdstring().c_str() );
 			event_poller()->watch( IOE_WRITE, fd(), _fn_io);
 		}
 
@@ -733,12 +733,12 @@ namespace wawo { namespace net {
 				return;
 			}
 			if (m_flag&F_WATCH_WRITE) {
-				TRACE_IOE("[socket][%s][begin_write]ignore for write watch already", info().to_stdstring().c_str());
+				WAWO_TRACE_IOE("[socket][%s][begin_write]ignore for write watch already", info().to_stdstring().c_str());
 				return;
 			}
 
 			if (m_flag&F_WRITE_SHUTDOWN) {
-				TRACE_IOE("[socket][%s][begin_write]cancel for wr shutdowned already", info().to_stdstring().c_str() );
+				WAWO_TRACE_IOE("[socket][%s][begin_write]cancel for wr shutdowned already", info().to_stdstring().c_str() );
 				if (fn_write != NULL) {
 					fn_write({ AIO_WRITE, m_fd,wawo::E_CHANNEL_WRITE_SHUTDOWN_ALREADY,0 });
 				}
@@ -747,7 +747,7 @@ namespace wawo { namespace net {
 
 			const fn_io_event _fn_io = fn_write == NULL ? std::bind(&socket::__cb_async_flush, WWRP<socket>(this), std::placeholders::_1) : fn_write;
 			m_flag |= (F_WATCH_WRITE);
-			TRACE_IOE("[socket][%s][begin_write]watch IOE_WRITE", info().to_stdstring().c_str() );
+			WAWO_TRACE_IOE("[socket][%s][begin_write]watch IOE_WRITE", info().to_stdstring().c_str() );
 			event_poller()->watch(IOE_WRITE,fd(), _fn_io );
 		}
 #endif

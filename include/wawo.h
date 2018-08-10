@@ -15,7 +15,6 @@
 #include <wawo/mutex.hpp>
 #include <wawo/condition.hpp>
 #include <wawo/thread.hpp>
-#include <wawo/ticker.hpp>
 
 #include <wawo/event_trigger.hpp>
 #include <wawo/timer.hpp>

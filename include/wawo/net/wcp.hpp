@@ -10,7 +10,6 @@
 #include <wawo/singleton.hpp>
 
 #include <wawo/mutex.hpp>
-#include <wawo/ticker.hpp>
 
 #include <wawo/bytes_ringbuffer.hpp>
 #include <wawo/packet.hpp>

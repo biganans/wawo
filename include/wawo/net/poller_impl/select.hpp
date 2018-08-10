@@ -37,7 +37,7 @@ namespace wawo { namespace net { namespace impl {
 				poller_ctx_map::iterator it = m_ctxs.find(fd);
 				
 				if (it == m_ctxs.end()) {
-					TRACE_IOE("[io_event_loop][#%d]watch_ioe: make new, flag: %u", fd, flag );
+					WAWO_TRACE_IOE("[io_event_loop][#%d]watch_ioe: make new, flag: %u", fd, flag );
 					WWRP<poller_ctx> _ctx = wawo::make_ref<poller_ctx>();
 					_ctx->fd = fd;
 					_ctx->flag = 0;
@@ -50,7 +50,7 @@ namespace wawo { namespace net { namespace impl {
 				}
 
 				ctx_update_for_watch(ctx, flag, fn );
-				TRACE_IOE("[io_event_loop][#%d]watch_ioe: update: %d, now: %d", fd, flag, ctx->flag);
+				WAWO_TRACE_IOE("[io_event_loop][#%d]watch_ioe: update: %d, now: %d", fd, flag, ctx->flag);
 			}
 
 			inline void unwatch_ioe( u8_t const& flag, SOCKET const& fd) {
@@ -66,7 +66,7 @@ namespace wawo { namespace net { namespace impl {
 				ctx_update_for_unwatch(ctx, flag);
 
 				if ((ctx->flag == 0)) {
-					TRACE_IOE("[select][#%d]erase fd from IOE", ctx->fd);
+					WAWO_TRACE_IOE("[select][#%d]erase fd from IOE", ctx->fd);
 					m_ctxs.erase(it);
 				}
 			}
@@ -96,7 +96,6 @@ namespace wawo { namespace net { namespace impl {
 			FD_ZERO(&m_fds_e);
 
 			SOCKET max_fd_v = wawo::E_INVALID_SOCKET;
-
 			poller_ctx_map::iterator it = m_ctxs.begin();
 			while( it != m_ctxs.end() ) {
 				WWRP<poller_ctx> const& ctx = it->second ;
@@ -121,7 +120,7 @@ namespace wawo { namespace net { namespace impl {
 				
 				++it;
 			}
-			_select(max_fd_v, m_fds_r, m_fds_w,m_fds_e );
+			_select(max_fd_v, m_fds_r, m_fds_w,m_fds_e);
 		}
 
 		inline void _select(SOCKET const& max_fd_v, fd_set& fds_r, fd_set& fds_w, fd_set& fds_ex) {

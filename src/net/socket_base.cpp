@@ -66,7 +66,7 @@ namespace wawo { namespace net {
 			_socket_fn_init();
 			WAWO_ASSERT(fd != wawo::E_INVALID_SOCKET );
 
-			TRACE_CH_OBJECT("[socket_base][%s]socket_base::socket_base(), new connected address: %p", info().to_stdstring().c_str(), this);
+			WAWO_TRACE_CH_OBJECT("[socket_base][#%u][%s]socket_base::socket_base(), address: %p", m_fd, info().to_stdstring().c_str(), this);
 		}
 
 		socket_base::socket_base(s_family const& family, s_type const& sockt, s_protocol const& proto) :
@@ -88,11 +88,11 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(proto < P_UNKNOWN);
 
 			_socket_fn_init();
-			TRACE_CH_OBJECT("[socket_base][%s]socket_base::socket_base(), dummy socket, address: %p", info().to_stdstring().c_str(), this);
+			WAWO_TRACE_CH_OBJECT("[socket_base][#dummy][%s]socket_base::socket_base(), address: %p", info().to_stdstring().c_str(), this);
 		}
 
 		socket_base::~socket_base() {
-			TRACE_CH_OBJECT("[socket_base][%s]socket_base::~socket_base(),address: %p", info().to_stdstring().c_str(), this);
+			WAWO_TRACE_CH_OBJECT("[socket_base][#%u][%s]socket_base::~socket_base(),address: %p", m_fd, info().to_stdstring().c_str(), this);
 		}
 
 		int socket_base::_cfg_reuseaddr(bool onoff) {

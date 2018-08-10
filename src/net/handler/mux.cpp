@@ -23,7 +23,7 @@ namespace wawo { namespace net { namespace handler {
 		u32_t len = income->read<u32_t>();
 
 		if (flag >= mux_stream_frame_flag::FRAME_MUX_STREAM_MESSAGE_TYPE_MAX) {
-			DEBUG_STREAM("[muxs][s%u][rst]invalid stream message type, ignore", id);
+			WAWO_TRACE_STREAM("[muxs][s%u][rst]invalid stream message type, ignore", id);
 			return;
 		}
 		WAWO_ASSERT(id > 0);
@@ -64,11 +64,11 @@ namespace wawo { namespace net { namespace handler {
 			typename stream_map_t::iterator it = m_stream_map.find(id);
 			if (it == m_stream_map.end()) {
 				if (flag == mux_stream_frame_flag::FRAME_RST) {
-					DEBUG_STREAM("[mux][s%u][rst]stream not found, ignore", id);
+					WAWO_TRACE_STREAM("[mux][s%u][rst]stream not found, ignore", id);
 					return;
 				}
 
-				DEBUG_STREAM("[mux][s%u][%u]stream not found, reply rst, len: %u", id, flag, income->len() );
+				WAWO_TRACE_STREAM("[mux][s%u][%u]stream not found, reply rst, len: %u", id, flag, income->len() );
 				mux_stream_frame f = make_frame_rst();
 				f.data->write_left<u32_t>(0);
 				f.data->write_left<u32_t>(0);
@@ -107,7 +107,7 @@ namespace wawo { namespace net { namespace handler {
 			//@TODO, we have to check read_shutdown,then do flush
 			it->second->ch_errno(-1);
 			it->second->ch_close();
-			DEBUG_STREAM("[mux][s%u][mux_close]mux closed, close all mux_stream", it->second->ch_id() );
+			WAWO_TRACE_STREAM("[mux][s%u][mux_close]mux closed, close all mux_stream", it->second->ch_id() );
 			++it;
 		}
 

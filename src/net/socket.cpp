@@ -182,7 +182,7 @@ namespace wawo { namespace net {
 			WAWO_ASSERT(m_state == S_CONNECTING);
 			m_fn_dial_initializer = initializer;
 			m_dial_promise = ch_promise;
-			TRACE_IOE("[socket][%s][async_connect]watch(IOE_WRITE)", info().to_stdstring().c_str());
+			WAWO_TRACE_IOE("[socket][%s][async_connect]watch(IOE_WRITE)", info().to_stdstring().c_str());
 #ifdef WAWO_IO_MODE_IOCP
 			socket::__IOCP_CALL_ConnectEx();
 #else

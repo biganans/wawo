@@ -51,11 +51,11 @@ namespace wawo { namespace net {
 			m_ctx(NULL),
 			m_errno(0)
 		{
-			TRACE_CH_OBJECT("channel::channel()");
+			WAWO_TRACE_CH_OBJECT("channel::channel()");
 		}
 
 		~channel() {
-			TRACE_CH_OBJECT("channel::~channel()");
+			WAWO_TRACE_CH_OBJECT("channel::~channel()");
 		}
 
 		inline WWRP<io_event_loop> const& event_poller() const {

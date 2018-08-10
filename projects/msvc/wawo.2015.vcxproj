@@ -261,7 +261,6 @@
     <ClInclude Include="..\..\include\wawo\thread_impl\shared_mutex.hpp" />
     <ClInclude Include="..\..\include\wawo\thread_impl\spin_mutex.hpp" />
     <ClInclude Include="..\..\include\wawo\thread_run_object_abstract.hpp" />
-    <ClInclude Include="..\..\include\wawo\ticker.hpp" />
     <ClInclude Include="..\..\include\wawo\timer.hpp" />
     <ClInclude Include="..\..\include\wawo\time\time.hpp" />
     <ClInclude Include="..\..\include\wawo\tls.hpp" />
