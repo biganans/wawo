@@ -12,17 +12,13 @@
 	#include <wawo/log/sys_logger.h>
 #endif
 
-#include <wawo/thread.hpp>
-
-
 namespace wawo { namespace log {
 
 	logger_manager::logger_manager() :
 		m_consoleLogger(NULL),
 		m_loggers(),
 		m_defaultFormatInterface(NULL),
-		m_isInited(false),
-		m_logBufferIdx(0)
+		m_isInited(false)
 	{
 		init();
 	}
@@ -45,18 +41,6 @@ namespace wawo { namespace log {
 		m_consoleLogger->set_mask_by_level( WAWO_CONSOLE_LOGGER_LEVEL ) ;
 		add_logger( m_consoleLogger );
 #endif
-
-		if( m_logBufferIdx > 0 ) {
-			for( int i=0;i<m_logBufferIdx;++i ) {
-				std::vector< WWRP<logger_abstract> >::iterator it = m_loggers.begin();
-				while( it != m_loggers.end() ) {
-					(*it)->write( m_log_buffer_mask[i], m_log_buffer[i].c_str(), m_log_buffer[i].length() );
-					++it;
-				}
-			}
-			m_logBufferIdx = 0;
-		}
-
 		m_isInited = true;
 	}
 
@@ -74,8 +58,7 @@ namespace wawo { namespace log {
 		while (it != m_loggers.end()) {
 			if ((*it) == logger) {
 				it = m_loggers.erase(it);
-			}
-			else {
+			} else {
 				++it;
 			}
 		}
@@ -93,52 +76,29 @@ namespace wawo { namespace log {
 		char __traceInfo[TRACE_INFO_SIZE] = { 0 };
 		snprintf(__traceInfo, ((sizeof(__traceInfo) / sizeof(__traceInfo[0])) - 1), "TRACE: %s:[%d] %s", file, line, func);
 #endif
+		(void)file;
+		(void)line;
+		WAWO_ASSERT(m_isInited);
 		const wawo::u64_t tid = wawo::this_thread::get_id();
-		char log_buffer[LOG_BUFFER_SIZE_MAX] = { 0 };
+		
+		const ::size_t lc = m_loggers.size();
+		for(::size_t i=0;i<lc;++i) {
+			if (!m_loggers[i]->test_mask(mask)) { continue; }
+			WAWO_ASSERT(m_loggers[i] != NULL);
 
-		std::string local_time_str;
-		wawo::time::curr_localtime_str(local_time_str);
-		wawo::size_t idx_tid = 0;
-		int snwrite = snprintf(log_buffer + idx_tid, LOG_BUFFER_SIZE_MAX - idx_tid, "[%s][%c][%llu]", local_time_str.c_str(), __log_mask_char[mask], tid);
-		if (snwrite == -1) {
-			WAWO_THROW("snprintf failed for loggerManager::write");
-		}
-		WAWO_ASSERT((wawo::size_t)snwrite < (LOG_BUFFER_SIZE_MAX - idx_tid));
-		idx_tid += snwrite;
-
-		//for log buffer
-		if (!m_isInited)
-		{
-			WWSP<format_interface> formatInterface;
-
-			formatInterface = get_default_format_interface();
-			va_list valist;
-
-			va_start(valist, func);
-			char* fmt = va_arg(valist, char*);
-			int size = formatInterface->format(log_buffer + idx_tid, LOG_BUFFER_SIZE_MAX - idx_tid, fmt, valist);
-			va_end(valist);
-
-			m_log_buffer[m_logBufferIdx] = std::string(log_buffer, size);
-
-#ifdef _DEBUG
-			m_log_buffer[m_logBufferIdx] += __traceInfo;
-#endif
-			m_log_buffer_mask[m_logBufferIdx] = mask;
-			m_logBufferIdx++;
-
-			(void)line;
-			return;
-		}
-
-		WWSP<format_interface> formatInterface;
-		std::vector< WWRP<logger_abstract> >::iterator it = m_loggers.begin();
-		while (it != m_loggers.end()) {
-			if (!(*it)->test_mask(mask)) { ++it; continue; }
-			WAWO_ASSERT((*it) != NULL);
+			char log_buffer[LOG_BUFFER_SIZE_MAX] = { 0 };
+			std::string local_time_str;
+			wawo::time::curr_localtime_str(local_time_str);
+			int idx_tid = 0;
+			int snwrite = snprintf(log_buffer + idx_tid, LOG_BUFFER_SIZE_MAX - idx_tid, "[%s][%c][%llu]", local_time_str.c_str(), __log_mask_char[mask], tid);
+			if (snwrite == -1) {
+				WAWO_THROW("snprintf failed for loggerManager::write");
+			}
+			WAWO_ASSERT(snwrite < (LOG_BUFFER_SIZE_MAX - idx_tid));
+			idx_tid += snwrite;
 
 			int idx_fmt = idx_tid;
-			formatInterface = (*it)->get_formator();
+			WWSP<format_interface> formatInterface = m_loggers[i]->get_formator();
 			if (formatInterface == NULL) {
 				formatInterface = get_default_format_interface();
 			}
@@ -179,7 +139,7 @@ namespace wawo { namespace log {
 			} else {
 				log_buffer[idx_fmt++] = '\n';
 			}
-			(*it++)->write( mask, log_buffer, idx_fmt);
+			m_loggers[i]->write( mask, log_buffer, idx_fmt);
 
 			(void)file;
 			(void)func;

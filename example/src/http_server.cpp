@@ -27,21 +27,20 @@ public:
 		WWRP<wawo::packet> req;
 		m->encode(req);
 
-		WWRP<wawo::packet> body = wawo::make_ref<wawo::packet>(req->len());
-		body->write((wawo::byte_t*)req->begin(), req->len());
-		resp->body = body;
+//		WWRP<wawo::packet> body = wawo::make_ref<wawo::packet>(req->len());
+//		body->write((wawo::byte_t*)req->begin(), req->len());
+		resp->body = req;
 
 		WWRP<wawo::packet> outp;
 		resp->encode(outp);
 
 //		WAWO_INFO("write begin");
 		WWRP<wawo::net::channel_future> f_write = ctx->write(outp);
-		f_write->add_listener([](WWRP<wawo::net::channel_future> const& f) {
+//		f_write->add_listener([](WWRP<wawo::net::channel_future> const& f) {
 //			WAWO_INFO("write done: %d", f->get());
-			WAWO_ASSERT(f->get() == wawo::OK);
-		});
+//			WAWO_ASSERT(f->get() == wawo::OK);
+//		});
 //		WAWO_INFO("write rt: %d", f->get());
-
 //		f_write->wait();
 
 		if (close_after_write) {

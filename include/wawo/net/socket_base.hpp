@@ -8,13 +8,6 @@
 #include <wawo/net/address.hpp>
 #include <wawo/net/socket_api.hpp>
 
-//#define WAWO_ENABLE_TRACE_SOCKET
-#ifdef WAWO_ENABLE_TRACE_SOCKET
-	#define WAWO_TRACE_SOCKET WAWO_INFO
-#else
-	#define WAWO_TRACE_SOCKET(...)
-#endif
-
 #ifndef IPTOS_TOS_MASK
 #define IPTOS_TOS_MASK		0x1E
 #endif
@@ -323,12 +316,12 @@ namespace wawo { namespace net {
 		int get_tos(u8_t& tos) const;
 		int set_tos(u8_t const& tos);
 
-		inline wawo::u32_t send(byte_t const* const buffer, wawo::u32_t const& size, int& ec_o, int const& flag = 0) {
+		__WW_FORCE_INLINE wawo::u32_t send(byte_t const* const buffer, wawo::u32_t const& size, int& ec_o, int const& flag = 0) {
 			WAWO_ASSERT(buffer != NULL);
 			WAWO_ASSERT(size > 0);
 			return m_fn_send(m_fd, buffer, size, ec_o, flag);
 		}
-		inline wawo::u32_t recv(byte_t* const buffer_o, wawo::u32_t const& size, int& ec_o, int const& flag = 0) {
+		__WW_FORCE_INLINE wawo::u32_t recv(byte_t* const buffer_o, wawo::u32_t const& size, int& ec_o, int const& flag = 0) {
 			WAWO_ASSERT(buffer_o != NULL);
 			WAWO_ASSERT(size > 0);
 			return m_fn_recv(m_fd, buffer_o, size, ec_o, flag);

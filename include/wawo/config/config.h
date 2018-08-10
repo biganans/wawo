@@ -39,9 +39,9 @@
 	#define __DEFAULT_FILE_LOG_LEVEL 3
 	#define __DEFAULT_SYS_LOG_LEVEL 3
 #else
-	#define __DEFAULT_CONSOLE_LOG_LEVEL 2
-	#define __DEFAULT_SYS_LOG_LEVEL 2
-	#define __DEFAULT_FILE_LOG_LEVEL 2
+	#define __DEFAULT_CONSOLE_LOG_LEVEL 1
+	#define __DEFAULT_SYS_LOG_LEVEL 1
+	#define __DEFAULT_FILE_LOG_LEVEL 1
 #endif
 
 
@@ -99,19 +99,35 @@
 //#define ENABLE_WEBSOCKET
 
 
-#define ENABLE_TRACE_IOE
+//#define ENABLE_TRACE_IOE
 #ifdef ENABLE_TRACE_IOE
 	#define TRACE_IOE WAWO_INFO
 #else
 	#define TRACE_IOE(...)
 #endif
 
-#define ENABLE_TRACE_CH_OBJECT
+//#define ENABLE_TRACE_CH_OBJECT
 #ifdef ENABLE_TRACE_CH_OBJECT
 	#define TRACE_CH_OBJECT WAWO_INFO
 #else
 	#define TRACE_CH_OBJECT(...)
 #endif
+
+//#define WAWO_ENABLE_TRACE_SOCKET_API
+//#define WAWO_ENABLE_TRACE_SOCKET
+
+#ifdef WAWO_ENABLE_TRACE_SOCKET_API
+	#define WAWO_TRACE_SOCKET_API WAWO_INFO
+#else
+	#define WAWO_TRACE_SOCKET_API(...)
+#endif
+
+#ifdef WAWO_ENABLE_TRACE_SOCKET
+	#define WAWO_TRACE_SOCKET WAWO_INFO
+#else
+	#define WAWO_TRACE_SOCKET(...)
+#endif
+
 
 #define ENABLE_DEBUG_MEMORY_ALLOC
 

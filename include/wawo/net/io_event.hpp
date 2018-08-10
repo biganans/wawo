@@ -18,10 +18,10 @@ namespace wawo { namespace net {
 
 	struct async_io_result {
 		int op;
+		SOCKET fd;
 		union {
 			int len;
 			int code;
-			int fd;
 		} v;
 		char* buf;
 	};

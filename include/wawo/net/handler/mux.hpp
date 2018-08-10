@@ -429,7 +429,7 @@ namespace wawo { namespace net { namespace handler {
 				m_flag |= F_WATCH_WRITE;
 				WWRP<channel_future> write_f = m_ch_ctx->write(f.data);
 				write_f->add_listener([S= WWRP<mux_stream>(this)](WWRP<channel_future> const& f) {
-					S->_ch_flush_done({ AIO_WRITE, f->get() });
+					S->_ch_flush_done({ AIO_WRITE, S->ch_id(), f->get() });
 				});
 				break;
 			}

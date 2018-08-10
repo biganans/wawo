@@ -29,12 +29,7 @@ namespace wawo { namespace log {
 		WWRP<logger_abstract> m_consoleLogger;
 		std::vector< WWRP<logger_abstract> > m_loggers;
 		WWSP<format_interface> m_defaultFormatInterface;
-
 		bool m_isInited;
-		int m_logBufferIdx;
-
-		log_mask m_log_buffer_mask[1024];
-		std::string m_log_buffer[1024];
 	};
 }}
 

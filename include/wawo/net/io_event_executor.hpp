@@ -101,6 +101,7 @@ namespace wawo { namespace net {
 		//>0,	WAIT nanosecond
 		inline long long _before_wait() {
 			lock_guard<spin_mutex> lg(m_mutex);
+			
 			WAWO_ASSERT(m_tm != NULL);
 			wawo::timer_duration_t ndelay;
 			m_tm->update(ndelay);
@@ -108,11 +109,12 @@ namespace wawo { namespace net {
 			if (ndelay == wawo::timer_duration_t()) {
 				return 0;
 			}
-
+			
 			WAWO_ASSERT(m_wait_t == W_NOWAIT);
 			if (m_tq_standby->size() == 0) {
 				m_wait_t = W_CUSTOM;
 				m_wait_until += ndelay;
+//				return ~0;
 				return ndelay.count();
 			}
 			return 0;

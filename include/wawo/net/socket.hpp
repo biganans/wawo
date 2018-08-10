@@ -16,8 +16,8 @@
 #include <wawo/net/io_event.hpp>
 
 #if defined(WAWO_PLATFORM_WIN) && defined(WAWO_ENABLE_IOCP)
-//	#define DEFAULT_LISTEN_BACKLOG SOMAXCONN
-	#define DEFAULT_LISTEN_BACKLOG 512
+//	#define WAWO_DEFAULT_LISTEN_BACKLOG SOMAXCONN
+	#define WAWO_DEFAULT_LISTEN_BACKLOG 512
 #else
 	#define WAWO_DEFAULT_LISTEN_BACKLOG 256
 #endif
@@ -363,13 +363,12 @@ namespace wawo { namespace net {
 
 		void __cb_async_accept( async_io_result const& r ) {
 			WAWO_ASSERT(m_fn_accept_initializer != NULL);
-
 			int ec = r.v.code;
 
 #ifdef WAWO_IO_MODE_IOCP
 			WAWO_ASSERT(r.op == AIO_ACCEPT);
 			if (ec > 0) {
-				int nfd = ec;
+				const int& nfd = ec;
 				SOCKADDR_IN* raddr_in = NULL;
 				SOCKADDR_IN* laddr_in = NULL;
 				int raddr_in_len = sizeof(SOCKADDR_IN);
@@ -424,13 +423,14 @@ namespace wawo { namespace net {
 					}
 					__new_fd(nfd, laddr, raddr);
 				}
-#endif
 			}
+#endif
 			if (IS_ERRNO_EQUAL_WOULDBLOCK(ec) || ec == wawo::OK) {
 				return;
 			}
 			ch_close();
 		}
+
 		void __cb_async_read(async_io_result const& r) {
 			(void)r;
 			WAWO_ASSERT(event_poller()->in_event_loop());
@@ -505,9 +505,8 @@ namespace wawo { namespace net {
 	public:
 #ifdef WAWO_IO_MODE_IOCP
 		inline void __IOCP_init() {
-			event_poller()->watch(IOE_IOCP_INIT, fd(), std::bind(&socket::__cb_async_accept, WWRP<socket>(this), std::placeholders::_1));
+			event_poller()->watch(IOE_IOCP_INIT, fd(), NULL);
 		}
-
 		inline void __IOCP_deinit() {
 			event_poller()->watch(IOE_IOCP_DEINIT, fd(), NULL);
 		}
@@ -608,7 +607,7 @@ namespace wawo { namespace net {
 					m_flag &= ~F_WRITE_BLOCKED;
 					channel::ch_fire_write_unblock();
 				}
-				if (m_flag&F_CLOSE_AFTER_WRITE) {
+				if (m_flag&F_CLOSING) {
 					ch_close();
 				} else if (m_flag&F_WRITE_SHUTDOWNING) {
 					ch_shutdown_write();
@@ -641,7 +640,7 @@ namespace wawo { namespace net {
 			if (m_flag&F_READ_SHUTDOWN) {
 				TRACE_IOE("[socket][%s][begin_read]cancel for rd shutdowned already", info().to_stdstring().c_str());
 				if (fn_read != NULL) {
-					fn_read({ AIO_READ, wawo::E_CHANNEL_READ_SHUTDOWN_ALREADY , 0 });
+					fn_read({ AIO_READ, m_fd, wawo::E_CHANNEL_READ_SHUTDOWN_ALREADY , 0 });
 				}
 				return;
 			}
@@ -741,7 +740,7 @@ namespace wawo { namespace net {
 			if (m_flag&F_WRITE_SHUTDOWN) {
 				TRACE_IOE("[socket][%s][begin_write]cancel for wr shutdowned already", info().to_stdstring().c_str() );
 				if (fn_write != NULL) {
-					fn_write({ AIO_WRITE,wawo::E_CHANNEL_WRITE_SHUTDOWN_ALREADY,0 });
+					fn_write({ AIO_WRITE, m_fd,wawo::E_CHANNEL_WRITE_SHUTDOWN_ALREADY,0 });
 				}
 				return;
 			}
@@ -971,15 +970,10 @@ namespace wawo { namespace net {
 			}
 
 			if( (m_flag&F_WRITE_ERROR) != 0 ) {
-#ifdef WAWO_IO_MODE_IOCP
-				if (rt == wawo::OK && (m_flag&F_WATCH_WRITE)) {
-				}
-#else
 				WAWO_ASSERT(m_outbound_entry_q.size() != 0);
 				_ch_do_shutdown_write(ch_promise);
 				__rdwr_shutdown_check();
 				return;
-#endif
 			}
 
 			if (m_flag&F_WATCH_WRITE) {
@@ -1082,13 +1076,9 @@ namespace wawo { namespace net {
 			//wait for write done event
 
 			if ((m_flag&F_WRITE_ERROR) != 0) {
-#ifdef WAWO_IO_MODE_IOCP
-				if ( (rt == wawo::OK) &&(m_flag&F_WATCH_WRITE)) {
-#else
 				WAWO_ASSERT(m_outbound_entry_q.size() != 0);
 				_ch_do_close_read_write(ch_promise);
 				return;
-#endif
 			}
 
 			if (m_flag&F_WATCH_WRITE) {

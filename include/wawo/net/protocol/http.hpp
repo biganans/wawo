@@ -15,6 +15,8 @@
 #define WAWO_HTTP_SP	" "
 #define WAWO_HTTP_CRLF	"\r\n"
 #define WAWO_HTTP_COLON	":"
+#define WAWO_HTTP_COLON_SP	": "
+
 
 #define WAWO_HTTP_METHOD_NAME_MAX_LEN 7
 
@@ -119,19 +121,16 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 		}
 
 		void encode(WWRP<packet>& packet_o) {
-			WWRP<packet> opacket = wawo::make_ref<packet>();
-
+			WWRP<packet> _out = wawo::make_ref<packet>();
 			std::for_each( keys_order.begin(), keys_order.end(), [&](std::string const& key ) {
-				std::string value = map[key];
-				opacket->write((wawo::byte_t*)key.c_str(), (wawo::u32_t)key.length());
-				opacket->write((wawo::byte_t*)WAWO_HTTP_COLON, 1);
-				opacket->write((wawo::byte_t*)WAWO_HTTP_SP, 1);
-				opacket->write((wawo::byte_t*)value.c_str(), (wawo::u32_t)value.length());
-				opacket->write((wawo::byte_t*)WAWO_HTTP_CRLF, (wawo::u32_t)wawo::strlen(WAWO_HTTP_CRLF));
+				const std::string& value = map[key];
+				_out->write((wawo::byte_t*)key.c_str(), (wawo::u32_t)key.length());
+				_out->write((wawo::byte_t*)WAWO_HTTP_COLON_SP, 2);
+				_out->write((wawo::byte_t*)value.c_str(), (wawo::u32_t)value.length());
+				_out->write((wawo::byte_t*)WAWO_HTTP_CRLF, (wawo::u32_t)wawo::strlen(WAWO_HTTP_CRLF));
 			});
-
-			opacket->write((wawo::byte_t*)WAWO_HTTP_CRLF, (wawo::u32_t)wawo::strlen(WAWO_HTTP_CRLF));
-			packet_o = opacket;
+			_out->write((wawo::byte_t*)WAWO_HTTP_CRLF, (wawo::u32_t)wawo::strlen(WAWO_HTTP_CRLF));
+			packet_o = _out;
 		}
 	};
 
@@ -156,9 +155,7 @@ namespace wawo { namespace net { namespace protocol { namespace http {
 
 		header h;
 		WWRP<wawo::packet> body;
-
 		url_fields urlfields;
-//		bool is_header_contain_connection_close;
 
 		void encode( WWRP<wawo::packet>& out );
 	};

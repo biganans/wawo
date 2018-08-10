@@ -8,13 +8,6 @@
 	#include <wawo/net/winsock_helper.hpp>
 #endif
 
-#define WAWO_ENABLE_TRACE_SOCKET_API
-#ifdef WAWO_ENABLE_TRACE_SOCKET_API
-	#define WAWO_TRACE_SOCKET_API WAWO_INFO
-#else
-	#define WAWO_TRACE_SOCKET_API(...)
-#endif
-
 #define IS_ERRNO_EQUAL_WOULDBLOCK(_errno) ((_errno==wawo::E_EAGAIN)||(_errno==wawo::E_EWOULDBLOCK)||(_errno==wawo::E_WSAEWOULDBLOCK))
 #define IS_ERRNO_EQUAL_CONNECTING(_errno) ((_errno==wawo::E_EINPROGRESS)||(_errno==wawo::E_WSAEWOULDBLOCK))
 
@@ -87,7 +80,7 @@ namespace wawo { namespace net { namespace socket_api {
 
 			socklen_t len = sizeof(addr_in);
 			int rt = ::getsockname(fd, (sockaddr*)(&addr_in), &len);
-			WAWO_RETURN_V_IF_MATCH(wawo::E_SOCKET_ERROR, rt == wawo::E_SOCKET_ERROR);
+			WAWO_RETURN_V_IF_MATCH(rt, rt == wawo::E_SOCKET_ERROR);
 			addr = address(addr_in);
 			return wawo::OK;
 		}
@@ -394,10 +387,8 @@ namespace wawo { namespace net { namespace socket_api {
 
 #ifdef WAWO_IO_MODE_IOCP
 	namespace iocp {
-		inline int socket(SOCKET const& family, int const& type, int const& proto) {
-			int rt = ::WSASocketW( OS_DEF_family[family], OS_DEF_sock_type[type], OS_DEF_protocol[proto], NULL, 0, WSA_FLAG_OVERLAPPED);
-			WAWO_RETURN_V_IF_MATCH(rt, rt > 0);
-			return socket_get_last_errno();
+		inline SOCKET socket(int const& family, int const& type, int const& proto) {
+			return ::WSASocketW( OS_DEF_family[family], OS_DEF_sock_type[type], OS_DEF_protocol[proto], NULL, 0, WSA_FLAG_OVERLAPPED);
 		}
 	}
 #endif

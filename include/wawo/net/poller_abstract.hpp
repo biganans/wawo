@@ -115,10 +115,10 @@ namespace wawo { namespace net {
 
 				if (ctx->fd > 0) {
 					if (ctx->fn[IOE_SLOT_READ] != NULL) {
-						ctx->fn[IOE_SLOT_READ]({ AIO_READ,wawo::E_OBSERVER_EXIT,0 });
+						ctx->fn[IOE_SLOT_READ]({ AIO_READ, ctx->fd,wawo::E_OBSERVER_EXIT,0 });
 					}
 					if (ctx->fn[IOE_SLOT_WRITE] != NULL) {
-						ctx->fn[IOE_SLOT_WRITE]({ AIO_WRITE,wawo::E_OBSERVER_EXIT,0 });
+						ctx->fn[IOE_SLOT_WRITE]({ AIO_WRITE, ctx->fd,wawo::E_OBSERVER_EXIT,0 });
 					}
 				}
 			}

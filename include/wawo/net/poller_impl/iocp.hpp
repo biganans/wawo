@@ -6,15 +6,14 @@
 #ifdef WAWO_ENABLE_IOCP
 #include <wawo/net/poller_abstract.hpp>
 #include <wawo/net/winsock_helper.hpp>
+#define WAWO_IOCP_INTERRUPT_COMPLETE_KEY -17
+#define WAWO_IOCP_BUFFER_SIZE 1024*64
 
 namespace wawo { namespace net { namespace impl {
-
-	#define WAWO_IOCP_INTERRUPT_COMPLETE_KEY -17
 
 	class iocp :
 		public poller_abstract
 	{
-#define WAWO_IOCP_BUFFER_SIZE 1024*64
 		class socket;
 		enum iocp_action {
 			READ = 0,
@@ -41,8 +40,8 @@ namespace wawo { namespace net { namespace impl {
 			public ref_base
 		{
 			WSAOVERLAPPED overlapped;
-			int fd;
-			int accept_fd;
+			SOCKET fd;
+			SOCKET accept_fd;
 			int action:24;
 			int action_status:8;
 			fn_overlapped_io_event fn_overlapped;
@@ -54,15 +53,15 @@ namespace wawo { namespace net { namespace impl {
 		inline static WWRP<iocp_overlapped_ctx> iocp_make_ctx() {
 			WWRP<iocp_overlapped_ctx> ctx = wawo::make_ref<iocp_overlapped_ctx>();
 			::memset(&ctx->overlapped, 0, sizeof(ctx->overlapped));
-			ctx->fd = -1;
-			ctx->accept_fd = -1;
+			ctx->fd = wawo::E_INVALID_SOCKET;
+			ctx->accept_fd = wawo::E_INVALID_SOCKET;
 			ctx->action = -1;
 			ctx->wsabuf = { WAWO_IOCP_BUFFER_SIZE, (char*)&ctx->buf };
 			return ctx;
 		}
 
 		struct iocp_ctxs {
-			int fd;
+			SOCKET fd;
 			int flag;
 			WWRP<iocp_overlapped_ctx> ol_ctxs[iocp_action::MAX];
 		};
@@ -222,7 +221,7 @@ namespace wawo { namespace net { namespace impl {
 		void do_poll() {
 			WAWO_ASSERT(m_handle > 0);
 			int ec = 0;
-			DWORD dwWaitMicro = _before_wait();
+			long long dwWaitMicro = _before_wait();
 			if (dwWaitMicro == ~0) {
 				dwWaitMicro = INFINITE;
 			} else {
@@ -314,7 +313,7 @@ namespace wawo { namespace net { namespace impl {
 
 		}
 
-		void do_watch(u8_t const& flag, int const& fd, fn_io_event const& fn) {
+		void do_watch(u8_t const& flag, SOCKET const& fd, fn_io_event const& fn) {
 
 			if (flag&IOE_IOCP_INIT) {
 				WAWO_DEBUG("[#%d][CreateIoCompletionPort]init", fd );
@@ -376,7 +375,7 @@ namespace wawo { namespace net { namespace impl {
 			}
 		}
 
-		void do_unwatch(u8_t const& flag, int const& fd)
+		void do_unwatch(u8_t const& flag, SOCKET const& fd)
 		{
 			iocp_ctxs_map::iterator it = m_ctxs.find(fd);
 			if (it == m_ctxs.end()) {

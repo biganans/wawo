@@ -4,62 +4,40 @@
 
 namespace wawo { namespace net { namespace protocol { namespace http {
 
-	void encode_message(WWSP<message> const& m, WWRP<packet>& out) {
+	void message::encode(WWRP<packet>& outp) {
 		WWRP<packet> _out = wawo::make_ref<packet>();
-
-		WAWO_ASSERT(m->ver.major != 0);
-
-		if (m->type == T_REQ) {
-			if (m->url == "") {
-				m->url = "/";
-			}
-
-			if (!m->h.have("User-Agent")) {
-				m->h.set("User-Agent", "wawo/1.1");
-			}
+		WAWO_ASSERT(ver.major != 0);
+		if (type == T_REQ) {
+			WAWO_ASSERT(url.length() > 0);
 
 			char resp[512] = { 0 };
-			snprintf(resp, sizeof(resp) / sizeof(resp[0]), "%s %s HTTP/%d.%d", protocol::http::option_name[m->opt], m->url.c_str(), m->ver.major, m->ver.minor);
+			int rt = snprintf(resp, sizeof(resp) / sizeof(resp[0]), "%s %s HTTP/%d.%d\r\n", protocol::http::option_name[opt], url.c_str(), ver.major, ver.minor);
+			WAWO_ASSERT(rt > 0 && rt < 512);
 			_out->write((wawo::byte_t*)resp, (wawo::u32_t)wawo::strlen(resp));
-			_out->write((wawo::byte_t*)WAWO_HTTP_CRLF, (wawo::u32_t)wawo::strlen(WAWO_HTTP_CRLF));
-		} else if (m->type == T_RESP) {
-
-			if ((m->status_code == 200) && m->status == "") {
-				m->status = "OK";
-			}
-
-			char resp[512] = { 0 };
-			WAWO_ASSERT(m->status.length() > 0);
-
-			snprintf(resp, sizeof(resp) / sizeof(resp[0]), "HTTP/%d.%d %d %s", m->ver.major, m->ver.minor, m->status_code, m->status.c_str());
+		}
+		else if (type == T_RESP) {
+			char resp[128] = { 0 };
+			WAWO_ASSERT(status.length() > 0);
+			int rt = snprintf(resp, sizeof(resp) / sizeof(resp[0]), "HTTP/%d.%d %d %s\r\n", ver.major, ver.minor, status_code, status.c_str());
+			WAWO_ASSERT(rt > 0 && rt < 128);
 			_out->write((wawo::byte_t*)resp, (wawo::u32_t)wawo::strlen(resp));
-			_out->write((wawo::byte_t*)WAWO_HTTP_CRLF, (wawo::u32_t)wawo::strlen(WAWO_HTTP_CRLF));
-
-			if (!m->h.have("Server")) {
-				m->h.set("Server", "wawo/1.1");
-			}
 		}
 
-		if (m->body != NULL && (m->body->len() > 0)) {
+		if (body != NULL && (body->len() > 0)) {
 			char blength_char[16] = { 0 };
-			snprintf(blength_char, 16, "%d", m->body->len());
-			m->h.set("Content-Length", blength_char);
+			int rt = snprintf(blength_char, 16, "%d", body->len());
+			WAWO_ASSERT(rt > 0 && rt < 128);
+			h.set("Content-Length", blength_char);
 		}
 
 		WWRP<packet> hpacket;
-		m->h.encode(hpacket);
+		h.encode(hpacket);
 		_out->write(hpacket->begin(), hpacket->len());
 
-		if (m->body != NULL && (m->body->len() > 0)) {
-			_out->write((wawo::byte_t*)m->body->begin(), m->body->len());
+		if (body != NULL && (body->len() > 0)) {
+			_out->write((wawo::byte_t*)body->begin(),body->len());
 		}
-
-		out = _out;
-	}
-
-	void message::encode(WWRP<packet>& outp) {
-		WWSP<wawo::net::protocol::http::message> m = wawo::make_shared<wawo::net::protocol::http::message>(*this);
-		encode_message( m, outp );
+		outp = _out;
 	}
 
 	int parse_url(std::string const& url, url_fields& urlfields, bool is_connect ) {
