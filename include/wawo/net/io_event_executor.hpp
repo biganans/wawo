@@ -14,116 +14,85 @@ namespace wawo { namespace net {
 	typedef std::function<void()> fn_io_event_task;
 	typedef std::queue<fn_io_event_task> TASK_Q;
 
-	enum wait_type {
-		W_NOWAIT,
-		W_COND,
-		W_CUSTOM
-	};
-
 	class io_event_executor:
 		public ref_base
 	{
 	protected:
 		spin_mutex m_mutex;
-		condition_any m_cond;
-
-		TASK_Q* m_tq_standby_;
 		TASK_Q* m_tq_standby;
 		TASK_Q* m_tq;
 		WWSP<timer_manager> m_tm;
 		std::thread::id m_tid;
-		wait_type m_wait_t;
 		timer_timepoint_t m_wait_until;
 
-		__WW_FORCE_INLINE void __wait_check() {
-			if (WAWO_LIKELY(m_wait_t == W_NOWAIT)) {
-				return;
-			} else if (m_wait_t == W_COND) {
-				m_cond.notify_one();
-			} else {
+		__WW_FORCE_INLINE void __wait_check( timer_timepoint_t const& nexpire ) {
+			if ((m_wait_until == _TIMER_TP_INFINITE) ||
+				(nexpire < m_wait_until))
+			{
 				interrupt_wait();
 			}
 		}
 
 	public:
-		io_event_executor():m_wait_t(W_NOWAIT) {}
+		io_event_executor() {}
 		virtual ~io_event_executor() {
 			WAWO_ASSERT(m_tq->empty());
 			WAWO_ASSERT(m_tq_standby->empty());
 		}
 
-		inline void execute(fn_io_event_task&& f) {
+		__WW_FORCE_INLINE void execute(fn_io_event_task&& f) {
 			if (in_event_loop()) {
 				f();
 				return;
 			}
 			schedule(std::forward<fn_io_event_task>(f));
 		}
-		inline void schedule(fn_io_event_task&& f) {
+		__WW_FORCE_INLINE void schedule(fn_io_event_task&& f) {
 			lock_guard<spin_mutex> lg(m_mutex);
 			m_tq_standby->push(f);
-			__wait_check();
+			__wait_check(timer_clock_t::now());
 		}
-		inline void start_timer(WWRP<wawo::timer>&& t) {
+		__WW_FORCE_INLINE void start_timer(WWRP<wawo::timer>&& t) {
 			if (in_event_loop()) {
 				m_tm->start(std::forward<WWRP<wawo::timer>>(t));
 				return;
 			}
 			lock_guard<spin_mutex> lg(m_mutex);
 			const timer_timepoint_t expire = m_tm->start(std::forward<WWRP<wawo::timer>>(t));
-			if (expire < m_wait_until) {
-				__wait_check();
-			}
+			__wait_check(expire);
 		}
-		inline void start_timer(WWRP<wawo::timer> const& t) {
+		__WW_FORCE_INLINE void start_timer(WWRP<wawo::timer> const& t) {
 			if (in_event_loop()) {
 				m_tm->start(t);
 				return;
 			}
 			lock_guard<spin_mutex> lg(m_mutex);
 			const timer_timepoint_t expire = m_tm->start(t);
-			if (expire < m_wait_until) {
-				__wait_check();
-			}
-		}
-
-		void cond_wait() {
-			lock_guard<spin_mutex> lg(m_mutex);
-			if (m_tq_standby->size() == 0) {
-				m_wait_t = W_COND;
-				m_cond.no_interrupt_wait_for<spin_mutex>(m_mutex, std::chrono::microseconds(500));
-				m_wait_t = W_NOWAIT;
-			}
+			__wait_check(expire);
 		}
 
 		//0,	NO WAIT
 		//~0,	INFINITE WAIT
 		//>0,	WAIT nanosecond
-		inline long long _before_wait() {
+		__WW_FORCE_INLINE long long _calc_wait_dur_in_nano() {
 			lock_guard<spin_mutex> lg(m_mutex);
-			
 			WAWO_ASSERT(m_tm != NULL);
 			wawo::timer_duration_t ndelay;
 			m_tm->update(ndelay);
-			m_wait_until = timer_clock_t::now();
-			if (ndelay == wawo::timer_duration_t()) {
+
+			if (ndelay == wawo::timer_duration_t() ||
+				m_tq_standby->size() !=0
+			) {
+				m_wait_until = timer_timepoint_t();
 				return 0;
+			} else if (ndelay == _TIMER_DURATION_INFINITE){
+				m_wait_until = _TIMER_TP_INFINITE;
+			} else {
+				m_wait_until = timer_clock_t::now() + ndelay;
 			}
-			
-			WAWO_ASSERT(m_wait_t == W_NOWAIT);
-			if (m_tq_standby->size() == 0) {
-				m_wait_t = W_CUSTOM;
-				m_wait_until += ndelay;
-//				return ~0;
-				return ndelay.count();
-			}
-			return 0;
+			return ndelay.count();
 		}
-		inline void _after_wait() {
-			lock_guard<spin_mutex> lg(m_mutex);
-			WAWO_ASSERT(m_wait_t != W_NOWAIT);
-			m_wait_t = W_NOWAIT;
-		}
+
 		virtual void interrupt_wait() { WAWO_ASSERT(!"NOT IMPLEMENTED"); }
 
 		__WW_FORCE_INLINE bool in_event_loop() const {
@@ -153,7 +122,7 @@ namespace wawo { namespace net {
 			WAWO_DELETE(m_tq);
 		}
 
-		inline void exec_task() {
+		__WW_FORCE_INLINE void exec_task() {
 			WAWO_ASSERT(m_tq->size() == 0);
 			{
 				lock_guard<spin_mutex> lg(m_mutex);

@@ -126,22 +126,17 @@ namespace wawo { namespace net { namespace impl {
 
 		inline void _select(SOCKET const& max_fd_v, fd_set& fds_r, fd_set& fds_w, fd_set& fds_ex) {
 			timeval _tv = { 0,0 };
-			timeval* tv;
-			const long long wait_in_nano = _before_wait();
-			if (wait_in_nano == ~0) {
-				tv = 0;//0 for infinite
-			} else {
-				tv = &_tv;
+			timeval* tv = 0;
+			const long long wait_in_nano = _calc_wait_dur_in_nano();
+			if (wait_in_nano != ~0) {
 				if (wait_in_nano > 0) {
 					_tv.tv_sec = static_cast<long>(wait_in_nano / 1000000000ULL);
-					_tv.tv_usec = static_cast<long>(wait_in_nano % 1000000000ULL)/1000;
+					_tv.tv_usec = static_cast<long>(wait_in_nano % 1000000000ULL) / 1000;
 				}
+				tv = &_tv;
 			}
-			const bool bLastWait = (wait_in_nano != 0);
+
 			int ready_c = ::select((int)max_fd_v, &fds_r, &fds_w, &fds_ex, tv); //only read now
-			if (bLastWait) {
-				_after_wait();
-			}
 			if (ready_c == 0) {
 				return;
 			}

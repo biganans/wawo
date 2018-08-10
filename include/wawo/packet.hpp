@@ -118,12 +118,12 @@ namespace wawo {
 		inline wawo::u32_t left_left_capacity() { return (m_buffer == NULL) ? 0 : m_read_idx; }
 		inline wawo::u32_t left_right_capacity() { return (m_buffer == NULL) ? 0 : _capacity() - m_write_idx; }
 
-		inline byte_t* begin() const {
+		__WW_FORCE_INLINE byte_t* begin() const {
 			WAWO_ASSERT( m_buffer != NULL );
 			return m_buffer + m_read_idx;
 		}
 
-		inline byte_t* end() const {
+		__WW_FORCE_INLINE byte_t* end() const {
 			WAWO_ASSERT( m_buffer != NULL );
 			return m_buffer + m_write_idx;
 		}
@@ -133,13 +133,13 @@ namespace wawo {
 			return m_write_idx - m_read_idx ;
 		}
 
-		inline void forward_write_index(wawo::u32_t const& bytes ) {
+		__WW_FORCE_INLINE void forward_write_index(wawo::u32_t const& bytes ) {
 			WAWO_ASSERT( m_buffer != NULL );
 			WAWO_CONDITION_CHECK( (_capacity()-m_write_idx) >= bytes );
 			m_write_idx += bytes;
 		}
 
-		inline void reset() {
+		__WW_FORCE_INLINE void reset() {
 			WAWO_ASSERT( (m_left_capacity>0) && (m_left_capacity < PACK_MAX_LEFT_CAPACITY) );
 			m_read_idx = m_write_idx = m_left_capacity ;
 		}
@@ -157,7 +157,7 @@ namespace wawo {
 
 		//would result in memmove if left space is not enough
 		template <class T, class endian=wawo::bytes_helper::big_endian>
-		packet* write_left(T const& t) {
+		inline packet* write_left(T const& t) {
 			wawo::u32_t to_write_length = sizeof(T) ;
 			while ( to_write_length > (left_left_capacity()) ) {
 				_extend_leftbuffer_capacity__();
@@ -211,7 +211,7 @@ namespace wawo {
 			return c;
 		}
 
-		inline void skip(wawo::u32_t const& len_ ) {
+		__WW_FORCE_INLINE void skip(wawo::u32_t const& len_ ) {
 			WAWO_ASSERT( (m_buffer != NULL) );
 			WAWO_ASSERT(len_ <= len() );
 			m_read_idx += len_;

@@ -9,7 +9,7 @@
 #include <wawo/net/io_event_loop.hpp>
 
 #define PIPELINE_VOID_FIRE_VOID(NAME) \
-	__WW_FORCE_INLINE void fire_##NAME() {\
+	void fire_##NAME() {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \
 		WAWO_ASSERT(m_head != NULL); \
 		m_io_event_loop->execute([h=m_head](){ \
@@ -18,7 +18,7 @@
 	}\
 
 #define PIPELINE_VOID_FIRE_PACKET_1(NAME) \
-	__WW_FORCE_INLINE void fire_##NAME(WWRP<packet> const& packet_) {\
+	void fire_##NAME(WWRP<packet> const& packet_) {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \
 		WAWO_ASSERT(m_head != NULL); \
 		m_io_event_loop->execute([h=m_head,packet_](){ \
@@ -27,7 +27,7 @@
 	}\
 
 #define PIPELINE_CH_FUTURE_ACTION_PACKET_1(NAME) \
-	__WW_FORCE_INLINE WWRP<channel_future> NAME(WWRP<packet> const& packet_) {\
+	WWRP<channel_future> NAME(WWRP<packet> const& packet_) {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \
 		WAWO_ASSERT(m_tail != NULL); \
 		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(m_ch); \
@@ -38,7 +38,7 @@
 	}\
 
 #define PIPELINE_CH_FUTURE_ACTION_PACKET_1_CH_PROMISE_1(NAME) \
-	__WW_FORCE_INLINE WWRP<channel_future> NAME(WWRP<packet> const& packet_, WWRP<channel_promise> const& ch_promise) {\
+	WWRP<channel_future> NAME(WWRP<packet> const& packet_, WWRP<channel_promise> const& ch_promise) {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \
 		WAWO_ASSERT(m_tail != NULL); \
 		m_io_event_loop->execute([t=m_tail,packet_,ch_promise](){ \
@@ -48,7 +48,7 @@
 	}\
 
 #define PIPELINE_CH_FUTURE_ACTION_VOID(NAME) \
-	__WW_FORCE_INLINE WWRP<channel_future> NAME() {\
+	WWRP<channel_future> NAME() {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \
 		WAWO_ASSERT(m_tail != NULL); \
 		WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(m_ch); \
@@ -59,7 +59,7 @@
 	}\
 
 #define PIPELINE_CH_FUTURE_ACTION_CH_PROMISE_1(NAME) \
-	__WW_FORCE_INLINE WWRP<channel_future> NAME( WWRP<channel_promise> const& ch_promise) {\
+	WWRP<channel_future> NAME( WWRP<channel_promise> const& ch_promise) {\
 		WAWO_ASSERT(m_tail != NULL); \
 		WAWO_ASSERT(m_io_event_loop != NULL); \
 		m_io_event_loop->execute([t=m_tail,ch_promise](){ \
@@ -69,7 +69,7 @@
 	}\
 
 #define PIPELINE_VOID_ACTION_VOID(NAME) \
-	__WW_FORCE_INLINE void NAME() {\
+	void NAME() {\
 		WAWO_ASSERT(m_io_event_loop != NULL); \
 		WAWO_ASSERT(m_tail != NULL); \
 		m_io_event_loop->execute([t=m_tail](){ \

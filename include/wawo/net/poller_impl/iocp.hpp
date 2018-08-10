@@ -233,9 +233,9 @@ namespace wawo { namespace net { namespace impl {
 			OVERLAPPED_ENTRY entrys[64];
 			ULONG n = 64;
 			BOOL getOk = ::GetQueuedCompletionStatusEx(m_handle, &entrys[0], n,&n, (dwWaitMicro),FALSE);
-			if (bLastWait) {
-				_after_wait();
-			}
+			//if (bLastWait) {
+			//	_after_wait();
+			//}
 			if (WAWO_UNLIKELY(getOk) == FALSE) {
 				ec = wawo::socket_get_last_errno();
 				WAWO_DEBUG("[iocp]GetQueuedCompletionStatusEx return: %d", ec);
@@ -270,9 +270,9 @@ namespace wawo { namespace net { namespace impl {
 			int fd;
 			LPOVERLAPPED ol;
 			BOOL getOk = ::GetQueuedCompletionStatus(m_handle, &len, (LPDWORD)&fd, &ol, dwWaitMill);
-			if (bLastWait) {
-				_after_wait();
-			}
+			//if (bLastWait) {
+			//	_after_wait();
+			//}
 
 			if (WAWO_UNLIKELY(getOk== FALSE)) {
 				ec = wawo::socket_get_last_errno();

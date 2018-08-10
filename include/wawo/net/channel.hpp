@@ -58,11 +58,11 @@ namespace wawo { namespace net {
 			TRACE_CH_OBJECT("channel::~channel()");
 		}
 
-		__WW_FORCE_INLINE WWRP<io_event_loop> const& event_poller() const {
+		inline WWRP<io_event_loop> const& event_poller() const {
 			return m_io_event_loop;
 		}
 
-		__WW_FORCE_INLINE WWRP<channel_pipeline> const& pipeline() const {
+		inline WWRP<channel_pipeline> const& pipeline() const {
 			WAWO_ASSERT(m_pipeline != NULL);
 			return m_pipeline;
 		}
@@ -72,19 +72,19 @@ namespace wawo { namespace net {
 		}
 
 		template <class ctx_t>
-		__WW_FORCE_INLINE WWRP<ctx_t> get_ctx() const {
+		inline WWRP<ctx_t> get_ctx() const {
 			return wawo::static_pointer_cast<ctx_t>(m_ctx);
 		}
-		__WW_FORCE_INLINE void set_ctx(WWRP<ref_base> const& ctx) {
+		inline void set_ctx(WWRP<ref_base> const& ctx) {
 			m_ctx = ctx;
 		}
-		__WW_FORCE_INLINE void ch_errno(int e) {
+		inline void ch_errno(int e) {
 			WAWO_ASSERT(e != wawo::OK);
 			m_errno = e;
 		}
-		__WW_FORCE_INLINE int ch_get_errno() { return m_errno; }
+		inline int ch_get_errno() { return m_errno; }
 
-		__WW_FORCE_INLINE WWRP<channel_promise> make_promise() {
+		inline WWRP<channel_promise> make_promise() {
 			return wawo::make_ref<channel_promise>(WWRP<channel>(this));
 		}
 
@@ -135,7 +135,7 @@ namespace wawo { namespace net {
 
 #define CH_FUTURE_ACTION_IMPL_CH_PROMISE_1(NAME) \
 private: \
-		__WW_FORCE_INLINE void _ch_##NAME(WWRP<channel_promise> const& ch_promise) {\
+		inline void _ch_##NAME(WWRP<channel_promise> const& ch_promise) {\
 			WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 			if (m_pipeline == NULL) { \
 				event_poller()->schedule([ch_promise](){ \
@@ -146,11 +146,11 @@ private: \
 			m_pipeline->##NAME(ch_promise); \
 		} \
 public: \
-		__WW_FORCE_INLINE WWRP<channel_future> ch_##NAME() {\
+		inline WWRP<channel_future> ch_##NAME() {\
 			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this)); \
 			return channel::ch_##NAME(ch_promise); \
 		} \
-		__WW_FORCE_INLINE WWRP<channel_future> ch_##NAME(WWRP<channel_promise> const& ch_promise) { \
+		inline WWRP<channel_future> ch_##NAME(WWRP<channel_promise> const& ch_promise) { \
 			WAWO_ASSERT( m_io_event_loop != NULL ); \
 			m_io_event_loop->execute([_ch=WWRP<channel>(this), ch_promise]() { \
 				_ch->_ch_##NAME(ch_promise); \
@@ -164,7 +164,7 @@ public: \
 
 #define CH_FUTURE_ACTION_IMPL_PACKET_1_CH_PROMISE_1(_NAME) \
 private: \
-		__WW_FORCE_INLINE void _ch_##_NAME(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {\
+		inline void _ch_##_NAME(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {\
 			WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 			if (m_pipeline == NULL) { \
 				event_poller()->schedule([ch_promise](){ \
@@ -175,11 +175,11 @@ private: \
 			m_pipeline->##_NAME(outlet,ch_promise); \
 		} \
 public: \
-		__WW_FORCE_INLINE WWRP<channel_future> ch_##_NAME(WWRP<packet> const& outlet) {\
+		inline WWRP<channel_future> ch_##_NAME(WWRP<packet> const& outlet) {\
 			WWRP<channel_promise> ch_promise = wawo::make_ref<channel_promise>(WWRP<channel>(this)); \
 			return ch_##_NAME(outlet,ch_promise); \
 		} \
-		__WW_FORCE_INLINE WWRP<channel_future> ch_##_NAME(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {\
+		inline WWRP<channel_future> ch_##_NAME(WWRP<packet> const& outlet, WWRP<channel_promise> const& ch_promise) {\
 			WAWO_ASSERT(m_io_event_loop != NULL); \
 			m_io_event_loop->execute([_ch=WWRP<channel>(this), outlet, ch_promise]() { \
 				_ch->_ch_##_NAME(outlet, ch_promise); \
@@ -192,7 +192,7 @@ public: \
 
 #define CH_ACTION_IMPL_VOID(NAME) \
 private: \
-		__WW_FORCE_INLINE void _ch_##NAME() { \
+		inline void _ch_##NAME() { \
 			WAWO_ASSERT(m_io_event_loop->in_event_loop()); \
 			if (m_pipeline == NULL) { \
 				return; \
@@ -200,7 +200,7 @@ private: \
 			m_pipeline->##NAME(); \
 		} \
 public: \
-		__WW_FORCE_INLINE void ch_##NAME() {\
+		inline void ch_##NAME() {\
 			WAWO_ASSERT( m_io_event_loop != NULL ); \
 			m_io_event_loop->execute([_ch=WWRP<channel>(this)]() { \
 				_ch->_ch_##NAME(); \

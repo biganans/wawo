@@ -51,42 +51,42 @@ namespace wawo {
 		};
 
 		template <class InIt>
-		inline u8_t read_u8( InIt const& start ) {
+		__WW_FORCE_INLINE u8_t read_u8( InIt const& start ) {
 			return static_cast<u8_t>( *start );
 		}
 		template <class InIt>
-		inline i8_t read_i8( InIt const & start ) {
+		__WW_FORCE_INLINE i8_t read_i8( InIt const & start ) {
 			return static_cast<i8_t>( *start );
 		}
 		template <class InIt, class endian=big_endian>
-		inline u16_t read_u16( InIt const& start ) {
+		__WW_FORCE_INLINE u16_t read_u16( InIt const& start ) {
 			return endian::read_impl( start, type<u16_t>() );
 		}
 		template <class InIt, class endian = big_endian>
-		inline i16_t read_i16( InIt const& start ) {
+		__WW_FORCE_INLINE i16_t read_i16( InIt const& start ) {
 			return endian::read_impl( start, type<i16_t>() );
 		}
 
 		template <class InIt, class endian = big_endian>
-		inline u32_t read_u32( InIt const& start) {
+		__WW_FORCE_INLINE u32_t read_u32( InIt const& start) {
 			return endian::read_impl( start, type<u32_t>() );
 		}
 		template <class InIt, class endian = big_endian>
-		inline i32_t read_i32( InIt const& start ) {
+		__WW_FORCE_INLINE i32_t read_i32( InIt const& start ) {
 			return endian::read_impl( start, type<i32_t>() ) ;
 		}
 
 		template <class InIt, class endian = big_endian>
-		inline u64_t read_u64( InIt const& start) {
+		__WW_FORCE_INLINE u64_t read_u64( InIt const& start) {
 			return endian::read_impl( start, type<u64_t>() );
 		}
 		template <class InIt, class endian = big_endian>
-		inline i64_t read_i64( InIt const& start ) {
+		__WW_FORCE_INLINE i64_t read_i64( InIt const& start ) {
 			return endian::read_impl( start, type<i64_t>() );
 		}
 
 		template <class InIt>
-		inline wawo::u32_t read_bytes( byte_t* const target, wawo::u32_t const& len,InIt const& start ) {
+		__WW_FORCE_INLINE wawo::u32_t read_bytes( byte_t* const target, wawo::u32_t const& len,InIt const& start ) {
 			wawo::u32_t read_idx = 0;
 			for( ; read_idx < len; ++read_idx ) {
 				*(target+read_idx) = *(start+read_idx) ;
@@ -95,44 +95,44 @@ namespace wawo {
 		}
 
 		template <class OutIt>
-		inline wawo::u32_t write_u8( u8_t const& val , OutIt const& out ) {
+		__WW_FORCE_INLINE wawo::u32_t write_u8( u8_t const& val , OutIt const& out ) {
 			return write_impl( val, out );
 		}
 
 		template <class OutIt>
-		inline wawo::u32_t write_i8( i8_t const& val, OutIt const& out) {
+		__WW_FORCE_INLINE wawo::u32_t write_i8( i8_t const& val, OutIt const& out) {
 			return write_impl( val, out );
 		}
 
 		template <class OutIt, class endian = big_endian>
-		inline wawo::u32_t write_u16(u16_t const& val , OutIt const& out) {
+		__WW_FORCE_INLINE wawo::u32_t write_u16(u16_t const& val , OutIt const& out) {
 			return endian::write_impl( val, out );
 		}
 		template <class OutIt, class endian = big_endian>
-		inline wawo::u32_t write_i16(i16_t const& val , OutIt const& out) {
+		__WW_FORCE_INLINE wawo::u32_t write_i16(i16_t const& val , OutIt const& out) {
 			return endian::write_impl( val, out );
 		}
 
 		template <class OutIt, class endian = big_endian>
-		inline wawo::u32_t write_u32(u32_t const& val, OutIt const& out) {
+		__WW_FORCE_INLINE wawo::u32_t write_u32(u32_t const& val, OutIt const& out) {
 			return endian::write_impl(val, out);
 		}
 		template <class OutIt, class endian = big_endian>
-		inline wawo::u32_t write_i32(i32_t const& val, OutIt const& out) {
+		__WW_FORCE_INLINE wawo::u32_t write_i32(i32_t const& val, OutIt const& out) {
 			return endian::write_impl(val, out);
 		}
 
 		template <class OutIt, class endian = big_endian>
-		inline wawo::u32_t write_u64(u64_t const& val, OutIt const& out) {
+		__WW_FORCE_INLINE wawo::u32_t write_u64(u64_t const& val, OutIt const& out) {
 			return endian::write_impl(val, out);
 		}
 		template <class OutIt, class endian = big_endian>
-		inline wawo::u32_t write_i64(i64_t const& val, OutIt const& out) {
+		__WW_FORCE_INLINE wawo::u32_t write_i64(i64_t const& val, OutIt const& out) {
 			return endian::write_impl(val, out);
 		}
 
 		template <class OutIt>
-		inline wawo::u32_t write_bytes( const byte_t* const buffer, wawo::u32_t const& len, OutIt const& out ) {
+		__WW_FORCE_INLINE wawo::u32_t write_bytes( const byte_t* const buffer, wawo::u32_t const& len, OutIt const& out ) {
 			wawo::u32_t write_idx = 0;
 			for( ; write_idx < len;++write_idx ) {
 				*(out+write_idx) = *(buffer+write_idx) ;
