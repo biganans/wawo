@@ -196,7 +196,7 @@ namespace wawo {
 		callstack(0)
 	{
 		if (no_stack_info == false) {
-			const u32_t info_size = 1024*32;
+			const u32_t info_size = 1024*64;
 			char info[info_size] = {0};
 			stack_trace(info, info_size);
 			__WAWO_EXCEPTION_INIT__(this, code_, sz_message_, sz_file_, line_, sz_func_, info);
