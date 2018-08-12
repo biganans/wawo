@@ -5,6 +5,85 @@
 
 namespace wawo { namespace net {
 
+	typedef std::function<void(WWRP<socket> const&)> fn_async_io_init;
+	typedef std::function<void(WWRP<socket> const&)> fn_async_io_deinit;
+
+	typedef std::function<void(WWRP<socket> const&)> fn_async_io_begin_connect;
+	typedef std::function<void(WWRP<socket> const&)> fn_async_io_end_connect;
+
+	typedef std::function<void(WWRP<socket> const&)> fn_async_io_begin_read;
+	typedef std::function<void(WWRP<socket> const&)> fn_async_io_end_read;
+
+	typedef std::function<void(WWRP<socket> const&)> fn_async_io_begin_write;
+	typedef std::function<void(WWRP<socket> const&)> fn_async_io_end_write;
+
+	typedef std::function<void(WWRP<socket> const&)> fn_async_io_begin_accept;
+	typedef std::function<void(WWRP<socket> const&)> fn_async_io_end_accept;
+
+#ifdef WAWO_IO_MODE_IOCP
+	void iocp_init(WWRP<socket> const& so) {
+	}
+	void iocp_deinit(WWRP<socket> const& so) {
+	}
+	void iocp_begin_connect(WWRP<socket> const& so) {
+	}
+
+	void iocp_end_connect(WWRP<socket> const& so) {
+	}
+
+	void iocp_begin_write() {
+	}
+
+	void iocp_end_write() {
+	}
+
+	void iocp_begin_accept() {
+	}
+	void iocp_end_accept() {
+	}
+#endif
+
+	void async_io_init(WWRP<socket> const& so) {
+		(void)so;
+	}
+	void async_io_deinit(WWRP<socket> const& so) {
+		(void)so;
+	}
+
+	void async_io_begin_connect(WWRP<socket> const& so) {
+		const fn_io_event _fn_io = std::bind(&socket::__cb_async_connect, so, std::placeholders::_1);
+		so->begin_write(_fn_io);
+	}
+	void async_io_end_connect(WWRP<socket> const& so) {
+		so->end_write();
+	}
+
+	void async_io_begin_accept(WWRP<socket> const& so) {
+		const fn_io_event _fn_io = std::bind(&socket::__cb_async_accept, so, std::placeholders::_1);
+		so->begin_read(F_WATCH_READ_INFINITE,_fn_io);
+	}
+	void async_io_end_accept(WWRP<socket> const& so) {
+		so->end_read();
+	}
+
+	void async_io_begin_read(WWRP<socket> const& so) {
+		const fn_io_event _fn_io = std::bind(&socket::__cb_async_read, so, std::placeholders::_1);
+		so->begin_read(F_WATCH_READ_INFINITE, _fn_io);
+	}
+
+	void async_io_end_read(WWRP<socket> const& so) {
+		so->end_read();
+	}
+
+	void async_io_begin_write(WWRP<socket> const& so) {
+		const fn_io_event _fn_io = std::bind(&socket::__cb_async_write, so, std::placeholders::_1);
+		so->begin_write(_fn_io);
+	}
+
+	void async_io_end_write(WWRP<socket> const& so) {
+		so->end_write();
+	}
+
 	void socket::_init() {
 		WAWO_ASSERT(m_cfg.buffer.rcv_size > 0);
 		m_trb = (byte_t*) ::malloc( sizeof(byte_t)*m_cfg.buffer.rcv_size ) ;
@@ -13,6 +92,21 @@ namespace wawo { namespace net {
 #ifdef ENABLE_DEBUG_MEMORY_ALLOC
 		::memset( m_trb, 's', m_cfg.buffer.rcv_size );
 #endif
+
+		m_fn_async_io_init = wawo::net::async_io_init;
+		m_fn_async_io_deinit = wawo::net::async_io_init;
+
+		m_fn_async_io_begin_connect = wawo::net::async_io_begin_connect;
+		m_fn_async_io_end_connect = wawo::net::async_io_end_connect;
+
+		m_fn_async_io_begin_accept = wawo::net::async_io_begin_accept;
+		m_fn_async_io_end_accept = wawo::net::async_io_end_accept;
+
+		m_fn_async_io_begin_read = wawo::net::async_io_begin_read;
+		m_fn_async_io_end_read = wawo::net::async_io_end_read;
+
+		m_fn_async_io_begin_write = wawo::net::async_io_begin_write;
+		m_fn_async_io_end_write = wawo::net::async_io_end_write;
 	}
 
 	void socket::_deinit() {
@@ -120,16 +214,10 @@ namespace wawo { namespace net {
 
 		WAWO_ASSERT(rt == wawo::OK);
 		m_fn_accept_initializer = fn_accepted;
-
-		event_poller()->schedule([ch_promise, S=WWRP<socket>(this)]() {
+		event_poller()->schedule([ch_promise, so=WWRP<socket>(this)]() {
 			ch_promise->set_success(wawo::OK);
-#ifdef WAWO_IO_MODE_IOCP
-			S->__IOCP_CALL_AcceptEx();
-#else
-			S->begin_accept();
-#endif
-	});
-
+			so->async_io_begin_accept();
+		});
 	}
 
 	WWRP<channel_future> socket::dial(address const& addr, fn_channel_initializer const& initializer, socket_cfg const& cfg) {
@@ -170,10 +258,7 @@ namespace wawo { namespace net {
 			event_poller()->schedule([ch_promise, rt,so=WWRP<socket>(this)]() {
 				ch_promise->set_success(wawo::OK);
 				so->ch_fire_connected();
-#ifdef WAWO_IO_MODE_IOCP
-				so->__IOCP_init();
-#endif
-				so->begin_read();
+				so->async_io_init();
 			});
 			return;
 		}
@@ -183,11 +268,7 @@ namespace wawo { namespace net {
 			m_fn_dial_initializer = initializer;
 			m_dial_promise = ch_promise;
 			WAWO_TRACE_IOE("[socket][%s][async_connect]watch(IOE_WRITE)", info().to_stdstring().c_str());
-#ifdef WAWO_IO_MODE_IOCP
-			socket::__IOCP_CALL_ConnectEx();
-#else
-			socket::begin_connect();
-#endif
+			socket::async_io_begin_connect();
 		} else {
 			//error
 			event_poller()->schedule([ch_promise, rt, CH = WWRP<channel>(this)]() {

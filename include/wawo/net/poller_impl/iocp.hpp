@@ -189,7 +189,7 @@ namespace wawo { namespace net { namespace impl {
 				}
 				ctx->fn({ AIO_CONNECT, ctx->fd, ec == 0 ? (int)dwTrans : ec, NULL });
 			}
-			break;
+			break; 
 			default:
 			{
 				WAWO_THROW("unknown io event flag");
