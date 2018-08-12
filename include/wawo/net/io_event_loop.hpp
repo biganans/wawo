@@ -70,7 +70,7 @@ namespace wawo { namespace net {
 
 #ifdef WAWO_IO_MODE_IOCP
 		inline void IOCP_overlapped_call(u8_t const& flag, SOCKET const& fd, fn_overlapped_io_event const& fn_overlapped, fn_io_event const& fn) {
-			WAWO_ASSERT(fd > 0);
+			WAWO_ASSERT(fd != wawo::E_INVALID_SOCKET );
 			WWRP<io_event_loop> loop(this);
 			execute([loop, flag, fd, fn_overlapped, fn]() -> void {
 				loop->do_IOCP_overlapped_call(flag,fd, fn_overlapped,fn);

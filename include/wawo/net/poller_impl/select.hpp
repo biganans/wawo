@@ -30,7 +30,7 @@ namespace wawo { namespace net { namespace impl {
 
 			inline void watch_ioe( u8_t const& flag, SOCKET const& fd, fn_io_event const& fn ) {
 
-				WAWO_ASSERT(fd >0);
+				WAWO_ASSERT(fd != wawo::E_INVALID_SOCKET);
 				WAWO_ASSERT(fn != NULL);
 
 				WWRP<poller_ctx> ctx;
@@ -55,7 +55,7 @@ namespace wawo { namespace net { namespace impl {
 
 			inline void unwatch_ioe( u8_t const& flag, SOCKET const& fd) {
 
-				WAWO_ASSERT(fd>0);
+				WAWO_ASSERT(fd != wawo::E_INVALID_SOCKET);
 				WAWO_ASSERT(flag > 0 && flag <= 0xFF);
 
 				poller_ctx_map::iterator it = m_ctxs.find(fd); 
@@ -83,7 +83,7 @@ namespace wawo { namespace net { namespace impl {
 
 			void do_unwatch(u8_t const& flag, SOCKET const& fd)
 			{
-				WAWO_ASSERT( flag > 0 );
+				WAWO_ASSERT(fd != wawo::E_INVALID_SOCKET);
 				unwatch_ioe( flag, fd );
 			}
 

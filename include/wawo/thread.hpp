@@ -146,7 +146,6 @@ namespace wawo {
 					throw interrupt_exception();
 				}
 			}
-
 		};
 	}
 

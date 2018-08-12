@@ -58,7 +58,7 @@ namespace wawo { namespace net {
 			WAWO_TRACE_CH_OBJECT("channel::~channel()");
 		}
 
-		inline WWRP<io_event_loop> const& event_poller() const {
+		__WW_FORCE_INLINE WWRP<io_event_loop> const& event_poller() const {
 			return m_io_event_loop;
 		}
 
@@ -230,8 +230,8 @@ public: \
 		virtual void begin_read(u8_t const& async_flag = 0, fn_io_event const& fn_read = NULL) = 0;
 		virtual void end_read() = 0;
 
-		virtual void begin_write(fn_io_event const& fn_write = NULL) = 0;
-		virtual void end_write() = 0;
+		//virtual void begin_write(fn_io_event const& fn_write = NULL) = 0;
+		//virtual void end_write() = 0;
 
 		virtual bool ch_is_active() const = 0;
 	};

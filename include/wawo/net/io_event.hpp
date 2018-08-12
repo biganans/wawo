@@ -17,7 +17,7 @@ namespace wawo { namespace net {
 	};
 
 	struct async_io_result {
-		int op;
+		async_io_op op;
 		SOCKET fd;
 		union {
 			int len;

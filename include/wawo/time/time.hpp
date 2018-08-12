@@ -52,7 +52,7 @@ namespace wawo { namespace time {
 
 	}
 
-	inline u64_t curr_nanoseconds() {
+	inline i64_t curr_nanoseconds() {
 #ifdef WAWO_USE_CHRONO
 		std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds> tp 
 			= std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() );
@@ -62,7 +62,7 @@ namespace wawo { namespace time {
 #endif
 	}
 
-	inline u64_t curr_microseconds() {
+	inline i64_t curr_microseconds() {
 #ifdef WAWO_USE_CHRONO
 		std::chrono::time_point<std::chrono::system_clock, std::chrono::microseconds> tp 
 			= std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now() );
@@ -74,7 +74,7 @@ namespace wawo { namespace time {
 #endif
 	}
 
-	inline u64_t curr_milliseconds() {
+	inline i64_t curr_milliseconds() {
 #ifdef WAWO_USE_CHRONO
 		std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> tp 
 			= std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() );
@@ -86,7 +86,7 @@ namespace wawo { namespace time {
 #endif
 	}
 
-	inline u64_t curr_seconds() {
+	inline i64_t curr_seconds() {
 #ifdef WAWO_USE_CHRONO
 		std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds> tp 
 			= std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::system_clock::now() );

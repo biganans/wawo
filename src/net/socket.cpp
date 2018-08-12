@@ -167,13 +167,13 @@ namespace wawo { namespace net {
 		if (rt == wawo::OK) {
 			WAWO_ASSERT(m_state == S_CONNECTED);
 			initializer(WWRP<channel>(this));
-			event_poller()->schedule([ch_promise, rt,SO=WWRP<socket>(this)]() {
+			event_poller()->schedule([ch_promise, rt,so=WWRP<socket>(this)]() {
 				ch_promise->set_success(wawo::OK);
-				SO->ch_fire_connected();
+				so->ch_fire_connected();
 #ifdef WAWO_IO_MODE_IOCP
-				SO->__IOCP_init();
+				so->__IOCP_init();
 #endif
-				SO->begin_read();
+				so->begin_read();
 			});
 			return;
 		}
@@ -189,6 +189,7 @@ namespace wawo { namespace net {
 			socket::begin_connect();
 #endif
 		} else {
+			//error
 			event_poller()->schedule([ch_promise, rt, CH = WWRP<channel>(this)]() {
 				ch_promise->set_success(rt);
 			});

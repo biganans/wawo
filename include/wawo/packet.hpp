@@ -149,8 +149,8 @@ namespace wawo {
 				_extend_leftbuffer_capacity__();
 			}
 
+			WAWO_ASSERT(m_read_idx >= len);
 			m_read_idx -= len;
-			WAWO_ASSERT(m_read_idx >= 0);
 			::memcpy( m_buffer + m_read_idx, buffer, len) ;
 			return this ;
 		}

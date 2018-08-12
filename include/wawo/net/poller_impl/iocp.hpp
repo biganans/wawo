@@ -74,7 +74,7 @@ namespace wawo { namespace net { namespace impl {
 		inline static void iocp_reset_accept_ctx(WWRP<iocp_overlapped_ctx> const& ctx) {
 			WAWO_ASSERT(ctx != NULL);
 			::memset(&ctx->overlapped, 0, sizeof(ctx->overlapped));
-			ctx->fd = -1;
+			ctx->fd = wawo::E_INVALID_SOCKET;
 		}
 
 		typedef std::map<int, WWSP<iocp_ctxs>> iocp_ctxs_map;
@@ -97,8 +97,8 @@ namespace wawo { namespace net { namespace impl {
 			WAWO_ASSERT(ctx != NULL);
 
 			int newfd = ctx->fn_overlapped((void*)&ctx->overlapped);
-			if (newfd == -1) {
-				ctx->fn({ AIO_ACCEPT, wawo::socket_get_last_errno(), NULL });
+			if (newfd == wawo::E_INVALID_SOCKET) {
+				ctx->fn({ AIO_ACCEPT, ctx->fd, wawo::socket_get_last_errno(), NULL });
 				return;
 			}
 			ctx->accept_fd = newfd;
@@ -114,8 +114,8 @@ namespace wawo { namespace net { namespace impl {
 				int ec = wawo::socket_get_last_errno();
 				if (ec != wawo::E_ERROR_IO_PENDING) {
 					WAWO_CLOSE_SOCKET(newfd);
-					ctx->accept_fd = -1;
-					ctx->fn({ AIO_ACCEPT, ec, NULL });
+					ctx->accept_fd = wawo::E_INVALID_SOCKET;
+					ctx->fn({ AIO_ACCEPT, ctx->fd, ec, NULL });
 					return;
 				}
 			}
@@ -128,7 +128,7 @@ namespace wawo { namespace net { namespace impl {
 				int ec = wawo::socket_get_last_errno();
 				if (ec != wawo::E_ERROR_IO_PENDING) {
 					ctx->action_status = AS_ERROR;
-					ctx->fn({ AIO_READ, ec, NULL });
+					ctx->fn({ AIO_READ, ctx->fd, ec, NULL });
 					return;
 				}
 			}
@@ -140,9 +140,9 @@ namespace wawo { namespace net { namespace impl {
 			switch (ctx->action) {
 			case READ:
 			{
-				WAWO_ASSERT(ctx->fd > 0);
-				WAWO_ASSERT(ctx->accept_fd == -1);
-				ctx->fn({ AIO_READ, ec == 0 ? (int)dwTrans : ec, ctx->wsabuf.buf });
+				WAWO_ASSERT(ctx->fd != wawo::E_INVALID_SOCKET);
+				WAWO_ASSERT(ctx->accept_fd == wawo::E_INVALID_SOCKET);
+				ctx->fn({ AIO_READ, ctx->fd, ec == 0 ? (int)dwTrans : ec, ctx->wsabuf.buf });
 				if (ctx->action_status == AS_NORMAL ) {
 					_do_read(ctx);
 				}
@@ -150,15 +150,15 @@ namespace wawo { namespace net { namespace impl {
 			break;
 			case WRITE:
 			{
-				WAWO_ASSERT(ctx->fd > 0);
-				WAWO_ASSERT(ctx->accept_fd == -1);
-				ctx->fn({ AIO_WRITE, ec == 0 ? (int)dwTrans : ec, NULL });
+				WAWO_ASSERT(ctx->fd != wawo::E_INVALID_SOCKET );
+				WAWO_ASSERT(ctx->accept_fd == wawo::E_INVALID_SOCKET);
+				ctx->fn({ AIO_WRITE, ctx->fd, ec == 0 ? (int)dwTrans : ec, NULL });
 			}
 			break;
 			case ACCEPT:
 			{
-				WAWO_ASSERT(ctx->fd > 0);
-				WAWO_ASSERT(ctx->accept_fd > 0);
+				WAWO_ASSERT(ctx->fd != wawo::E_INVALID_SOCKET);
+				WAWO_ASSERT(ctx->accept_fd != wawo::E_INVALID_SOCKET);
 				WAWO_ASSERT(ctx->fn != nullptr);
 
 				if (ec == wawo::OK) {
@@ -166,7 +166,7 @@ namespace wawo { namespace net { namespace impl {
 				}
 
 				if (WAWO_LIKELY(ec == 0)) {
-					ctx->fn({ AIO_ACCEPT, ctx->accept_fd, ctx->wsabuf.buf });
+					ctx->fn({ AIO_ACCEPT, ctx->accept_fd,ec, ctx->wsabuf.buf });
 				}
 				else {
 					WAWO_CLOSE_SOCKET(ctx->accept_fd);
@@ -179,15 +179,15 @@ namespace wawo { namespace net { namespace impl {
 			break;
 			case CONNECT:
 			{
-				WAWO_ASSERT(ctx->fd > 0);
-				WAWO_ASSERT(ctx->accept_fd == -1);
+				WAWO_ASSERT(ctx->fd != wawo::E_INVALID_SOCKET);
+				WAWO_ASSERT(ctx->accept_fd == wawo::E_INVALID_SOCKET);
 				if (ec == wawo::OK) {
 					ec = ::setsockopt(ctx->fd, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
-					if (ec == SOCKET_ERROR) {
+					if (ec == wawo::E_SOCKET_ERROR) {
 						ec = wawo::socket_get_last_errno();
 					}
 				}
-				ctx->fn({ AIO_CONNECT, ec == 0 ? (int)dwTrans : ec, NULL });
+				ctx->fn({ AIO_CONNECT, ctx->fd, ec == 0 ? (int)dwTrans : ec, NULL });
 			}
 			break;
 			default:
@@ -221,21 +221,17 @@ namespace wawo { namespace net { namespace impl {
 		void do_poll() {
 			WAWO_ASSERT(m_handle > 0);
 			int ec = 0;
-			long long dwWaitMicro = _before_wait();
-			if (dwWaitMicro == ~0) {
-				dwWaitMicro = INFINITE;
+			long long dw_wait_in_nano = _calc_wait_dur_in_nano();
+			if (dw_wait_in_nano == ~0) {
+				dw_wait_in_nano = INFINITE;
 			} else {
-				dwWaitMicro = dwWaitMicro/1000;
+				dw_wait_in_nano = dw_wait_in_nano /1000;
 			}
-			const bool bLastWait = (dwWaitMicro != 0);
 #define WAWO_USE_GET_QUEUED_COMPLETION_STATUS_EX
 #ifdef WAWO_USE_GET_QUEUED_COMPLETION_STATUS_EX
 			OVERLAPPED_ENTRY entrys[64];
 			ULONG n = 64;
-			BOOL getOk = ::GetQueuedCompletionStatusEx(m_handle, &entrys[0], n,&n, (dwWaitMicro),FALSE);
-			//if (bLastWait) {
-			//	_after_wait();
-			//}
+			BOOL getOk = ::GetQueuedCompletionStatusEx(m_handle, &entrys[0], n,&n, (DWORD)(dw_wait_in_nano),FALSE);
 			if (WAWO_UNLIKELY(getOk) == FALSE) {
 				ec = wawo::socket_get_last_errno();
 				WAWO_DEBUG("[iocp]GetQueuedCompletionStatusEx return: %d", ec);
@@ -270,9 +266,6 @@ namespace wawo { namespace net { namespace impl {
 			int fd;
 			LPOVERLAPPED ol;
 			BOOL getOk = ::GetQueuedCompletionStatus(m_handle, &len, (LPDWORD)&fd, &ol, dwWaitMill);
-			//if (bLastWait) {
-			//	_after_wait();
-			//}
 
 			if (WAWO_UNLIKELY(getOk== FALSE)) {
 				ec = wawo::socket_get_last_errno();
@@ -393,7 +386,6 @@ namespace wawo { namespace net { namespace impl {
 			iocp_ctxs_map::iterator it = m_ctxs.find(fd);
 			WAWO_ASSERT(it != m_ctxs.end());
 			WWSP<iocp_ctxs> _iocp_ctxs = it->second;
-			
 			WAWO_ASSERT(_iocp_ctxs != NULL);
 			
 			if (flag&IOE_WRITE) {
@@ -406,7 +398,7 @@ namespace wawo { namespace net { namespace impl {
 
 				int wsasndrt = fn_overlapped((void*)&ctx->overlapped);
 				if (wsasndrt != wawo::OK) {
-					fn({ AIO_WRITE, wsasndrt, NULL });
+					fn({ AIO_WRITE, ctx->fd, wsasndrt, NULL });
 				}
 				return;
 			}
@@ -431,9 +423,9 @@ namespace wawo { namespace net { namespace impl {
 				iocp_reset_ctx(ctx);
 				ctx->fn = fn;
 
-				int connexRt = fn_overlapped((void*)&ctx->overlapped);
-				if (connexRt != wawo::OK) {
-					fn({ AIO_CONNECT, connexRt, NULL });
+				int connectExRT = fn_overlapped((void*)&ctx->overlapped);
+				if (connectExRT != wawo::OK) {
+					fn({ AIO_CONNECT, ctx->fd, connectExRT, NULL });
 				}
 			}
 		}

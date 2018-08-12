@@ -694,12 +694,12 @@ namespace wawo { namespace net { namespace handler {
 			m_flag &= ~F_WATCH_READ;
 		}
 
-		void begin_write(fn_io_event const& fn_write = NULL) {
-			WAWO_ASSERT(!"TODO");
-		}
-		void end_write() {
-			WAWO_ASSERT(!"TODO");
-		}
+		//void begin_write(fn_io_event const& fn_write = NULL) {
+		//	WAWO_ASSERT(!"TODO");
+		//}
+		//void end_write() {
+		//	WAWO_ASSERT(!"TODO");
+		//}
 
 		bool ch_is_active() const {
 			return (m_is_active == true) ;

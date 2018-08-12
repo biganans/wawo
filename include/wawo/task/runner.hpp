@@ -36,7 +36,7 @@ namespace wawo { namespace task {
 				}
 			}
 		}
-		inline u32_t empty() const {
+		inline bool empty() const {
 			return	tasks[P_NORMAL].empty() && tasks[P_HIGH].empty();
 		}
 	};
@@ -71,7 +71,7 @@ namespace wawo { namespace task {
 
 		u8_t m_id;
 		u8_t m_wait_flag;
-		volatile task_runner_state m_state:8;
+		volatile task_runner_state m_state;
 
 		scheduler* m_scheduler;
 	public:

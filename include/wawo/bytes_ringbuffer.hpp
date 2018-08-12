@@ -99,7 +99,7 @@ namespace wawo {
 		}
 
 		inline void skip( wawo::u32_t const& s ) {
-			WAWO_ASSERT( (s>=0) && s <= count() );
+			WAWO_ASSERT( s <= count() );
 			m_begin = ((m_begin + s) % m_capacity) ;
 			if( is_empty() ) {
 				reset() ;

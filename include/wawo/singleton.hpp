@@ -10,7 +10,7 @@ namespace wawo {
 	template <class T>
 	class singleton {
 	public:
-		inline static T* instance() {
+		__WW_FORCE_INLINE static T* instance() {
 			T* ins = s_instance.load(std::memory_order_acquire);
 			if ( WAWO_LIKELY(NULL != ins)) {
 				return ins;
