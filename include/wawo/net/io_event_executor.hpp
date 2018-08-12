@@ -53,21 +53,24 @@ namespace wawo { namespace net {
 			__wait_check(timer_clock_t::now());
 		}
 		__WW_FORCE_INLINE void start_timer(WWRP<wawo::timer>&& t) {
+			WAWO_ASSERT(m_tm != NULL);
 			if (in_event_loop()) {
 				m_tm->start(std::forward<WWRP<wawo::timer>>(t));
 				return;
 			}
-			lock_guard<spin_mutex> lg(m_mutex);
 			const timer_timepoint_t expire = m_tm->start(std::forward<WWRP<wawo::timer>>(t));
+			lock_guard<spin_mutex> lg(m_mutex);
 			__wait_check(expire);
 		}
 		__WW_FORCE_INLINE void start_timer(WWRP<wawo::timer> const& t) {
+			WAWO_ASSERT(m_tm != NULL);
+
 			if (in_event_loop()) {
 				m_tm->start(t);
 				return;
 			}
-			lock_guard<spin_mutex> lg(m_mutex);
 			const timer_timepoint_t expire = m_tm->start(t);
+			lock_guard<spin_mutex> lg(m_mutex);
 			__wait_check(expire);
 		}
 
@@ -75,11 +78,11 @@ namespace wawo { namespace net {
 		//~0,	INFINITE WAIT
 		//>0,	WAIT nanosecond
 		__WW_FORCE_INLINE long long _calc_wait_dur_in_nano() {
-			lock_guard<spin_mutex> lg(m_mutex);
 			WAWO_ASSERT(m_tm != NULL);
 			wawo::timer_duration_t ndelay;
 			m_tm->update(ndelay);
 
+			lock_guard<spin_mutex> lg(m_mutex);
 			if (ndelay == wawo::timer_duration_t() ||
 				m_tq_standby->size() !=0
 			) {
