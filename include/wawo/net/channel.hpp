@@ -62,7 +62,7 @@ namespace wawo { namespace net {
 			return m_io_event_loop;
 		}
 
-		inline WWRP<channel_pipeline> const& pipeline() const {
+		__WW_FORCE_INLINE WWRP<channel_pipeline> const& pipeline() const {
 			WAWO_ASSERT(m_pipeline != NULL);
 			return m_pipeline;
 		}

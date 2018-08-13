@@ -20,15 +20,17 @@ namespace wawo {
 			std::lock_guard<std::mutex> _lg(__s_instance_mutex);
 			ins = s_instance.load(std::memory_order_acquire);
 			if ( WAWO_LIKELY(NULL == ins)) {
-				try {
+				//@note, try ..catch would prevent inline
+				//if there is a exception , we just let it bubbling up
+				//try {
 					ins = new T();
 					singleton<T>::schedule_for_destroy(singleton<T>::destroy_instance);
 					s_instance.store(ins, std::memory_order_release);
-				} catch (...) {
+				//} catch (...) {
 					//issue might be
-					delete ins;
-					WAWO_THROW("new T() | schedule_for_destroy failed!!!");
-				}
+				//	delete ins;
+				//	WAWO_THROW("new T() | schedule_for_destroy failed!!!");
+				//}
 			}
 			return ins;
 		}
