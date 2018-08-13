@@ -5,13 +5,13 @@
 #include <queue>
 
 #include <wawo/core.hpp>
-#include <wawo/net/poller_abstract.hpp>
+#include <wawo/net/io_event_loop.hpp>
 #include <wawo/net/socket_api.hpp>
 
 namespace wawo { namespace net { namespace impl {
 
 	class select:
-		public poller_abstract
+		public io_event_loop
 	{
 		fd_set m_fds_r;
 		fd_set m_fds_w;
@@ -20,7 +20,7 @@ namespace wawo { namespace net { namespace impl {
 		SOCKET m_signalfds[2];
 		public:
 			select():
-				poller_abstract()
+				io_event_loop(T_SELECT)
 			{
 				m_signalfds[0] = wawo::E_INVALID_SOCKET;
 				m_signalfds[1] = wawo::E_INVALID_SOCKET;
@@ -33,12 +33,12 @@ namespace wawo { namespace net { namespace impl {
 				WAWO_ASSERT(fd != wawo::E_INVALID_SOCKET);
 				WAWO_ASSERT(fn != NULL);
 
-				WWRP<poller_ctx> ctx;
-				poller_ctx_map::iterator it = m_ctxs.find(fd);
+				WWRP<watch_ctx> ctx;
+				watch_ctx_map::iterator it = m_ctxs.find(fd);
 				
 				if (it == m_ctxs.end()) {
 					WAWO_TRACE_IOE("[io_event_loop][#%d]watch_ioe: make new, flag: %u", fd, flag );
-					WWRP<poller_ctx> _ctx = wawo::make_ref<poller_ctx>();
+					WWRP<watch_ctx> _ctx = wawo::make_ref<watch_ctx>();
 					_ctx->fd = fd;
 					_ctx->flag = 0;
 
@@ -58,10 +58,10 @@ namespace wawo { namespace net { namespace impl {
 				WAWO_ASSERT(fd != wawo::E_INVALID_SOCKET);
 				WAWO_ASSERT(flag > 0 && flag <= 0xFF);
 
-				poller_ctx_map::iterator it = m_ctxs.find(fd); 
+				watch_ctx_map::iterator it = m_ctxs.find(fd); 
 				
 				if (it == m_ctxs.end()) return;
-				WWRP<poller_ctx> ctx = it->second ;
+				WWRP<watch_ctx> ctx = it->second ;
 
 				ctx_update_for_unwatch(ctx, flag);
 
@@ -96,9 +96,9 @@ namespace wawo { namespace net { namespace impl {
 			FD_ZERO(&m_fds_e);
 
 			SOCKET max_fd_v = wawo::E_INVALID_SOCKET;
-			poller_ctx_map::iterator it = m_ctxs.begin();
+			watch_ctx_map::iterator it = m_ctxs.begin();
 			while( it != m_ctxs.end() ) {
-				WWRP<poller_ctx> const& ctx = it->second ;
+				WWRP<watch_ctx> const& ctx = it->second ;
 				if(ctx->flag&IOE_READ) {
 					//TRACE_IOE("[select]check read evt for: %d", ctx->fd );
 					FD_SET((ctx->fd), &m_fds_r);
@@ -148,12 +148,12 @@ namespace wawo { namespace net { namespace impl {
 			//check begin
 			//int total_rc = 0;
 
-			poller_ctx_map::iterator it = m_ctxs.begin();
+			watch_ctx_map::iterator it = m_ctxs.begin();
 			while (it != m_ctxs.end() && (ready_c > 0)) {
-				poller_ctx_map::iterator it_cur = it;
+				watch_ctx_map::iterator it_cur = it;
 				++it;
 
-				WWRP<poller_ctx> ctx = it_cur->second;
+				WWRP<watch_ctx> ctx = it_cur->second;
 				WAWO_ASSERT(ctx != NULL);
 
 				SOCKET const& fd = ctx->fd;
@@ -200,7 +200,7 @@ namespace wawo { namespace net { namespace impl {
 #pragma warning(pop)
 
 		void init() {
-			poller_abstract::init();
+			io_event_loop::init();
 
 			int rt = wawo::net::socket_api::posix::socketpair(F_AF_INET, T_STREAM, P_TCP, m_signalfds);
 			WAWO_ASSERT(rt == wawo::OK);
@@ -229,12 +229,12 @@ namespace wawo { namespace net { namespace impl {
 		}
 		void deinit() {
 			unwatch_ioe(IOE_READ, m_signalfds[0]);
-			poller_abstract::ctxs_cancel_all(m_ctxs);
+			io_event_loop::ctxs_cancel_all(m_ctxs);
 			WAWO_CLOSE_SOCKET(m_signalfds[0]);
 			WAWO_CLOSE_SOCKET(m_signalfds[1]);
 			m_signalfds[0] = wawo::E_INVALID_SOCKET;
 			m_signalfds[1] = wawo::E_INVALID_SOCKET;
-			poller_abstract::deinit();
+			io_event_loop::deinit();
 		}
 		void interrupt_wait() {
 			WAWO_ASSERT(m_signalfds[0] > 0);

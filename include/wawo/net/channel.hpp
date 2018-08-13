@@ -226,11 +226,10 @@ public: \
 		virtual void ch_get_write_buffer_size(WWRP<channel_promise> const& ch_promise) = 0;
 
 		virtual void ch_set_nodelay(WWRP<channel_promise> const& ch_promise) = 0;
-
-		virtual void begin_read(u8_t const& async_flag = 0, fn_io_event const& fn_read = NULL) = 0;
-		virtual void end_read() = 0;
-
 		virtual bool ch_is_active() const = 0;
+
+		virtual void ch_async_io_begin_read(u8_t const& async_flag = 0, fn_io_event const& fn_read = NULL) = 0;
+		virtual void ch_async_io_end_read() = 0;
 	};
 }}
 #endif

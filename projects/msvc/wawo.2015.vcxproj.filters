@@ -443,9 +443,6 @@
     <ClInclude Include="..\..\include\wawo\net\poller_impl\wpoll.hpp">
       <Filter>Header Files\wawo\net\poller_impl</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\wawo\net\poller_abstract.hpp">
-      <Filter>Header Files\wawo\net</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\wawo\net\poller_impl\iocp.hpp">
       <Filter>Header Files\wawo\net\poller_impl</Filter>
     </ClInclude>

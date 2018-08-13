@@ -5,53 +5,6 @@
 
 namespace wawo { namespace net {
 
-#ifdef WAWO_IO_MODE_IOCP
-	void iocp_init(WWRP<socket> const& so) {
-	}
-	void iocp_deinit(WWRP<socket> const& so) {
-	}
-	void iocp_begin_connect(WWRP<socket> const& so) {
-	}
-
-	void iocp_end_connect(WWRP<socket> const& so) {
-	}
-
-	void iocp_begin_write() {
-	}
-
-	void iocp_end_write() {
-	}
-
-	void iocp_begin_accept() {
-	}
-	void iocp_end_accept() {
-	}
-#endif
-
-	void async_io_begin_connect(WWRP<socket> const& so) {
-		const fn_io_event _fn_io = std::bind(&socket::__cb_async_connect_impl, so, std::placeholders::_1);
-		so->begin_write_impl(_fn_io);
-	}
-	void async_io_end_connect(WWRP<socket> const& so) {
-		so->end_write_impl();
-	}
-
-	void async_io_begin_accept(WWRP<socket> const& so) {
-		const fn_io_event _fn_io = std::bind(&socket::__cb_async_accept_impl, so, std::placeholders::_1);
-		so->begin_read(F_WATCH_READ_INFINITE,_fn_io);
-	}
-	void async_io_end_accept(WWRP<socket> const& so) {
-		so->end_read();
-	}
-
-	void async_io_begin_write(WWRP<socket> const& so) {
-		so->begin_write_impl();
-	}
-
-	void async_io_end_write(WWRP<socket> const& so) {
-		so->end_write_impl();
-	}
-
 	void socket::_init() {
 		if (m_protocol != P_UDP) {
 			WAWO_ASSERT(m_cfg.buffer.rcv_size > 0);
@@ -174,7 +127,7 @@ namespace wawo { namespace net {
 		event_poller()->schedule([ch_promise, so=WWRP<socket>(this)]() {
 			ch_promise->set_success(wawo::OK);
 			so->async_io_init();
-			so->async_io_begin_accept();
+			so->_async_io_begin_accept();
 		});
 	}
 
@@ -217,7 +170,6 @@ namespace wawo { namespace net {
 				ch_promise->set_success(wawo::OK);
 				so->ch_fire_connected();
 				so->async_io_init();
-				so->begin_read();
 			});
 			return;
 		}
@@ -228,7 +180,7 @@ namespace wawo { namespace net {
 			m_dial_promise = ch_promise;
 			WAWO_TRACE_IOE("[socket][%s][async_connect]watch(IOE_WRITE)", info().to_stdstring().c_str());
 			socket::async_io_init();
-			socket::async_io_begin_connect();
+			socket::_async_io_begin_connect();
 		} else {
 			//error
 			event_poller()->schedule([ch_promise, rt, CH = WWRP<channel>(this)]() {

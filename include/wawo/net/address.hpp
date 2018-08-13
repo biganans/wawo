@@ -88,7 +88,7 @@ namespace wawo { namespace net {
 	static_assert(sizeof(ipv4_t) == 4, "ipv4_t size assert failed");
 	static_assert(sizeof(port_t) == 2, "port_t size assert failed");
 
-	enum AddrInfoFilter {
+	enum addrinfo_filter {
 		AIF_ALL			= 0x0, //return all
 		AIF_F_INET		= 0x01, //return only ipv4
 		AIF_F_INET6		= 0x02, //return only ipv6

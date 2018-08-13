@@ -55,7 +55,7 @@ namespace wawo { namespace net { namespace handler {
 
 			invoke<fn_mux_stream_accepted_t>(E_MUX_CH_STREAM_ACCEPTED, s );
 			s->ch_fire_connected();
-			s->begin_read();
+			s->ch_async_io_begin_read();
 			return;
 		}
 

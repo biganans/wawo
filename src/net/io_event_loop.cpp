@@ -16,30 +16,28 @@
 
 namespace wawo { namespace net {
 
-	inline static WWRP<io_event_loop> make_poller_by_type(poller_type t) {
-			WWRP<io_event_loop> rt;
+	inline static WWRP<io_event_loop> make_poller_by_type(io_poller_type t) {
+			WWRP<io_event_loop> poller;
 			switch (t) {
 #ifdef WAWO_ENABLE_EPOLL
 			case T_EPOLL:
 			{
-				rt = wawo::make_ref<impl::epoll>();
+				poller = wawo::make_ref<impl::epoll>();
 				WAWO_ALLOC_CHECK(m_poller, sizeof(impl::epoll));
 			}
 			break;
-
 #elif defined(WAWO_IO_MODE_IOCP)
-
 			case T_IOCP:
 			{
-				rt = wawo::make_ref<impl::iocp>();
-				WAWO_ALLOC_CHECK(rt, sizeof(impl::iocp));
+				poller = wawo::make_ref<impl::iocp>();
+				WAWO_ALLOC_CHECK(poller, sizeof(impl::iocp));
 			}
 			break;
 #else
 			case T_SELECT:
 			{
-				rt = wawo::make_ref<impl::select>();
-				WAWO_ALLOC_CHECK(rt, sizeof(impl::select));
+				poller = wawo::make_ref<impl::select>();
+				WAWO_ALLOC_CHECK(poller, sizeof(impl::select));
 			}
 			break;
 #endif
@@ -57,24 +55,25 @@ namespace wawo { namespace net {
 			}
 			}
 
-			WAWO_ASSERT(rt != NULL);
-			return rt;
+			WAWO_ASSERT(poller != NULL);
+			return poller;
 		}
 
 		io_event_loop_group::io_event_loop_group()
-			:m_curr_sys(0), m_curr_wpoll(0)
 		{}
 		io_event_loop_group::~io_event_loop_group() {}
 
 		void io_event_loop_group::init(int wpoller_count) {
+
 			int sys_i = std::thread::hardware_concurrency();
 //			sys_i = 1;
-
+			const io_poller_type t = get_poller_type();
+			m_curr_idx[t] = 0;
 			while (sys_i-- > 0) {
-				WWRP<io_event_loop> o = make_poller_by_type(get_poll_type());
+				WWRP<io_event_loop> o = make_poller_by_type(t);
 				int rt = o->start();
 				WAWO_ASSERT(rt == wawo::OK);
-				m_pollers.push_back(o);
+				m_pollers[t].push_back(o);
 			}
 
 #ifdef WAWO_ENABLE_WCP
@@ -84,53 +83,37 @@ namespace wawo { namespace net {
 			if (wpoller_count > 0) {
 				wcp::instance()->start();
 			}
-
+			m_curr_idx[T_WPOLL] = 0;
 			while (wpoller_count-- > 0) {
 				WWRP<io_event_loop> o = make_poller_by_type(T_WPOLL);
 				int rt = o->start();
 				WAWO_ASSERT(rt == wawo::OK);
-				m_wpoll_pollers.push_back(o);
+				m_pollers[T_WPOLL].push_back(o);
 			}
-#endif
-		}
-		WWRP<io_event_loop> io_event_loop_group::next(bool const& return_wpoller) {
-#ifdef WAWO_ENABLE_WCP
-			if (return_wpoller) {
-				int i = m_curr_wpoll.load() % m_wpoll_pollers.size();
-				wawo::atomic_increment(&m_curr_wpoll);
-				return m_wpoll_pollers[i% m_wpoll_pollers.size()];
-			}
-			else {
-#endif
-				int i = m_curr_sys.load() % m_pollers.size();
-				wawo::atomic_increment(&m_curr_sys);
-				return m_pollers[i% m_pollers.size()];
-#ifdef WAWO_ENABLE_WCP
-			}
+#else
+			(void)wpoller_count;
 #endif
 		}
 
 		void io_event_loop_group::deinit() {
-#ifdef WAWO_ENABLE_WCP
-			if (m_wpoll_pollers.size()) {
-				wcp::instance()->stop();
-				std::for_each(m_wpoll_pollers.begin(), m_wpoll_pollers.end(), [](WWRP<io_event_loop> const& o) {
+			for (::size_t i = 0; i < T_POLLER_MAX; ++i) {
+				std::for_each(m_pollers[i].begin(), m_pollers[i].end(), [](WWRP<io_event_loop> const& o) {
 					o->stop();
 				});
-				m_wpoll_pollers.clear();
+				m_pollers[i].clear();
 			}
-#endif
-			std::for_each(m_pollers.begin(), m_pollers.end(), [](WWRP<io_event_loop> const& o) {
-				o->stop();
-			});
-			m_pollers.clear();
+		}
+
+		WWRP<io_event_loop> io_event_loop_group::next(io_poller_type const& t) {
+			const io_event_loop_vector& pollers = m_pollers[t];
+			return pollers[wawo::atomic_increment(&m_curr_idx[t]) % pollers.size()];
 		}
 
 		void io_event_loop_group::execute(fn_io_event_task&& f) {
-			next()->execute(std::forward<fn_io_event_task>(f));
+			next(get_poller_type())->execute(std::forward<fn_io_event_task>(f));
 		}
 		void io_event_loop_group::schedule(fn_io_event_task&& f) {
-			next()->schedule(std::forward<fn_io_event_task>(f));
+			next(get_poller_type())->schedule(std::forward<fn_io_event_task>(f));
 		}
 	}
 }

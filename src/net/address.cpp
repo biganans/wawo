@@ -157,7 +157,7 @@ namespace wawo { namespace net {
 		ia.s_addr = ::htonl(ip);
 		char addr[16] = { 0 };
 		const char* addr_cstr = ::inet_ntop(AF_INET, &ia, addr, 16);
-		if (addr_cstr != NULL) {
+		if (WAWO_LIKELY(addr_cstr != NULL)) {
 			return std::string(addr);
 		}
 		return std::string();

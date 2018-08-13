@@ -115,7 +115,7 @@ namespace wawo { namespace net { namespace handler {
 		}
 		inline void _ch_do_shutdown_read(WWRP<channel_promise> const& ch_p) {
 			WAWO_ASSERT((m_flag&F_READ_SHUTDOWN) == 0);
-			end_read();
+			ch_async_io_end_read();
 			m_flag |= F_READ_SHUTDOWN;
 			event_poller()->schedule([ch_p, CH = WWRP<channel>(this)]() {
 				if (ch_p != NULL) {
@@ -466,7 +466,7 @@ namespace wawo { namespace net { namespace handler {
 						s->_dial_ok();
 						ch_promise->set_success(wawo::OK);
 						s->ch_fire_connected();
-						s->begin_read();
+						s->ch_async_io_begin_read();
 					} else {
 						s->_dial_failed();
 						ch_promise->set_success(rt);
@@ -664,10 +664,10 @@ namespace wawo { namespace net { namespace handler {
 			}
 		}
 
-		void begin_read(u8_t const& async_flag = 0, fn_io_event const& fn_read = NULL) {
+		void ch_async_io_begin_read(u8_t const& async_flag = 0, fn_io_event const& fn_read = NULL) {
 			if (!event_poller()->in_event_loop()) {
 				event_poller()->schedule([ch = WWRP<channel>(this)](){
-					ch->begin_read();
+					ch->ch_async_io_begin_read();
 				});
 			}
 			if (m_flag&F_READ_SHUTDOWN) {
@@ -685,10 +685,10 @@ namespace wawo { namespace net { namespace handler {
 			(void)fn_read;
 		}
 
-		void end_read() {
+		void ch_async_io_end_read() {
 			if (!event_poller()->in_event_loop()) {
 				event_poller()->schedule([ch = WWRP<channel>(this)](){
-					ch->end_read();
+					ch->ch_async_io_end_read();
 				});
 			}
 			m_flag &= ~F_WATCH_READ;
